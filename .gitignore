@@ -19,3 +19,14 @@ logs/
 # beside it.
 /.plugins/
 /.opencode-skills/
+
+# Gradle & Java
+.gradle/
+**/build/
+**/data/
+*.class
+*.jar
+!gradle-wrapper.jar
+!**/gradle-wrapper.jar
+.idea/
+*.iml
