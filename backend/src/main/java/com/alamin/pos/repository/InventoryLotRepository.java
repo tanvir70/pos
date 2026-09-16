@@ -4,6 +4,7 @@ import com.alamin.pos.entity.InventoryLot;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,5 +19,7 @@ public interface InventoryLotRepository extends JpaRepository<InventoryLot, Long
     List<InventoryLot> findByProductId(Long productId);
 
     List<InventoryLot> findAllByOrderByExpiryDateAsc();
+
+    List<InventoryLot> findByExpiryDateLessThanEqualOrderByExpiryDateAsc(LocalDate expiryDate);
 }
 

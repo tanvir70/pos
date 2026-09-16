@@ -4,6 +4,7 @@ import com.alamin.pos.entity.CustomerLedger;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,5 +16,7 @@ public interface CustomerLedgerRepository extends JpaRepository<CustomerLedger, 
     List<CustomerLedger> findByCustomerIdOrderByTransactionDateDescIdDesc(Long customerId);
 
     Optional<CustomerLedger> findTopByCustomerIdOrderByTransactionDateDescIdDesc(Long customerId);
+
+    List<CustomerLedger> findByTransactionDateBetweenAndTransactionType(LocalDateTime start, LocalDateTime end, String transactionType);
 }
 
