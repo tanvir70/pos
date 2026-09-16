@@ -16,3 +16,5 @@
 | Task | Description | Status | Commit |
 | :--- | :--- | :--- | :--- |
 | Task 1 | Monorepo Scaffolding & Directory Setup | DONE | `26a9dae` |
+| Task 2 | Database Schema & Flyway Migration | DONE | `2fe5c95` |
+
