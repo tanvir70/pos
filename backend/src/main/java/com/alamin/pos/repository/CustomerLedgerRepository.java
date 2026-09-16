@@ -12,5 +12,8 @@ public interface CustomerLedgerRepository extends JpaRepository<CustomerLedger, 
 
     List<CustomerLedger> findByCustomerIdOrderByTransactionDateDesc(Long customerId);
 
+    List<CustomerLedger> findByCustomerIdOrderByTransactionDateDescIdDesc(Long customerId);
+
     Optional<CustomerLedger> findTopByCustomerIdOrderByTransactionDateDescIdDesc(Long customerId);
 }
+

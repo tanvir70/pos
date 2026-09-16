@@ -2,6 +2,8 @@ package com.alamin.pos.repository;
 
 import com.alamin.pos.entity.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,4 +17,12 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     List<Customer> findByNameContainingIgnoreCaseOrPhoneContaining(String name, String phone);
 
     List<Customer> findByCustomerType(String customerType);
+
+    @Query("SELECT c FROM Customer c WHERE " +
+            "(:query IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
+            "OR LOWER(c.phone) LIKE LOWER(CONCAT('%', :query, '%')) " +
+            "OR (c.businessName IS NOT NULL AND LOWER(c.businessName) LIKE LOWER(CONCAT('%', :query, '%')))) " +
+            "AND (:customerType IS NULL OR UPPER(c.customerType) = UPPER(:customerType))")
+    List<Customer> searchCustomers(@Param("query") String query, @Param("customerType") String customerType);
 }
+
