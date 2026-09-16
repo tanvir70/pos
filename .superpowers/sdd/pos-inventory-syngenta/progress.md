@@ -23,6 +23,7 @@
 | Task 6 | POS Sales Engine (Split-Stock, Negative Stock, Price Override, Round-off) | DONE | `8b01473` |
 | Task 7 | Customer Due Ledger & Direct Returns | DONE | `ecbb43c` |
 | Task 8 | Dashboard & 1-Click Database Backup Engine | DONE | `0e9eb1b` |
+| Task 9 | Frontend API Client & Refactored Component Architecture | DONE | `3c69d7e` |
 
 
 
