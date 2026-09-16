@@ -1,0 +1,10 @@
+{
+  "description": "This bilingual retail application streamlines sales and inventory management for retailers, offering intuitive workflows, real-time updates, and easy cash transactions.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
