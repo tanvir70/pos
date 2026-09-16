@@ -24,6 +24,7 @@
 | Task 7 | Customer Due Ledger & Direct Returns | DONE | `ecbb43c` |
 | Task 8 | Dashboard & 1-Click Database Backup Engine | DONE | `0e9eb1b` |
 | Task 9 | Frontend API Client & Refactored Component Architecture | DONE | `3c69d7e` |
+| Task 10 | POS Billing Counter (Split-Stock, Lot Override & Dual Print) | DONE | `92ee0ed` |
 
 
 
