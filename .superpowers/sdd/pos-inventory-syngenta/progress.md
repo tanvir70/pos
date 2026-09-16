@@ -20,6 +20,7 @@
 | Task 3 | JPA Entities, Repositories & MapStruct Mappers | DONE | `883d06f` |
 | Task 4 | Inventory Lot & Godown Transfer Service | DONE | `704d027` |
 | Task 5 | ZXing Barcode Generation Engine | DONE | `165f697` |
+| Task 6 | POS Sales Engine (Split-Stock, Negative Stock, Price Override, Round-off) | DONE | `8b01473` |
 
 
 
