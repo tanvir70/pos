@@ -16,4 +16,7 @@ public interface InventoryLotRepository extends JpaRepository<InventoryLot, Long
     List<InventoryLot> findByProductIdOrderByExpiryDateAsc(Long productId);
 
     List<InventoryLot> findByProductId(Long productId);
+
+    List<InventoryLot> findAllByOrderByExpiryDateAsc();
 }
+
