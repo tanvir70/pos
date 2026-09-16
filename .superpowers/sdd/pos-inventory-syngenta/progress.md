@@ -18,5 +18,6 @@
 | Task 1 | Monorepo Scaffolding & Directory Setup | DONE | `26a9dae` |
 | Task 2 | Database Schema & Flyway Migration | DONE | `2fe5c95` |
 | Task 3 | JPA Entities, Repositories & MapStruct Mappers | DONE | `883d06f` |
+| Task 4 | Inventory Lot & Godown Transfer Service | DONE | `704d027` |
 
 
