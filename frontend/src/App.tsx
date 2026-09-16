@@ -1,5 +1,6 @@
 import { useState, useRef } from "react"
 import Navbar from "./components/Navbar"
+import PosCounter from "./pages/PosCounter"
 import type { NavigationTab } from "./types"
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -1422,13 +1423,7 @@ export default function App() {
 
       {/* Main */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 py-5">
-        {tab === "pos" && (
-          <SalesCounter
-            products={products}
-            setProducts={updateProducts}
-            isOwner={isOwner}
-          />
-        )}
+        {tab === "pos" && <PosCounter isOwner={isOwner} />}
         {tab === "inventory" && (
           <div className="space-y-6">
             <Inventory products={products} isOwner={isOwner} />

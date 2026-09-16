@@ -165,6 +165,38 @@ export interface CustomerPaymentRequest {
 }
 
 // ----------------------------------------------------------------------------
+// Cart Item for POS Counter
+// ----------------------------------------------------------------------------
+export interface CartItem {
+  id: string
+  productId: number
+  productCode: string
+  nameEn: string
+  nameBn: string
+  category?: string
+  baseUnit: string
+  cartonMultiplier: number
+  defaultBarcode?: string
+  lotId: number
+  lotNumber: string
+  entryDate?: string
+  expiryDate: string
+  purchaseCost: number
+  lotRetailPrice: number
+  lotWholesalePrice: number
+  barcode?: string
+  dokanAvailable: number
+  godownAvailable: number
+  quantity: number
+  totalQuantity?: number
+  dokanQuantity: number
+  godownQuantity: number
+  unitPrice: number
+  originalUnitPrice?: number
+  availableLots?: InventoryLot[]
+}
+
+// ----------------------------------------------------------------------------
 // Sales
 // ----------------------------------------------------------------------------
 export interface SaleItemRequest {
