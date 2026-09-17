@@ -1,6 +1,7 @@
 package com.alamin.pos.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class CustomerRequest {
     private String businessName;
 
     @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^01[3-9]\\d{8}$", message = "Invalid Bangladesh phone number")
     private String phone;
 
     private String whatsappNumber;
