@@ -345,3 +345,15 @@ export interface DashboardSummary {
   expiringLots: ExpiringLot[]
   lowStockProducts: LowStockProduct[]
 }
+
+// ----------------------------------------------------------------------------
+// Uniform Backend Error Contract
+// ----------------------------------------------------------------------------
+export interface ErrorResponse {
+  timestamp: string
+  status: number
+  errorCode: string
+  message: string
+  path: string
+  details?: Record<string, string> | null
+}

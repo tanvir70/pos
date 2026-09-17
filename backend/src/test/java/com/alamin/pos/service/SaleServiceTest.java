@@ -6,6 +6,9 @@ import com.alamin.pos.dto.SaleRequest;
 import com.alamin.pos.dto.SaleResponse;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
+import com.alamin.pos.exception.BusinessRuleViolationException;
+import com.alamin.pos.exception.InsufficientStockException;
+import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
@@ -271,7 +274,7 @@ class SaleServiceTest {
     }
 
     @Test
-    @DisplayName("6. Anonymous Due Validation: Due sale without customer fails with IllegalArgumentException")
+    @DisplayName("6. Anonymous Due Validation: Due sale without customer fails with BusinessRuleViolationException")
     void testAnonymousCustomerWithDueThrowsException() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
 
@@ -290,12 +293,12 @@ class SaleServiceTest {
                 .build();
 
         assertThatThrownBy(() -> saleService.processSale(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BusinessRuleViolationException.class)
                 .hasMessageContaining("Cannot have due amount for anonymous walk-in customer");
     }
 
     @Test
-    @DisplayName("7. Insufficient Godown stock throws IllegalArgumentException")
+    @DisplayName("7. Insufficient Godown stock throws InsufficientStockException")
     void testInsufficientGodownStockThrowsException() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
         StockInventory godown = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN").orElseThrow();
@@ -316,7 +319,7 @@ class SaleServiceTest {
                 .build();
 
         assertThatThrownBy(() -> saleService.processSale(request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InsufficientStockException.class)
                 .hasMessageContaining("Insufficient Godown stock");
     }
 
@@ -350,5 +353,29 @@ class SaleServiceTest {
         List<SaleResponse> recent = saleService.getRecentSales(10);
         assertThat(recent).isNotEmpty();
         assertThat(recent.stream().anyMatch(s -> s.getInvoiceNo().equals(created.getInvoiceNo()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("9. Validation: Split quantities do not match total quantity throws ValidationException")
+    void testSplitQuantityMismatchThrowsValidationException() {
+        InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
+
+        SaleItemRequest itemReq = SaleItemRequest.builder()
+                .lotId(lot.getId())
+                .totalQuantity(new BigDecimal("5.000"))
+                .dokanQuantity(new BigDecimal("2.000"))
+                .godownQuantity(new BigDecimal("2.000")) // Sum = 4 != 5
+                .unitPrice(new BigDecimal("650.00"))
+                .build();
+
+        SaleRequest request = SaleRequest.builder()
+                .saleMode("RETAIL")
+                .items(List.of(itemReq))
+                .cashPaid(new BigDecimal("3250.00"))
+                .build();
+
+        assertThatThrownBy(() -> saleService.processSale(request))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("must equal total quantity");
     }
 }

@@ -10,6 +10,9 @@ import com.alamin.pos.entity.CustomerLedger;
 import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.StockInventory;
+import com.alamin.pos.exception.BusinessRuleViolationException;
+import com.alamin.pos.exception.DuplicateResourceException;
+import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
 import com.alamin.pos.repository.GodownMovementRepository;
@@ -228,7 +231,7 @@ class CustomerAndReturnTest {
     }
 
     @Test
-    @DisplayName("6. Validation: Due adjustment without customer throws IllegalArgumentException")
+    @DisplayName("6. Validation: Due adjustment without customer throws BusinessRuleViolationException")
     void testValidationDueAdjustmentWithoutCustomerThrowsException() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
 
@@ -246,7 +249,7 @@ class CustomerAndReturnTest {
                 .build();
 
         assertThatThrownBy(() -> saleReturnService.processReturn(returnReq))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(BusinessRuleViolationException.class)
                 .hasMessageContaining("Customer is required for DUE_ADJUSTMENT refund");
     }
 
@@ -311,5 +314,33 @@ class CustomerAndReturnTest {
         List<SaleReturnResponse> recent = saleReturnService.getRecentReturns(10);
         assertThat(recent).isNotEmpty();
         assertThat(recent.stream().anyMatch(r -> r.getReturnNo().equals(created.getReturnNo()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("9. Duplicate Customer: Registering duplicate phone throws DuplicateResourceException")
+    void testDuplicateCustomerPhoneThrowsException() {
+        CustomerRequest request = CustomerRequest.builder()
+                .name("রহিম ট্রেডার্স")
+                .phone("01711000001") // Seeded customer phone
+                .build();
+
+        assertThatThrownBy(() -> customerService.createCustomer(request))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessageContaining("already exists");
+    }
+
+    @Test
+    @DisplayName("10. Validation: Zero or negative customer payment throws ValidationException")
+    void testInvalidPaymentAmountThrowsException() {
+        Customer customer = customerRepository.findByPhone("01711000001").orElseThrow();
+
+        CustomerPaymentRequest payment = CustomerPaymentRequest.builder()
+                .amount(new BigDecimal("-500.00")) // Invalid amount
+                .paymentMethod("CASH")
+                .build();
+
+        assertThatThrownBy(() -> customerService.recordPayment(customer.getId(), payment))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Payment amount must be greater than zero");
     }
 }

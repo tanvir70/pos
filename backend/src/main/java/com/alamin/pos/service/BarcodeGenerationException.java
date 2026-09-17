@@ -1,6 +1,10 @@
 package com.alamin.pos.service;
 
-public class BarcodeGenerationException extends RuntimeException {
+/**
+ * @deprecated Use {@link com.alamin.pos.exception.BarcodeGenerationException}
+ */
+@Deprecated
+public class BarcodeGenerationException extends com.alamin.pos.exception.BarcodeGenerationException {
 
     public BarcodeGenerationException(String message) {
         super(message);

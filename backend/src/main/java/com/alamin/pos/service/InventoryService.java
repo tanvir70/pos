@@ -8,13 +8,15 @@ import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.StockInventory;
+import com.alamin.pos.exception.InsufficientStockException;
+import com.alamin.pos.exception.ResourceNotFoundException;
+import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.mapper.InventoryLotMapper;
 import com.alamin.pos.repository.GodownMovementRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.alamin.pos.repository.ProductRepository;
 import com.alamin.pos.repository.StockInventoryRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InventoryService {
@@ -40,7 +41,7 @@ public class InventoryService {
     @Transactional
     public InventoryLot recordLotEntry(LotEntryRequest request) {
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + request.getProductId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
 
         // BUSINESS DECISION: Convert carton count to base units using product.cartonMultiplier, plus loose units.
         // Quantities are maintained strictly in base units with NUMERIC(12, 3) precision.
@@ -50,7 +51,7 @@ public class InventoryService {
 
         BigDecimal totalBaseUnits = cartons.multiply(multiplier).add(loose).setScale(3, RoundingMode.HALF_UP);
         if (totalBaseUnits.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Total quantity must be greater than zero");
+            throw new ValidationException("Total quantity must be greater than zero");
         }
 
         // BUSINESS DECISION: If barcode is not specified, auto-generate SYN-<CODE>-<LOT> format.
@@ -117,30 +118,30 @@ public class InventoryService {
     @Transactional
     public void transferStock(StockTransferRequest request) {
         if (request.getFromLocation() == null || request.getToLocation() == null) {
-            throw new IllegalArgumentException("Source and destination locations are required");
+            throw new ValidationException("Source and destination locations are required");
         }
         String fromLocation = request.getFromLocation().trim().toUpperCase();
         String toLocation = request.getToLocation().trim().toUpperCase();
 
         if (fromLocation.equalsIgnoreCase(toLocation)) {
-            throw new IllegalArgumentException("Source and destination locations cannot be the same");
+            throw new ValidationException("Source and destination locations cannot be the same");
         }
 
         if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Transfer quantity must be greater than zero");
+            throw new ValidationException("Transfer quantity must be greater than zero");
         }
 
         BigDecimal transferQty = request.getQuantity().setScale(3, RoundingMode.HALF_UP);
 
         InventoryLot lot = inventoryLotRepository.findById(request.getLotId())
-                .orElseThrow(() -> new IllegalArgumentException("Lot not found with id: " + request.getLotId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Lot not found with id: " + request.getLotId()));
 
         StockInventory sourceStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), fromLocation)
-                .orElseThrow(() -> new IllegalArgumentException("Insufficient stock in " + fromLocation));
+                .orElseThrow(() -> new InsufficientStockException("Insufficient stock in " + fromLocation));
 
         // BUSINESS DECISION: Strict pre-validation of source stock; prevent negative balance transfers.
         if (sourceStock.getQuantity().compareTo(transferQty) < 0) {
-            throw new IllegalArgumentException("Insufficient stock in " + fromLocation);
+            throw new InsufficientStockException("Insufficient stock in " + fromLocation);
         }
 
         sourceStock.setQuantity(sourceStock.getQuantity().subtract(transferQty));

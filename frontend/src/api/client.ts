@@ -3,6 +3,8 @@
 // Ponytail Rules: Zero external HTTP dependencies, native fetch wrapper.
 // ============================================================================
 
+import type { ErrorResponse } from "../types"
+
 // BUSINESS DECISION: Frontend uses native browser fetch targeting /api prefixed endpoints,
 // routed to backend via Vite development proxy and configurable via VITE_API_BASE_URL.
 // Eliminates external HTTP library weight (Axios) and adheres to Ponytail minimal architecture.
@@ -10,12 +12,22 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api"
 
 export class ApiError extends Error {
   status: number
-  data: unknown
+  errorCode?: string
+  details?: Record<string, string> | null
+  data?: ErrorResponse | unknown
 
-  constructor(message: string, status: number, data?: unknown) {
+  constructor(
+    message: string,
+    status: number,
+    errorCode?: string,
+    details?: Record<string, string> | null,
+    data?: unknown,
+  ) {
     super(message)
     this.name = "ApiError"
     this.status = status
+    this.errorCode = errorCode
+    this.details = details
     this.data = data
   }
 }
@@ -50,16 +62,20 @@ export async function apiClient<T>(
 
   if (!response.ok) {
     let errorDetail = response.statusText
+    let errorCode: string | undefined
+    let details: Record<string, string> | null | undefined
     let responseData: unknown = null
     try {
       const contentType = response.headers.get("content-type") || ""
       if (contentType.includes("application/json")) {
         responseData = await response.json()
         if (responseData && typeof responseData === "object") {
-          const obj = responseData as Record<string, unknown>
-          errorDetail = ((obj.message ||
+          const obj = responseData as Partial<ErrorResponse> & Record<string, unknown>
+          errorDetail = (obj.message ||
             obj.error ||
-            JSON.stringify(responseData)) as string)
+            JSON.stringify(responseData)) as string
+          errorCode = obj.errorCode
+          details = obj.details
         }
       } else {
         const text = await response.text()
@@ -71,6 +87,8 @@ export async function apiClient<T>(
     throw new ApiError(
       errorDetail || `Request failed with status ${response.status}`,
       response.status,
+      errorCode,
+      details,
       responseData,
     )
   }

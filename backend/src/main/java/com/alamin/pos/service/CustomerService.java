@@ -4,6 +4,9 @@ import com.alamin.pos.dto.CustomerPaymentRequest;
 import com.alamin.pos.dto.CustomerRequest;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
+import com.alamin.pos.exception.DuplicateResourceException;
+import com.alamin.pos.exception.ResourceNotFoundException;
+import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,15 +31,15 @@ public class CustomerService {
     @Transactional
     public Customer createCustomer(CustomerRequest request) {
         if (request.getName() == null || request.getName().isBlank()) {
-            throw new IllegalArgumentException("Customer name is required");
+            throw new ValidationException("Customer name is required");
         }
         if (request.getPhone() == null || request.getPhone().isBlank()) {
-            throw new IllegalArgumentException("Phone number is required");
+            throw new ValidationException("Phone number is required");
         }
 
         Optional<Customer> existing = customerRepository.findByPhone(request.getPhone().trim());
         if (existing.isPresent()) {
-            throw new IllegalArgumentException("Customer with phone " + request.getPhone() + " already exists");
+            throw new DuplicateResourceException("Customer with phone " + request.getPhone() + " already exists");
         }
 
         String customerType = (request.getCustomerType() != null && !request.getCustomerType().isBlank())
@@ -99,7 +102,7 @@ public class CustomerService {
     @Transactional
     public Customer updateCustomer(Long id, CustomerRequest request) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
 
         if (request.getName() != null && !request.getName().isBlank()) {
             customer.setName(request.getName().trim());
@@ -107,7 +110,7 @@ public class CustomerService {
         if (request.getPhone() != null && !request.getPhone().isBlank() && !request.getPhone().trim().equals(customer.getPhone())) {
             Optional<Customer> existing = customerRepository.findByPhone(request.getPhone().trim());
             if (existing.isPresent() && !existing.get().getId().equals(customer.getId())) {
-                throw new IllegalArgumentException("Customer with phone " + request.getPhone() + " already exists");
+                throw new DuplicateResourceException("Customer with phone " + request.getPhone() + " already exists");
             }
             customer.setPhone(request.getPhone().trim());
         }
@@ -122,10 +125,10 @@ public class CustomerService {
             customer.setWhatsappNumber(request.getWhatsappNumber().trim());
         }
         if (request.getEmail() != null) {
-            customer.setEmail(request.getEmail());
+            customer.setEmail(request.getEmail().trim());
         }
         if (request.getVillageAddress() != null) {
-            customer.setVillageAddress(request.getVillageAddress());
+            customer.setVillageAddress(request.getVillageAddress().trim());
         }
         if (request.getCustomerType() != null && !request.getCustomerType().isBlank()) {
             customer.setCustomerType(request.getCustomerType().trim().toUpperCase());
@@ -137,16 +140,16 @@ public class CustomerService {
             customer.setMfsType(request.getMfsType());
         }
         if (request.getMfsNumber() != null) {
-            customer.setMfsNumber(request.getMfsNumber());
+            customer.setMfsNumber(request.getMfsNumber().trim());
         }
         if (request.getBankName() != null) {
-            customer.setBankName(request.getBankName());
+            customer.setBankName(request.getBankName().trim());
         }
         if (request.getBankBranch() != null) {
-            customer.setBankBranch(request.getBankBranch());
+            customer.setBankBranch(request.getBankBranch().trim());
         }
         if (request.getBankAccountNo() != null) {
-            customer.setBankAccountNo(request.getBankAccountNo());
+            customer.setBankAccountNo(request.getBankAccountNo().trim());
         }
 
         // BUSINESS DECISION: Customer profile updates do not directly overwrite currentDue to preserve financial ledger audit integrity; due balance changes occur strictly via sales, repayments, and returns.
@@ -157,7 +160,7 @@ public class CustomerService {
     @Transactional(readOnly = true)
     public Customer getCustomer(Long id) {
         return customerRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
     }
 
     @Transactional(readOnly = true)
@@ -174,10 +177,10 @@ public class CustomerService {
     @Transactional
     public CustomerLedger recordPayment(Long customerId, CustomerPaymentRequest request) {
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + customerId));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + customerId));
 
         if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Payment amount must be greater than zero");
+            throw new ValidationException("Payment amount must be greater than zero");
         }
 
         BigDecimal amount = request.getAmount().setScale(2, RoundingMode.HALF_UP);
@@ -203,7 +206,7 @@ public class CustomerService {
     @Transactional(readOnly = true)
     public List<CustomerLedger> getCustomerLedger(Long customerId) {
         if (!customerRepository.existsById(customerId)) {
-            throw new IllegalArgumentException("Customer not found with id: " + customerId);
+            throw new ResourceNotFoundException("Customer not found with id: " + customerId);
         }
         return customerLedgerRepository.findByCustomerIdOrderByTransactionDateDescIdDesc(customerId);
     }

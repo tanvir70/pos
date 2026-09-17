@@ -1,5 +1,7 @@
 package com.alamin.pos.service;
 
+import com.alamin.pos.exception.BarcodeGenerationException;
+import com.alamin.pos.exception.ValidationException;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
@@ -21,10 +23,10 @@ public class BarcodeService {
     // readable by retail laser and CCD handheld barcode scanners used in rural agro shops.
     public byte[] generateBarcodePng(String barcodeText, int width, int height) {
         if (barcodeText == null || barcodeText.isBlank()) {
-            throw new IllegalArgumentException("Barcode text cannot be null or blank");
+            throw new ValidationException("Barcode text cannot be null or blank");
         }
         if (width <= 0 || height <= 0) {
-            throw new IllegalArgumentException("Barcode dimensions must be greater than zero: " + width + "x" + height);
+            throw new ValidationException("Barcode dimensions must be greater than zero: " + width + "x" + height);
         }
 
         try {

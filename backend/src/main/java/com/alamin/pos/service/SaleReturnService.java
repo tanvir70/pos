@@ -13,6 +13,9 @@ import com.alamin.pos.entity.Sale;
 import com.alamin.pos.entity.SaleReturn;
 import com.alamin.pos.entity.SaleReturnItem;
 import com.alamin.pos.entity.StockInventory;
+import com.alamin.pos.exception.BusinessRuleViolationException;
+import com.alamin.pos.exception.ResourceNotFoundException;
+import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
 import com.alamin.pos.repository.GodownMovementRepository;
@@ -54,33 +57,33 @@ public class SaleReturnService {
     @Transactional
     public SaleReturnResponse processReturn(SaleReturnRequest request) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new IllegalArgumentException("Sale return must have at least one item");
+            throw new ValidationException("Sale return must have at least one item");
         }
         if (request.getRefundType() == null || request.getRefundType().isBlank()) {
-            throw new IllegalArgumentException("Refund type is required");
+            throw new ValidationException("Refund type is required");
         }
 
         String refundType = request.getRefundType().trim().toUpperCase();
         if (!"CASH_REFUND".equals(refundType) && !"DUE_ADJUSTMENT".equals(refundType)) {
-            throw new IllegalArgumentException("Invalid refund type: " + refundType + ". Expected CASH_REFUND or DUE_ADJUSTMENT");
+            throw new ValidationException("Invalid refund type: " + refundType + ". Expected CASH_REFUND or DUE_ADJUSTMENT");
         }
 
         Sale originalSale = null;
         if (request.getOriginalSaleId() != null) {
             originalSale = saleRepository.findById(request.getOriginalSaleId())
-                    .orElseThrow(() -> new IllegalArgumentException("Original sale not found with id: " + request.getOriginalSaleId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Original sale not found with id: " + request.getOriginalSaleId()));
         }
 
         Customer customer = null;
         if (request.getCustomerId() != null) {
             customer = customerRepository.findById(request.getCustomerId())
-                    .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + request.getCustomerId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + request.getCustomerId()));
         } else if (originalSale != null && originalSale.getCustomer() != null) {
             customer = originalSale.getCustomer();
         }
 
         if ("DUE_ADJUSTMENT".equals(refundType) && customer == null) {
-            throw new IllegalArgumentException("Customer is required for DUE_ADJUSTMENT refund");
+            throw new BusinessRuleViolationException("Customer is required for DUE_ADJUSTMENT refund");
         }
 
         // Synthesize unique return number: RET-YYYYMMDD-XXXX
@@ -96,20 +99,20 @@ public class SaleReturnService {
 
         for (SaleReturnItemRequest itemReq : request.getItems()) {
             InventoryLot lot = inventoryLotRepository.findById(itemReq.getLotId())
-                    .orElseThrow(() -> new IllegalArgumentException("Lot not found with id: " + itemReq.getLotId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Lot not found with id: " + itemReq.getLotId()));
 
             BigDecimal qty = itemReq.getQuantity() != null
                     ? itemReq.getQuantity().setScale(3, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP);
             if (qty.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Return quantity must be greater than zero");
+                throw new ValidationException("Return quantity must be greater than zero");
             }
 
             BigDecimal refundPrice = itemReq.getRefundPrice() != null
                     ? itemReq.getRefundPrice().setScale(2, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
             if (refundPrice.compareTo(BigDecimal.ZERO) < 0) {
-                throw new IllegalArgumentException("Refund price cannot be negative");
+                throw new ValidationException("Refund price cannot be negative");
             }
 
             BigDecimal lineRefund = refundPrice.multiply(qty).setScale(2, RoundingMode.HALF_UP);
@@ -200,7 +203,7 @@ public class SaleReturnService {
     @Transactional(readOnly = true)
     public SaleReturnResponse getReturnById(Long id) {
         SaleReturn saleReturn = saleReturnRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Sale return not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Sale return not found with id: " + id));
         List<SaleReturnItem> items = saleReturnItemRepository.findBySaleReturnId(saleReturn.getId());
         return mapToResponse(saleReturn, items);
     }

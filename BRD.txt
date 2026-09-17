@@ -1,0 +1,14 @@
+1. In stock add expiray date
+2. Bar code generate korte hobe. 
+3. need a dashboard for kind of analysis
+4. whole sale customers list, their dues , their buying items.
+5. Gudawn / dokan alada
+6. Date wise gudawn product entry, exits 
+6. Pic upload for product 
+8. produce code, product name, photo, generated bar code, quantity, expire date, entry date, sell date, company name, gram, kg, mili, liter, cartoon, box, botle. 
+9. date wise filter
+10. sell return
+
+same prodcut can have multiple variant according to quantity, expiry and price.
+
+

@@ -12,6 +12,10 @@ import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.Sale;
 import com.alamin.pos.entity.SaleItem;
 import com.alamin.pos.entity.StockInventory;
+import com.alamin.pos.exception.BusinessRuleViolationException;
+import com.alamin.pos.exception.InsufficientStockException;
+import com.alamin.pos.exception.ResourceNotFoundException;
+import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
 import com.alamin.pos.repository.GodownMovementRepository;
@@ -51,16 +55,16 @@ public class SaleService {
     @Transactional
     public SaleResponse processSale(SaleRequest request) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new IllegalArgumentException("Sale must have at least one item");
+            throw new ValidationException("Sale must have at least one item");
         }
         if (request.getSaleMode() == null || request.getSaleMode().isBlank()) {
-            throw new IllegalArgumentException("Sale mode is required");
+            throw new ValidationException("Sale mode is required");
         }
 
         Customer customer = null;
         if (request.getCustomerId() != null) {
             customer = customerRepository.findById(request.getCustomerId())
-                    .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + request.getCustomerId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + request.getCustomerId()));
         }
 
         // BUSINESS DECISION: Invoice numbers are generated using INV-YYYYMMDD-XXXX format ensuring daily readability and uniqueness.
@@ -76,11 +80,11 @@ public class SaleService {
 
         for (SaleItemRequest itemReq : request.getItems()) {
             InventoryLot lot = inventoryLotRepository.findById(itemReq.getLotId())
-                    .orElseThrow(() -> new IllegalArgumentException("Lot not found with id: " + itemReq.getLotId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Lot not found with id: " + itemReq.getLotId()));
 
             BigDecimal totalQty = itemReq.getTotalQuantity().setScale(3, RoundingMode.HALF_UP);
             if (totalQty.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Total quantity must be greater than zero for lot " + lot.getLotNumber());
+                throw new ValidationException("Total quantity must be greater than zero for lot " + lot.getLotNumber());
             }
 
             // BUSINESS DECISION: Default split deduction when unspecified assigns entire quantity to Dokan counter stock; partial specification auto-balances to fulfill total quantity.
@@ -100,10 +104,10 @@ public class SaleService {
             }
 
             if (dokanQty.add(godownQty).compareTo(totalQty) != 0) {
-                throw new IllegalArgumentException("Split quantities (Dokan: " + dokanQty + ", Godown: " + godownQty + ") must equal total quantity: " + totalQty);
+                throw new ValidationException("Split quantities (Dokan: " + dokanQty + ", Godown: " + godownQty + ") must equal total quantity: " + totalQty);
             }
             if (dokanQty.compareTo(BigDecimal.ZERO) < 0 || godownQty.compareTo(BigDecimal.ZERO) < 0) {
-                throw new IllegalArgumentException("Split quantities cannot be negative");
+                throw new ValidationException("Split quantities cannot be negative");
             }
 
             // 1. Deduct Dokan stock
@@ -122,10 +126,10 @@ public class SaleService {
             // 2. Deduct Godown stock
             if (godownQty.compareTo(BigDecimal.ZERO) > 0) {
                 StockInventory godownStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN")
-                        .orElseThrow(() -> new IllegalArgumentException("Insufficient Godown stock for lot " + lot.getLotNumber()));
+                        .orElseThrow(() -> new InsufficientStockException("Insufficient Godown stock for lot " + lot.getLotNumber()));
                 // BUSINESS DECISION: Strictly prevent negative inventory in Godown bulk storage to protect physical warehouse audit counts.
                 if (godownStock.getQuantity().compareTo(godownQty) < 0) {
-                    throw new IllegalArgumentException("Insufficient Godown stock for lot " + lot.getLotNumber());
+                    throw new InsufficientStockException("Insufficient Godown stock for lot " + lot.getLotNumber());
                 }
                 godownStock.setQuantity(godownStock.getQuantity().subtract(godownQty).setScale(3, RoundingMode.HALF_UP));
                 stockInventoryRepository.save(godownStock);
@@ -213,7 +217,7 @@ public class SaleService {
         // Customer due and ledger management
         if (dueAmount.compareTo(BigDecimal.ZERO) > 0) {
             if (customer == null) {
-                throw new IllegalArgumentException("Cannot have due amount for anonymous walk-in customer");
+                throw new BusinessRuleViolationException("Cannot have due amount for anonymous walk-in customer");
             }
 
             // BUSINESS DECISION: Allow sales to proceed with warning when customer credit limit is exceeded, reflecting Bangladeshi agrochemical trade where credit is extended based on personal trust and upcoming harvest seasons.
@@ -253,7 +257,7 @@ public class SaleService {
     @Transactional(readOnly = true)
     public SaleResponse getSaleById(Long id) {
         Sale sale = saleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Sale not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Sale not found with id: " + id));
         List<SaleItem> items = saleItemRepository.findBySaleId(sale.getId());
         return mapToResponse(sale, items);
     }
@@ -261,7 +265,7 @@ public class SaleService {
     @Transactional(readOnly = true)
     public SaleResponse getSaleByInvoiceNo(String invoiceNo) {
         Sale sale = saleRepository.findByInvoiceNo(invoiceNo)
-                .orElseThrow(() -> new IllegalArgumentException("Sale not found with invoice no: " + invoiceNo));
+                .orElseThrow(() -> new ResourceNotFoundException("Sale not found with invoice no: " + invoiceNo));
         List<SaleItem> items = saleItemRepository.findBySaleId(sale.getId());
         return mapToResponse(sale, items);
     }

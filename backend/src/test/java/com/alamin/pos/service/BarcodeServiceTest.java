@@ -1,6 +1,7 @@
 package com.alamin.pos.service;
 
 import com.alamin.pos.entity.InventoryLot;
+import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.LuminanceSource;
@@ -122,27 +123,27 @@ class BarcodeServiceTest {
     void testInvalidAndBlankInputHandling() {
         // Null barcode
         assertThatThrownBy(() -> barcodeService.generateBarcodePng(null, 300, 100))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("cannot be null or blank");
 
         // Empty barcode
         assertThatThrownBy(() -> barcodeService.generateBarcodePng("", 300, 100))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("cannot be null or blank");
 
         // Blank barcode
         assertThatThrownBy(() -> barcodeService.generateBarcodePng("   ", 300, 100))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("cannot be null or blank");
 
         // Invalid width
         assertThatThrownBy(() -> barcodeService.generateBarcodePng("SYN-TEST", 0, 100))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("greater than zero");
 
         // Invalid height
         assertThatThrownBy(() -> barcodeService.generateBarcodePng("SYN-TEST", 300, -10))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("greater than zero");
     }
 

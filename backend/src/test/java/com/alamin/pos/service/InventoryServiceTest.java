@@ -8,6 +8,8 @@ import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.StockInventory;
+import com.alamin.pos.exception.InsufficientStockException;
+import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.GodownMovementRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.alamin.pos.repository.ProductRepository;
@@ -137,7 +139,7 @@ class InventoryServiceTest {
     }
 
     @Test
-    @DisplayName("3. Attempting to transfer more than available stock in GODOWN throws IllegalArgumentException")
+    @DisplayName("3. Attempting to transfer more than available stock in GODOWN throws InsufficientStockException")
     void testTransferMoreThanAvailableStockThrowsException() {
         Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
 
@@ -164,7 +166,7 @@ class InventoryServiceTest {
                 .build();
 
         assertThatThrownBy(() -> inventoryService.transferStock(overdrawRequest))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InsufficientStockException.class)
                 .hasMessageContaining("Insufficient stock in GODOWN");
     }
 
@@ -234,7 +236,7 @@ class InventoryServiceTest {
                 .quantityBaseUnits(BigDecimal.ZERO)
                 .build();
         assertThatThrownBy(() -> inventoryService.recordLotEntry(zeroLot))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("Total quantity must be greater than zero");
 
         // 2. Same source and destination transfer
@@ -245,7 +247,7 @@ class InventoryServiceTest {
                 .quantity(BigDecimal.ONE)
                 .build();
         assertThatThrownBy(() -> inventoryService.transferStock(sameLocRequest))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("cannot be the same");
 
         // 3. Zero transfer quantity
@@ -256,7 +258,7 @@ class InventoryServiceTest {
                 .quantity(BigDecimal.ZERO)
                 .build();
         assertThatThrownBy(() -> inventoryService.transferStock(zeroQtyRequest))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("greater than zero");
     }
 }
