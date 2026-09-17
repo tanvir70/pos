@@ -69,3 +69,39 @@ ${shopName}`
 
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`
 }
+
+/**
+ * Opens a WhatsApp chat with invoice summary or payment notification for an invoice.
+ */
+export function openWhatsAppPaymentReminder(
+  phone: string,
+  customerName: string,
+  totalAmount: number,
+  remainingDue: number,
+  invoiceNumber?: string,
+  shopName = "মেসার্স আল-আমিন ট্রেডার্স",
+): void {
+  const normalizedPhone = normalizeBDPhone(phone)
+  if (!normalizedPhone) return
+
+  let message = `আসসালামু আলাইকুম ${customerName} সাহেব,
+${shopName} থেকে আপনার ক্রয়কৃত পণ্যের ইনভয়েস #${invoiceNumber || ""} সফলভাবে তৈরি হয়েছে।
+মোট বিল: ${formatTk(totalAmount)}।`
+
+  if (remainingDue > 0) {
+    message += `
+পরিশোধের পর বর্তমান বাকি: ${formatTk(remainingDue)}।`
+  } else {
+    message += `
+সম্পূর্ণ বিল পরিশোধিত হয়েছে।`
+  }
+
+  message += `
+
+ধন্যবাদান্তে,
+${shopName}`
+
+  const url = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`
+  window.open(url, "_blank", "noopener,noreferrer")
+}
+
