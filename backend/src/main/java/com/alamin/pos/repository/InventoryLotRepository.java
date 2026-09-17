@@ -13,6 +13,8 @@ public interface InventoryLotRepository extends JpaRepository<InventoryLot, Long
 
     Optional<InventoryLot> findByBarcode(String barcode);
 
+    Optional<InventoryLot> findByLotNumber(String lotNumber);
+
     // FEFO: First Expired, First Out dispatch order
     List<InventoryLot> findByProductIdOrderByExpiryDateAsc(Long productId);
 
