@@ -15,11 +15,15 @@
 | Task 1..10 -> Task 11 | All Hardened Modules -> Concurrency & Regression Suite | Clean | Proceed |
 
 ## Explicit User Rulings
-- **Ruling on Task 5 (Quarantine):** Hold the quarantine inventory tracking part. Do not add quarantine stock balances or quarantine inventory routing for damaged returns. Still enforce:
-  1. Expired lot blocker (throw `ExpiredLotSaleException` on expired lots).
-  2. FEFO ordering check & audit warnings.
-  3. Strict invoice-linked return validation (item presence, original unit price, cumulative return quantity $\le$ invoiced quantity).
-  4. Damaged returns will not increment active salable inventory (logged and acknowledged without quarantine stock table).
+- **Ruling on Task 5 (Quarantine):** Initially held, then explicitly unheld and requested for completion by user.
+  - Implemented complete quarantine workflow:
+    1. Expired lot blocker (`ExpiredLotSaleException` on expired lots).
+    2. FEFO ordering check & audit warnings.
+    3. Strict invoice-linked return validation (item presence, original unit price, cumulative return quantity $\le$ invoiced quantity).
+    4. Damaged returns routed to `QUARANTINE` stock with `DAMAGED_RETURN_HOLD` movement audit log.
+    5. Active salable stock query isolation (`AND location != 'QUARANTINE'`).
+    6. Quarantine inspection & valuation endpoint `GET /api/inventory/quarantine` with RBAC cost masking.
+    7. Quarantine disposal endpoint `POST /api/inventory/quarantine/dispose` with `DAMAGE_EXIT` logging.
 
 ## Task Execution Log
 | Task | Description | Status | Commit |
@@ -28,10 +32,11 @@
 | Task 2 | Domain Enums, Entity Hardening & Concurrency Mappings | DONE | `cd7e5cf` |
 | Task 3 | Concurrency Engine & Atomic Document Sequencing | DONE | `5812fa3` |
 | Task 4 | Financial Math & Accounting Precision Engine | DONE | `f2ad9e7` |
-| Task 5 | Agrochemical Regulatory Compliance & Strict Return Validation (Excluding Quarantine) | DONE | `a09ab27` |
+| Task 5 | Agrochemical Regulatory Compliance & Strict Return Validation | DONE | `a09ab27` |
 | Task 6 | Enterprise Security, Role-Based Access Control & Cost Masking | DONE | `f60f872` |
 | Task 7 | Resource Exhaustion & Denial of Service Protection | DONE | `89bf63d` |
 | Task 8 | Clean Architecture, N+1 Query Elimination & Pagination | DONE | `32e12a1` |
 | Task 9 | Comprehensive Bean Validation & RFC 7807 Problem Details | DONE | `8e9500e` |
 | Task 10 | Transaction Idempotency Filter & Replay Prevention | DONE | `45bb191` |
 | Task 11 | End-to-End System Regression & Concurrency Stress Test Suite | DONE | `1dc32f1` |
+| Task 12 | Quarantine Damaged Goods Inventory Tracking, Valuation & Disposal | DONE | `8606423` |
