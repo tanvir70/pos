@@ -19,6 +19,8 @@ import type {
   DashboardSummary,
   AuthTokenResponse,
   PinVerificationRequest,
+  QuarantineStockItem,
+  QuarantineDisposalRequest,
 } from "../types"
 
 // ----------------------------------------------------------------------------
@@ -71,6 +73,20 @@ export async function createLot(data: LotEntryRequest): Promise<InventoryLot> {
     body: JSON.stringify(data),
   })
 }
+
+export async function getQuarantineStock(): Promise<QuarantineStockItem[]> {
+  return apiClient<QuarantineStockItem[]>("/inventory/quarantine")
+}
+
+export async function disposeQuarantineStock(
+  data: QuarantineDisposalRequest,
+): Promise<{ message: string }> {
+  return apiClient<{ message: string }>("/inventory/quarantine/dispose", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
 
 // ----------------------------------------------------------------------------
 // 3. Barcodes

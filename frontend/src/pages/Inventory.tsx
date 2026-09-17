@@ -1,107 +1,120 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
-import type { Product, StockItem } from "../types"
-import { getStock, getProducts, createProduct } from "../api/endpoints"
+import type {
+  Product,
+  StockItem,
+  QuarantineStockItem,
+  QuarantineDisposalRequest,
+} from "../types"
+import {
+  getStock,
+  getProducts,
+  createProduct,
+  getQuarantineStock,
+  disposeQuarantineStock,
+} from "../api/endpoints"
+import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
+import { formatTk } from "../utils/currency"
 import BarcodeStickerModal from "../components/BarcodeStickerModal"
-
-// BUSINESS DECISION: The Inventory overview links master product catalog definitions with
-// live store stock levels. Total valuation is protected behind Owner Mode PIN.
-// Low stock items trigger visual amber alert badges when total units drop below minStockAlert.
+import LotEntryModal from "../components/LotEntryModal"
+import Button from "../components/ui/Button"
+import Input from "../components/ui/Input"
+import Badge from "../components/ui/Badge"
+import StatCard from "../components/ui/StatCard"
+import Modal from "../components/ui/Modal"
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableHeaderCell,
+  TableCell,
+  TableEmptyState,
+  TableLoadingState,
+} from "../components/ui/Table"
 
 export interface InventoryProps {
-  isOwner: boolean
+  isOwner?: boolean
 }
 
-interface CategoryFilter {
-  id: string
-  labelBn: string
-  labelEn: string
-  backendCategory?: string
-}
+export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
+  const { isOwner: authIsOwner, openPinModal } = useAuth()
+  const { showSuccess, showError, showWarning } = useToast()
+  const isOwner = propIsOwner !== undefined ? propIsOwner : authIsOwner
 
-const CATEGORIES: CategoryFilter[] = [
-  { id: "all", labelBn: "সকল", labelEn: "All" },
-  {
-    id: "insecticide",
-    labelBn: "কীটনাশক",
-    labelEn: "Insecticide",
-    backendCategory: "Insecticide",
-  },
-  {
-    id: "fungicide",
-    labelBn: "ছত্রাকনাশক",
-    labelEn: "Fungicide",
-    backendCategory: "Fungicide",
-  },
-  {
-    id: "herbicide",
-    labelBn: "আগাছানাশক",
-    labelEn: "Herbicide",
-    backendCategory: "Herbicide",
-  },
-  {
-    id: "bio",
-    labelBn: "গ্রোথ প্রমোটার",
-    labelEn: "Bio-stimulant",
-    backendCategory: "Bio-stimulant",
-  },
-  { id: "seed", labelBn: "বীজ", labelEn: "Seed", backendCategory: "Seed" },
-]
+  const [activeTab, setActiveTab] = useState<"catalog" | "quarantine">("catalog")
 
-export default function Inventory({ isOwner }: InventoryProps) {
+  // ─── Remote Data State ──────────────────────────────────────────
   const [stocks, setStocks] = useState<StockItem[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [quarantineItems, setQuarantineItems] = useState<QuarantineStockItem[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Filters & Search
+  // ─── Filters & Search ───────────────────────────────────────────
   const [search, setSearch] = useState<string>("")
-  const [activeCategory, setActiveCategory] = useState<string>("all")
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL")
   const [onlyLowStock, setOnlyLowStock] = useState<boolean>(false)
 
   // Expanded lots accordion state (keyed by productId)
-  const [expandedProductIds, setExpandedProductIds] = useState<Set<number>>(
-    new Set(),
-  )
+  const [expandedProductIds, setExpandedProductIds] = useState<Set<number>>(new Set())
 
-  // Modal states
+  // ─── Modals State ───────────────────────────────────────────────
+  const [isLotEntryOpen, setIsLotEntryOpen] = useState<boolean>(false)
   const [stickerItem, setStickerItem] = useState<StockItem | null>(null)
   const [isStickerOpen, setIsStickerOpen] = useState<boolean>(false)
   const [showAddProduct, setShowAddProduct] = useState<boolean>(false)
 
-  // New product form state
+  // Quarantine Disposal Modal State
+  const [selectedQuarantineItem, setSelectedQuarantineItem] =
+    useState<QuarantineStockItem | null>(null)
+  const [disposalQty, setDisposalQty] = useState<string>("")
+  const [disposalType, setDisposalType] = useState<string>("WRITE_OFF")
+  const [disposalRemarks, setDisposalRemarks] = useState<string>("")
+  const [isDisposing, setIsDisposing] = useState<boolean>(false)
+
+  // ─── New Product Form State ─────────────────────────────────────
   const [newProdNameBn, setNewProdNameBn] = useState("")
   const [newProdNameEn, setNewProdNameEn] = useState("")
   const [newProdCode, setNewProdCode] = useState("")
-  const [newProdCategory, setNewProdCategory] = useState("Insecticide")
-  const [newProdBaseUnit, setNewProdBaseUnit] = useState("Bottle")
+  const [newProdCategory, setNewProdCategory] = useState("কীটনাশক (Insecticide)")
+  const [newProdBaseUnit, setNewProdBaseUnit] = useState("বোতল (Bottle)")
   const [newProdCartonMult, setNewProdCartonMult] = useState("20")
   const [newProdRetail, setNewProdRetail] = useState("")
   const [newProdWholesale, setNewProdWholesale] = useState("")
   const [newProdMinStock, setNewProdMinStock] = useState("5")
   const [isSavingProd, setIsSavingProd] = useState(false)
 
+  // ─── Load Initial Data ──────────────────────────────────────────
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true)
-      setErrorMessage(null)
-      const [stockData, productData] = await Promise.all([
+      const [stockData, productData, quarantineData] = await Promise.all([
         getStock(),
         getProducts(),
+        getQuarantineStock().catch(() => []),
       ])
       setStocks(stockData)
       setProducts(productData)
-    } catch (err: any) {
-      setErrorMessage(
-        err?.message || "স্টক ডেটা লোড করতে সমস্যা হয়েছে। পুনরায় চেষ্টা করুন।",
-      )
+      setQuarantineItems(quarantineData)
+    } catch (err) {
+      showError(err, "ইনভেন্টরি তথ্য লোড ব্যর্থ")
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [showError])
 
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  // Extract categories
+  const categories = useMemo(() => {
+    const set = new Set<string>()
+    products.forEach((p) => {
+      if (p.category) set.add(p.category.trim())
+    })
+    return Array.from(set).sort()
+  }, [products])
 
   // Group stocks by productId
   const groupedProducts = useMemo(() => {
@@ -124,7 +137,7 @@ export default function Inventory({ isOwner }: InventoryProps) {
       }
     >()
 
-    // First initialize from product master catalog
+    // Initialize from master products
     for (const prod of products) {
       map.set(prod.id, {
         product: prod,
@@ -143,7 +156,7 @@ export default function Inventory({ isOwner }: InventoryProps) {
       })
     }
 
-    // Accumulate stock rows from lots
+    // Add lots
     for (const stock of stocks) {
       const pId = stock.productId
       let entry = map.get(pId)
@@ -158,36 +171,31 @@ export default function Inventory({ isOwner }: InventoryProps) {
           baseUnit: stock.baseUnit,
           cartonMultiplier: stock.cartonMultiplier,
           minStockAlert: 5,
-          retailPrice: stock.lotRetailPrice,
-          wholesalePrice: stock.lotWholesalePrice,
+          retailPrice: (stock as any).lotRetailPrice || stock.standardRetailPrice || 0,
+          wholesalePrice: (stock as any).lotWholesalePrice || stock.standardWholesalePrice || 0,
           totalStock: 0,
           lots: [],
         }
         map.set(pId, entry)
       }
-      entry.totalStock += Number(stock.quantity ?? stock.totalQuantity) || 0
+      entry.totalStock += Number(stock.quantity ?? (stock as any).totalQuantity) || 0
       entry.lots.push(stock)
     }
 
     return Array.from(map.values())
   }, [products, stocks])
 
-  // Filter products by category, search, and low stock
+  // Filtered Products
   const filteredProducts = useMemo(() => {
     return groupedProducts.filter((item) => {
-      // Category filter
-      if (activeCategory !== "all") {
-        const catConfig = CATEGORIES.find((c) => c.id === activeCategory)
-        if (
-          catConfig?.backendCategory &&
-          item.category.toLowerCase() !==
-            catConfig.backendCategory.toLowerCase()
-        ) {
-          return false
-        }
+      if (selectedCategory !== "ALL" && item.category !== selectedCategory) {
+        return false
       }
 
-      // Search query
+      if (onlyLowStock && item.totalStock > item.minStockAlert) {
+        return false
+      }
+
       if (search.trim()) {
         const q = search.trim().toLowerCase()
         const matchCode = item.productCode.toLowerCase().includes(q)
@@ -195,41 +203,43 @@ export default function Inventory({ isOwner }: InventoryProps) {
         const matchBn = item.nameBn.includes(search.trim())
         const matchLot = item.lots.some(
           (l) =>
-            l.lotNumber.toLowerCase().includes(q) ||
-            (l.barcode && l.barcode.toLowerCase().includes(q)),
+            (l as any).lotNumber?.toLowerCase().includes(q) ||
+            (l as any).barcode?.toLowerCase().includes(q),
         )
         if (!matchCode && !matchEn && !matchBn && !matchLot) {
           return false
         }
       }
 
-      // Low stock only
-      if (onlyLowStock) {
-        if (item.totalStock > item.minStockAlert) {
-          return false
-        }
-      }
-
       return true
     })
-  }, [groupedProducts, activeCategory, search, onlyLowStock])
+  }, [groupedProducts, selectedCategory, onlyLowStock, search])
 
-  // Summary figures
+  // Summary Metrics
   const totalStockUnits = useMemo(
     () => groupedProducts.reduce((sum, p) => sum + p.totalStock, 0),
     [groupedProducts],
   )
   const lowStockCount = useMemo(
-    () =>
-      groupedProducts.filter((p) => p.totalStock <= p.minStockAlert).length,
+    () => groupedProducts.filter((p) => p.totalStock <= p.minStockAlert).length,
     [groupedProducts],
   )
   const totalValuation = useMemo(() => {
     return stocks.reduce(
-      (sum, s) => sum + (s.totalQuantity || 0) * (s.purchaseCost || 0),
+      (sum, s) =>
+        sum +
+        (Number(s.quantity ?? (s as any).totalQuantity) || 0) *
+          ((s as any).purchaseCost || 0),
       0,
     )
   }, [stocks])
+
+  const totalQuarantineLoss = useMemo(() => {
+    return quarantineItems.reduce(
+      (sum, item) => sum + (item.totalLossValue || item.quarantineQuantity * item.purchaseCost),
+      0,
+    )
+  }, [quarantineItems])
 
   const toggleExpand = (productId: number) => {
     setExpandedProductIds((prev) => {
@@ -243,22 +253,20 @@ export default function Inventory({ isOwner }: InventoryProps) {
     })
   }
 
-  const openSticker = (item: StockItem) => {
-    setStickerItem(item)
-    setIsStickerOpen(true)
-  }
-
+  // ─── Create Product Handler ──────────────────────────────────────
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newProdNameBn.trim() || !newProdNameEn.trim()) {
-      alert("পণ্যের নাম আবশ্যক")
+      showWarning("পণ্যের বাংলা ও ইংরেজি নাম আবশ্যক!")
       return
     }
+
     try {
       setIsSavingProd(true)
       const code =
         newProdCode.trim() ||
         `SYN-${newProdNameEn.replace(/\s+/g, "-").toUpperCase().slice(0, 6)}`
+
       await createProduct({
         productCode: code,
         nameEn: newProdNameEn.trim(),
@@ -270,622 +278,789 @@ export default function Inventory({ isOwner }: InventoryProps) {
         standardRetailPrice: parseFloat(newProdRetail) || 0,
         standardWholesalePrice: parseFloat(newProdWholesale) || 0,
         minStockAlert: parseInt(newProdMinStock) || 5,
-        defaultBarcode: `${code}-DEFAULT`,
+        defaultBarcode: `${code}-DEF`,
       })
+
       setShowAddProduct(false)
       setNewProdNameBn("")
       setNewProdNameEn("")
       setNewProdCode("")
       setNewProdRetail("")
       setNewProdWholesale("")
+      showSuccess("নতুন পণ্য সফলভাবে ক্যাটালগে যুক্ত হয়েছে!")
       await loadData()
-    } catch (err: any) {
-      alert(err?.message || "পণ্য যোগ করতে ত্রুটি হয়েছে")
+    } catch (err) {
+      showError(err, "পণ্য তৈরি ব্যর্থ")
     } finally {
       setIsSavingProd(false)
     }
   }
 
+  // ─── Quarantine Disposal Execution ──────────────────────────────
+  const handleOpenDisposalModal = (item: QuarantineStockItem) => {
+    if (!isOwner) {
+      showWarning("ড্যামেজ কেমিক্যাল বিনষ্টকরণের জন্য মালিক মোড আবশ্যক!")
+      openPinModal()
+      return
+    }
+    setSelectedQuarantineItem(item)
+    setDisposalQty(String(item.quarantineQuantity))
+    setDisposalType("WRITE_OFF")
+    setDisposalRemarks("")
+  }
+
+  const handleExecuteDisposal = async () => {
+    if (!selectedQuarantineItem) return
+    const qty = parseFloat(disposalQty)
+    if (isNaN(qty) || qty <= 0) {
+      showWarning("সঠিক পরিমাণ লিখুন")
+      return
+    }
+    if (qty > selectedQuarantineItem.quarantineQuantity) {
+      showWarning("কোয়ারেন্টাইনে থাকা পরিমাণের চেয়ে বেশি বিনষ্ট করা যাবে না!")
+      return
+    }
+
+    const payload: QuarantineDisposalRequest = {
+      lotId: selectedQuarantineItem.lotId,
+      quantity: qty,
+      disposalType: disposalType,
+      remarks: disposalRemarks.trim() || undefined,
+    }
+
+    try {
+      setIsDisposing(true)
+      await disposeQuarantineStock(payload)
+      showSuccess(
+        `লট #${selectedQuarantineItem.lotNumber} থেকে ${qty} ইউনিট ড্যামেজ কেমিক্যাল সফলভাবে বিনষ্ট/ডিসপোজ করা হয়েছে!`,
+      )
+      setSelectedQuarantineItem(null)
+      await loadData()
+    } catch (err) {
+      showError(err, "ডিসপোজাল ব্যর্থ")
+    } finally {
+      setIsDisposing(false)
+    }
+  }
+
   return (
-    <div className="space-y-5">
-      {/* Top Header & Overview Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="space-y-4">
+      {/* Top Banner & Tab Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-frost-border shadow-xs">
         <div>
-          <h1 className="text-2xl font-bold text-frost-dark bn-text flex items-center gap-2">
+          <h1 className="text-xl font-bold text-frost-dark bn-text flex items-center gap-2">
             <span>📦</span>
-            <span>পণ্য ক্যাটালগ ও মাল্টি-লোকেশন স্টক (Catalog & Stock)</span>
+            <span>ইনভেন্টরি ও দোকান স্টক ম্যানেজমেন্ট</span>
           </h1>
           <p className="text-xs text-frost-muted mt-0.5 bn-text">
-            দোকান কাউন্টার ও গুদামের রিয়েল-টাইম ব্যালেন্স, সতর্কবার্তা ও বারকোড
-            লেবেল জেনারেটর
+            দোকানের রিয়েল-টাইম স্টক, লট চালান এন্ট্রি, বারকোড স্টিকার এবং ড্যামেজ কেমিক্যাল কোয়ারেন্টাইন
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* View Tab Switcher */}
+          <div className="inline-flex bg-frost-surface p-0.5 rounded-xl border border-frost-border">
+            <button
+              type="button"
+              onClick={() => setActiveTab("catalog")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer bn-text ${
+                activeTab === "catalog"
+                  ? "bg-white text-emerald-800 shadow-xs border border-frost-border/60"
+                  : "text-frost-muted hover:text-frost-dark"
+              }`}
+            >
+              দোকান স্টক ({stocks.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("quarantine")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer bn-text flex items-center gap-1.5 ${
+                activeTab === "quarantine"
+                  ? "bg-rose-700 text-white shadow-xs"
+                  : "text-rose-700 hover:bg-rose-50"
+              }`}
+            >
+              <span>☣️ কোয়ারেন্টাইন</span>
+              {quarantineItems.length > 0 && (
+                <span className="bg-rose-900 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+                  {quarantineItems.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {activeTab === "catalog" && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddProduct((p) => !p)}
+                className="bn-text"
+              >
+                {showAddProduct ? "✕ ফর্ম বন্ধ" : "+ নতুন পণ্য"}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setIsLotEntryOpen(true)}
+                leftIcon={<span>📥</span>}
+                className="bn-text"
+              >
+                নতুন চালান এন্ট্রি
+              </Button>
+            </>
+          )}
+
           <button
-            onClick={() => setShowAddProduct((prev) => !prev)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-xs cursor-pointer bn-text"
-          >
-            <span>{showAddProduct ? "✕" : "➕"}</span>
-            <span>{showAddProduct ? "ফর্ম বন্ধ" : "নতুন পণ্য যোগ"}</span>
-          </button>
-          <button
-            onClick={() => loadData()}
+            type="button"
+            onClick={loadData}
             disabled={isLoading}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-frost-border text-frost-dark hover:bg-frost-hover cursor-pointer transition-colors shadow-xs"
-            title="রিফ্রেশ করুন"
+            className="p-2 bg-frost-surface hover:bg-frost-hover text-frost-dark rounded-xl border border-frost-border cursor-pointer transition-colors text-xs"
+            title="রিফ্রেশ"
           >
-            <span className={isLoading ? "animate-spin" : ""}>🔄</span>
-            <span className="bn-text hidden sm:inline">রিফ্রেশ</span>
+            <span className={isLoading ? "animate-spin inline-block" : ""}>🔄</span>
           </button>
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white border border-frost-border rounded-xl p-4 shadow-xs">
-          <p className="text-xs font-medium text-frost-muted bn-text">
-            মোট নিবন্ধিত পণ্য
-          </p>
-          <p className="text-2xl font-black text-frost-dark tabular-nums mt-1">
-            {products.length}{" "}
-            <span className="text-xs font-normal text-frost-muted">টি</span>
-          </p>
-        </div>
-
-        <div className="bg-white border border-frost-border rounded-xl p-4 shadow-xs">
-          <p className="text-xs font-medium text-frost-muted bn-text">
-            মোট উপলব্ধ স্টক (সকল স্থান)
-          </p>
-          <p className="text-2xl font-black text-emerald-700 tabular-nums mt-1">
-            {totalStockUnits.toLocaleString("en-IN")}{" "}
-            <span className="text-xs font-normal text-frost-muted">ইউনিট</span>
-          </p>
-        </div>
-
-        <div
-          onClick={() => setOnlyLowStock((prev) => !prev)}
-          className={`border rounded-xl p-4 shadow-xs cursor-pointer transition-all ${
-            lowStockCount > 0
-              ? "bg-amber-50/70 border-amber-300 hover:bg-amber-100/70"
-              : "bg-white border-frost-border"
-          }`}
-          title="ক্লিক করলে শুধুমাত্র কম স্টক পণ্য ফিল্টার হবে"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-frost-muted bn-text">
-              কম স্টক সতর্কতা
-            </p>
-            {onlyLowStock && (
-              <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded font-bold bn-text">
-                ফিল্টার সক্রিয়
-              </span>
-            )}
-          </div>
-          <p
-            className={`text-2xl font-black tabular-nums mt-1 ${
-              lowStockCount > 0 ? "text-amber-700" : "text-frost-dark"
-            }`}
-          >
-            {lowStockCount}{" "}
-            <span className="text-xs font-normal text-frost-muted">
-              আইটেম ↓
-            </span>
-          </p>
-        </div>
-
-        <div className="bg-white border border-frost-border rounded-xl p-4 shadow-xs">
-          <p className="text-xs font-medium text-frost-muted bn-text">
-            মোট স্টক ক্রয়মূল্য (Valuation)
-          </p>
-          <p className="text-2xl font-black text-frost-dark tabular-nums mt-1">
-            {isOwner ? (
-              `৳${totalValuation.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`
-            ) : (
-              <span className="text-sm font-bold text-frost-muted">
-                🔒 মালিকের পিন দরকার
-              </span>
-            )}
-          </p>
-        </div>
-      </div>
-
-      {/* Inline New Product Form Collapsible */}
-      {showAddProduct && (
-        <form
-          onSubmit={handleCreateProduct}
-          className="bg-white border-2 border-emerald-500/40 rounded-2xl p-5 shadow-md space-y-4 animate-in fade-in"
-        >
-          <div className="flex items-center justify-between border-b border-frost-border pb-3">
-            <h3 className="font-bold text-frost-dark bn-text text-base flex items-center gap-2">
-              <span>🌾</span>
-              <span>নতুন সিনজেনটা পণ্য মাস্টার ক্যাটালগে যুক্ত করুন</span>
-            </h3>
-            <button
-              type="button"
-              onClick={() => setShowAddProduct(false)}
-              className="text-frost-muted hover:text-frost-dark text-sm p-1"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-frost-dark bn-text mb-1">
-                পণ্যের নাম (বাংলা) *
-              </label>
-              <input
-                type="text"
-                required
-                value={newProdNameBn}
-                onChange={(e) => setNewProdNameBn(e.target.value)}
-                placeholder="যেমন: স্কোর ২৫০ ইসি"
-                className="field text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-frost-dark bn-text mb-1">
-                Product Name (English) *
-              </label>
-              <input
-                type="text"
-                required
-                value={newProdNameEn}
-                onChange={(e) => setNewProdNameEn(e.target.value)}
-                placeholder="e.g. Score 250 EC"
-                className="field text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-frost-dark bn-text mb-1">
-                প্রোডাক্ট কোড (Product Code)
-              </label>
-              <input
-                type="text"
-                value={newProdCode}
-                onChange={(e) => setNewProdCode(e.target.value)}
-                placeholder="যেমন: SYN-SCO-250"
-                className="field text-sm uppercase"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-frost-dark bn-text mb-1">
-                ক্যাটাগরি
-              </label>
-              <select
-                value={newProdCategory}
-                onChange={(e) => setNewProdCategory(e.target.value)}
-                className="field text-sm"
-              >
-                <option value="Insecticide">কীটনাশক (Insecticide)</option>
-                <option value="Fungicide">ছত্রাকনাশক (Fungicide)</option>
-                <option value="Herbicide">আগাছানাশক (Herbicide)</option>
-                <option value="Bio-stimulant">
-                  গ্রোথ প্রমোটার (Bio-stimulant)
-                </option>
-                <option value="Seed">বীজ (Seed)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-frost-dark bn-text mb-1">
-                বেস ইউনিট
-              </label>
-              <select
-                value={newProdBaseUnit}
-                onChange={(e) => setNewProdBaseUnit(e.target.value)}
-                className="field text-sm"
-              >
-                <option value="Bottle">বোতল (Bottle)</option>
-                <option value="Packet">প্যাকেট (Packet)</option>
-                <option value="Kg">কেজি (Kg)</option>
-                <option value="Liter">লিটার (Liter)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-frost-dark bn-text mb-1">
-                ১ কার্টনে ইউনিট সংখ্যা
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={newProdCartonMult}
-                onChange={(e) => setNewProdCartonMult(e.target.value)}
-                className="field text-sm tabular-nums"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-frost-dark bn-text mb-1">
-                খুচরা রেট (৳)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={newProdRetail}
-                onChange={(e) => setNewProdRetail(e.target.value)}
-                placeholder="০"
-                className="field text-sm tabular-nums"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-frost-dark bn-text mb-1">
-                পাইকারি রেট (৳)
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={newProdWholesale}
-                onChange={(e) => setNewProdWholesale(e.target.value)}
-                placeholder="০"
-                className="field text-sm tabular-nums"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowAddProduct(false)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-frost-muted hover:bg-frost-hover bn-text"
-            >
-              বাতিল
-            </button>
-            <button
-              type="submit"
-              disabled={isSavingProd}
-              className="px-4 py-1.5 rounded-lg text-xs font-bold bg-emerald-700 text-white hover:bg-emerald-800 disabled:opacity-50 bn-text shadow-xs"
-            >
-              {isSavingProd ? "সংরক্ষণ হচ্ছে..." : "পণ্য সংরক্ষণ করুন"}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Search Bar & Category Filter Chips */}
-      <div className="bg-white border border-frost-border rounded-xl p-3 space-y-3 shadow-xs">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="relative flex-1">
-            <span className="absolute left-3.5 top-2.5 text-frost-muted text-base">
-              🔍
-            </span>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="পণ্যের বাংলা/ইংরেজি নাম, কোড বা লট নম্বর দিয়ে খুঁজুন..."
-              className="w-full bg-frost-surface border border-frost-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-frost-dark placeholder-frost-muted focus:bg-white focus:border-emerald-600 focus:outline-hidden transition-all bn-text"
+      {/* ─── TAB 1: CATALOG & DOKAN STOCK ────────────────────────── */}
+      {activeTab === "catalog" && (
+        <>
+          {/* KPI Stat Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard
+              title="নিবন্ধিত পণ্য (SKUs)"
+              value={`${products.length} টি`}
+              icon="🌾"
+              colorTheme="emerald"
             />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-3 top-2.5 text-frost-muted hover:text-frost-dark text-xs p-0.5"
-              >
-                ✕
-              </button>
-            )}
+            <StatCard
+              title="মোট দোকান স্টক"
+              value={`${totalStockUnits.toLocaleString("en-IN")} ইউনিট`}
+              icon="📦"
+              colorTheme="blue"
+            />
+            <StatCard
+              title="কম স্টক সতর্কতা"
+              value={`${lowStockCount} টি`}
+              icon="⚠️"
+              colorTheme="amber"
+              trend={
+                lowStockCount > 0
+                  ? { value: `${lowStockCount} টি সতর্কবার্তা`, isPositive: false }
+                  : undefined
+              }
+            />
+            <StatCard
+              title="ইনভেন্টরি মূল্যায়ন (কেনা দাম)"
+              value={formatTk(totalValuation)}
+              icon="💰"
+              colorTheme="purple"
+              isMasked={!isOwner}
+              onUnlockClick={openPinModal}
+            />
           </div>
 
-          <span className="text-xs text-frost-muted whitespace-nowrap self-center font-semibold bn-text">
-            {filteredProducts.length}টি পণ্য প্রদর্শিত
-          </span>
-        </div>
+          {/* New Product Inline Card */}
+          {showAddProduct && (
+            <div className="bg-white p-5 rounded-2xl border-2 border-emerald-500 shadow-md animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between pb-3 border-b border-frost-border/60 mb-4">
+                <h3 className="font-bold text-base text-frost-dark bn-text flex items-center gap-2">
+                  <span>➕</span>
+                  <span>নতুন সিনজেনটা পণ্য মাস্টার ক্যাটালগে যুক্ত করুন</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAddProduct(false)}
+                  className="text-frost-muted hover:text-frost-dark text-sm p-1 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
 
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          {CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat.id
-            return (
+              <form onSubmit={handleCreateProduct} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input
+                    label="পণ্যের বাংলা নাম"
+                    required
+                    value={newProdNameBn}
+                    onChange={(e) => setNewProdNameBn(e.target.value)}
+                    placeholder="যেমন: ভিরতাকো ৪০ ডব্লিউজি"
+                  />
+                  <Input
+                    label="English Name"
+                    required
+                    value={newProdNameEn}
+                    onChange={(e) => setNewProdNameEn(e.target.value)}
+                    placeholder="e.g. Virtako 40WG"
+                  />
+                  <Input
+                    label="প্রোডাক্ট কোড (ঐচ্ছিক)"
+                    value={newProdCode}
+                    onChange={(e) => setNewProdCode(e.target.value)}
+                    placeholder="যেমন: SYN-VIRT-100"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-frost-dark bn-text mb-1">
+                      ক্যাটাগরি
+                    </label>
+                    <select
+                      value={newProdCategory}
+                      onChange={(e) => setNewProdCategory(e.target.value)}
+                      className="w-full text-xs py-2 px-3 bg-white border border-frost-border rounded-xl focus:border-emerald-600 focus:outline-hidden bn-text"
+                    >
+                      <option value="কীটনাশক (Insecticide)">কীটনাশক (Insecticide)</option>
+                      <option value="ছত্রাকনাশক (Fungicide)">ছত্রাকনাশক (Fungicide)</option>
+                      <option value="আগাছানাশক (Herbicide)">আগাছানাশক (Herbicide)</option>
+                      <option value="গ্রোথ প্রমোটার (Bio-stimulant)">গ্রোথ প্রমোটার</option>
+                      <option value="বীজ (Seed)">বীজ (Seed)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-frost-dark bn-text mb-1">
+                      প্যাকেজিং ইউনিট
+                    </label>
+                    <select
+                      value={newProdBaseUnit}
+                      onChange={(e) => setNewProdBaseUnit(e.target.value)}
+                      className="w-full text-xs py-2 px-3 bg-white border border-frost-border rounded-xl focus:border-emerald-600 focus:outline-hidden bn-text"
+                    >
+                      <option value="বোতল (Bottle)">বোতল (Bottle)</option>
+                      <option value="প্যাকেট (Packet)">প্যাকেট (Packet)</option>
+                      <option value="কেজি (Kg)">কেজি (Kg)</option>
+                      <option value="লিটার (Liter)">লিটার (Liter)</option>
+                      <option value="পিস (Piece)">পিস (Piece)</option>
+                    </select>
+                  </div>
+
+                  <Input
+                    label="কার্টন গুণক (Carton Mult)"
+                    type="number"
+                    value={newProdCartonMult}
+                    onChange={(e) => setNewProdCartonMult(e.target.value)}
+                    placeholder="20"
+                    helperText="১ কার্টনে কয়টি ইউনিট থাকে"
+                  />
+
+                  <Input
+                    label="কম স্টক সতর্কতা সীমা"
+                    type="number"
+                    value={newProdMinStock}
+                    onChange={(e) => setNewProdMinStock(e.target.value)}
+                    placeholder="5"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="স্ট্যান্ডার্ড খুচরা দর (৳)"
+                    type="number"
+                    value={newProdRetail}
+                    onChange={(e) => setNewProdRetail(e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <Input
+                    label="স্ট্যান্ডার্ড পাইকারি দর (৳)"
+                    type="number"
+                    value={newProdWholesale}
+                    onChange={(e) => setNewProdWholesale(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="md"
+                    onClick={() => setShowAddProduct(false)}
+                  >
+                    বাতিল
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    isLoading={isSavingProd}
+                  >
+                    সংরক্ষণ করুন
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Search & Category Filter Bar */}
+          <div className="bg-white p-3.5 rounded-2xl border border-frost-border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex-1 max-w-md">
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClear={() => setSearch("")}
+                placeholder="পণ্য, কোড বা লট নম্বর দিয়ে খুঁজুন..."
+                leftAdornment={<span className="text-frost-muted">🔍</span>}
+                inputSize="sm"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
               <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer bn-text ${
-                  isActive
-                    ? "bg-emerald-700 text-white shadow-xs"
-                    : "bg-frost-surface text-frost-muted hover:bg-frost-hover hover:text-frost-dark"
+                type="button"
+                onClick={() => setSelectedCategory("ALL")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer bn-text ${
+                  selectedCategory === "ALL"
+                    ? "bg-frost-dark text-white"
+                    : "bg-frost-surface text-frost-dark hover:bg-frost-hover border border-frost-border"
                 }`}
               >
-                <span>{cat.labelBn}</span>
-                <span
-                  className={`text-[10px] ml-1 font-normal ${
-                    isActive ? "text-emerald-100" : "text-frost-muted/70"
+                সব ({products.length})
+              </button>
+              {categories.map((cat) => (
+                <button
+                  type="button"
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap bn-text ${
+                    selectedCategory === cat
+                      ? "bg-emerald-700 text-white"
+                      : "bg-frost-surface text-frost-dark hover:bg-frost-hover border border-frost-border"
                   }`}
                 >
-                  ({cat.labelEn})
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
+                  {cat}
+                </button>
+              ))}
 
-      {/* Error Banner */}
-      {errorMessage && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-semibold bn-text flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span>⚠️</span>
-            <span>{errorMessage}</span>
+              <button
+                type="button"
+                onClick={() => setOnlyLowStock((prev) => !prev)}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer whitespace-nowrap bn-text border ${
+                  onlyLowStock
+                    ? "bg-amber-100 text-amber-900 border-amber-300"
+                    : "bg-white text-frost-muted border-frost-border hover:bg-frost-surface"
+                }`}
+              >
+                ⚠️ কম স্টক
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => loadData()}
-            className="underline font-bold hover:text-red-900"
-          >
-            পুনরায় চেষ্টা করুন
-          </button>
+
+          {/* Dokan Stock Inventory Table */}
+          <div className="bg-white rounded-2xl border border-frost-border shadow-xs overflow-hidden">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>পণ্য বিবরণ ও কোড</TableHeaderCell>
+                  <TableHeaderCell>ক্যাটাগরি</TableHeaderCell>
+                  <TableHeaderCell>প্যাকেজিং / কার্টন</TableHeaderCell>
+                  <TableHeaderCell align="center">দোকান মজুদ (Dokan Stock)</TableHeaderCell>
+                  <TableHeaderCell align="right">খুচরা দর</TableHeaderCell>
+                  <TableHeaderCell align="right">পাইকারি দর</TableHeaderCell>
+                  {isOwner && <TableHeaderCell align="right">কেনা দাম</TableHeaderCell>}
+                  <TableHeaderCell align="right">অ্যাকশন</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {isLoading ? (
+                  <TableLoadingState colSpan={isOwner ? 8 : 7} text="স্টক তালিকা লোড হচ্ছে..." />
+                ) : filteredProducts.length === 0 ? (
+                  <TableEmptyState
+                    colSpan={isOwner ? 8 : 7}
+                    icon="📦"
+                    message="কোনো পণ্য পাওয়া যায়নি"
+                    submessage="ফিল্টার রিসেট করুন অথবা নতুন লট এন্ট্রি করুন"
+                  />
+                ) : (
+                  filteredProducts.map((item) => {
+                    const isExpanded = expandedProductIds.has(item.productId)
+                    const isLowStock = item.totalStock <= item.minStockAlert
+
+                    return (
+                      <React.Fragment key={item.productId}>
+                        <TableRow className={isLowStock ? "bg-amber-50/30" : ""}>
+                          {/* Product Info */}
+                          <TableCell>
+                            <div>
+                              <div className="font-bold text-frost-dark bn-text text-sm">
+                                {item.nameBn}
+                              </div>
+                              <div className="text-[11px] text-frost-muted flex items-center gap-2">
+                                <span>{item.nameEn}</span>
+                                <span className="font-mono text-emerald-800 font-semibold">
+                                  #{item.productCode}
+                                </span>
+                              </div>
+                            </div>
+                          </TableCell>
+
+                          {/* Category */}
+                          <TableCell>
+                            <span className="text-xs px-2 py-0.5 rounded-lg bg-frost-surface font-semibold text-frost-dark border border-frost-border bn-text">
+                              {item.category}
+                            </span>
+                          </TableCell>
+
+                          {/* Packaging */}
+                          <TableCell>
+                            <div className="text-xs font-medium text-frost-dark bn-text">
+                              {item.baseUnit}
+                            </div>
+                            <div className="text-[10px] text-frost-muted font-mono">
+                              ১ কার্টন = {item.cartonMultiplier} {item.baseUnit}
+                            </div>
+                          </TableCell>
+
+                          {/* Dokan Stock */}
+                          <TableCell align="center">
+                            <div className="inline-flex flex-col items-center">
+                              <Badge
+                                variant={
+                                  item.totalStock <= 0
+                                    ? "danger"
+                                    : isLowStock
+                                      ? "warning"
+                                      : "success"
+                                }
+                                size="md"
+                                dot={isLowStock || item.totalStock <= 0}
+                              >
+                                {item.totalStock} {item.baseUnit}
+                              </Badge>
+                              {item.lots.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpand(item.productId)}
+                                  className="text-[10px] font-bold text-emerald-800 hover:underline mt-1 cursor-pointer bn-text"
+                                >
+                                  {isExpanded ? "▲ লট লুকান" : `▼ ${item.lots.length} টি লট দেখুন`}
+                                </button>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* Retail Price */}
+                          <TableCell align="right" isMonospace>
+                            {formatTk(item.retailPrice)}
+                          </TableCell>
+
+                          {/* Wholesale Price */}
+                          <TableCell align="right" isMonospace>
+                            {formatTk(item.wholesalePrice)}
+                          </TableCell>
+
+                          {/* Purchase Cost (Owner Only) */}
+                          {isOwner && (
+                            <TableCell align="right" isMonospace className="text-amber-800">
+                              {item.lots.length > 0
+                                ? formatTk((item.lots[0] as any).purchaseCost || 0)
+                                : "—"}
+                            </TableCell>
+                          )}
+
+                          {/* Actions */}
+                          <TableCell align="right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {item.lots.length > 0 && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setStickerItem(item.lots[0])
+                                    setIsStickerOpen(true)
+                                  }}
+                                  title="বারকোড লেবেল স্টিকার প্রিন্ট করুন"
+                                  className="text-xs px-2 py-1"
+                                >
+                                  🏷️ স্টিকার
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Expanded Lots Accordion */}
+                        {isExpanded && item.lots.length > 0 && (
+                          <TableRow className="bg-emerald-50/20">
+                            <td colSpan={isOwner ? 8 : 7} className="p-3">
+                              <div className="bg-white rounded-xl border border-emerald-200 p-3 shadow-xs space-y-2">
+                                <div className="text-xs font-bold text-emerald-900 bn-text flex items-center justify-between">
+                                  <span>লট ও ব্যাচ ট্র্যাকিং তালিকা (FEFO):</span>
+                                  <span className="font-normal text-frost-muted">
+                                    মোট লট: {item.lots.length} টি
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                  {item.lots.map((lot) => (
+                                    <div
+                                      key={lot.lotId}
+                                      className="p-2.5 bg-frost-surface/40 border border-frost-border rounded-lg text-xs space-y-1"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-mono font-bold text-frost-dark">
+                                          #{lot.lotNumber}
+                                        </span>
+                                        <Badge variant="neutral" size="sm">
+                                          {lot.quantity} {item.baseUnit}
+                                        </Badge>
+                                      </div>
+                                      <div className="text-[11px] text-frost-muted flex justify-between">
+                                        <span>মেয়াদ:</span>
+                                        <span className="font-mono font-bold text-frost-dark">
+                                          {lot.expiryDate}
+                                        </span>
+                                      </div>
+                                      {lot.barcode && (
+                                        <div className="text-[10px] text-frost-muted font-mono truncate">
+                                          BC: {lot.barcode}
+                                        </div>
+                                      )}
+                                      <div className="pt-1 flex justify-end">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setStickerItem(lot)
+                                            setIsStickerOpen(true)
+                                          }}
+                                          className="text-[10px] font-bold text-emerald-800 hover:underline cursor-pointer bn-text"
+                                        >
+                                          🏷️ এই লটের স্টিকার
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </td>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
+
+      {/* ─── TAB 2: QUARANTINE & DAMAGED CHEMICALS ───────────────── */}
+      {activeTab === "quarantine" && (
+        <div className="space-y-4 animate-in fade-in duration-150">
+          {/* Quarantine Overview Card */}
+          <div className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl">☣️</span>
+              <div>
+                <h3 className="font-bold text-base text-rose-950 bn-text">
+                  ড্যামেজ ও কোয়ারেন্টাইন কেমিক্যাল আইসোলেশন
+                </h3>
+                <p className="text-xs text-rose-800 bn-text mt-0.5">
+                  মেয়াদোত্তীর্ণ বা ক্ষতিগ্রস্ত রাসায়নিক দ্রব্যাদি আলাদাভাবে সংরক্ষিত থাকে, যা বিক্রির মূল স্টক থেকে পৃথক।
+                </p>
+              </div>
+            </div>
+
+            <div className="text-right shrink-0 bg-white/80 p-3 rounded-xl border border-rose-200">
+              <span className="text-xs text-rose-800 font-semibold bn-text block">
+                মোট সম্ভাব্য আর্থিক ক্ষতি:
+              </span>
+              <span className="text-xl font-black font-mono text-rose-700">
+                {formatTk(totalQuarantineLoss)}
+              </span>
+            </div>
+          </div>
+
+          {/* Quarantine Items Table */}
+          <div className="bg-white rounded-2xl border border-frost-border shadow-xs overflow-hidden">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>ক্ষতিগ্রস্ত পণ্য ও লট নম্বর</TableHeaderCell>
+                  <TableHeaderCell>মেয়াদ শেষ তারিখ</TableHeaderCell>
+                  <TableHeaderCell>সরবরাহকারী (Supplier)</TableHeaderCell>
+                  <TableHeaderCell align="center">ড্যামেজ পরিমাণ</TableHeaderCell>
+                  <TableHeaderCell align="right">কেনা দাম</TableHeaderCell>
+                  <TableHeaderCell align="right">মোট ক্ষতি (Loss Value)</TableHeaderCell>
+                  <TableHeaderCell align="right">ব্যবস্থা গ্রহণ</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {isLoading ? (
+                  <TableLoadingState colSpan={7} text="কোয়ারেন্টাইন স্টক লোড হচ্ছে..." />
+                ) : quarantineItems.length === 0 ? (
+                  <TableEmptyState
+                    colSpan={7}
+                    icon="✅"
+                    message="কোয়ারেন্টাইনে কোনো ক্ষতিগ্রস্ত পণ্য নেই"
+                    submessage="দোকানের সমস্ত স্টক স্বাস্থ্যকর ও বিক্রয়যোগ্য অবস্থায় রয়েছে।"
+                  />
+                ) : (
+                  quarantineItems.map((item) => (
+                    <TableRow key={item.lotId}>
+                      <TableCell>
+                        <div className="font-bold text-frost-dark bn-text text-sm">
+                          {item.productNameBn}
+                        </div>
+                        <div className="text-[11px] text-frost-muted flex items-center gap-2">
+                          <span>{item.productNameEn}</span>
+                          <span className="font-mono text-rose-700 font-bold">
+                            লট #{item.lotNumber}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell isMonospace className="text-rose-700 font-semibold">
+                        {item.expiryDate}
+                      </TableCell>
+
+                      <TableCell className="bn-text text-xs text-frost-muted">
+                        {item.supplierName || "Syngenta BD"}
+                      </TableCell>
+
+                      <TableCell align="center">
+                        <Badge variant="danger" size="md">
+                          {item.quarantineQuantity} {item.baseUnit}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell align="right" isMonospace>
+                        {formatTk(item.purchaseCost)}
+                      </TableCell>
+
+                      <TableCell align="right" isMonospace className="text-rose-700 font-black">
+                        {formatTk(item.totalLossValue || item.quarantineQuantity * item.purchaseCost)}
+                      </TableCell>
+
+                      <TableCell align="right">
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleOpenDisposalModal(item)}
+                          className="bn-text text-xs"
+                        >
+                          🔥 বিনষ্টকরণ (Dispose)
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 
-      {/* Product Catalog & Stock Table */}
-      <div className="bg-white border border-frost-border rounded-xl overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="bg-frost-surface border-b border-frost-border text-frost-muted">
-                <th className="px-4 py-3 font-bold bn-text">
-                  পণ্য (Code &amp; Name)
-                </th>
-                <th className="px-3 py-3 font-bold bn-text hidden md:table-cell">
-                  ক্যাটাগরি
-                </th>
-                <th className="px-3 py-3 font-bold bn-text hidden lg:table-cell text-center">
-                  কার্টন সাইজ
-                </th>
-                <th className="px-3 py-3 font-bold bn-text text-right hidden sm:table-cell">
-                  স্ট্যান্ডার্ড রেট
-                </th>
-                <th className="px-3 py-3 font-bold bn-text text-right">
-                  মজুদ স্টক
-                </th>
-                <th className="px-4 py-3 font-bold bn-text text-center">
-                  অ্যাকশন
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-frost-border/50">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-frost-muted">
-                    <span className="text-xl animate-spin inline-block">⏳</span>
-                    <p className="mt-2 text-xs bn-text">
-                      স্টক তথ্য লোড হচ্ছে...
-                    </p>
-                  </td>
-                </tr>
-              ) : filteredProducts.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-frost-muted">
-                    <span className="text-3xl">🔍</span>
-                    <p className="mt-2 text-sm font-semibold bn-text">
-                      কোনো পণ্য খুঁজে পাওয়া যায়নি
-                    </p>
-                    <p className="text-xs text-frost-muted/70 mt-0.5">
-                      সার্চ কিওয়ার্ড বা ফিল্টার পরিবর্তন করে দেখুন
-                    </p>
-                  </td>
-                </tr>
-              ) : (
-                filteredProducts.map((p) => {
-                  const isLow = p.totalStock <= p.minStockAlert
-                  const isExpanded = expandedProductIds.has(p.productId)
-                  const primaryLot = p.lots[0] || null
-
-                  return (
-                    <tr
-                      key={p.productId}
-                      className={`group transition-colors ${
-                        isLow
-                          ? "bg-amber-50/40 hover:bg-amber-50"
-                          : "hover:bg-frost-surface/50"
-                      }`}
-                    >
-                      {/* Product Name & Code */}
-                      <td className="px-4 py-3 align-top">
-                        <div className="flex items-start gap-2">
-                          <button
-                            onClick={() => toggleExpand(p.productId)}
-                            className="mt-0.5 text-xs text-frost-muted hover:text-emerald-700 cursor-pointer p-0.5"
-                            title={isExpanded ? "লট সংক্ষেপ করুন" : "লট বিস্তার করুন"}
-                          >
-                            {isExpanded ? "▼" : "▶"}
-                          </button>
-                          <div>
-                            <div className="font-bold text-sm text-frost-dark bn-text leading-tight">
-                              {p.nameBn}
-                            </div>
-                            <div className="text-[11px] text-frost-muted leading-tight mt-0.5">
-                              {p.nameEn}
-                            </div>
-                            <span className="inline-block mt-1 px-1.5 py-0.2 rounded bg-frost-surface border border-frost-border font-mono text-[10px] text-frost-muted">
-                              {p.productCode}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Category */}
-                      <td className="px-3 py-3 align-top hidden md:table-cell">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-frost-surface text-frost-dark border border-frost-border bn-text">
-                          {p.category}
-                        </span>
-                      </td>
-
-                      {/* Carton Multiplier */}
-                      <td className="px-3 py-3 align-top hidden lg:table-cell text-center">
-                        <span className="text-xs font-semibold tabular-nums text-frost-dark">
-                          ১ × {p.cartonMultiplier}{" "}
-                          <span className="text-frost-muted text-[10px]">
-                            {p.baseUnit}
-                          </span>
-                        </span>
-                      </td>
-
-                      {/* Rates */}
-                      <td className="px-3 py-3 align-top text-right hidden sm:table-cell">
-                        <div className="font-bold text-frost-dark tabular-nums">
-                          ৳{p.retailPrice}
-                        </div>
-                        <div className="text-[10px] text-frost-muted tabular-nums">
-                          পাইকারি: ৳{p.wholesalePrice}
-                        </div>
-                      </td>
-
-
-
-                      {/* Total Stock & Low Alert */}
-                      <td className="px-3 py-3 align-top text-right">
-                        <div className="font-black tabular-nums text-sm text-frost-dark">
-                          {p.totalStock} {p.baseUnit}
-                        </div>
-                        {isLow ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded mt-0.5 bn-text">
-                            ⚠️ কম স্টক (সতর্কতা: {p.minStockAlert})
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-emerald-700 font-semibold bn-text">
-                            পর্যাপ্ত
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-4 py-3 align-top text-center">
-                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                          <button
-                            onClick={() => toggleExpand(p.productId)}
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-frost-surface hover:bg-frost-hover text-frost-dark border border-frost-border transition-colors cursor-pointer bn-text"
-                            title="লট তালিকা দেখুন"
-                          >
-                            <span>📋</span>
-                            <span className="ml-1">
-                              লট তালিকা ({p.lots.length})
-                            </span>
-                          </button>
-
-                          {primaryLot && (
-                            <button
-                              onClick={() => openSticker(primaryLot)}
-                              className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-colors cursor-pointer bn-text"
-                              title="বারকোড স্টিকার প্রিন্ট করুন"
-                            >
-                              <span>🏷️</span>
-                              <span className="ml-1">বারকোড স্টিকার</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Expanded Lot Drawers below table for products that were expanded */}
-      {Array.from(expandedProductIds).map((pId) => {
-        const p = groupedProducts.find((item) => item.productId === pId)
-        if (!p || p.lots.length === 0) return null
-
-        return (
-          <div
-            key={pId}
-            className="bg-emerald-50/50 border-2 border-emerald-300 rounded-xl p-4 shadow-sm space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📋</span>
-                <h4 className="font-bold text-sm text-emerald-950 bn-text">
-                  {p.nameBn} ({p.nameEn}) — লট বিস্তারিত তালিকা (Batches)
-                </h4>
-              </div>
-              <button
-                onClick={() => toggleExpand(pId)}
-                className="text-xs text-frost-muted hover:text-frost-dark px-2 py-1"
-              >
-                ✕ বন্ধ করুন
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left bg-white rounded-lg border border-frost-border overflow-hidden">
-                <thead>
-                  <tr className="bg-frost-surface border-b border-frost-border text-frost-muted">
-                    <th className="px-3 py-2 font-bold bn-text">লট নম্বর</th>
-                    <th className="px-3 py-2 font-bold bn-text">মেয়াদ (Expiry)</th>
-                    <th className="px-3 py-2 font-bold bn-text text-right">
-                      মজুদ স্টক
-                    </th>
-                    <th className="px-3 py-2 font-bold bn-text text-right">
-                      খুচরা মূল্য
-                    </th>
-                    {isOwner && (
-                      <th className="px-3 py-2 font-bold bn-text text-right text-emerald-800">
-                        কেনা দাম
-                      </th>
-                    )}
-                    <th className="px-3 py-2 font-bold bn-text text-center">
-                      বারকোড
-                    </th>
-                    <th className="px-3 py-2 font-bold bn-text text-center">
-                      অ্যাকশন
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-frost-border/50">
-                  {p.lots.map((lot) => (
-                    <tr key={lot.lotId} className="hover:bg-frost-surface/40">
-                      <td className="px-3 py-2 font-mono font-bold text-frost-dark">
-                        {lot.lotNumber}
-                      </td>
-                      <td className="px-3 py-2 font-mono text-frost-dark">
-                        {lot.expiryDate}
-                      </td>
-                      <td className="px-3 py-2 text-right font-bold tabular-nums">
-                        {lot.quantity} {lot.baseUnit}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        ৳{lot.lotRetailPrice}
-                      </td>
-                      {isOwner && (
-                        <td className="px-3 py-2 text-right font-bold tabular-nums text-emerald-700">
-                          ৳{lot.purchaseCost}
-                        </td>
-                      )}
-                      <td className="px-3 py-2 text-center font-mono text-[11px] text-frost-muted">
-                        {lot.barcode || lot.lotBarcode}
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => openSticker(lot)}
-                            className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 cursor-pointer bn-text"
-                            title="স্টিকার প্রিন্ট"
-                          >
-                            🏷️ স্টিকার
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )
-      })}
-
-      {/* Barcode Sticker Modal */}
-      <BarcodeStickerModal
-        item={stickerItem}
-        isOpen={isStickerOpen}
-        onClose={() => {
-          setIsStickerOpen(false)
-          setStickerItem(null)
+      {/* Lot Entry Modal */}
+      <LotEntryModal
+        products={products}
+        isOpen={isLotEntryOpen}
+        onClose={() => setIsLotEntryOpen(false)}
+        onSuccess={() => {
+          showSuccess("নতুন চালান ও লট সফলভাবে যুক্ত হয়েছে!")
+          loadData()
         }}
       />
+
+      {/* Barcode Sticker Modal */}
+      {stickerItem && (
+        <BarcodeStickerModal
+          item={stickerItem}
+          isOpen={isStickerOpen}
+          onClose={() => {
+            setIsStickerOpen(false)
+            setStickerItem(null)
+          }}
+        />
+      )}
+
+      {/* Quarantine Disposal Confirmation Modal */}
+      {selectedQuarantineItem && (
+        <Modal
+          isOpen={!!selectedQuarantineItem}
+          onClose={() => setSelectedQuarantineItem(null)}
+          title="ড্যামেজ কেমিক্যাল বিনষ্টকরণ অনুমোদন (Disposal)"
+          subtitle="মালিকের অনুমোদনক্রমে নষ্ট কেমিক্যাল স্টক থেকে স্থায়ীভাবে রাইট-অফ করুন"
+          icon="🔥"
+          size="md"
+        >
+          <div className="space-y-4">
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl space-y-1">
+              <div className="text-xs font-bold text-rose-950 bn-text">
+                পণ্য: {selectedQuarantineItem.productNameBn} (লট #{selectedQuarantineItem.lotNumber})
+              </div>
+              <div className="text-xs text-rose-800 flex justify-between">
+                <span>বর্তমান কোয়ারেন্টাইন মজুদ:</span>
+                <span className="font-mono font-bold">
+                  {selectedQuarantineItem.quarantineQuantity} {selectedQuarantineItem.baseUnit}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Input
+                label={`বিনষ্টকরণের পরিমাণ (${selectedQuarantineItem.baseUnit})`}
+                type="number"
+                step="any"
+                max={selectedQuarantineItem.quarantineQuantity}
+                value={disposalQty}
+                onChange={(e) => setDisposalQty(e.target.value)}
+                placeholder="পরিমাণ"
+                required
+              />
+
+              <div>
+                <label className="block text-xs font-bold text-frost-dark bn-text mb-1">
+                  বিনষ্টকরণের ধরন / কারণ:
+                </label>
+                <select
+                  value={disposalType}
+                  onChange={(e) => setDisposalType(e.target.value)}
+                  className="w-full text-xs py-2 px-3 bg-white border border-frost-border rounded-xl focus:border-rose-600 focus:outline-hidden bn-text"
+                >
+                  <option value="WRITE_OFF">স্থায়ী ক্ষতি রাইট-অফ (Damaged Write-Off)</option>
+                  <option value="SUPPLIER_CLAIM">কোম্পানিকে ফেরত / ক্লেইম (Syngenta Return Claim)</option>
+                  <option value="DESTROYED">পরিবেশসম্মত বিনষ্টকরণ (Disposed / Destroyed)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-frost-dark bn-text mb-1">
+                  মন্তব্য / বিবরণ (ঐচ্ছিক):
+                </label>
+                <textarea
+                  value={disposalRemarks}
+                  onChange={(e) => setDisposalRemarks(e.target.value)}
+                  rows={2}
+                  placeholder="যেমন: মেয়াদোত্তীর্ণ হওয়ায় বা বোতল লিক করায় বিনষ্ট করা হলো..."
+                  className="w-full text-xs py-2 px-3 bg-white border border-frost-border rounded-xl focus:border-rose-600 focus:outline-hidden bn-text"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-frost-border/60">
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={() => setSelectedQuarantineItem(null)}
+                disabled={isDisposing}
+              >
+                বাতিল
+              </Button>
+              <Button
+                variant="danger"
+                size="md"
+                onClick={handleExecuteDisposal}
+                isLoading={isDisposing}
+              >
+                নিশ্চিত বিনষ্ট করুন
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

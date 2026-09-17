@@ -90,9 +90,34 @@ export interface LotEntryRequest {
   quantityBaseUnits?: number
 }
 
+export interface QuarantineStockItem {
+  productId: number
+  productCode: string
+  productNameEn: string
+  productNameBn: string
+  baseUnit: string
+  lotId: number
+  lotNumber: string
+  barcode?: string
+  expiryDate: string
+  supplierName?: string | null
+  quarantineQuantity: number
+  purchaseCost: number
+  lotRetailPrice: number
+  totalLossValue: number
+}
+
+export interface QuarantineDisposalRequest {
+  lotId: number
+  quantity: number
+  disposalType: "WRITE_OFF" | "SUPPLIER_CLAIM" | "DESTROYED" | string
+  remarks?: string
+}
+
 // ----------------------------------------------------------------------------
 // Customer & Ledger
 // ----------------------------------------------------------------------------
+
 export interface Customer {
   id: number
   name: string
