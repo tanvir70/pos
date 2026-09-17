@@ -26,6 +26,7 @@
 | Task 9 | Frontend API Client & Refactored Component Architecture | DONE | `3c69d7e` |
 | Task 10 | POS Billing Counter (Split-Stock, Lot Override & Dual Print) | DONE | `92ee0ed` |
 | Task 11 | Inventory, Godown Lots & Barcode Stickers UI | DONE | `ba0f032` |
+| Task 12 | Customer Due Ledger, Direct Returns & Analytics Dashboard UI | DONE | `38a974c` |
 
 
 
