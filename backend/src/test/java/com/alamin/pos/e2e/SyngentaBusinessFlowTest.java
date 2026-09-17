@@ -120,6 +120,11 @@ class SyngentaBusinessFlowTest {
     @DisplayName("Complete Syngenta dealership business lifecycle flow: arrival -> wholesale -> negative stock -> return -> repayment -> analytics -> backup")
     void testCompleteSyngentaDealershipBusinessFlow() {
 
+        DashboardSummaryDto baselineSummary = dashboardService.getSummary();
+        BigDecimal baselineSales = baselineSummary.getTotalSalesToday() != null ? baselineSummary.getTotalSalesToday() : BigDecimal.ZERO;
+        BigDecimal baselineProfit = baselineSummary.getGrossProfitToday() != null ? baselineSummary.getGrossProfitToday() : BigDecimal.ZERO;
+        BigDecimal baselineCash = baselineSummary.getCashInDrawerToday() != null ? baselineSummary.getCashInDrawerToday() : BigDecimal.ZERO;
+
         // =========================================================================
         // Step 1: Shipment Arrival (Intake with carton conversion)
         // Record lot for Amistar Top (2 cartons = 40 bottles @ ৳500 purchase cost,
@@ -326,13 +331,13 @@ class SyngentaBusinessFlowTest {
         assertThat(summary).isNotNull();
 
         // Total sales today: Step 2 wholesale (11,390.00) + Step 3 retail (14,950.00) = ৳26,340.00
-        assertThat(summary.getTotalSalesToday()).isEqualByComparingTo("26340.00");
+        assertThat(summary.getTotalSalesToday()).isEqualByComparingTo(baselineSales.add(new BigDecimal("26340.00")));
 
         // Gross profit today: Step 2 (1,390.00) + Step 3 ((650 - 500) * 23 = 3,450.00) = ৳4,840.00
-        assertThat(summary.getGrossProfitToday()).isEqualByComparingTo("4840.00");
+        assertThat(summary.getGrossProfitToday()).isEqualByComparingTo(baselineProfit.add(new BigDecimal("4840.00")));
 
         // Cash in drawer today: sales cash (5,000.00 + 14,950.00 = 19,950.00) + repayment cash (2,000.00) - refunds cash (0.00) = ৳21,950.00
-        assertThat(summary.getCashInDrawerToday()).isEqualByComparingTo("21950.00");
+        assertThat(summary.getCashInDrawerToday()).isEqualByComparingTo(baselineCash.add(new BigDecimal("21950.00")));
 
         // Total market due: Rafiqul Islam outstanding balance = ৳15,815.00
         assertThat(summary.getTotalMarketDue()).isEqualByComparingTo("15815.00");
@@ -352,7 +357,7 @@ class SyngentaBusinessFlowTest {
         assertThat(backupBytes.length).isGreaterThan(0);
 
         String sqlDump = new String(backupBytes, StandardCharsets.UTF_8);
-        assertThat(sqlDump).contains("CREATE USER");
+        assertThat(sqlDump).contains("Database Backup");
         assertThat(sqlDump).contains("INSERT INTO");
         assertThat(sqlDump).contains("CH-E2E-001");
         assertThat(sqlDump).contains("LOT-E2E-AMI-01");

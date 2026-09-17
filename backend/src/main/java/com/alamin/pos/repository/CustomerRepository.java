@@ -28,17 +28,22 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     List<Customer> findByCustomerType(String customerType);
 
     @Query("SELECT c FROM Customer c WHERE " +
-            "(:query IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
-            "OR LOWER(c.phone) LIKE LOWER(CONCAT('%', :query, '%')) " +
-            "OR (c.businessName IS NOT NULL AND LOWER(c.businessName) LIKE LOWER(CONCAT('%', :query, '%')))) " +
-            "AND (:customerType IS NULL OR UPPER(c.customerType) = UPPER(:customerType))")
+            "(CAST(:query AS string) IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) " +
+            "OR LOWER(c.phone) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) " +
+            "OR (c.businessName IS NOT NULL AND LOWER(c.businessName) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))) " +
+            "AND (CAST(:customerType AS string) IS NULL OR UPPER(c.customerType) = UPPER(CAST(:customerType AS string)))")
     List<Customer> searchCustomers(@Param("query") String query, @Param("customerType") String customerType);
 
-    @Query("SELECT c FROM Customer c WHERE " +
-            "(:query IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) " +
-            "OR LOWER(c.phone) LIKE LOWER(CONCAT('%', :query, '%')) " +
-            "OR (c.businessName IS NOT NULL AND LOWER(c.businessName) LIKE LOWER(CONCAT('%', :query, '%')))) " +
-            "AND (:customerType IS NULL OR UPPER(c.customerType) = UPPER(:customerType))")
+    @Query(value = "SELECT c FROM Customer c WHERE " +
+            "(CAST(:query AS string) IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) " +
+            "OR LOWER(c.phone) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) " +
+            "OR (c.businessName IS NOT NULL AND LOWER(c.businessName) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))) " +
+            "AND (CAST(:customerType AS string) IS NULL OR UPPER(c.customerType) = UPPER(CAST(:customerType AS string)))",
+            countQuery = "SELECT count(c) FROM Customer c WHERE " +
+            "(CAST(:query AS string) IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) " +
+            "OR LOWER(c.phone) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) " +
+            "OR (c.businessName IS NOT NULL AND LOWER(c.businessName) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')))) " +
+            "AND (CAST(:customerType AS string) IS NULL OR UPPER(c.customerType) = UPPER(CAST(:customerType AS string)))")
     Page<Customer> searchCustomers(@Param("query") String query, @Param("customerType") String customerType, Pageable pageable);
 
     @Query("SELECT COALESCE(SUM(c.currentDue), 0) FROM Customer c WHERE c.currentDue > 0")

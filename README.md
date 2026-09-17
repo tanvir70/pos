@@ -77,7 +77,7 @@ POS & Inventory Prototype/
 | Layer | Technologies & Libraries |
 | :--- | :--- |
 | **Backend Runtime** | Java 21 LTS, Spring Boot 3.3.3 |
-| **Persistence & DB** | Spring Data JPA, Hibernate 6.5, Flyway 10, H2 2.2 (embedded file / memory), PostgreSQL 10+ (production-ready) |
+| **Persistence & DB** | Spring Data JPA, Hibernate 6.5, Flyway 10, PostgreSQL 10+ (pure enterprise relational database) |
 | **Validation & Mapping** | Jakarta Bean Validation, MapStruct 1.6.0, Lombok 1.18.34 |
 | **Barcodes** | ZXing Core & JavaSE 3.5.3 (Code 128 1D vector and raster generation) |
 | **Build System** | Gradle 8.13 (Groovy DSL) with toolchain pinning |
@@ -92,6 +92,7 @@ POS & Inventory Prototype/
 
 ### Prerequisites
 - **Java 21 LTS** (JDK 21 installed and available on `PATH` or configured via `gradle.properties`)
+- **PostgreSQL 10+** (running on `localhost:5432` with databases `posdb` and `posdb_test`)
 - **Node.js 20+** and **pnpm 9+**
 
 ### 1. Running the Backend Service
@@ -103,9 +104,9 @@ cd backend
 # Build and start the Spring Boot application
 ./gradlew bootRun
 ```
-- Server starts on `http://localhost:8080`
-- Flyway automatically runs database migrations and seeds initial Syngenta products (Amistar Top, Virtako, Refit, Isabion, Karate), lots, customer accounts, and stock balances
-- Embedded database is stored locally in `backend/data/posdb.mv.db`
+- Server starts on `http://localhost:8080` (or `SERVER_PORT=8081 ./gradlew bootRun`)
+- Flyway automatically runs database migrations and seeds initial Syngenta products (Amistar Top, Virtako, Refit, Isabion, Karate), lots, customer accounts, and stock balances into PostgreSQL `posdb`
+- Tests run against PostgreSQL `posdb_test` via `./gradlew test`
 
 ### 2. Running the Frontend Application
 

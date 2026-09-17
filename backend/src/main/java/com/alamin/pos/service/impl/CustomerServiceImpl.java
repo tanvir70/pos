@@ -232,6 +232,9 @@ public class CustomerServiceImpl implements CustomerService {
     public org.springframework.data.domain.Page<Customer> searchCustomers(String query, String customerType, org.springframework.data.domain.Pageable pageable) {
         String cleanQuery = (query != null && !query.trim().isBlank()) ? query.trim() : null;
         String cleanType = (customerType != null && !customerType.trim().isBlank()) ? customerType.trim().toUpperCase() : null;
+        if (cleanQuery == null && cleanType == null) {
+            return customerRepository.findAll(pageable);
+        }
         return customerRepository.searchCustomers(cleanQuery, cleanType, pageable);
     }
 

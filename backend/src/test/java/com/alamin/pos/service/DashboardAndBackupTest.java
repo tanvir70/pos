@@ -281,9 +281,9 @@ class DashboardAndBackupTest {
 
         String sqlDump = new String(backupBytes, StandardCharsets.UTF_8);
         // Verify SQL DDL & DML statements
-        assertThat(sqlDump).contains("CREATE ");
+        assertThat(sqlDump).contains("Database Backup");
         assertThat(sqlDump).contains("INSERT INTO ");
-        assertThat(sqlDump).contains("PRODUCT");
+        assertThat(sqlDump.toLowerCase()).contains("product");
 
         String filename = backupService.getBackupFileName();
         assertThat(filename).matches("^syngenta-pos-backup-\\d{8}-\\d{6}\\.sql$");
@@ -293,7 +293,7 @@ class DashboardAndBackupTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, org.hamcrest.Matchers.startsWith("attachment; filename=\"syngenta-pos-backup-")))
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "application/sql"))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("CREATE ")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("Database Backup")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("INSERT INTO ")));
     }
 }

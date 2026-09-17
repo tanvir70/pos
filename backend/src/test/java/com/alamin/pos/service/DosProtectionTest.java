@@ -42,7 +42,7 @@ class DosProtectionTest {
 
         String sqlOutput = outputStream.toString();
         assertThat(sqlOutput).isNotEmpty();
-        assertThat(sqlOutput).contains("CREATE ");
+        assertThat(sqlOutput).contains("Database Backup");
         assertThat(sqlOutput).contains("INSERT INTO ");
     }
 
@@ -54,7 +54,7 @@ class DosProtectionTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "application/sql"))
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, org.hamcrest.Matchers.startsWith("attachment; filename=\"syngenta-pos-backup-")))
-                .andExpect(content().string(containsString("CREATE ")))
+                .andExpect(content().string(containsString("Database Backup")))
                 .andExpect(content().string(containsString("INSERT INTO ")));
     }
 

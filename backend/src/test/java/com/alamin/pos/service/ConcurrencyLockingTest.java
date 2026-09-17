@@ -41,6 +41,21 @@ class ConcurrencyLockingTest {
     @Autowired
     private StockInventoryRepository stockInventoryRepository;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @org.junit.jupiter.api.BeforeEach
+    @org.junit.jupiter.api.AfterEach
+    void cleanUp() {
+        try {
+            jdbcTemplate.execute("DELETE FROM sale_item WHERE lot_id IN (SELECT id FROM inventory_lot WHERE barcode = 'SYN-CONC-BAR-99')");
+            jdbcTemplate.execute("DELETE FROM stock_inventory WHERE lot_id IN (SELECT id FROM inventory_lot WHERE barcode = 'SYN-CONC-BAR-99')");
+            jdbcTemplate.execute("DELETE FROM inventory_lot WHERE barcode = 'SYN-CONC-BAR-99'");
+            jdbcTemplate.execute("DELETE FROM product WHERE product_code = 'SYN-CONC-TEST'");
+        } catch (Exception ignored) {
+        }
+    }
+
     @Test
     @DisplayName("Verify DocumentSequenceService produces collision-free sequential numbers concurrently")
     void testConcurrentDocumentSequencing() throws InterruptedException {
