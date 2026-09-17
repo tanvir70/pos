@@ -1,0 +1,191 @@
+package com.alamin.pos.e2e;
+
+import com.alamin.pos.dto.SaleItemRequest;
+import com.alamin.pos.dto.SaleRequest;
+import com.alamin.pos.dto.SaleResponse;
+import com.alamin.pos.entity.InventoryLot;
+import com.alamin.pos.entity.Product;
+import com.alamin.pos.entity.StockInventory;
+import com.alamin.pos.repository.InventoryLotRepository;
+import com.alamin.pos.repository.ProductRepository;
+import com.alamin.pos.repository.StockInventoryRepository;
+import com.alamin.pos.service.SaleService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
+public class SecurityRegressionTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private SaleService saleService;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private InventoryLotRepository inventoryLotRepository;
+
+    @Autowired
+    private StockInventoryRepository stockInventoryRepository;
+
+    @Test
+    @DisplayName("1. Unauthenticated request to /api/dashboard/summary returns 401 Unauthorized")
+    void testUnauthenticatedDashboardDenied() throws Exception {
+        mockMvc.perform(get("/api/dashboard/summary"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    @DisplayName("2. Unauthenticated request to /api/backup/download returns 401 Unauthorized")
+    void testUnauthenticatedBackupDenied() throws Exception {
+        mockMvc.perform(get("/api/backup/download"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    @WithMockUser(roles = "CASHIER")
+    @DisplayName("3. Cashier token gets 403 Forbidden on /api/dashboard/summary")
+    void testCashierForbiddenOnDashboard() throws Exception {
+        mockMvc.perform(get("/api/dashboard/summary"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
+    }
+
+    @Test
+    @WithMockUser(roles = "CASHIER")
+    @DisplayName("4. Cashier token gets 403 Forbidden on /api/backup/download")
+    void testCashierForbiddenOnBackup() throws Exception {
+        mockMvc.perform(get("/api/backup/download"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"));
+    }
+
+    @Test
+    @WithMockUser(roles = "CASHIER")
+    @DisplayName("5. Cashier receives masked purchaseCost (null) on /api/inventory/stock")
+    void testCashierStockCostMasking() throws Exception {
+        mockMvc.perform(get("/api/inventory/stock"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", not(empty())))
+                .andExpect(jsonPath("$[0].purchaseCost").value(nullValue()));
+    }
+
+    @Test
+    @WithMockUser(roles = "CASHIER")
+    @DisplayName("6. Cashier receives masked totalProfit (null) on /api/sales")
+    void testCashierSaleProfitMasking() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Product product = productRepository.save(Product.builder()
+                .productCode("PROD-SEC-" + suffix)
+                .nameEn("Security Test Product " + suffix)
+                .nameBn("নিরাপত্তা টেস্ট পণ্য")
+                .category("INSECTICIDE")
+                .baseUnit("Bottle")
+                .cartonMultiplier(BigDecimal.ONE)
+                .standardRetailPrice(new BigDecimal("300.00"))
+                .standardWholesalePrice(new BigDecimal("280.00"))
+                .build());
+
+        InventoryLot lot = inventoryLotRepository.save(InventoryLot.builder()
+                .product(product)
+                .lotNumber("LOT-SEC-" + suffix)
+                .barcode("BAR-SEC-" + suffix)
+                .entryDate(LocalDate.now())
+                .expiryDate(LocalDate.now().plusYears(5))
+                .purchaseCost(new BigDecimal("200.00"))
+                .lotRetailPrice(new BigDecimal("300.00"))
+                .lotWholesalePrice(new BigDecimal("280.00"))
+                .build());
+
+        stockInventoryRepository.save(StockInventory.builder()
+                .lot(lot)
+                .location("DOKAN")
+                .quantity(new BigDecimal("20.000"))
+                .build());
+
+        SaleItemRequest item = SaleItemRequest.builder()
+                .lotId(lot.getId())
+                .totalQuantity(new BigDecimal("1.000"))
+                .dokanQuantity(new BigDecimal("1.000"))
+                .godownQuantity(BigDecimal.ZERO)
+                .unitPrice(new BigDecimal("300.00"))
+                .build();
+
+        SaleRequest saleRequest = SaleRequest.builder()
+                .saleMode("RETAIL")
+                .items(List.of(item))
+                .paymentMethod("CASH")
+                .cashPaid(new BigDecimal("300.00"))
+                .cashTendered(new BigDecimal("300.00"))
+                .build();
+
+        SaleResponse sale = saleService.processSale(saleRequest);
+
+        mockMvc.perform(get("/api/sales/" + sale.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(sale.getId()))
+                .andExpect(jsonPath("$.totalProfit").value(nullValue()))
+                .andExpect(jsonPath("$.items[0].unitCost").value(nullValue()))
+                .andExpect(jsonPath("$.items[0].lineProfit").value(nullValue()));
+    }
+
+    @Test
+    @WithMockUser(roles = "OWNER")
+    @DisplayName("7. Owner role receives unmasked purchaseCost on /api/inventory/stock")
+    void testOwnerStockCostUnmasked() throws Exception {
+        mockMvc.perform(get("/api/inventory/stock"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", not(empty())))
+                .andExpect(jsonPath("$[0].purchaseCost").value(notNullValue()));
+    }
+
+    @Test
+    @WithMockUser(roles = "OWNER")
+    @DisplayName("8. Owner role receives 200 OK on /api/dashboard/summary")
+    void testOwnerCanAccessDashboard() throws Exception {
+        mockMvc.perform(get("/api/dashboard/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalMarketDue").isNumber())
+                .andExpect(jsonPath("$.cashInDrawerToday").isNumber());
+    }
+
+    @Test
+    @WithMockUser(roles = "OWNER")
+    @DisplayName("9. Owner role receives 200 OK and SQL stream on /api/backup/download")
+    void testOwnerCanDownloadBackup() throws Exception {
+        mockMvc.perform(get("/api/backup/download"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString(".sql")));
+    }
+
+    @Test
+    @DisplayName("10. Public unauthenticated request allowed on /api/barcode/{barcode}")
+    void testPublicBarcodeEndpoint() throws Exception {
+        mockMvc.perform(get("/api/barcode/8901234567890"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_PNG));
+    }
+}

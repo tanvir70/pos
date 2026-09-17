@@ -50,17 +50,34 @@ class IdempotencyFilterTest {
     @Autowired
     private com.alamin.pos.repository.ProductRepository productRepository;
 
+    @Autowired
+    private com.alamin.pos.repository.SaleRepository saleRepository;
+
+    @Autowired
+    private com.alamin.pos.repository.SaleItemRepository saleItemRepository;
+
     @Test
     @WithMockUser(roles = "CASHIER")
     @DisplayName("1. Idempotency: Duplicate checkout with identical key deducts stock once and replays response")
     void testIdempotentSaleCheckout() throws Exception {
-        com.alamin.pos.entity.Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        com.alamin.pos.entity.Product product = productRepository.save(com.alamin.pos.entity.Product.builder()
+                .productCode("PROD-IDEM-" + suffix)
+                .nameEn("Idempotency Product " + suffix)
+                .nameBn("আইডেমপটেন্সি পণ্য")
+                .category("INSECTICIDE")
+                .baseUnit("Bottle")
+                .cartonMultiplier(BigDecimal.ONE)
+                .standardRetailPrice(new BigDecimal("150.00"))
+                .standardWholesalePrice(new BigDecimal("140.00"))
+                .build());
+
         InventoryLot lot = inventoryLotRepository.save(InventoryLot.builder()
                 .product(product)
-                .lotNumber("LOT-IDEM-" + UUID.randomUUID().toString().substring(0, 8))
-                .barcode("BAR-IDEM-" + UUID.randomUUID().toString().substring(0, 8))
+                .lotNumber("LOT-IDEM-" + suffix)
+                .barcode("BAR-IDEM-" + suffix)
                 .entryDate(java.time.LocalDate.now())
-                .expiryDate(java.time.LocalDate.now().plusYears(1))
+                .expiryDate(java.time.LocalDate.now().plusYears(5))
                 .purchaseCost(new BigDecimal("100.00"))
                 .lotRetailPrice(new BigDecimal("150.00"))
                 .lotWholesalePrice(new BigDecimal("140.00"))
@@ -131,8 +148,15 @@ class IdempotencyFilterTest {
         assertThat(stockAfterSecond.getQuantity())
                 .isEqualByComparingTo(initialQty.subtract(new BigDecimal("2.000")));
 
-        // Cleanup test idempotency key
+        // Cleanup test idempotency key and entities
         idempotencyRecordRepository.deleteById(idempotencyKey);
+        saleRepository.findByInvoiceNo(invoiceNo1).ifPresent(s -> {
+            saleItemRepository.deleteAll(saleItemRepository.findBySaleId(s.getId()));
+            saleRepository.deleteById(s.getId());
+        });
+        stockInventoryRepository.deleteAll(stockInventoryRepository.findByLotId(lot.getId()));
+        inventoryLotRepository.deleteById(lot.getId());
+        productRepository.deleteById(product.getId());
     }
 
     @Test
