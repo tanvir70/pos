@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +32,10 @@ public class Sale {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     @Column(name = "invoice_no", nullable = false, unique = true, length = 50)
     private String invoiceNo;
@@ -68,6 +73,14 @@ public class Sale {
     @Builder.Default
     private BigDecimal cashPaid = BigDecimal.ZERO;
 
+    @Column(name = "cash_tendered", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal cashTendered = BigDecimal.ZERO;
+
+    @Column(name = "change_amount", precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal changeAmount = BigDecimal.ZERO;
+
     @Column(name = "digital_paid", precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal digitalPaid = BigDecimal.ZERO;
@@ -101,6 +114,12 @@ public class Sale {
         }
         if (cashPaid == null) {
             cashPaid = BigDecimal.ZERO;
+        }
+        if (cashTendered == null) {
+            cashTendered = cashPaid != null ? cashPaid : BigDecimal.ZERO;
+        }
+        if (changeAmount == null) {
+            changeAmount = BigDecimal.ZERO;
         }
         if (digitalPaid == null) {
             digitalPaid = BigDecimal.ZERO;
