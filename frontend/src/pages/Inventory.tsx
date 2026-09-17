@@ -271,7 +271,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
         productCode: code,
         nameEn: newProdNameEn.trim(),
         nameBn: newProdNameBn.trim(),
-        companyName: "Syngenta",
+        companyName: "Agro Chem",
         category: newProdCategory,
         baseUnit: newProdBaseUnit,
         cartonMultiplier: parseFloat(newProdCartonMult) || 20,
@@ -467,7 +467,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
               <div className="flex items-center justify-between pb-3 border-b border-frost-border/60 mb-4">
                 <h3 className="font-bold text-base text-frost-dark bn-text flex items-center gap-2">
                   <span>➕</span>
-                  <span>নতুন সিনজেনটা পণ্য মাস্টার ক্যাটালগে যুক্ত করুন</span>
+                  <span>নতুন পণ্য মাস্টার ক্যাটালগে যুক্ত করুন</span>
                 </h3>
                 <button
                   type="button"
@@ -917,7 +917,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                       </TableCell>
 
                       <TableCell className="bn-text text-xs text-frost-muted">
-                        {item.supplierName || "Syngenta BD"}
+                        {item.supplierName || "Agro Supplier"}
                       </TableCell>
 
                       <TableCell align="center">
@@ -1021,7 +1021,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                   className="w-full text-xs py-2 px-3 bg-white border border-frost-border rounded-xl focus:border-rose-600 focus:outline-hidden bn-text"
                 >
                   <option value="WRITE_OFF">স্থায়ী ক্ষতি রাইট-অফ (Damaged Write-Off)</option>
-                  <option value="SUPPLIER_CLAIM">কোম্পানিকে ফেরত / ক্লেইম (Syngenta Return Claim)</option>
+                  <option value="SUPPLIER_CLAIM">কোম্পানিকে ফেরত / ক্লেইম (Supplier Return Claim)</option>
                   <option value="DESTROYED">পরিবেশসম্মত বিনষ্টকরণ (Disposed / Destroyed)</option>
                 </select>
               </div>

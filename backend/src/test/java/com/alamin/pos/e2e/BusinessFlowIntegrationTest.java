@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.springframework.test.annotation.DirtiesContext;
 
 /**
- * End-to-End System Integration Test for Syngenta Agrochemical Dealership.
+ * End-to-End System Integration Test for Agrochemical Dealership.
  * Verifies the full operational lifecycle:
  * 1. Shipment Arrival (Intake with carton multiplier conversion into DOKAN store stock)
  * 2. Wholesale Sale (Dokan store deduction, bargaining override, multi-channel split payment)
@@ -56,9 +56,9 @@ import org.springframework.test.annotation.DirtiesContext;
  */
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class SyngentaBusinessFlowTest {
+class BusinessFlowIntegrationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(SyngentaBusinessFlowTest.class);
+    private static final Logger log = LoggerFactory.getLogger(BusinessFlowIntegrationTest.class);
 
     @Autowired
     private InventoryService inventoryService;
@@ -117,8 +117,8 @@ class SyngentaBusinessFlowTest {
     }
 
     @Test
-    @DisplayName("Complete Syngenta dealership business lifecycle flow: arrival -> wholesale -> negative stock -> return -> repayment -> analytics -> backup")
-    void testCompleteSyngentaDealershipBusinessFlow() {
+    @DisplayName("Complete dealership business lifecycle flow: arrival -> wholesale -> negative stock -> return -> repayment -> analytics -> backup")
+    void testCompleteDealershipBusinessFlow() {
 
         DashboardSummaryDto baselineSummary = dashboardService.getSummary();
         BigDecimal baselineSales = baselineSummary.getTotalSalesToday() != null ? baselineSummary.getTotalSalesToday() : BigDecimal.ZERO;
@@ -146,7 +146,7 @@ class SyngentaBusinessFlowTest {
                 .lotWholesalePrice(new BigDecimal("580.00"))
                 .quantityCartons(new BigDecimal("2"))
                 .quantityBaseUnits(BigDecimal.ZERO)
-                .supplierName("Syngenta Bangladesh Ltd.")
+                .supplierName("Agro Chemical Ltd.")
                 .challanNo("CH-E2E-001")
                 .build();
 
@@ -363,9 +363,9 @@ class SyngentaBusinessFlowTest {
         assertThat(sqlDump).contains("LOT-E2E-AMI-01");
 
         String backupFileName = backupService.getBackupFileName();
-        assertThat(backupFileName).startsWith("syngenta-pos-backup-");
+        assertThat(backupFileName).startsWith("pos-backup-");
         assertThat(backupFileName).endsWith(".sql");
 
-        log.info("=== Syngenta E2E Business Flow Test Completed Successfully! ===");
+        log.info("=== Dealership E2E Business Flow Test Completed Successfully! ===");
     }
 }

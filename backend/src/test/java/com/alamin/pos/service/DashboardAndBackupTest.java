@@ -286,12 +286,12 @@ class DashboardAndBackupTest {
         assertThat(sqlDump.toLowerCase()).contains("product");
 
         String filename = backupService.getBackupFileName();
-        assertThat(filename).matches("^syngenta-pos-backup-\\d{8}-\\d{6}\\.sql$");
+        assertThat(filename).matches("^pos-backup-\\d{8}-\\d{6}\\.sql$");
 
         // Verify HTTP download via BackupController
         mockMvc.perform(get("/api/backup/download"))
                 .andExpect(status().isOk())
-                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, org.hamcrest.Matchers.startsWith("attachment; filename=\"syngenta-pos-backup-")))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, org.hamcrest.Matchers.startsWith("attachment; filename=\"pos-backup-")))
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "application/sql"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("Database Backup")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("INSERT INTO ")));

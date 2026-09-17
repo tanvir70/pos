@@ -3,7 +3,7 @@ import type { StockItem } from "../types"
 import { getBarcodePngUrl } from "../api/endpoints"
 
 // BUSINESS DECISION: Standard thermal barcode stickers format at 50mm × 25mm standard dimensions.
-// Features Syngenta company branding, dual English/Bengali product names, FEFO expiry date,
+// Features dealership branding, dual English/Bengali product names, FEFO expiry date,
 // Code 128 barcode, and mandated MRP (সর্বোচ্চ খুচরা মূল্য) for legal compliance.
 
 export interface BarcodeStickerModalProps {
@@ -45,7 +45,7 @@ export default function BarcodeStickerModal({
         <div class="label-page">
           <div class="sticker">
             <div class="header">
-              <span class="brand">🌾 SYNGENTA BANGLADESH</span>
+              <span class="brand">🌾 AL-AMIN TRADERS</span>
               <span class="mrp">MRP ৳${retailPrice}</span>
             </div>
             <div class="product-title-bn">${productNameBn}</div>
@@ -244,7 +244,7 @@ export default function BarcodeStickerModal({
               {/* Header */}
               <div className="flex items-center justify-between border-b border-gray-300 pb-1 text-[11px] font-bold text-emerald-800">
                 <span className="tracking-wide flex items-center gap-1">
-                  <span>🌾</span> SYNGENTA BANGLADESH
+                  <span>🌾</span> AL-AMIN TRADERS
                 </span>
                 <span className="text-frost-dark font-black">
                   ৳{retailPrice}

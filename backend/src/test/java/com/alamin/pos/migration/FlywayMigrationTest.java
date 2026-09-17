@@ -40,7 +40,7 @@ class FlywayMigrationTest {
     }
 
     @Test
-    @DisplayName("Verify product seed data count >= 5 and specific Syngenta products exist")
+    @DisplayName("Verify product seed data count >= 5 and specific agrochemical products exist")
     void testProductSeedData() {
         Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM product", Integer.class);
         assertThat(count).isGreaterThanOrEqualTo(5);

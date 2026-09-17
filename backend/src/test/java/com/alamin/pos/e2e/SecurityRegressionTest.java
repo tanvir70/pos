@@ -327,7 +327,7 @@ public class SecurityRegressionTest {
                 .lotId(lot.getId())
                 .quantity(new BigDecimal("4.000"))
                 .disposalType("SUPPLIER_CLAIM")
-                .remarks("Claim sent to Syngenta distributor for broken caps")
+                .remarks("Claim sent to agrochemical distributor for broken caps")
                 .build();
 
         mockMvc.perform(post("/api/inventory/quarantine/dispose")

@@ -58,7 +58,7 @@ class InventoryServiceTest {
                 .lotWholesalePrice(new BigDecimal("580.00"))
                 .quantityCartons(new BigDecimal("2"))
                 .quantityBaseUnits(new BigDecimal("5"))
-                .supplierName("Syngenta Bangladesh Ltd.")
+                .supplierName("Agro Chemical Ltd.")
                 .challanNo("CH-SYN-TEST-01")
                 .build();
 
@@ -136,7 +136,7 @@ class InventoryServiceTest {
                 .lotId(lot.getId())
                 .quantity(new BigDecimal("4.000"))
                 .disposalType("SUPPLIER_CLAIM")
-                .remarks("Defective seal returned to Syngenta")
+                .remarks("Defective seal returned to supplier")
                 .build();
 
         inventoryService.disposeQuarantineStock(request);

@@ -60,17 +60,12 @@ public class InventoryServiceImpl implements InventoryService {
 
         String barcode = request.getBarcode();
         if (barcode == null || barcode.isBlank()) {
-            String code = product.getProductCode();
-            if (code.startsWith("SYN-")) {
-                barcode = code + "-" + request.getLotNumber();
-            } else {
-                barcode = "SYN-" + code + "-" + request.getLotNumber();
-            }
+            barcode = product.getProductCode() + "-" + request.getLotNumber();
         }
 
         LocalDate entryDate = request.getEntryDate() != null ? request.getEntryDate() : LocalDate.now();
         String supplier = (request.getSupplierName() != null && !request.getSupplierName().isBlank())
-                ? request.getSupplierName() : "Syngenta Bangladesh Ltd.";
+                ? request.getSupplierName() : "Agro Chemical Ltd.";
         String location = "DOKAN";
 
         InventoryLot lot = InventoryLot.builder()

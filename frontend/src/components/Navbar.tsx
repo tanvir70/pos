@@ -86,11 +86,11 @@ export default function Navbar({
                   আল-আমিন ট্রেডার্স
                 </span>
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 bn-text border border-emerald-200">
-                  সিনজেনটা অনুমোদিত ডিলার
+                  অনুমোদিত কৃষি পরিবেশক
                 </span>
               </div>
               <p className="text-[11px] text-frost-muted hidden sm:block leading-none mt-0.5">
-                Al-Amin Traders (Syngenta Dealership Cockpit)
+                Al-Amin Traders (Agrochemical Dealership Cockpit)
               </p>
             </div>
           </div>

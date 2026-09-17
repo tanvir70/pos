@@ -712,7 +712,7 @@ export default function Returns({ isOwner }: ReturnsProps) {
                     আল-আমিন ট্রেডার্স
                   </h2>
                   <p className="text-xs text-frost-muted bn-text">
-                    সিনজেনটা ডিলার · উত্তর বাজার, বেলাবো, নরসিংদী
+                    অনুমোদিত কৃষি পরিবেশক · উত্তর বাজার, বেলাবো, নরসিংদী
                   </p>
                   <div className="inline-block mt-1 px-2.5 py-0.5 rounded bg-frost-surface border border-frost-border text-xs font-bold text-frost-dark bn-text">
                     বিক্রয় ফেরত ভাউচার (Credit Note)

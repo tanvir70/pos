@@ -62,7 +62,7 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
                 মেসার্স আল-আমিন ট্রেডার্স
               </h1>
               <p className="text-[11px] font-semibold bn-text text-gray-800 mt-0.5">
-                সিনজেনটা অনুমোদিত ডিলার
+                অনুমোদিত কৃষি পরিবেশক
               </p>
               <p className="text-[10px] bn-text text-gray-700">
                 কৃষি মার্কেট, উত্তর বাজার, নরসিংদী
@@ -210,7 +210,7 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
                 ধন্যবাদ, আবার আসবেন!
               </p>
               <p className="text-[10px] bn-text text-gray-700">
-                সিনজেনটা মানসম্মত ফসলের নিশ্চয়তা।
+                উন্নত মানের বালাইনাশক ও সার।
               </p>
               <p className="text-[9px] text-gray-500 font-mono mt-1">
                 {sale.invoiceNo} · Powered by Al-Amin POS

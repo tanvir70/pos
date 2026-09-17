@@ -1,6 +1,6 @@
 -- ============================================================================
 -- V3__enterprise_hardening.sql
--- Syngenta POS & Inventory Management System - Enterprise Hardening Migration
+-- Al-Amin POS & Inventory Management System - Enterprise Hardening Migration
 --
 -- Compatibility: Dual-compatible with H2 2.x+ and PostgreSQL 10+
 -- Adds:

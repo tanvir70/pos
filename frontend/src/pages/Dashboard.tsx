@@ -310,7 +310,7 @@ export default function Dashboard({
             <h2 className="font-bold text-frost-dark bn-text text-sm sm:text-base">
               দ্রুত পরিসংখ্যান (Store Summary)
             </h2>
-            <span className="text-xs text-frost-muted">সিনজেনটা ডিলারশিপ</span>
+            <span className="text-xs text-frost-muted">কৃষি ডিলারশিপ</span>
           </div>
 
           <div className="space-y-3">

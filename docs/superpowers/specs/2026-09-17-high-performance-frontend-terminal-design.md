@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Core Architectural Principles
 
-This document specifies the complete frontend redesign and component overhaul for the **Al-Amin Traders (মেসার্স আল-আমিন ট্রেডার্স) Point of Sale & Warehouse Inventory System**, tailored specifically for Syngenta Agricultural Dealerships in Bangladesh.
+This document specifies the complete frontend redesign and component overhaul for the **Al-Amin Traders (মেসার্স আল-আমিন ট্রেডার্স) Point of Sale & Warehouse Inventory System**, tailored specifically for Agrochemical Dealerships in Bangladesh.
 
 ### Core Architectural Principles:
 1. **Zero-Lag Terminal Performance:** Instant hardware barcode wedge capture ($\le 30\text{ms}$ buffer), debounced text search ($150\text{ms}$), granular React component memoization (`React.memo`), and optimistic UI updates.
@@ -176,7 +176,7 @@ frontend/src/
     }
   }
   ```
-- Renders crisp Syngenta branding, Bengali product name, lot number, expiry date, high-density Code 128 barcode, and retail MRP.
+- Renders crisp dealership branding, Bengali product name, lot number, expiry date, high-density Code 128 barcode, and retail MRP.
 
 ### 5.3 Quarantine & Damaged Stock Subsystem (`QuarantinePage.tsx`)
 - Displays all damaged chemicals returned from retail sales or warehouse handling.
@@ -195,7 +195,7 @@ frontend/src/
   - **ডিজিটাল এমএফএস ও ব্যাংক (Digital Collections):** bKash, Nagad, and Bank collections tracked independently.
 - **Owner-Protected Profit:** Daily & Monthly Gross Profit figures masked behind 4-digit PIN.
 - **Actionable FEFO Clearance Widget:** Lots expiring within 15 days get a flashing red badge and a 1-click **[ 🏷️ বিশেষ ছাড়ে বিক্রয় (Promotional Sale) ]** button loading the lot directly into the POS cart at a clearance discount.
-- **1-Click Streamed SQL Backup:** Direct binary stream download (`syngenta_pos_backup_YYYYMMDD_HHmmss.sql`) with Owner PIN gate, consuming zero RAM.
+- **1-Click Streamed SQL Backup:** Direct binary stream download (`pos_backup_YYYYMMDD_HHmmss.sql`) with Owner PIN gate, consuming zero RAM.
 
 ---
 

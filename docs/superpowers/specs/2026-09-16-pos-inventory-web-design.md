@@ -1,4 +1,4 @@
-# System Architecture & Technical Design: Syngenta POS & Inventory Web Application
+# System Architecture & Technical Design: Agrochemical POS & Inventory Web Application
 
 **Date:** 2026-09-16  
 **Status:** Approved  
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-This system is a full-featured, bulletproof Wholesale & Retail Point-of-Sale (POS) and Warehouse Inventory Management system specifically engineered for **Syngenta Agricultural Dealerships (Pesticides, Insecticides, Fungicides, Herbicides, Fertilizers, and Seeds)** in Bangladesh.
+This system is a full-featured, bulletproof Wholesale & Retail Point-of-Sale (POS) and Warehouse Inventory Management system specifically engineered for **Agrochemical Dealerships (Pesticides, Insecticides, Fungicides, Herbicides, Fertilizers, and Seeds)** in Bangladesh.
 
 The application runs as a **monorepo web application**:
 - **Backend:** Spring Boot 3 REST API managing agrochemical lots, base unit stock conversions, multi-location inventory (Godown vs Dokan), seasonal customer credit ledgers, barcode generation, database backup, and gross profit reporting.
@@ -123,7 +123,7 @@ pos-inventory-system/
 │       ├── pages/
 │       │   ├── PosCounter.tsx           # Cashier billing counter with F1/F2 shortcuts
 │       │   ├── Dashboard.tsx            # Visual analytics & metric cards
-│       │   ├── Inventory.tsx            # Syngenta products, lots, entry dates & barcodes
+│       │   ├── Inventory.tsx            # Agrochemical products, lots, entry dates & barcodes
 │       │   ├── Godown.tsx               # Warehouse lots, entry date tracking & shop transfers
 │       │   ├── Customers.tsx            # Wholesale accounts, ledger & purchase history
 │       │   └── Returns.tsx              # Sales returns (with or without invoice)
@@ -138,13 +138,13 @@ pos-inventory-system/
 ## 4. Bulletproof Relational Database Schema
 
 ```sql
--- 1. Product Master (Syngenta Agrochemical Catalog)
+-- 1. Product Master (Agrochemical Catalog)
 CREATE TABLE product (
     id BIGSERIAL PRIMARY KEY,
     product_code VARCHAR(50) NOT NULL UNIQUE,
     name_en VARCHAR(255) NOT NULL, -- e.g. "Amistar Top 325 SC"
     name_bn VARCHAR(255) NOT NULL, -- e.g. "অ্যামিস্টার টপ ৩২৫ এসসি"
-    company_name VARCHAR(150) DEFAULT 'Syngenta',
+    company_name VARCHAR(150) DEFAULT 'Agro Chem',
     category VARCHAR(100) NOT NULL, -- 'INSECTICIDE', 'FUNGICIDE', 'HERBICIDE', 'BIO_STIMULANT', 'SEED', 'FERTILIZER'
     base_unit VARCHAR(30) NOT NULL, -- 'BOTTLE', 'PACKET', 'KG', 'LITER'
     carton_multiplier NUMERIC(10, 3) DEFAULT 1.0, -- e.g. 1 Carton = 20 Bottles

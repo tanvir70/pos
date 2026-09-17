@@ -1,8 +1,8 @@
-# Syngenta POS & Inventory Web System Implementation Plan
+# Agrochemical POS & Inventory Web System Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a production-ready, bulletproof Web-based POS and Warehouse Inventory Management system specifically tailored for Syngenta agricultural dealerships (pesticides, fungicides, herbicides, fertilizers, and seeds) in a clean monorepo architecture (Spring Boot 3 + React 19 / Tailwind CSS v4) within a 15-day / 15,000 BDT budget.
+**Goal:** Build a production-ready, bulletproof Web-based POS and Warehouse Inventory Management system specifically tailored for agricultural dealerships (pesticides, fungicides, herbicides, fertilizers, and seeds) in a clean monorepo architecture (Spring Boot 3 + React 19 / Tailwind CSS v4) within a 15-day / 15,000 BDT budget.
 
 **Architecture:** Monorepo consisting of `backend/` (Spring Boot 3 REST API in Java 21 with Spring Data JPA and Flyway) and `frontend/` (React 19 + Vite + Tailwind CSS v4 single-page app refactored from existing prototype). Incorporates the 7 bulletproof operational rules: base unit stock storage with carton multipliers, negative stock allowance, FEFO/manual lot dispatch, line-item price overrides for bargaining, direct returns without receipts, round-off change adjustments, and 1-click database backup.
 
@@ -53,15 +53,15 @@
 ### Task 2: Database Schema & Flyway Migration (The Bulletproof Core)
 
 **Files:**
-- Create: `backend/src/main/resources/db/migration/V1__init_syngenta_schema.sql`
-- Create: `backend/src/main/resources/db/migration/V2__seed_syngenta_data.sql`
+- Create: `backend/src/main/resources/db/migration/V1__init_schema.sql`
+- Create: `backend/src/main/resources/db/migration/V2__seed_data.sql`
 - Test: `backend/src/test/java/com/alamin/pos/migration/FlywayMigrationTest.java`
 
 **Interfaces:**
 - Produces: Complete database schema with tables: `product`, `inventory_lot`, `stock_inventory`, `godown_movement`, `customer`, `customer_ledger`, `sale`, `sale_item`, `sale_return`, `sale_return_item`.
 
-- [ ] **Step 1: Write `V1__init_syngenta_schema.sql`** with the 10 bulletproof tables including carton multipliers, round-off, and nullable original invoice IDs for direct returns.
-- [ ] **Step 2: Write `V2__seed_syngenta_data.sql`** with popular Syngenta agrochemical products (*Amistar Top 325 SC, Virtako 40 WG, Refit 500 EC, Isabion, Karate 2.5 EC*) with initial lots and prices.
+- [ ] **Step 1: Write `V1__init_schema.sql`** with the 10 bulletproof tables including carton multipliers, round-off, and nullable original invoice IDs for direct returns.
+- [ ] **Step 2: Write `V2__seed_data.sql`** with popular agrochemical products (*Amistar Top 325 SC, Virtako 40 WG, Refit 500 EC, Isabion, Karate 2.5 EC*) with initial lots and prices.
 - [ ] **Step 3: Write `FlywayMigrationTest.java`** verifying migration and seeding runs cleanly.
 - [ ] **Step 4: Run `./gradlew test --tests FlywayMigrationTest`**.
 
@@ -242,7 +242,7 @@
 - Create: `frontend/src/components/StockTransferModal.tsx`
 - Create: `frontend/src/components/BarcodeStickerModal.tsx`
 
-- [ ] **Step 1: Build `Inventory.tsx`** displaying Syngenta products with carton multipliers and stock levels.
+- [ ] **Step 1: Build `Inventory.tsx`** displaying agrochemical products with carton multipliers and stock levels.
 - [ ] **Step 2: Build `Godown.tsx`** with lot entry dates, expiry dates, and movement logs.
 - [ ] **Step 3: Build `LotEntryModal.tsx` and `StockTransferModal.tsx`**.
 - [ ] **Step 4: Build `BarcodeStickerModal.tsx`** displaying printable barcode labels.
@@ -267,10 +267,10 @@
 ### Task 13: End-to-End System Integration Test & Verification
 
 **Files:**
-- Create: `backend/src/test/java/com/alamin/pos/e2e/SyngentaBusinessFlowTest.java`
+- Create: `backend/src/test/java/com/alamin/pos/e2e/BusinessFlowIntegrationTest.java`
 - Modify: `README.md`
 
-- [ ] **Step 1: Write `SyngentaBusinessFlowTest.java`** verifying:
+- [ ] **Step 1: Write `BusinessFlowIntegrationTest.java`** verifying:
   - Receiving 2 cartons of Amistar Top (40 bottles at ৳135 cost, entry date logged).
   - Transferring 10 bottles to Dokan.
   - Selling 15 bottles (10 from Dokan + 5 from Godown) with ৳10 round-off.

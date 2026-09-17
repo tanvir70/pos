@@ -1,5 +1,5 @@
-# Syngenta POS & Inventory Management System
-### মেসার্স আল-আমিন ট্রেডার্স (সিনজেনটা অনুমোদিত ডিলারশিপ)
+# Agrochemical POS & Inventory Management System
+### মেসার্স আল-আমিন ট্রেডার্স (অনুমোদিত কৃষি পরিবেশক)
 
 A modern, full-stack Point of Sale (POS), Inventory, and Customer Credit Ledger system tailor-made for agrochemical dealerships in Bangladesh. Built with **Spring Boot 3 (Java 21)** and **React 19 (TypeScript + Tailwind CSS v4)**, this application is engineered around real-world rural pesticide dealership realities: carton break-bulk conversions, FEFO chemical expiry management, rush-hour split-stock deductions, negative counter stock allowances, in-line price bargaining overrides, customer debt ledgers with Money Receipt vouchers, damaged chemical quarantine routing, 4-digit Owner PIN protection, and 1-click disaster recovery backups.
 
@@ -37,8 +37,8 @@ POS & Inventory Prototype/
 │   │   ├── application.yml               # Production & local development database configuration
 │   │   └── db/migration/                 # Flyway migrations (V1 schema, V2 seed data)
 │   ├── src/test/                         # Comprehensive unit & E2E integration test suite
-│   │   ├── java/com/alamin/pos/e2e/      # SyngentaBusinessFlowTest (8-step dealership flow)
-│   │   └── resources/application.yml     # Isolated in-memory H2 test database configuration
+│   │   ├── java/com/alamin/pos/e2e/      # BusinessFlowIntegrationTest (8-step dealership flow)
+│   │   └── resources/application.yml     # Dedicated PostgreSQL test database configuration
 │   ├── build.gradle                      # Gradle Groovy build configuration
 │   └── gradle.properties                 # Java 21 LTS toolchain pinning
 │
@@ -105,7 +105,7 @@ cd backend
 ./gradlew bootRun
 ```
 - Server starts on `http://localhost:8080` (or `SERVER_PORT=8081 ./gradlew bootRun`)
-- Flyway automatically runs database migrations and seeds initial Syngenta products (Amistar Top, Virtako, Refit, Isabion, Karate), lots, customer accounts, and stock balances into PostgreSQL `posdb`
+- Flyway automatically runs database migrations and seeds initial agrochemical products (Amistar Top, Virtako, Refit, Isabion, Karate), lots, customer accounts, and stock balances into PostgreSQL `posdb`
 - Tests run against PostgreSQL `posdb_test` via `./gradlew test`
 
 ### 2. Running the Frontend Application
@@ -146,7 +146,7 @@ cd backend
 ```
 
 #### Test Suite Breakdown:
-- `SyngentaBusinessFlowTest`: Complete 8-step dealership integration test verifying the entire operational business flow from shipment arrival to 1-click SQL disaster recovery backup.
+- `BusinessFlowIntegrationTest`: Complete 8-step dealership integration test verifying the entire operational business flow from shipment arrival to 1-click SQL disaster recovery backup.
 - `DashboardAndBackupTest`: Verifies cash in drawer calculation, exact gross margin profit accuracy, expiring lot alerts, low stock alerts, and 1-click SQL backup streaming.
 - `CustomerAndReturnTest`: Verifies customer registration, search, debt repayment with Money Receipt (MR No.), receipt-less returns, quarantine routing, and due adjustments.
 - `SaleServiceTest`: Verifies split-stock deduction across Dokan/Godown, Dokan negative stock tolerance, Godown negative stock prevention, and unit cost price freezing.

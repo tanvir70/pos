@@ -136,7 +136,7 @@ export default function Customers({ isOwner }: CustomersProps) {
     } else if (!digits.startsWith("880") && digits.length === 10) {
       digits = "880" + digits
     }
-    const message = `আসসালামু আলাইকুম ${name || "সম্মানিত গ্রাহক"} ভাই, আল-আমিন ট্রেডার্স (সিনজেনটা অনুমোদিত ডিলার) থেকে আপনার বর্তমান বাকি হিসাব: ${tk(due || 0)}। বিস্তারিত জানতে দোকানে যোগাযোগের অনুরোধ রইল। ধন্যবাদ।`
+    const message = `আসসালামু আলাইকুম ${name || "সম্মানিত গ্রাহক"} ভাই, আল-আমিন ট্রেডার্স (অনুমোদিত কৃষি পরিবেশক) থেকে আপনার বর্তমান বাকি হিসাব: ${tk(due || 0)}। বিস্তারিত জানতে দোকানে যোগাযোগের অনুরোধ রইল। ধন্যবাদ।`
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
   }
 
@@ -1169,7 +1169,7 @@ export default function Customers({ isOwner }: CustomersProps) {
                 আল-আমিন ট্রেডার্স (Al-Amin Traders)
               </h2>
               <p className="text-xs text-emerald-800 font-semibold bn-text">
-                সিনজেনটা বাংলাদেশ অনুমোদিত পরিবেশক
+                অনুমোদিত কৃষি পরিবেশক
               </p>
               <p className="text-xs text-frost-muted bn-text mt-0.5">
                 উত্তর বাজার, বেলাবো, নরসিংদী · মোবাইল: ০১৭১১-১২৩৪৫৬

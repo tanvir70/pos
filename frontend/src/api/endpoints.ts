@@ -230,7 +230,7 @@ export async function downloadDatabaseBackup(): Promise<void> {
   const timestamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)
   return downloadBlob(
     "/backup/download",
-    `syngenta-pos-backup-${timestamp}.sql`,
+    `pos-backup-${timestamp}.sql`,
   )
 }
 

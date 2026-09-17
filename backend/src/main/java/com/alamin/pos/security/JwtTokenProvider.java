@@ -17,7 +17,7 @@ public class JwtTokenProvider {
     private final long validityInMilliseconds;
 
     public JwtTokenProvider(
-            @Value("${app.security.jwt.secret:SyngentaEnterprisePosSystemSecureKey2026SecureSecret}") String secret,
+            @Value("${app.security.jwt.secret:AlAminEnterprisePosSystemSecureKey2026SecureSecret}") String secret,
             @Value("${app.security.jwt.expiration-ms:86400000}") long validityInMilliseconds) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.validityInMilliseconds = validityInMilliseconds;

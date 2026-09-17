@@ -40,7 +40,7 @@ export default function LotEntryModal({
   const [expiryDate, setExpiryDate] = useState<string>("")
   const [challanNo, setChallanNo] = useState<string>("")
   const [supplierName, setSupplierName] = useState<string>(
-    "Syngenta Bangladesh Ltd.",
+    "Agro Chemical Ltd.",
   )
   const [quantityCartons, setQuantityCartons] = useState<string>("")
   const [quantityBaseUnits, setQuantityBaseUnits] = useState<string>("")
@@ -129,7 +129,7 @@ export default function LotEntryModal({
         lotRetailPrice: retail,
         lotWholesalePrice: wholesale,
         barcode: barcode.trim() || undefined,
-        supplierName: supplierName.trim() || "Syngenta Bangladesh Ltd.",
+        supplierName: supplierName.trim() || "Agro Chemical Ltd.",
         challanNo: challanNo.trim() || undefined,
         quantityCartons: cartons > 0 ? cartons : undefined,
         quantityBaseUnits: loose > 0 ? loose : undefined,
@@ -292,7 +292,7 @@ export default function LotEntryModal({
                 type="text"
                 value={supplierName}
                 onChange={(e) => setSupplierName(e.target.value)}
-                placeholder="Syngenta Bangladesh Ltd."
+                placeholder="Agro Chemical Ltd."
                 className="w-full bg-white border border-frost-border rounded-xl px-3 py-2 text-sm text-frost-dark focus:border-emerald-600 focus:outline-hidden bn-text"
               />
             </div>

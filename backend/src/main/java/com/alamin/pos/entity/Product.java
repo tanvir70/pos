@@ -45,7 +45,7 @@ public class Product {
 
     @Column(name = "company_name", length = 150)
     @Builder.Default
-    private String companyName = "Syngenta";
+    private String companyName = "Agro Chem";
 
     @Column(name = "category", nullable = false, length = 100)
     private String category;
@@ -85,7 +85,7 @@ public class Product {
             cartonMultiplier = BigDecimal.ONE;
         }
         if (companyName == null) {
-            companyName = "Syngenta";
+            companyName = "Agro Chem";
         }
         if (minStockAlert == null) {
             minStockAlert = 5;

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Transform the Syngenta POS & Inventory Prototype backend into a fault-tolerant, GAAP-compliant, regulatory-sound, and high-concurrency enterprise system. Completely resolve all race conditions, financial calculation bugs, security flaws, agrochemical regulatory omissions, and architectural bottlenecks identified during the comprehensive audit.
+**Goal:** Transform the POS & Inventory Prototype backend into a fault-tolerant, GAAP-compliant, regulatory-sound, and high-concurrency enterprise system. Completely resolve all race conditions, financial calculation bugs, security flaws, agrochemical regulatory omissions, and architectural bottlenecks identified during the comprehensive audit.
 
 **Architecture:** Spring Boot 3.3.3 + Java 21 LTS + Spring Data JPA + Flyway migrations + Spring Security with Dual Roles (`CASHIER` and `OWNER`). Preserves existing REST API contracts while hardening database consistency via pessimistic/optimistic locking, atomic sequencing, RFC 7807 problem details, idempotency deduplication, and zero-leakage financial accounting.
 
@@ -71,7 +71,7 @@ Task 1 (Flyway V3 Schema)
 
 **Interfaces:**
 - Produces: Database schema supporting optimistic versioning, atomic sequences, tender/change amounts, quarantine inventory, composite indexes, and idempotency records.
-- Consumes: Existing tables from `V1__init_syngenta_schema.sql`.
+- Consumes: Existing tables from `V1__init_schema.sql`.
 
 - [x] **Step 1: Write `V3__enterprise_hardening.sql` with cross-database (H2 & PostgreSQL) compatible DDL:**
   - Add `version BIGINT NOT NULL DEFAULT 0` to `products`, `product_lots`, `stock_inventories`, `customers`, and `sales`.

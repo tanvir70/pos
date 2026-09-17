@@ -53,7 +53,7 @@ class DosProtectionTest {
         mockMvc.perform(get("/api/backup/download"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "application/sql"))
-                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, org.hamcrest.Matchers.startsWith("attachment; filename=\"syngenta-pos-backup-")))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, org.hamcrest.Matchers.startsWith("attachment; filename=\"pos-backup-")))
                 .andExpect(content().string(containsString("Database Backup")))
                 .andExpect(content().string(containsString("INSERT INTO ")));
     }

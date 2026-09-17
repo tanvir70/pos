@@ -107,7 +107,7 @@ class SaleServiceTest {
                 .lotRetailPrice(new BigDecimal("650.00"))
                 .lotWholesalePrice(new BigDecimal("580.00"))
                 .barcode("SYN-NEG-001")
-                .supplierName("Syngenta Bangladesh Ltd")
+                .supplierName("Agro Chemical Ltd")
                 .build();
         lot = inventoryLotRepository.save(lot);
 

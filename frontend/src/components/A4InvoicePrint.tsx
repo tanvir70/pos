@@ -85,7 +85,7 @@ export default function A4InvoicePrint({
               color: "#111827",
             }}
           >
-            {/* Syngenta Dealership Letterhead */}
+            {/* Agrochemical Dealership Letterhead */}
             <div className="border-b-2 border-emerald-800 pb-4 mb-4">
               <div className="flex items-start justify-between">
                 <div>
@@ -94,11 +94,11 @@ export default function A4InvoicePrint({
                       মেসার্স আল-আমিন ট্রেডার্স
                     </span>
                     <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 bn-text">
-                      সিনজেনটা অনুমোদিত ডিলার
+                      অনুমোদিত কৃষি পরিবেশক
                     </span>
                   </div>
                   <p className="text-xs font-semibold text-gray-700 bn-text mt-0.5">
-                    সিনজেনটা বাংলাদেশ লিমিটেড-এর অনুমোদিত পরিবেশক
+                    উন্নত মানের বালাইনাশক, সার ও বীজ পরিবেশক
                   </p>
                   <p className="text-[11px] text-gray-600 bn-text">
                     কৃষি মার্কেট, উত্তর বাজার, নরসিংদী সদর, নরসিংদী।
@@ -244,7 +244,7 @@ export default function A4InvoicePrint({
                             {item.productNameBn}
                           </div>
                           <div className="text-[10px] text-gray-500">
-                            {item.productNameEn} (Syngenta)
+                            {item.productNameEn}
                           </div>
                         </td>
                         <td className="border border-gray-300 py-2 px-2 text-center font-mono text-[10px]">

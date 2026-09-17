@@ -14,7 +14,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
@@ -27,7 +27,7 @@ app:
   security:
     owner-pin: "1234"
     jwt:
-      secret: "SyngentaEnterprisePosSystemSecureKey2026SecureSecretForHmacSha256MustBe32BytesOrLonger"
+      secret: "AlAminEnterprisePosSystemSecureKey2026SecureSecretForHmacSha256MustBe32BytesOrLonger"
       expiration-ms: 86400000
   cors:
     allowed-origins:

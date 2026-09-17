@@ -46,7 +46,7 @@ public class BackupServiceImpl implements BackupService {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             writer.write("-- ============================================================================");
             writer.newLine();
-            writer.write("-- Syngenta POS & Agrochemical Dealership System - Database Backup");
+            writer.write("-- Al-Amin POS & Agrochemical Dealership System - Database Backup");
             writer.newLine();
             writer.write("-- Generated at: " + timestamp);
             writer.newLine();
@@ -162,6 +162,6 @@ public class BackupServiceImpl implements BackupService {
     @Override
     public String getBackupFileName() {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-        return "syngenta-pos-backup-" + timestamp + ".sql";
+        return "pos-backup-" + timestamp + ".sql";
     }
 }
