@@ -13,6 +13,7 @@ import com.alamin.pos.entity.Sale;
 import com.alamin.pos.entity.SaleItem;
 import com.alamin.pos.entity.StockInventory;
 import com.alamin.pos.exception.BusinessRuleViolationException;
+import com.alamin.pos.exception.ExpiredLotSaleException;
 import com.alamin.pos.exception.InsufficientStockException;
 import com.alamin.pos.exception.ResourceNotFoundException;
 import com.alamin.pos.exception.ValidationException;
@@ -79,6 +80,32 @@ public class SaleServiceImpl implements SaleService {
         for (SaleItemRequest itemReq : request.getItems()) {
             InventoryLot lot = inventoryLotRepository.findById(itemReq.getLotId())
                     .orElseThrow(() -> new ResourceNotFoundException("Lot not found with id: " + itemReq.getLotId()));
+
+            // Agrochemical Regulatory Compliance: Pesticide Ordinance 1971
+            if (lot.getExpiryDate() != null && lot.getExpiryDate().isBefore(LocalDate.now())) {
+                throw new ExpiredLotSaleException("Cannot sell expired lot " + lot.getLotNumber() + " (expired on " + lot.getExpiryDate() + "). Agrochemical regulatory violation under Pesticide Ordinance 1971.");
+            }
+
+            // FEFO audit: check if older unexpired lot exists with positive stock
+            if (lot.getProduct() != null && lot.getExpiryDate() != null) {
+                List<InventoryLot> fefoLots = inventoryLotRepository.findByProductIdOrderByExpiryDateAsc(lot.getProduct().getId());
+                for (InventoryLot earlierLot : fefoLots) {
+                    if (earlierLot.getExpiryDate() != null
+                            && earlierLot.getExpiryDate().isBefore(lot.getExpiryDate())
+                            && !earlierLot.getExpiryDate().isBefore(LocalDate.now())) {
+                        BigDecimal available = stockInventoryRepository.findByLotId(earlierLot.getId()).stream()
+                                .map(StockInventory::getQuantity)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                        if (available.compareTo(BigDecimal.ZERO) > 0) {
+                            log.warn("REGULATORY FEFO WARNING: Product {} ({}) has older unexpired lot {} (expires {}, available: {}) but cashier selected lot {} (expires {})",
+                                    lot.getProduct().getProductCode(), lot.getProduct().getNameEn(),
+                                    earlierLot.getLotNumber(), earlierLot.getExpiryDate(), available,
+                                    lot.getLotNumber(), lot.getExpiryDate());
+                            break;
+                        }
+                    }
+                }
+            }
 
             BigDecimal totalQty = itemReq.getTotalQuantity().setScale(3, RoundingMode.HALF_UP);
             if (totalQty.compareTo(BigDecimal.ZERO) <= 0) {

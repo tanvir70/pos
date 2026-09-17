@@ -12,14 +12,17 @@ import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.Sale;
 import com.alamin.pos.entity.SaleReturn;
 import com.alamin.pos.entity.SaleReturnItem;
+import com.alamin.pos.entity.SaleItem;
 import com.alamin.pos.entity.StockInventory;
 import com.alamin.pos.exception.BusinessRuleViolationException;
+import com.alamin.pos.exception.InvalidReturnException;
 import com.alamin.pos.exception.ResourceNotFoundException;
 import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
 import com.alamin.pos.repository.GodownMovementRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
+import com.alamin.pos.repository.SaleItemRepository;
 import com.alamin.pos.repository.SaleRepository;
 import com.alamin.pos.repository.SaleReturnItemRepository;
 import com.alamin.pos.repository.SaleReturnRepository;
@@ -50,6 +53,7 @@ public class SaleReturnServiceImpl implements SaleReturnService {
     private final SaleReturnRepository saleReturnRepository;
     private final SaleReturnItemRepository saleReturnItemRepository;
     private final SaleRepository saleRepository;
+    private final SaleItemRepository saleItemRepository;
     private final CustomerRepository customerRepository;
     private final CustomerLedgerRepository customerLedgerRepository;
     private final InventoryLotRepository inventoryLotRepository;
@@ -72,11 +76,10 @@ public class SaleReturnServiceImpl implements SaleReturnService {
             throw new ValidationException("Invalid refund type: " + refundType + ". Expected CASH_REFUND or DUE_ADJUSTMENT");
         }
 
-        Sale originalSale = null;
-        if (request.getOriginalSaleId() != null) {
-            originalSale = saleRepository.findById(request.getOriginalSaleId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Original sale not found with id: " + request.getOriginalSaleId()));
-        }
+        final Sale originalSale = (request.getOriginalSaleId() != null)
+                ? saleRepository.findById(request.getOriginalSaleId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Original sale not found with id: " + request.getOriginalSaleId()))
+                : null;
 
         Customer customer = null;
         if (request.getCustomerId() != null) {
@@ -96,6 +99,12 @@ public class SaleReturnServiceImpl implements SaleReturnService {
         List<SaleReturnItem> returnItems = new ArrayList<>();
         BigDecimal totalRefundAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
+        // If original sale is provided, fetch original items for return validation
+        List<SaleItem> originalSaleItems = null;
+        if (originalSale != null) {
+            originalSaleItems = saleItemRepository.findBySaleId(originalSale.getId());
+        }
+
         for (SaleReturnItemRequest itemReq : request.getItems()) {
             InventoryLot lot = inventoryLotRepository.findById(itemReq.getLotId())
                     .orElseThrow(() -> new ResourceNotFoundException("Lot not found with id: " + itemReq.getLotId()));
@@ -110,6 +119,36 @@ public class SaleReturnServiceImpl implements SaleReturnService {
             BigDecimal refundPrice = itemReq.getRefundPrice() != null
                     ? itemReq.getRefundPrice().setScale(2, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+
+            // Strict invoice-linked return validation
+            if (originalSale != null && originalSaleItems != null) {
+                SaleItem matchingOriginalItem = originalSaleItems.stream()
+                        .filter(si -> si.getLot().getId().equals(lot.getId()))
+                        .findFirst()
+                        .orElseThrow(() -> new InvalidReturnException("Lot " + lot.getLotNumber() + " was not part of original invoice " + originalSale.getInvoiceNo()));
+
+                // Calculate cumulative previously returned quantity for this lot from originalSale
+                List<SaleReturn> previousReturns = saleReturnRepository.findByOriginalSaleId(originalSale.getId());
+                BigDecimal previouslyReturned = BigDecimal.ZERO;
+                for (SaleReturn prev : previousReturns) {
+                    List<SaleReturnItem> prevItems = saleReturnItemRepository.findBySaleReturnId(prev.getId());
+                    for (SaleReturnItem pi : prevItems) {
+                        if (pi.getLot().getId().equals(lot.getId())) {
+                            previouslyReturned = previouslyReturned.add(pi.getQuantity());
+                        }
+                    }
+                }
+
+                BigDecimal remainingReturnable = matchingOriginalItem.getTotalQuantity().subtract(previouslyReturned);
+                if (qty.compareTo(remainingReturnable) > 0) {
+                    throw new InvalidReturnException("Return quantity " + qty + " exceeds remaining returnable quantity (" + remainingReturnable + ") for lot " + lot.getLotNumber() + " on invoice " + originalSale.getInvoiceNo());
+                }
+
+                if (refundPrice.compareTo(BigDecimal.ZERO) == 0) {
+                    refundPrice = matchingOriginalItem.getUnitPrice();
+                }
+            }
+
             if (refundPrice.compareTo(BigDecimal.ZERO) < 0) {
                 throw new ValidationException("Refund price cannot be negative");
             }

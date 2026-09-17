@@ -18,6 +18,8 @@ public interface SaleReturnRepository extends JpaRepository<SaleReturn, Long> {
 
     List<SaleReturn> findByCustomerIdOrderByReturnDateDesc(Long customerId);
 
+    List<SaleReturn> findByOriginalSaleId(Long originalSaleId);
+
     List<SaleReturn> findByReturnDateBetweenAndRefundType(LocalDateTime start, LocalDateTime end, String refundType);
 }
 
