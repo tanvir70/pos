@@ -255,8 +255,8 @@ class SyngentaBusinessFlowTest {
         // Paid: 5,000 + 3,000 = ৳8,000.00; Due: 11,390 - 8,000 = ৳3,390.00
         assertThat(wholesaleSaleResp.getDueAmount()).isEqualByComparingTo("3390.00");
 
-        // Gross Profit: (575.00 unitPrice - 500.00 purchaseCost) * 20 - 100.00 discount = ৳1,400.00
-        assertThat(wholesaleSaleResp.getTotalProfit()).isEqualByComparingTo("1400.00");
+        // Gross Profit: (575.00 unitPrice - 500.00 purchaseCost) * 20 - 100.00 discount - 10.00 round-off = ৳1,390.00
+        assertThat(wholesaleSaleResp.getTotalProfit()).isEqualByComparingTo("1390.00");
 
         // Verify stock levels: Dokan 15 - 15 = 0, Godown 25 - 5 = 20
         StockInventory step3Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
@@ -398,8 +398,8 @@ class SyngentaBusinessFlowTest {
         // Total sales today: Step 3 wholesale (11,390.00) + Step 4 retail (1,950.00) = ৳13,340.00
         assertThat(summary.getTotalSalesToday()).isEqualByComparingTo("13340.00");
 
-        // Gross profit today: Step 3 (1,400.00) + Step 4 ((650 - 500) * 3 = 450.00) = ৳1,850.00
-        assertThat(summary.getGrossProfitToday()).isEqualByComparingTo("1850.00");
+        // Gross profit today: Step 3 (1,390.00) + Step 4 ((650 - 500) * 3 = 450.00) = ৳1,840.00
+        assertThat(summary.getGrossProfitToday()).isEqualByComparingTo("1840.00");
 
         // Cash in drawer today: sales cash (5,000.00 + 1,950.00 = 6,950.00) + repayment cash (2,000.00) - refunds cash (0.00) = ৳8,950.00
         assertThat(summary.getCashInDrawerToday()).isEqualByComparingTo("8950.00");

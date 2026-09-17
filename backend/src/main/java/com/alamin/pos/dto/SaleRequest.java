@@ -42,6 +42,9 @@ public class SaleRequest {
     private BigDecimal cashPaid = BigDecimal.ZERO;
 
     @Builder.Default
+    private BigDecimal cashTendered = BigDecimal.ZERO;
+
+    @Builder.Default
     private BigDecimal digitalPaid = BigDecimal.ZERO;
 
     // Optional: 'BKASH', 'NAGAD', 'BANK_TRANSFER'

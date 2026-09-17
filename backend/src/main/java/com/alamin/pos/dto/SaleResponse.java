@@ -33,6 +33,8 @@ public class SaleResponse {
 
     private String paymentMethod;
     private BigDecimal cashPaid;
+    private BigDecimal cashTendered;
+    private BigDecimal changeAmount;
     private BigDecimal digitalPaid;
     private String digitalMedium;
     private String digitalTrxId;

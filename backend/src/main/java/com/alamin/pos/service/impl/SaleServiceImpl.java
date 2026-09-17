@@ -172,10 +172,22 @@ public class SaleServiceImpl implements SaleService {
 
         // BUSINESS DECISION: Round-off adjustment is deducted from invoice total alongside discount to zero out small change without distorting line item unit pricing.
         BigDecimal totalAmount = subtotal.subtract(discount).subtract(roundOff).setScale(2, RoundingMode.HALF_UP);
+        if (totalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ValidationException("Discount and round-off (" + discount.add(roundOff) + ") cannot exceed subtotal (" + subtotal + ")");
+        }
 
         BigDecimal cashPaid = request.getCashPaid() != null
                 ? request.getCashPaid().setScale(2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal cashTendered = request.getCashTendered() != null && request.getCashTendered().compareTo(BigDecimal.ZERO) > 0
+                ? request.getCashTendered().setScale(2, RoundingMode.HALF_UP)
+                : cashPaid;
+
+        BigDecimal changeAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        if (cashTendered.compareTo(cashPaid) > 0) {
+            changeAmount = cashTendered.subtract(cashPaid).setScale(2, RoundingMode.HALF_UP);
+        }
 
         BigDecimal digitalPaid = request.getDigitalPaid() != null
                 ? request.getDigitalPaid().setScale(2, RoundingMode.HALF_UP)
@@ -198,6 +210,8 @@ public class SaleServiceImpl implements SaleService {
                 .totalAmount(totalAmount)
                 .paymentMethod(paymentMethod)
                 .cashPaid(cashPaid)
+                .cashTendered(cashTendered)
+                .changeAmount(changeAmount)
                 .digitalPaid(digitalPaid)
                 .digitalMedium(request.getDigitalMedium())
                 .digitalTrxId(request.getDigitalTrxId())
@@ -247,6 +261,7 @@ public class SaleServiceImpl implements SaleService {
                 .map(item -> item.getUnitPrice().subtract(item.getUnitCost()).multiply(item.getTotalQuantity()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .subtract(discount)
+                .subtract(roundOff)
                 .setScale(2, RoundingMode.HALF_UP);
 
         return mapToResponse(savedSale, savedItems, totalProfit);
@@ -288,6 +303,7 @@ public class SaleServiceImpl implements SaleService {
                 .map(item -> item.getUnitPrice().subtract(item.getUnitCost()).multiply(item.getTotalQuantity()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .subtract(sale.getDiscount() != null ? sale.getDiscount() : BigDecimal.ZERO)
+                .subtract(sale.getRoundOff() != null ? sale.getRoundOff() : BigDecimal.ZERO)
                 .setScale(2, RoundingMode.HALF_UP);
         return mapToResponse(sale, items, totalProfit);
     }
@@ -334,6 +350,8 @@ public class SaleServiceImpl implements SaleService {
                 .totalAmount(sale.getTotalAmount())
                 .paymentMethod(sale.getPaymentMethod())
                 .cashPaid(sale.getCashPaid())
+                .cashTendered(sale.getCashTendered())
+                .changeAmount(sale.getChangeAmount())
                 .digitalPaid(sale.getDigitalPaid())
                 .digitalMedium(sale.getDigitalMedium())
                 .digitalTrxId(sale.getDigitalTrxId())
