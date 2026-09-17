@@ -16,9 +16,13 @@ import java.util.Base64;
 @Service
 public class BarcodeServiceImpl implements BarcodeService {
 
+    private static final int MIN_WIDTH = 100;
+    private static final int MAX_WIDTH = 1000;
+    private static final int MIN_HEIGHT = 30;
+    private static final int MAX_HEIGHT = 300;
+
     // BUSINESS DECISION: Uses Code 128 (1D barcode) standard for agrochemical lot sticker labels.
-    // Code 128 supports high-density alphanumeric encoding (e.g., SYN-AMI-202601) and is universally
-    // readable by retail laser and CCD handheld barcode scanners used in rural agro shops.
+    // Dimensions are clamped to [100..1000] width and [30..300] height to prevent memory allocation DoS attacks.
     @Override
     public byte[] generateBarcodePng(String barcodeText, int width, int height) {
         if (barcodeText == null || barcodeText.isBlank()) {
@@ -28,9 +32,13 @@ public class BarcodeServiceImpl implements BarcodeService {
             throw new ValidationException("Barcode dimensions must be greater than zero: " + width + "x" + height);
         }
 
+        // Clamp dimensions to prevent image allocation denial of service (DoS)
+        int clampedWidth = Math.max(MIN_WIDTH, Math.min(width, MAX_WIDTH));
+        int clampedHeight = Math.max(MIN_HEIGHT, Math.min(height, MAX_HEIGHT));
+
         try {
             Code128Writer writer = new Code128Writer();
-            BitMatrix bitMatrix = writer.encode(barcodeText, BarcodeFormat.CODE_128, width, height);
+            BitMatrix bitMatrix = writer.encode(barcodeText, BarcodeFormat.CODE_128, clampedWidth, clampedHeight);
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
@@ -49,8 +57,6 @@ public class BarcodeServiceImpl implements BarcodeService {
         return generateBarcodePng(barcodeText, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
-    // BUSINESS DECISION: Returns Base64 data URL ('data:image/png;base64,...') to enable direct inline
-    // rendering in HTML / React thermal sticker print templates without secondary HTTP fetch round-trips.
     @Override
     public String generateBarcodeBase64(String barcodeText, int width, int height) {
         byte[] pngBytes = generateBarcodePng(barcodeText, width, height);
