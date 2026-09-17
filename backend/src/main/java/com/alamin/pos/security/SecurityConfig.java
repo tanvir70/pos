@@ -26,6 +26,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final IdempotencyFilter idempotencyFilter;
 
     @Value("${app.cors.allowed-origins:http://localhost:8443,http://localhost:5173,http://localhost:3000,http://127.0.0.1:8443,http://127.0.0.1:5173,http://127.0.0.1:3000}")
     private List<String> allowedOrigins;
@@ -60,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/sales/**", "/api/returns/**", "/api/customers/**", "/api/inventory/**", "/api/products/**").hasAnyRole("CASHIER", "OWNER")
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(idempotencyFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
