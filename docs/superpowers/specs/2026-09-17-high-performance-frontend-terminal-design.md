@@ -61,17 +61,13 @@ frontend/src/
 │   ├── pos/
 │   │   ├── ProductCatalogGrid.tsx# 60% Left Section: Quick categories & tap-to-add product cards
 │   │   ├── CartTicket.tsx        # 40% Right Section: Line items, FEFO lot dropdown, price override
-│   │   ├── SplitStockModal.tsx   # Dokan vs Godown multi-location split allocation modal
 │   │   ├── SettlementPanel.tsx   # Oversized cash tendered, quick cash chips, change display & checkout
 │   │   └── DualPrintModal.tsx    # Post-checkout 80mm thermal slip vs A4 Wholesale Challan preview
 │   │
 │   ├── inventory/
+│   │   ├── LotEntryModal.tsx       # (Cartons * Multiplier) + Loose Units intake calculator
 │   │   ├── BarcodeStickerModal.tsx # Precision 50x25mm thermal sticker generator
 │   │   └── ProductEntryModal.tsx   # New product catalog addition
-│   │
-│   ├── godown/
-│   │   ├── LotReceivingModal.tsx # (Cartons * Multiplier) + Loose Units intake calculator
-│   │   └── StockTransferModal.tsx# Godown to Dokan 1-click max replenishment
 │   │
 │   ├── quarantine/
 │   │   └── QuarantineDisposeModal.tsx # Supervisor write-off disposal with audit reason
@@ -82,8 +78,7 @@ frontend/src/
 │
 ├── pages/
 │   ├── PosTerminalPage.tsx       # Main 60/40 counter billing cockpit
-│   ├── InventoryPage.tsx         # Master product catalog & Dokan/Godown stock matrix
-│   ├── GodownPage.tsx            # Warehouse lot intake, transfers, and movement ledger
+│   ├── InventoryPage.tsx         # Master product catalog & store stock matrix
 │   ├── QuarantinePage.tsx        # Damaged chemical inventory tracking & write-offs
 │   ├── CustomersPage.tsx         # Customer Khata, credit limits & WhatsApp due notices
 │   ├── ReturnsPage.tsx           # Direct receipt-less returns & quarantine routing
@@ -130,17 +125,17 @@ frontend/src/
 ### 4.1 Layout Dimensions & Viewport Optimization
 - Engineered specifically to eliminate vertical scrolling on $1366 \times 768$ laptops.
 - Fixed 60% Left / 40% Right horizontal split.
-- **Left Panel:** Sticky top category filter pills + search bar, followed by a compact, high-density grid of Product Cards with stock pills (`Dokan: X`, `Godown: Y`) and prices.
+- **Left Panel:** Sticky top category filter pills + search bar, followed by a compact, high-density grid of Product Cards with stock pills (`মজুদ: X`) and prices.
 - **Right Panel (Cart Ticket):**
   - Customer selection header (Walk-in vs Wholesale dealer with current due display).
-  - Dense line-item rows showing: Product Name, Base Unit Qty, FEFO Lot Dropdown (with expiry alerts), In-Line Bargaining Price input, Dokan/Godown split indicator, and Line Total.
+  - Dense line-item rows showing: Product Name, Base Unit Qty, FEFO Lot Dropdown (with expiry alerts), In-Line Bargaining Price input, Stock availability indicator (with deficit alert if selling into deficit), and Line Total.
   - Sticky bottom settlement card with Subtotal, 1-Click Round-Off button, Net Payable, Tendered Cash input with Quick-Cash chips (`Exact`, `+500`, `+1000`), Change Due, and oversized emerald Checkout button.
 
 ### 4.2 Counter Invariants & Edge Cases
 1. **Scanner Hijack Guard:** Rapid scanner bursts automatically strip characters from active price inputs and route to the barcode cart lookup.
 2. **Session Cart Draft:** Active cart is mirrored in `sessionStorage` (`pos_active_cart_v1`). Tab switching or refreshing restores the ticket with 100% fidelity.
 3. **Pesticide Ordinance 1971 Enforcement:** Lots where `expiryDate < today` are hard-blocked with a prominent red badge (`মেয়াদোত্তীর্ণ - বিক্রয় নিষিদ্ধ`) and disabled from selection.
-4. **Negative Stock Policy:** Dokan shelf stock is allowed to enter negative balance with an amber indicator (`অনথিভুক্ত চালান`), allowing checkout during peak arrival rush before paper challan entry. Godown bulk stock is strictly locked against negative values.
+4. **Negative Stock Policy:** Store stock is allowed to enter negative balance with an amber indicator (`অনথিভুক্ত চালান / ঘাটতি`), allowing checkout during peak arrival rush before paper challan entry.
 5. **Supervisor Cost Alert:** If a bargaining price is entered below the lot's purchase cost, an amber warning badge appears; in Cashier Mode, checkout requires Owner PIN confirmation.
 
 ### 4.3 POS Keyboard Hotkeys
@@ -155,11 +150,11 @@ frontend/src/
 
 ## 5. Subsystem Detailed Specifications
 
-### 5.1 Warehouse Intake & Godown Management (`GodownPage.tsx`)
+### 5.1 Store Lot Intake & Shipment Receiving (`LotEntryModal.tsx`)
 - **Intake Receiving Formula:**
   $$\text{Total Base Units} = (\text{Cartons Received} \times \text{Product Carton Multiplier}) + \text{Loose Base Units}$$
   Real-time breakdown preview prevents dockside arithmetic errors.
-- **Stock Transfer Modal:** Fast Godown $\to$ Dokan counter replenishment with a 1-click `[সর্বোচ্চ (Max)]` button locking quantity to available warehouse balance and logging `INTERNAL_TRANSFER`.
+- **Store Entry:** All incoming shipments enter active store inventory (`DOKAN`) directly; backend auto-synthesizes Code 128 barcodes if left blank.
 
 ### 5.2 Thermal Barcode Sticker Studio (`BarcodeStickerModal.tsx`)
 - Dedicated print layout configured with exact CSS:
@@ -185,7 +180,7 @@ frontend/src/
 
 ### 5.3 Quarantine & Damaged Stock Subsystem (`QuarantinePage.tsx`)
 - Displays all damaged chemicals returned from retail sales or warehouse handling.
-- Segregated permanently from sellable Dokan and Godown stock.
+- Segregated permanently from sellable store stock.
 - **Supervisor Write-Off Action:** `POST /api/inventory/quarantine/dispose` executed with Owner PIN verification, tracking disposal reason (*লিক হওয়া বোতল ধ্বংস*, *কোম্পানি রিটার্ন*) and write-off valuation.
 
 ### 5.4 Customer Khata & Debt Recovery (`CustomersPage.tsx`)
@@ -212,8 +207,8 @@ frontend/src/
 
 ### End-to-End Business Flow Scenarios:
 1. **Auth & Security:** Auto-issuing cashier session $\to$ verifying Owner PIN escalation $\to$ testing 5-minute inactivity auto-lock.
-2. **Rapid POS Billing:** Hardware barcode scan simulation $\to$ FEFO lot auto-assignment $\to$ bargaining price override $\to$ split-stock Dokan/Godown allocation $\to$ quick cash chip change calculation $\to$ dual print preview.
-3. **Warehouse Intake & Transfer:** Entering 3 cartons + 4 loose bottles of Karate 2.5 EC $\to$ verifying 64 base units added $\to$ transferring 20 units to Dokan.
+2. **Rapid POS Billing:** Hardware barcode scan simulation $\to$ FEFO lot auto-assignment $\to$ bargaining price override $\to$ negative inventory handling $\to$ quick cash chip change calculation $\to$ dual print preview.
+3. **Shipment Intake & Barcodes:** Entering 3 cartons + 4 loose bottles of Karate 2.5 EC $\to$ verifying 64 base units added to store stock $\to$ generating 50x25mm thermal barcode sticker.
 4. **Quarantine & Returns:** Processing return of damaged chemical $\to$ confirming automatic quarantine lock $\to$ executing supervisor disposal write-off.
 5. **Khata & Repayment:** Recording partial due payment $\to$ verifying Money Receipt generation $\to$ validating WhatsApp link format.
 6. **Executive Backup:** Triggering 1-click SQL backup stream download and confirming valid SQL file output.
