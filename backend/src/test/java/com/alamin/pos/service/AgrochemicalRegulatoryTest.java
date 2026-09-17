@@ -51,6 +51,12 @@ class AgrochemicalRegulatoryTest {
     @Autowired
     private CustomerRepository customerRepository;
 
+    @Autowired
+    private com.alamin.pos.repository.GodownMovementRepository godownMovementRepository;
+
+    @Autowired
+    private InventoryService inventoryService;
+
     @Test
     @DisplayName("Verify selling expired pesticide lot is blocked with ExpiredLotSaleException")
     void testSellingExpiredLotBlocked() {
@@ -185,11 +191,13 @@ class AgrochemicalRegulatoryTest {
     }
 
     @Test
-    @DisplayName("Verify damaged returns do not increment salable stock (quarantine held)")
-    void testDamagedReturnStockUnchanged() {
+    @DisplayName("Verify damaged returns are routed to QUARANTINE stock with audit trail and zero salable stock leakage")
+    void testDamagedReturnStockQuarantined() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
         StockInventory initialDokanStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
         BigDecimal initialQty = initialDokanStock.getQuantity();
+
+        BigDecimal salableQtyBefore = stockInventoryRepository.sumQuantityByProductId(lot.getProduct().getId());
 
         SaleReturnRequest returnReq = SaleReturnRequest.builder()
                 .refundType("CASH_REFUND")
@@ -207,7 +215,24 @@ class AgrochemicalRegulatoryTest {
         SaleReturnResponse response = saleReturnService.processReturn(returnReq);
         assertThat(response).isNotNull();
 
+        // 1. Salable Dokan stock must remain completely untouched
         StockInventory afterReturnStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-        assertThat(afterReturnStock.getQuantity()).as("Damaged return must not increment salable stock").isEqualByComparingTo(initialQty);
+        assertThat(afterReturnStock.getQuantity()).as("Damaged return must not increment salable Dokan stock").isEqualByComparingTo(initialQty);
+
+        // 2. Quarantine stock must exist with quantity 1.000
+        StockInventory quarantineStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "QUARANTINE").orElseThrow();
+        assertThat(quarantineStock.getQuantity()).isEqualByComparingTo("1.000");
+
+        // 3. Salable product quantity must not have increased
+        BigDecimal salableQtyAfter = stockInventoryRepository.sumQuantityByProductId(lot.getProduct().getId());
+        assertThat(salableQtyAfter).isEqualByComparingTo(salableQtyBefore);
+
+        // 4. DAMAGED_RETURN_HOLD movement record must be created
+        List<com.alamin.pos.entity.GodownMovement> movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId());
+        assertThat(movements).anyMatch(m -> "DAMAGED_RETURN_HOLD".equals(m.getMovementType()) && m.getQuantity().compareTo(new BigDecimal("1.000")) == 0);
+
+        // 5. Quarantine overview must include this lot
+        List<com.alamin.pos.dto.QuarantineStockResponse> quarantineList = inventoryService.getQuarantineStockOverview();
+        assertThat(quarantineList).anyMatch(q -> q.getLotId().equals(lot.getId()) && q.getQuarantineQuantity().compareTo(new BigDecimal("1.000")) == 0);
     }
 }

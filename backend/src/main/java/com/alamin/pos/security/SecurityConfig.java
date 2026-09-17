@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("OWNER")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("OWNER")
                         .requestMatchers("/api/dashboard/summary").hasRole("OWNER")
+                        .requestMatchers("/api/inventory/quarantine/dispose").hasRole("OWNER")
                         .requestMatchers("/api/sales/**", "/api/returns/**", "/api/customers/**", "/api/inventory/**", "/api/products/**").hasAnyRole("CASHIER", "OWNER")
                         .anyRequest().authenticated()
                 )

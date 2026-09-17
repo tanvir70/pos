@@ -9,34 +9,25 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class StockItemResponse {
+public class QuarantineStockResponse {
 
-    // Product details
     private Long productId;
     private String productCode;
     private String productNameEn;
     private String productNameBn;
-    private String category;
     private String baseUnit;
-    private BigDecimal cartonMultiplier;
-    private String defaultBarcode;
 
-    // Lot details
     private Long lotId;
     private String lotNumber;
-    private LocalDate entryDate;
+    private String barcode;
     private LocalDate expiryDate;
+    private String supplierName;
+
+    private BigDecimal quarantineQuantity;
     private BigDecimal purchaseCost;
     private BigDecimal lotRetailPrice;
-    private BigDecimal lotWholesalePrice;
-    private String barcode;
-
-    // Stock levels
-    private BigDecimal dokanQuantity;
-    private BigDecimal godownQuantity;
-    private BigDecimal totalQuantity;
-    private BigDecimal quarantineQuantity;
+    private BigDecimal totalLossValue;
 }

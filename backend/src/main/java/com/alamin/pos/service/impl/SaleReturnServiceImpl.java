@@ -183,8 +183,27 @@ public class SaleReturnServiceImpl implements SaleReturnService {
                     godownMovementRepository.save(movement);
                 }
             } else {
-                // BUSINESS DECISION: Damaged return items are quarantined from sellable Dokan and Godown stock balances.
-                log.info("Quarantined damaged return item for lot {} (quantity: {})", lot.getLotNumber(), qty);
+                // BUSINESS DECISION: Damaged return items are quarantined into QUARANTINE stock location to protect sellable Dokan and Godown stock balances.
+                StockInventory quarantineStock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), "QUARANTINE")
+                        .orElseGet(() -> StockInventory.builder()
+                                .lot(lot)
+                                .location("QUARANTINE")
+                                .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
+                                .build());
+                quarantineStock.setQuantity(quarantineStock.getQuantity().add(qty).setScale(3, RoundingMode.HALF_UP));
+                stockInventoryRepository.save(quarantineStock);
+
+                // Audit log damaged return hold into godown_movement
+                GodownMovement movement = GodownMovement.builder()
+                        .lot(lot)
+                        .movementType("DAMAGED_RETURN_HOLD")
+                        .quantity(qty)
+                        .movementDate(LocalDateTime.now())
+                        .referenceNo(returnNo)
+                        .remarks("Damaged item returned from customer quarantined for inspection/claim: " + returnNo)
+                        .build();
+                godownMovementRepository.save(movement);
+                log.info("Quarantined damaged return item for lot {} (quantity: {}) into QUARANTINE stock with movement DAMAGED_RETURN_HOLD", lot.getLotNumber(), qty);
             }
 
             SaleReturnItem item = SaleReturnItem.builder()

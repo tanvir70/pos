@@ -76,5 +76,27 @@ public class InventoryController {
         }
         return ResponseEntity.ok(lots);
     }
+
+    @GetMapping("/quarantine")
+    public ResponseEntity<List<com.alamin.pos.dto.QuarantineStockResponse>> getQuarantineOverview() {
+        List<com.alamin.pos.dto.QuarantineStockResponse> list = inventoryService.getQuarantineStockOverview();
+        if (!SecurityUtils.isOwner()) {
+            list.forEach(item -> {
+                item.setPurchaseCost(null);
+                item.setTotalLossValue(null);
+            });
+        }
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/quarantine/dispose")
+    public ResponseEntity<Map<String, String>> disposeQuarantineStock(
+            @Valid @RequestBody com.alamin.pos.dto.QuarantineDisposalRequest request) {
+        if (!SecurityUtils.isOwner()) {
+            throw new org.springframework.security.access.AccessDeniedException("Only owners can authorize quarantine stock disposal");
+        }
+        inventoryService.disposeQuarantineStock(request);
+        return ResponseEntity.ok(Map.of("message", "Quarantine stock disposed successfully"));
+    }
 }
 

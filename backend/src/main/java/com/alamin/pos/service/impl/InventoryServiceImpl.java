@@ -2,6 +2,8 @@ package com.alamin.pos.service.impl;
 
 import com.alamin.pos.dto.InventoryLotDto;
 import com.alamin.pos.dto.LotEntryRequest;
+import com.alamin.pos.dto.QuarantineDisposalRequest;
+import com.alamin.pos.dto.QuarantineStockResponse;
 import com.alamin.pos.dto.StockItemResponse;
 import com.alamin.pos.dto.StockTransferRequest;
 import com.alamin.pos.entity.GodownMovement;
@@ -19,6 +21,7 @@ import com.alamin.pos.repository.StockInventoryRepository;
 import com.alamin.pos.service.DocumentSequenceService;
 import com.alamin.pos.service.InventoryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +32,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InventoryServiceImpl implements InventoryService {
@@ -204,6 +209,12 @@ public class InventoryServiceImpl implements InventoryService {
                     .findFirst()
                     .orElse(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP));
 
+            BigDecimal quarantineQty = stocks.stream()
+                    .filter(s -> "QUARANTINE".equalsIgnoreCase(s.getLocation()))
+                    .map(StockInventory::getQuantity)
+                    .findFirst()
+                    .orElse(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP));
+
             BigDecimal totalQty = dokanQty.add(godownQty).setScale(3, RoundingMode.HALF_UP);
 
             overview.add(StockItemResponse.builder()
@@ -226,6 +237,7 @@ public class InventoryServiceImpl implements InventoryService {
                     .dokanQuantity(dokanQty)
                     .godownQuantity(godownQty)
                     .totalQuantity(totalQty)
+                    .quarantineQuantity(quarantineQty)
                     .build());
         }
 
@@ -251,5 +263,80 @@ public class InventoryServiceImpl implements InventoryService {
             }
         }
         return inventoryLotMapper.toDtoList(lots);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<QuarantineStockResponse> getQuarantineStockOverview() {
+        List<StockInventory> quarantineStocks = stockInventoryRepository.findActiveQuarantineStocks();
+        List<QuarantineStockResponse> responseList = new ArrayList<>();
+
+        for (StockInventory si : quarantineStocks) {
+            InventoryLot lot = si.getLot();
+            Product product = lot != null ? lot.getProduct() : null;
+            BigDecimal qty = si.getQuantity();
+            BigDecimal unitCost = (lot != null && lot.getPurchaseCost() != null)
+                    ? lot.getPurchaseCost().setScale(2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+            BigDecimal totalLoss = unitCost.multiply(qty).setScale(2, RoundingMode.HALF_UP);
+
+            responseList.add(QuarantineStockResponse.builder()
+                    .productId(product != null ? product.getId() : null)
+                    .productCode(product != null ? product.getProductCode() : null)
+                    .productNameEn(product != null ? product.getNameEn() : null)
+                    .productNameBn(product != null ? product.getNameBn() : null)
+                    .baseUnit(product != null ? product.getBaseUnit() : null)
+                    .lotId(lot != null ? lot.getId() : null)
+                    .lotNumber(lot != null ? lot.getLotNumber() : null)
+                    .barcode(lot != null ? lot.getBarcode() : null)
+                    .expiryDate(lot != null ? lot.getExpiryDate() : null)
+                    .supplierName(lot != null ? lot.getSupplierName() : null)
+                    .quarantineQuantity(qty)
+                    .purchaseCost(unitCost)
+                    .lotRetailPrice(lot != null ? lot.getLotRetailPrice() : null)
+                    .totalLossValue(totalLoss)
+                    .build());
+        }
+
+        return responseList;
+    }
+
+    @Override
+    @Transactional
+    public void disposeQuarantineStock(QuarantineDisposalRequest request) {
+        if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ValidationException("Disposal quantity must be greater than zero");
+        }
+
+        BigDecimal disposeQty = request.getQuantity().setScale(3, RoundingMode.HALF_UP);
+        InventoryLot lot = inventoryLotRepository.findById(request.getLotId())
+                .orElseThrow(() -> new ResourceNotFoundException("Lot not found with id: " + request.getLotId()));
+
+        StockInventory quarantineStock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), "QUARANTINE")
+                .orElseThrow(() -> new InsufficientStockException("No quarantine stock found for lot " + lot.getLotNumber()));
+
+        if (quarantineStock.getQuantity().compareTo(disposeQty) < 0) {
+            throw new InsufficientStockException("Requested disposal quantity (" + disposeQty + ") exceeds available quarantine stock (" + quarantineStock.getQuantity() + ") for lot " + lot.getLotNumber());
+        }
+
+        quarantineStock.setQuantity(quarantineStock.getQuantity().subtract(disposeQty).setScale(3, RoundingMode.HALF_UP));
+        stockInventoryRepository.save(quarantineStock);
+
+        String refNo = "DISP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        String remarks = (request.getRemarks() != null && !request.getRemarks().isBlank())
+                ? request.getRemarks()
+                : "Quarantine stock disposal: " + request.getDisposalType();
+
+        GodownMovement movement = GodownMovement.builder()
+                .lot(lot)
+                .movementType("DAMAGE_EXIT")
+                .quantity(disposeQty)
+                .movementDate(LocalDateTime.now())
+                .referenceNo(refNo)
+                .remarks(remarks + " [" + request.getDisposalType() + "]")
+                .build();
+        godownMovementRepository.save(movement);
+
+        log.info("Disposed {} units of damaged lot {} from QUARANTINE under type {}", disposeQty, lot.getLotNumber(), request.getDisposalType());
     }
 }

@@ -27,14 +27,19 @@ public interface StockInventoryRepository extends JpaRepository<StockInventory, 
 
     List<StockInventory> findByLotIdIn(Collection<Long> lotIds);
 
-    @Query("SELECT COALESCE(SUM(si.quantity), 0) FROM StockInventory si WHERE si.lot.product.id = :productId")
+    @Query("SELECT COALESCE(SUM(si.quantity), 0) FROM StockInventory si WHERE si.lot.product.id = :productId AND si.location != 'QUARANTINE'")
     BigDecimal sumQuantityByProductId(@Param("productId") Long productId);
 
     @Query("SELECT new com.alamin.pos.dto.LowStockProductDto(p.id, p.productCode, p.nameEn, p.nameBn, COALESCE(p.minStockAlert, 0), COALESCE(SUM(si.quantity), 0)) " +
            "FROM Product p " +
            "LEFT JOIN InventoryLot il ON il.product.id = p.id " +
-           "LEFT JOIN StockInventory si ON si.lot.id = il.id " +
+           "LEFT JOIN StockInventory si ON si.lot.id = il.id AND si.location != 'QUARANTINE' " +
            "GROUP BY p.id, p.productCode, p.nameEn, p.nameBn, p.minStockAlert " +
            "HAVING COALESCE(SUM(si.quantity), 0) <= COALESCE(p.minStockAlert, 0)")
     List<LowStockProductDto> findLowStockProducts();
+
+    @Query("SELECT si FROM StockInventory si JOIN FETCH si.lot l JOIN FETCH l.product p WHERE si.location = 'QUARANTINE' AND si.quantity > 0")
+    List<StockInventory> findActiveQuarantineStocks();
+
+    List<StockInventory> findByLocation(String location);
 }
