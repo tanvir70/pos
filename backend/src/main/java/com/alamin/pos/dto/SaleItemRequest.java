@@ -22,12 +22,6 @@ public class SaleItemRequest {
     @DecimalMin(value = "0.001", message = "Total quantity must be greater than zero")
     private BigDecimal totalQuantity;
 
-    // Optional: if null and godownQuantity is null, default all to dokanQuantity
-    private BigDecimal dokanQuantity;
-
-    // Optional
-    private BigDecimal godownQuantity;
-
     // Overridden or standard price
     @NotNull(message = "Unit price is required")
     private BigDecimal unitPrice;

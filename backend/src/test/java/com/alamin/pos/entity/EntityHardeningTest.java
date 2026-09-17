@@ -100,7 +100,8 @@ class EntityHardeningTest {
     @DisplayName("Verify domain enums validation helpers")
     void testDomainEnums() {
         assertThat(Location.isValid("DOKAN")).isTrue();
-        assertThat(Location.isValid("godown")).isTrue();
+        assertThat(Location.isValid("quarantine")).isTrue();
+        assertThat(Location.isValid("godown")).isFalse();
         assertThat(Location.isValid("INVALID")).isFalse();
         assertThat(CustomerType.valueOf("WHOLESALE")).isEqualTo(CustomerType.WHOLESALE);
         assertThat(TransactionType.valueOf("MFS_PAYMENT")).isEqualTo(TransactionType.MFS_PAYMENT);

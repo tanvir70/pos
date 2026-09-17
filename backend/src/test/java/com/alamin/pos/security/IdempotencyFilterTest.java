@@ -95,8 +95,6 @@ class IdempotencyFilterTest {
         SaleItemRequest item = SaleItemRequest.builder()
                 .lotId(lot.getId())
                 .totalQuantity(new BigDecimal("2.000"))
-                .dokanQuantity(new BigDecimal("2.000"))
-                .godownQuantity(BigDecimal.ZERO)
                 .unitPrice(new BigDecimal("150.00"))
                 .build();
 

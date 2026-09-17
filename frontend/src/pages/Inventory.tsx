@@ -2,12 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import type { Product, StockItem } from "../types"
 import { getStock, getProducts, createProduct } from "../api/endpoints"
 import BarcodeStickerModal from "../components/BarcodeStickerModal"
-import StockTransferModal from "../components/StockTransferModal"
 
 // BUSINESS DECISION: The Inventory overview links master product catalog definitions with
-// live multi-location stock levels (Dokan counter and Godown warehouse). Total valuation is
-// protected behind Owner Mode PIN. Low stock items trigger visual amber alert badges when
-// total units drop below minStockAlert.
+// live store stock levels. Total valuation is protected behind Owner Mode PIN.
+// Low stock items trigger visual amber alert badges when total units drop below minStockAlert.
 
 export interface InventoryProps {
   isOwner: boolean
@@ -68,10 +66,6 @@ export default function Inventory({ isOwner }: InventoryProps) {
   // Modal states
   const [stickerItem, setStickerItem] = useState<StockItem | null>(null)
   const [isStickerOpen, setIsStickerOpen] = useState<boolean>(false)
-  const [transferItemLotId, setTransferItemLotId] = useState<
-    number | undefined
-  >(undefined)
-  const [isTransferOpen, setIsTransferOpen] = useState<boolean>(false)
   const [showAddProduct, setShowAddProduct] = useState<boolean>(false)
 
   // New product form state
@@ -125,8 +119,6 @@ export default function Inventory({ isOwner }: InventoryProps) {
         minStockAlert: number
         retailPrice: number
         wholesalePrice: number
-        dokanStock: number
-        godownStock: number
         totalStock: number
         lots: StockItem[]
       }
@@ -146,8 +138,6 @@ export default function Inventory({ isOwner }: InventoryProps) {
         minStockAlert: prod.minStockAlert,
         retailPrice: prod.standardRetailPrice,
         wholesalePrice: prod.standardWholesalePrice,
-        dokanStock: 0,
-        godownStock: 0,
         totalStock: 0,
         lots: [],
       })
@@ -170,16 +160,12 @@ export default function Inventory({ isOwner }: InventoryProps) {
           minStockAlert: 5,
           retailPrice: stock.lotRetailPrice,
           wholesalePrice: stock.lotWholesalePrice,
-          dokanStock: 0,
-          godownStock: 0,
           totalStock: 0,
           lots: [],
         }
         map.set(pId, entry)
       }
-      entry.dokanStock += Number(stock.dokanQuantity) || 0
-      entry.godownStock += Number(stock.godownQuantity) || 0
-      entry.totalStock += Number(stock.totalQuantity) || 0
+      entry.totalStock += Number(stock.quantity ?? stock.totalQuantity) || 0
       entry.lots.push(stock)
     }
 
@@ -260,11 +246,6 @@ export default function Inventory({ isOwner }: InventoryProps) {
   const openSticker = (item: StockItem) => {
     setStickerItem(item)
     setIsStickerOpen(true)
-  }
-
-  const openTransfer = (lotId?: number) => {
-    setTransferItemLotId(lotId)
-    setIsTransferOpen(true)
   }
 
   const handleCreateProduct = async (e: React.FormEvent) => {
@@ -655,13 +636,7 @@ export default function Inventory({ isOwner }: InventoryProps) {
                   স্ট্যান্ডার্ড রেট
                 </th>
                 <th className="px-3 py-3 font-bold bn-text text-right">
-                  🏪 দোকান স্টক
-                </th>
-                <th className="px-3 py-3 font-bold bn-text text-right">
-                  🏭 গুদাম স্টক
-                </th>
-                <th className="px-3 py-3 font-bold bn-text text-right">
-                  মোট স্টক
+                  মজুদ স্টক
                 </th>
                 <th className="px-4 py-3 font-bold bn-text text-center">
                   অ্যাকশন
@@ -671,7 +646,7 @@ export default function Inventory({ isOwner }: InventoryProps) {
             <tbody className="divide-y divide-frost-border/50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-frost-muted">
+                  <td colSpan={6} className="py-12 text-center text-frost-muted">
                     <span className="text-xl animate-spin inline-block">⏳</span>
                     <p className="mt-2 text-xs bn-text">
                       স্টক তথ্য লোড হচ্ছে...
@@ -680,7 +655,7 @@ export default function Inventory({ isOwner }: InventoryProps) {
                 </tr>
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-frost-muted">
+                  <td colSpan={6} className="py-12 text-center text-frost-muted">
                     <span className="text-3xl">🔍</span>
                     <p className="mt-2 text-sm font-semibold bn-text">
                       কোনো পণ্য খুঁজে পাওয়া যায়নি
@@ -756,25 +731,7 @@ export default function Inventory({ isOwner }: InventoryProps) {
                         </div>
                       </td>
 
-                      {/* Dokan Stock */}
-                      <td className="px-3 py-3 align-top text-right">
-                        <span className="font-bold tabular-nums text-sm text-frost-dark">
-                          {p.dokanStock}
-                        </span>
-                        <span className="text-[10px] text-frost-muted ml-1">
-                          {p.baseUnit}
-                        </span>
-                      </td>
 
-                      {/* Godown Stock */}
-                      <td className="px-3 py-3 align-top text-right">
-                        <span className="font-bold tabular-nums text-sm text-frost-dark">
-                          {p.godownStock}
-                        </span>
-                        <span className="text-[10px] text-frost-muted ml-1">
-                          {p.baseUnit}
-                        </span>
-                      </td>
 
                       {/* Total Stock & Low Alert */}
                       <td className="px-3 py-3 align-top text-right">
@@ -859,10 +816,7 @@ export default function Inventory({ isOwner }: InventoryProps) {
                     <th className="px-3 py-2 font-bold bn-text">লট নম্বর</th>
                     <th className="px-3 py-2 font-bold bn-text">মেয়াদ (Expiry)</th>
                     <th className="px-3 py-2 font-bold bn-text text-right">
-                      গুদাম স্টক
-                    </th>
-                    <th className="px-3 py-2 font-bold bn-text text-right">
-                      দোকান স্টক
+                      মজুদ স্টক
                     </th>
                     <th className="px-3 py-2 font-bold bn-text text-right">
                       খুচরা মূল্য
@@ -890,10 +844,7 @@ export default function Inventory({ isOwner }: InventoryProps) {
                         {lot.expiryDate}
                       </td>
                       <td className="px-3 py-2 text-right font-bold tabular-nums">
-                        {lot.godownQuantity} {lot.baseUnit}
-                      </td>
-                      <td className="px-3 py-2 text-right font-bold tabular-nums">
-                        {lot.dokanQuantity} {lot.baseUnit}
+                        {lot.quantity} {lot.baseUnit}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums">
                         ৳{lot.lotRetailPrice}
@@ -908,13 +859,6 @@ export default function Inventory({ isOwner }: InventoryProps) {
                       </td>
                       <td className="px-3 py-2 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => openTransfer(lot.lotId)}
-                            className="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 cursor-pointer bn-text"
-                            title="দোকানে স্থানান্তর"
-                          >
-                            🔄 স্থানান্তর
-                          </button>
                           <button
                             onClick={() => openSticker(lot)}
                             className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 cursor-pointer bn-text"
@@ -940,20 +884,6 @@ export default function Inventory({ isOwner }: InventoryProps) {
         onClose={() => {
           setIsStickerOpen(false)
           setStickerItem(null)
-        }}
-      />
-
-      {/* Stock Transfer Modal */}
-      <StockTransferModal
-        stockItems={stocks}
-        initialLotId={transferItemLotId}
-        isOpen={isTransferOpen}
-        onClose={() => {
-          setIsTransferOpen(false)
-          setTransferItemLotId(undefined)
-        }}
-        onSuccess={() => {
-          loadData()
         }}
       />
     </div>

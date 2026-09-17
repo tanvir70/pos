@@ -32,13 +32,6 @@ public class DocumentSequenceServiceImpl implements DocumentSequenceService {
         return String.format("RET-%s-%06d", datePart, nextVal);
     }
 
-    @Override
-    public String generateTransferNumber() {
-        Long nextVal = getNextSequenceValue("transfer_number_seq");
-        String datePart = LocalDate.now().format(DATE_FORMATTER);
-        return String.format("TRF-%s-%06d", datePart, nextVal);
-    }
-
     private Long getNextSequenceValue(String sequenceName) {
         try {
             Long val = jdbcTemplate.queryForObject("SELECT NEXTVAL('" + sequenceName + "')", Long.class);

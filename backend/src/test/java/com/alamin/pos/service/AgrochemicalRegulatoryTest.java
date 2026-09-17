@@ -52,9 +52,6 @@ class AgrochemicalRegulatoryTest {
     private CustomerRepository customerRepository;
 
     @Autowired
-    private com.alamin.pos.repository.GodownMovementRepository godownMovementRepository;
-
-    @Autowired
     private InventoryService inventoryService;
 
     @Test
@@ -91,8 +88,6 @@ class AgrochemicalRegulatoryTest {
                         SaleItemRequest.builder()
                                 .lotId(expiredLot.getId())
                                 .totalQuantity(new BigDecimal("1.000"))
-                                .dokanQuantity(new BigDecimal("1.000"))
-                                .godownQuantity(BigDecimal.ZERO)
                                 .unitPrice(new BigDecimal("650.00"))
                                 .build()
                 ))
@@ -120,8 +115,6 @@ class AgrochemicalRegulatoryTest {
                         SaleItemRequest.builder()
                                 .lotId(lot1.getId())
                                 .totalQuantity(new BigDecimal("2.000"))
-                                .dokanQuantity(new BigDecimal("2.000"))
-                                .godownQuantity(BigDecimal.ZERO)
                                 .unitPrice(new BigDecimal("650.00"))
                                 .build()
                 ))
@@ -137,7 +130,6 @@ class AgrochemicalRegulatoryTest {
                                 .lotId(lot2.getId())
                                 .quantity(new BigDecimal("1.000"))
                                 .refundPrice(new BigDecimal("650.00"))
-                                .restockLocation("DOKAN")
                                 .build()
                 ))
                 .build();
@@ -163,8 +155,6 @@ class AgrochemicalRegulatoryTest {
                         SaleItemRequest.builder()
                                 .lotId(lot.getId())
                                 .totalQuantity(new BigDecimal("2.000"))
-                                .dokanQuantity(new BigDecimal("2.000"))
-                                .godownQuantity(BigDecimal.ZERO)
                                 .unitPrice(new BigDecimal("650.00"))
                                 .build()
                 ))
@@ -180,7 +170,6 @@ class AgrochemicalRegulatoryTest {
                                 .lotId(lot.getId())
                                 .quantity(new BigDecimal("3.000"))
                                 .refundPrice(new BigDecimal("650.00"))
-                                .restockLocation("DOKAN")
                                 .build()
                 ))
                 .build();
@@ -191,7 +180,7 @@ class AgrochemicalRegulatoryTest {
     }
 
     @Test
-    @DisplayName("Verify damaged returns are routed to QUARANTINE stock with audit trail and zero salable stock leakage")
+    @DisplayName("Verify damaged returns are routed to QUARANTINE stock with zero salable stock leakage")
     void testDamagedReturnStockQuarantined() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
         StockInventory initialDokanStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
@@ -207,7 +196,6 @@ class AgrochemicalRegulatoryTest {
                                 .quantity(new BigDecimal("1.000"))
                                 .refundPrice(new BigDecimal("650.00"))
                                 .isDamaged(true)
-                                .restockLocation("DOKAN")
                                 .build()
                 ))
                 .build();
@@ -227,11 +215,7 @@ class AgrochemicalRegulatoryTest {
         BigDecimal salableQtyAfter = stockInventoryRepository.sumQuantityByProductId(lot.getProduct().getId());
         assertThat(salableQtyAfter).isEqualByComparingTo(salableQtyBefore);
 
-        // 4. DAMAGED_RETURN_HOLD movement record must be created
-        List<com.alamin.pos.entity.GodownMovement> movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId());
-        assertThat(movements).anyMatch(m -> "DAMAGED_RETURN_HOLD".equals(m.getMovementType()) && m.getQuantity().compareTo(new BigDecimal("1.000")) == 0);
-
-        // 5. Quarantine overview must include this lot
+        // 4. Quarantine overview must include this lot
         List<com.alamin.pos.dto.QuarantineStockResponse> quarantineList = inventoryService.getQuarantineStockOverview();
         assertThat(quarantineList).anyMatch(q -> q.getLotId().equals(lot.getId()) && q.getQuarantineQuantity().compareTo(new BigDecimal("1.000")) == 0);
     }

@@ -7,7 +7,6 @@ import com.alamin.pos.dto.SaleReturnRequest;
 import com.alamin.pos.dto.SaleReturnResponse;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
-import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.StockInventory;
 import com.alamin.pos.exception.BusinessRuleViolationException;
@@ -15,7 +14,6 @@ import com.alamin.pos.exception.DuplicateResourceException;
 import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
-import com.alamin.pos.repository.GodownMovementRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.alamin.pos.repository.StockInventoryRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -51,9 +49,6 @@ class CustomerAndReturnTest {
 
     @Autowired
     private StockInventoryRepository stockInventoryRepository;
-
-    @Autowired
-    private GodownMovementRepository godownMovementRepository;
 
     @Test
     @DisplayName("1. Customer Creation & Query: Create wholesale dealer with MFS and credit limit, verify retrieval")
@@ -99,33 +94,33 @@ class CustomerAndReturnTest {
         Customer customer = customerRepository.findByPhone("01711000001").orElseThrow();
         assertThat(customer.getCurrentDue()).isEqualByComparingTo("15000.00");
 
-        CustomerPaymentRequest payReq = CustomerPaymentRequest.builder()
+        CustomerPaymentRequest paymentRequest = CustomerPaymentRequest.builder()
                 .amount(new BigDecimal("5000.00"))
-                .moneyReceiptNo("MR-1001")
                 .paymentMethod("CASH")
-                .notes("Partial seasonal repayment")
+                .moneyReceiptNo("MR-1001")
+                .notes("Partial repayment for seasonal credit")
                 .build();
 
-        CustomerLedger ledger = customerService.recordPayment(customer.getId(), payReq);
-
+        CustomerLedger paymentResult = customerService.recordPayment(customer.getId(), paymentRequest);
         Customer updatedCustomer = customerService.getCustomer(customer.getId());
-        assertThat(updatedCustomer.getCurrentDue()).isEqualByComparingTo("10000.00");
 
-        assertThat(ledger.getTransactionType()).isEqualTo("CASH_PAYMENT");
-        assertThat(ledger.getCredit()).isEqualByComparingTo("5000.00");
-        assertThat(ledger.getDebit()).isEqualByComparingTo("0.00");
-        assertThat(ledger.getBalanceAfter()).isEqualByComparingTo("10000.00");
-        assertThat(ledger.getMoneyReceiptNo()).isEqualTo("MR-1001");
-        assertThat(ledger.getNotes()).isEqualTo("Partial seasonal repayment");
+        assertThat(updatedCustomer.getCurrentDue()).isEqualByComparingTo("10000.00");
 
         List<CustomerLedger> ledgers = customerService.getCustomerLedger(customer.getId());
         assertThat(ledgers).isNotEmpty();
-        assertThat(ledgers.get(0).getId()).isEqualTo(ledger.getId());
+
+        CustomerLedger latestLedger = ledgers.get(0);
+        assertThat(latestLedger.getTransactionType()).isEqualTo("CASH_PAYMENT");
+        assertThat(latestLedger.getCredit()).isEqualByComparingTo("5000.00");
+        assertThat(latestLedger.getDebit()).isEqualByComparingTo("0.00");
+        assertThat(latestLedger.getBalanceAfter()).isEqualByComparingTo("10000.00");
+        assertThat(latestLedger.getMoneyReceiptNo()).isEqualTo("MR-1001");
+        assertThat(latestLedger.getNotes()).isEqualTo("Partial repayment for seasonal credit");
     }
 
     @Test
-    @DisplayName("3. Direct Return Without Invoice (Restock to Dokan): Return 2 bottles without original invoice; verify Dokan stock increases by 2; refund cash")
-    void testDirectReturnWithoutInvoiceRestockDokan() {
+    @DisplayName("3. Direct Sale Return (Cash Refund): Return 2 bottles without original invoice, refund ৳1,300 cash, increments DOKAN stock")
+    void testDirectSaleReturnCash() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
         StockInventory dokanStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
         BigDecimal startDokanQty = dokanStock.getQuantity();
@@ -135,7 +130,6 @@ class CustomerAndReturnTest {
                 .quantity(new BigDecimal("2.000"))
                 .refundPrice(new BigDecimal("650.00"))
                 .isDamaged(false)
-                .restockLocation("DOKAN")
                 .build();
 
         SaleReturnRequest returnReq = SaleReturnRequest.builder()
@@ -172,7 +166,6 @@ class CustomerAndReturnTest {
                 .quantity(new BigDecimal("3.000"))
                 .refundPrice(new BigDecimal("650.00"))
                 .isDamaged(false)
-                .restockLocation("DOKAN")
                 .build();
 
         SaleReturnRequest returnReq = SaleReturnRequest.builder()
@@ -200,7 +193,7 @@ class CustomerAndReturnTest {
     }
 
     @Test
-    @DisplayName("5. Damaged Item Return: Return 1 damaged packet; verify sellable stock is NOT incremented")
+    @DisplayName("5. Damaged Item Return: Return 1 damaged packet; verify sellable stock is NOT incremented, quarantined stock incremented")
     void testDamagedItemReturn() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-VIR-202601").orElseThrow();
         StockInventory dokanStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
@@ -211,7 +204,6 @@ class CustomerAndReturnTest {
                 .quantity(new BigDecimal("1.000"))
                 .refundPrice(new BigDecimal("350.00"))
                 .isDamaged(true) // Damaged!
-                .restockLocation("DOKAN")
                 .build();
 
         SaleReturnRequest returnReq = SaleReturnRequest.builder()
@@ -228,6 +220,10 @@ class CustomerAndReturnTest {
         // Sellable stock MUST NOT be incremented
         StockInventory updatedDokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
         assertThat(updatedDokan.getQuantity()).isEqualByComparingTo(startDokanQty);
+
+        // Quarantine stock MUST be incremented
+        StockInventory quarantineStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "QUARANTINE").orElseThrow();
+        assertThat(quarantineStock.getQuantity()).isEqualByComparingTo("1.000");
     }
 
     @Test
@@ -254,41 +250,7 @@ class CustomerAndReturnTest {
     }
 
     @Test
-    @DisplayName("7. Restock to Godown: Godown stock increases and GodownMovement RETURN_ENTRY is logged")
-    void testRestockToGodownLogsMovement() {
-        InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
-        StockInventory godownStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN").orElseThrow();
-        BigDecimal startGodownQty = godownStock.getQuantity();
-
-        SaleReturnItemRequest returnItem = SaleReturnItemRequest.builder()
-                .lotId(lot.getId())
-                .quantity(new BigDecimal("5.000"))
-                .refundPrice(new BigDecimal("580.00"))
-                .isDamaged(false)
-                .restockLocation("GODOWN")
-                .build();
-
-        SaleReturnRequest returnReq = SaleReturnRequest.builder()
-                .refundType("CASH_REFUND")
-                .reason("Bulk sub-dealer return restocked to Godown")
-                .items(List.of(returnItem))
-                .build();
-
-        SaleReturnResponse response = saleReturnService.processReturn(returnReq);
-
-        StockInventory updatedGodown = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN").orElseThrow();
-        assertThat(updatedGodown.getQuantity()).isEqualByComparingTo(startGodownQty.add(new BigDecimal("5.000")));
-
-        List<GodownMovement> movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId());
-        assertThat(movements).isNotEmpty();
-        GodownMovement latest = movements.get(0);
-        assertThat(latest.getMovementType()).isEqualTo("RETURN_ENTRY");
-        assertThat(latest.getQuantity()).isEqualByComparingTo("5.000");
-        assertThat(latest.getReferenceNo()).isEqualTo(response.getReturnNo());
-    }
-
-    @Test
-    @DisplayName("8. Query return by ID and Recent Returns list")
+    @DisplayName("7. Query return by ID and Recent Returns list")
     void testQueryReturnMethods() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
 
@@ -297,7 +259,6 @@ class CustomerAndReturnTest {
                 .quantity(new BigDecimal("1.000"))
                 .refundPrice(new BigDecimal("650.00"))
                 .isDamaged(false)
-                .restockLocation("DOKAN")
                 .build();
 
         SaleReturnRequest returnReq = SaleReturnRequest.builder()
@@ -317,7 +278,7 @@ class CustomerAndReturnTest {
     }
 
     @Test
-    @DisplayName("9. Duplicate Customer: Registering duplicate phone throws DuplicateResourceException")
+    @DisplayName("8. Duplicate Customer: Registering duplicate phone throws DuplicateResourceException")
     void testDuplicateCustomerPhoneThrowsException() {
         CustomerRequest request = CustomerRequest.builder()
                 .name("রহিম ট্রেডার্স")
@@ -330,7 +291,7 @@ class CustomerAndReturnTest {
     }
 
     @Test
-    @DisplayName("10. Validation: Zero or negative customer payment throws ValidationException")
+    @DisplayName("9. Validation: Zero or negative customer payment throws ValidationException")
     void testInvalidPaymentAmountThrowsException() {
         Customer customer = customerRepository.findByPhone("01711000001").orElseThrow();
 

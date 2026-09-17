@@ -3,8 +3,7 @@ package com.alamin.pos.exception;
 import org.springframework.http.HttpStatus;
 
 /**
- * Thrown when requested stock quantity exceeds available physical balance in bulk warehouse storage (Godown)
- * or when an internal replenishment transfer cannot be fulfilled.
+ * Thrown when requested stock quantity exceeds available balance or cannot be fulfilled.
  * Maps to HTTP 422 Unprocessable Entity.
  */
 public class InsufficientStockException extends PosException {

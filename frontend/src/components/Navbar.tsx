@@ -25,7 +25,6 @@ const NAV_TABS: TabItem[] = [
   { id: "pos", bn: "বিক্রয় কাউন্টার", en: "POS", icon: "🛒" },
   { id: "dashboard", bn: "ড্যাশবোর্ড", en: "Analytics", icon: "📊" },
   { id: "inventory", bn: "পণ্য ও স্টক", en: "Catalog", icon: "📦" },
-  { id: "godown", bn: "গুদাম ও চালান", en: "Godown", icon: "🏭" },
   { id: "customers", bn: "বাকি খাতা", en: "Ledger", icon: "📒" },
   { id: "returns", bn: "পণ্য ফেরত", en: "Returns", icon: "🔄" },
 ]

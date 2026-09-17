@@ -36,9 +36,6 @@ class FlywayV3MigrationTest {
 
         Long nextReturn = jdbcTemplate.queryForObject("SELECT NEXTVAL('return_number_seq')", Long.class);
         assertThat(nextReturn).isNotNull().isGreaterThanOrEqualTo(1001L);
-
-        Long nextTransfer = jdbcTemplate.queryForObject("SELECT NEXTVAL('transfer_number_seq')", Long.class);
-        assertThat(nextTransfer).isNotNull().isGreaterThanOrEqualTo(1001L);
     }
 
     @Test

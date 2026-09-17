@@ -135,8 +135,6 @@ public class SecurityRegressionTest {
         SaleItemRequest item = SaleItemRequest.builder()
                 .lotId(lot.getId())
                 .totalQuantity(new BigDecimal("1.000"))
-                .dokanQuantity(new BigDecimal("1.000"))
-                .godownQuantity(BigDecimal.ZERO)
                 .unitPrice(new BigDecimal("300.00"))
                 .build();
 

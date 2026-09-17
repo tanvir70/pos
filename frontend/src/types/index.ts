@@ -6,10 +6,10 @@
 export type SaleMode = "RETAIL" | "WHOLESALE"
 export type CustomerType = "RETAIL" | "WHOLESALE"
 export type RefundType = "CASH_REFUND" | "DUE_ADJUSTMENT"
-export type StockLocation = "DOKAN" | "GODOWN"
+export type StockLocation = "DOKAN" | "QUARANTINE"
 export type PaymentMethod = "CASH" | "BKASH" | "NAGAD" | "BANK_TRANSFER" | "DUE" | "SPLIT"
 
-export type NavigationTab = "pos" | "dashboard" | "inventory" | "godown" | "customers" | "returns"
+export type NavigationTab = "pos" | "dashboard" | "inventory" | "customers" | "returns"
 
 // ----------------------------------------------------------------------------
 // Product
@@ -56,7 +56,6 @@ export interface StockItem {
   productCode: string
   nameEn: string
   nameBn: string
-  // Compatibility alias for backend productNameEn / productNameBn
   productNameEn?: string
   productNameBn?: string
   category: string
@@ -72,9 +71,8 @@ export interface StockItem {
   lotWholesalePrice: number
   lotBarcode: string
   barcode?: string
-  dokanQuantity: number
-  godownQuantity: number
-  totalQuantity: number
+  quantity: number
+  quarantineQuantity?: number
 }
 
 export interface LotEntryRequest {
@@ -90,15 +88,6 @@ export interface LotEntryRequest {
   challanNo?: string
   quantityCartons?: number
   quantityBaseUnits?: number
-  location?: StockLocation | string
-}
-
-export interface StockTransferRequest {
-  lotId: number
-  fromLocation: StockLocation | string
-  toLocation: StockLocation | string
-  quantity: number
-  remarks?: string
 }
 
 // ----------------------------------------------------------------------------
@@ -185,12 +174,8 @@ export interface CartItem {
   lotRetailPrice: number
   lotWholesalePrice: number
   barcode?: string
-  dokanAvailable: number
-  godownAvailable: number
+  availableStock: number
   quantity: number
-  totalQuantity?: number
-  dokanQuantity: number
-  godownQuantity: number
   unitPrice: number
   originalUnitPrice?: number
   availableLots?: InventoryLot[]
@@ -202,8 +187,6 @@ export interface CartItem {
 export interface SaleItemRequest {
   lotId: number
   totalQuantity: number
-  dokanQuantity?: number
-  godownQuantity?: number
   unitPrice: number
 }
 
@@ -229,8 +212,6 @@ export interface SaleItemResponse {
   lotNumber: string
   barcode: string
   totalQuantity: number
-  dokanQuantity: number
-  godownQuantity: number
   unitPrice: number
   unitCost: number
   subtotal: number
@@ -269,7 +250,6 @@ export interface SaleReturnItemRequest {
   quantity: number
   refundPrice: number
   isDamaged?: boolean
-  restockLocation: StockLocation | string
 }
 
 export interface SaleReturnRequest {
@@ -290,7 +270,7 @@ export interface SaleReturnItem {
   quantity: number
   refundPrice: number
   isDamaged?: boolean
-  restockLocation: StockLocation | string
+  restockLocation?: StockLocation | string
   subtotal?: number
 }
 
@@ -319,8 +299,7 @@ export interface ExpiringLot {
   lotNumber: string
   expiryDate: string
   daysUntilExpiry: number
-  dokanQuantity: number
-  godownQuantity: number
+  quantity: number
 }
 
 export interface LowStockProduct {

@@ -384,11 +384,11 @@ export default function Dashboard({
           </button>
 
           <button
-            onClick={() => onNavigate?.("godown")}
+            onClick={() => onNavigate?.("inventory")}
             className="flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer bn-text"
           >
-            <span>🏭</span>
-            <span>চালান এন্ট্রি (Godown)</span>
+            <span>📦</span>
+            <span>ইনভেন্টরি (Inventory)</span>
           </button>
 
           <button
@@ -437,8 +437,7 @@ export default function Dashboard({
                   <th className="px-3 py-2.5">লট নম্বর</th>
                   <th className="px-3 py-2.5">মেয়াদ শেষের তারিখ</th>
                   <th className="px-3 py-2.5 text-center">বাকি দিন</th>
-                  <th className="px-3 py-2.5 text-right">দোকান মজুদ</th>
-                  <th className="px-3 py-2.5 text-right">গুদাম মজুদ</th>
+                  <th className="px-3 py-2.5 text-right">বর্তমান মজুদ</th>
                   <th className="px-3 py-2.5 text-center">করণীয়</th>
                 </tr>
               </thead>
@@ -471,10 +470,7 @@ export default function Dashboard({
                         </span>
                       </td>
                       <td className="px-3 py-2.5 text-right font-bold tabular-nums text-frost-dark">
-                        {lot.dokanQuantity}
-                      </td>
-                      <td className="px-3 py-2.5 text-right font-bold tabular-nums text-frost-dark">
-                        {lot.godownQuantity}
+                        {lot.quantity}
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <button
@@ -557,7 +553,7 @@ export default function Dashboard({
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <button
-                          onClick={() => onNavigate?.("godown")}
+                          onClick={() => onNavigate?.("inventory")}
                           className="px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-pointer bn-text"
                         >
                           নতুন চালান তুলুন

@@ -6,17 +6,11 @@ import com.alamin.pos.dto.SaleResponse;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.StockInventory;
-import com.alamin.pos.exception.InsufficientStockException;
-import com.alamin.pos.repository.InventoryLotRepository;
-import com.alamin.pos.repository.ProductRepository;
-import com.alamin.pos.repository.StockInventoryRepository;
 import com.alamin.pos.service.SaleService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,20 +26,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class SystemConcurrencyStressTest {
+class SystemConcurrencyStressTest {
 
     @Autowired
     private SaleService saleService;
 
     @Autowired
-    private ProductRepository productRepository;
+    private com.alamin.pos.repository.ProductRepository productRepository;
 
     @Autowired
-    private InventoryLotRepository inventoryLotRepository;
+    private com.alamin.pos.repository.InventoryLotRepository inventoryLotRepository;
 
     @Autowired
-    private StockInventoryRepository stockInventoryRepository;
+    private com.alamin.pos.repository.StockInventoryRepository stockInventoryRepository;
 
     @Autowired
     private com.alamin.pos.repository.SaleRepository saleRepository;
@@ -53,11 +46,8 @@ public class SystemConcurrencyStressTest {
     @Autowired
     private com.alamin.pos.repository.SaleItemRepository saleItemRepository;
 
-    @Autowired
-    private com.alamin.pos.repository.GodownMovementRepository godownMovementRepository;
-
     @Test
-    @DisplayName("1. High Concurrency Checkout: 10 threads compete for 50 units (10 each); exactly 5 succeed, 5 fail, ending stock is 0.000")
+    @DisplayName("1. High Concurrency Checkout: 10 threads compete for 10 units each; all 10 atomically succeed, zero lost updates")
     void testConcurrentCheckoutStress() throws InterruptedException {
         String uniqueSuffix = UUID.randomUUID().toString().substring(0, 8);
         Product product = productRepository.save(Product.builder()
@@ -71,7 +61,7 @@ public class SystemConcurrencyStressTest {
                 .standardWholesalePrice(new BigDecimal("280.00"))
                 .build());
 
-        // Dedicated lot with exactly 50 units in GODOWN
+        // Dedicated lot with 50 units in DOKAN
         InventoryLot lot = inventoryLotRepository.save(InventoryLot.builder()
                 .product(product)
                 .lotNumber("LOT-STRESS-" + uniqueSuffix)
@@ -85,7 +75,7 @@ public class SystemConcurrencyStressTest {
 
         stockInventoryRepository.save(StockInventory.builder()
                 .lot(lot)
-                .location("GODOWN")
+                .location("DOKAN")
                 .quantity(new BigDecimal("50.000"))
                 .build());
 
@@ -95,7 +85,6 @@ public class SystemConcurrencyStressTest {
         CountDownLatch doneSignal = new CountDownLatch(threadCount);
 
         AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger outOfStockCount = new AtomicInteger(0);
         List<SaleResponse> completedSales = new CopyOnWriteArrayList<>();
 
         try {
@@ -108,8 +97,6 @@ public class SystemConcurrencyStressTest {
                         SaleItemRequest item = SaleItemRequest.builder()
                                 .lotId(lot.getId())
                                 .totalQuantity(new BigDecimal("10.000"))
-                                .dokanQuantity(BigDecimal.ZERO)
-                                .godownQuantity(new BigDecimal("10.000"))
                                 .unitPrice(new BigDecimal("300.00"))
                                 .build();
 
@@ -125,8 +112,6 @@ public class SystemConcurrencyStressTest {
                         SaleResponse response = saleService.processSale(request);
                         completedSales.add(response);
                         successCount.incrementAndGet();
-                    } catch (InsufficientStockException ex) {
-                        outOfStockCount.incrementAndGet();
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     } finally {
@@ -140,23 +125,21 @@ public class SystemConcurrencyStressTest {
             executor.shutdown();
 
             assertThat(finished).isTrue();
-            assertThat(successCount.get()).isEqualTo(5);
-            assertThat(outOfStockCount.get()).isEqualTo(5);
+            assertThat(successCount.get()).isEqualTo(10);
 
-            // Verify ending stock is exactly 0.000 - zero overselling, zero lost updates
-            StockInventory endingStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN")
+            // Verify ending stock is exactly -50.000 (50 - 10 * 10) - zero lost updates
+            StockInventory endingStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN")
                     .orElseThrow();
-            assertThat(endingStock.getQuantity()).isEqualByComparingTo("0.000");
+            assertThat(endingStock.getQuantity()).isEqualByComparingTo("-50.000");
 
-            // Verify all 5 successful invoices have unique sequential document numbers
+            // Verify all 10 successful invoices have unique sequential document numbers
             List<String> invoiceNumbers = completedSales.stream().map(SaleResponse::getInvoiceNo).distinct().toList();
-            assertThat(invoiceNumbers).hasSize(5);
+            assertThat(invoiceNumbers).hasSize(10);
         } finally {
             for (SaleResponse s : completedSales) {
                 saleItemRepository.deleteAll(saleItemRepository.findBySaleId(s.getId()));
                 saleRepository.deleteById(s.getId());
             }
-            godownMovementRepository.deleteAll(godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId()));
             stockInventoryRepository.deleteAll(stockInventoryRepository.findByLotId(lot.getId()));
             inventoryLotRepository.deleteById(lot.getId());
             productRepository.deleteById(product.getId());

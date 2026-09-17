@@ -6,7 +6,6 @@ import com.alamin.pos.dto.SaleReturnRequest;
 import com.alamin.pos.dto.SaleReturnResponse;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
-import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.Sale;
@@ -20,7 +19,6 @@ import com.alamin.pos.exception.ResourceNotFoundException;
 import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
-import com.alamin.pos.repository.GodownMovementRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.alamin.pos.repository.SaleItemRepository;
 import com.alamin.pos.repository.SaleRepository;
@@ -58,7 +56,6 @@ public class SaleReturnServiceImpl implements SaleReturnService {
     private final CustomerLedgerRepository customerLedgerRepository;
     private final InventoryLotRepository inventoryLotRepository;
     private final StockInventoryRepository stockInventoryRepository;
-    private final GodownMovementRepository godownMovementRepository;
     private final DocumentSequenceService documentSequenceService;
 
     @Override
@@ -157,53 +154,19 @@ public class SaleReturnServiceImpl implements SaleReturnService {
             totalRefundAmount = totalRefundAmount.add(lineRefund);
 
             boolean isDamaged = Boolean.TRUE.equals(itemReq.getIsDamaged());
-            String location = (itemReq.getRestockLocation() != null && !itemReq.getRestockLocation().isBlank())
-                    ? itemReq.getRestockLocation().trim().toUpperCase()
-                    : "DOKAN";
+            String location = isDamaged ? "QUARANTINE" : "DOKAN";
 
-            if (!isDamaged) {
-                StockInventory stock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), location)
-                        .orElseGet(() -> StockInventory.builder()
-                                .lot(lot)
-                                .location(location)
-                                .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
-                                .build());
-                stock.setQuantity(stock.getQuantity().add(qty).setScale(3, RoundingMode.HALF_UP));
-                stockInventoryRepository.save(stock);
-
-                if ("GODOWN".equals(location)) {
-                    GodownMovement movement = GodownMovement.builder()
+            StockInventory stock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), location)
+                    .orElseGet(() -> StockInventory.builder()
                             .lot(lot)
-                            .movementType("RETURN_ENTRY")
-                            .quantity(qty)
-                            .movementDate(LocalDateTime.now())
-                            .referenceNo(returnNo)
-                            .remarks("Sales return restocked to Godown: " + returnNo)
-                            .build();
-                    godownMovementRepository.save(movement);
-                }
-            } else {
-                // BUSINESS DECISION: Damaged return items are quarantined into QUARANTINE stock location to protect sellable Dokan and Godown stock balances.
-                StockInventory quarantineStock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), "QUARANTINE")
-                        .orElseGet(() -> StockInventory.builder()
-                                .lot(lot)
-                                .location("QUARANTINE")
-                                .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
-                                .build());
-                quarantineStock.setQuantity(quarantineStock.getQuantity().add(qty).setScale(3, RoundingMode.HALF_UP));
-                stockInventoryRepository.save(quarantineStock);
+                            .location(location)
+                            .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
+                            .build());
+            stock.setQuantity(stock.getQuantity().add(qty).setScale(3, RoundingMode.HALF_UP));
+            stockInventoryRepository.save(stock);
 
-                // Audit log damaged return hold into godown_movement
-                GodownMovement movement = GodownMovement.builder()
-                        .lot(lot)
-                        .movementType("DAMAGED_RETURN_HOLD")
-                        .quantity(qty)
-                        .movementDate(LocalDateTime.now())
-                        .referenceNo(returnNo)
-                        .remarks("Damaged item returned from customer quarantined for inspection/claim: " + returnNo)
-                        .build();
-                godownMovementRepository.save(movement);
-                log.info("Quarantined damaged return item for lot {} (quantity: {}) into QUARANTINE stock with movement DAMAGED_RETURN_HOLD", lot.getLotNumber(), qty);
+            if (isDamaged) {
+                log.info("Quarantined damaged return item for lot {} (quantity: {}) into QUARANTINE stock", lot.getLotNumber(), qty);
             }
 
             SaleReturnItem item = SaleReturnItem.builder()

@@ -35,8 +35,6 @@ public class StockItemResponse {
     private String barcode;
 
     // Stock levels
-    private BigDecimal dokanQuantity;
-    private BigDecimal godownQuantity;
-    private BigDecimal totalQuantity;
+    private BigDecimal quantity;
     private BigDecimal quarantineQuantity;
 }

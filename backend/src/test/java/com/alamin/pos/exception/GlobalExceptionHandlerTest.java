@@ -1,8 +1,9 @@
 package com.alamin.pos.exception;
 
 import com.alamin.pos.dto.CustomerRequest;
+import com.alamin.pos.dto.LotEntryRequest;
+import com.alamin.pos.dto.QuarantineDisposalRequest;
 import com.alamin.pos.dto.SaleRequest;
-import com.alamin.pos.dto.StockTransferRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Collections;
 
 import static org.hamcrest.Matchers.*;
@@ -45,22 +47,22 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @WithMockUser(roles = "OWNER")
     @DisplayName("2. InsufficientStockException returns HTTP 422 and INSUFFICIENT_STOCK error code")
     void testInsufficientStockException() throws Exception {
-        StockTransferRequest request = new StockTransferRequest();
-        request.setLotId(1L);
-        request.setFromLocation("GODOWN");
-        request.setToLocation("DOKAN");
-        request.setQuantity(new BigDecimal("999999.000")); // Exceeds available stock
+        QuarantineDisposalRequest request = QuarantineDisposalRequest.builder()
+                .lotId(1L)
+                .quantity(new BigDecimal("999999.000"))
+                .disposalType("WRITE_OFF")
+                .build();
 
-        mockMvc.perform(post("/api/inventory/transfer")
+        mockMvc.perform(post("/api/inventory/quarantine/dispose")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.status").value(422))
                 .andExpect(jsonPath("$.errorCode").value("INSUFFICIENT_STOCK"))
-                .andExpect(jsonPath("$.message", containsString("Insufficient stock in GODOWN")))
-                .andExpect(jsonPath("$.path").value("/api/inventory/transfer"))
+                .andExpect(jsonPath("$.path").value("/api/inventory/quarantine/dispose"))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 
@@ -86,20 +88,24 @@ public class GlobalExceptionHandlerTest {
     @Test
     @DisplayName("4. ValidationException returns HTTP 400 and VALIDATION_FAILED error code")
     void testValidationException() throws Exception {
-        StockTransferRequest request = new StockTransferRequest();
-        request.setLotId(1L);
-        request.setFromLocation("GODOWN");
-        request.setToLocation("DOKAN");
-        request.setQuantity(new BigDecimal("-1.000")); // Invalid quantity triggers ValidationException
+        LotEntryRequest request = LotEntryRequest.builder()
+                .productId(1L)
+                .lotNumber("LOT-INV-TEST")
+                .entryDate(LocalDate.now().minusMonths(1))
+                .expiryDate(LocalDate.now().plusYears(1))
+                .purchaseCost(new BigDecimal("100.00"))
+                .lotRetailPrice(new BigDecimal("150.00"))
+                .lotWholesalePrice(new BigDecimal("140.00"))
+                .quantityCartons(new BigDecimal("-5.000"))
+                .build();
 
-        mockMvc.perform(post("/api/inventory/transfer")
+        mockMvc.perform(post("/api/inventory/lots")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
-                .andExpect(jsonPath("$.message").value("Transfer quantity must be greater than zero"))
-                .andExpect(jsonPath("$.path").value("/api/inventory/transfer"))
+                .andExpect(jsonPath("$.path").value("/api/inventory/lots"))
                 .andExpect(jsonPath("$.timestamp").isNotEmpty());
     }
 

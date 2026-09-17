@@ -20,8 +20,6 @@ public class SaleItemResponse {
     private String productNameEn;
     private String productNameBn;
     private BigDecimal totalQuantity;
-    private BigDecimal dokanQuantity;
-    private BigDecimal godownQuantity;
     private BigDecimal unitPrice;
     private BigDecimal unitCost;
     private BigDecimal subtotal;

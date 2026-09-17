@@ -3,7 +3,7 @@ import type { Product, LotEntryRequest } from "../types"
 import { createLot } from "../api/endpoints"
 
 // BUSINESS DECISION: Incoming shipments calculate base units as (cartons * cartonMultiplier) + loose units.
-// Shipments default to GODOWN storage unless explicitly assigned to DOKAN. Barcodes are synthesized
+// Shipments enter DOKAN store stock directly. Barcodes are synthesized
 // automatically by backend if left blank.
 
 export interface LotEntryModalProps {
@@ -25,7 +25,6 @@ export default function LotEntryModal({
   const expiryDateId = useId()
   const challanNoId = useId()
   const supplierNameId = useId()
-  const locationId = useId()
   const quantityCartonsId = useId()
   const quantityBaseUnitsId = useId()
   const purchaseCostId = useId()
@@ -43,7 +42,6 @@ export default function LotEntryModal({
   const [supplierName, setSupplierName] = useState<string>(
     "Syngenta Bangladesh Ltd.",
   )
-  const [location, setLocation] = useState<"GODOWN" | "DOKAN">("GODOWN")
   const [quantityCartons, setQuantityCartons] = useState<string>("")
   const [quantityBaseUnits, setQuantityBaseUnits] = useState<string>("")
   const [purchaseCost, setPurchaseCost] = useState<string>("")
@@ -135,7 +133,7 @@ export default function LotEntryModal({
         challanNo: challanNo.trim() || undefined,
         quantityCartons: cartons > 0 ? cartons : undefined,
         quantityBaseUnits: loose > 0 ? loose : undefined,
-        location,
+        location: "DOKAN",
       }
 
       await createLot(request)
@@ -264,8 +262,8 @@ export default function LotEntryModal({
             </div>
           </div>
 
-          {/* Row 3: Challan, Supplier & Arrival Location */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Row 3: Challan & Supplier */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label
                 htmlFor={challanNoId}
@@ -297,25 +295,6 @@ export default function LotEntryModal({
                 placeholder="Syngenta Bangladesh Ltd."
                 className="w-full bg-white border border-frost-border rounded-xl px-3 py-2 text-sm text-frost-dark focus:border-emerald-600 focus:outline-hidden bn-text"
               />
-            </div>
-            <div>
-              <label
-                htmlFor={locationId}
-                className="block text-xs font-bold text-frost-dark bn-text mb-1.5"
-              >
-                আনলোড স্থান (Location)
-              </label>
-              <select
-                id={locationId}
-                value={location}
-                onChange={(e) =>
-                  setLocation(e.target.value as "GODOWN" | "DOKAN")
-                }
-                className="w-full bg-white border border-frost-border rounded-xl px-3 py-2 text-sm font-semibold text-frost-dark focus:border-emerald-600 focus:outline-hidden bn-text cursor-pointer"
-              >
-                <option value="GODOWN">🏭 গুদাম (Godown Bulk)</option>
-                <option value="DOKAN">🏪 দোকান কাউন্টার (Dokan Shelf)</option>
-              </select>
             </div>
           </div>
 

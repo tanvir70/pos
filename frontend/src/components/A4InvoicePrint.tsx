@@ -245,11 +245,6 @@ export default function A4InvoicePrint({
                           </div>
                           <div className="text-[10px] text-gray-500">
                             {item.productNameEn} (Syngenta)
-                            {item.godownQuantity > 0 && (
-                              <span className="ml-2 font-medium text-purple-700 bn-text">
-                                [গুদাম থেকে: {item.godownQuantity}]
-                              </span>
-                            )}
                           </div>
                         </td>
                         <td className="border border-gray-300 py-2 px-2 text-center font-mono text-[10px]">

@@ -19,13 +19,12 @@ class FlywayMigrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    @DisplayName("Verify all 10 schema tables exist and can be queried")
-    void testAllTenTablesExist() {
+    @DisplayName("Verify all active schema tables exist and can be queried")
+    void testAllActiveTablesExist() {
         List<String> tables = List.of(
                 "product",
                 "inventory_lot",
                 "stock_inventory",
-                "godown_movement",
                 "customer",
                 "customer_ledger",
                 "sale",
@@ -85,7 +84,7 @@ class FlywayMigrationTest {
     }
 
     @Test
-    @DisplayName("Verify stock_inventory has both DOKAN and GODOWN records")
+    @DisplayName("Verify stock_inventory has DOKAN records and zero GODOWN records after V4 migration")
     void testStockInventoryLocations() {
         Integer dokanCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM stock_inventory WHERE location = 'DOKAN'", Integer.class);
@@ -93,7 +92,7 @@ class FlywayMigrationTest {
                 "SELECT COUNT(*) FROM stock_inventory WHERE location = 'GODOWN'", Integer.class);
 
         assertThat(dokanCount).as("DOKAN stock allocations exist").isGreaterThan(0);
-        assertThat(godownCount).as("GODOWN stock allocations exist").isGreaterThan(0);
+        assertThat(godownCount).as("GODOWN stock allocations dropped by V4").isEqualTo(0);
 
         // Verify total stock quantity is positive
         BigDecimal totalStock = jdbcTemplate.queryForObject(
@@ -103,11 +102,11 @@ class FlywayMigrationTest {
     }
 
     @Test
-    @DisplayName("Verify godown_movement initial records exist")
-    void testGodownMovementRecords() {
-        Integer movementCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM godown_movement WHERE movement_type = 'PURCHASE_ENTRY'", Integer.class);
-        assertThat(movementCount).isGreaterThanOrEqualTo(6);
+    @DisplayName("Verify godown_movement table was dropped by V4 migration")
+    void testGodownMovementTableDropped() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                jdbcTemplate.execute("SELECT 1 FROM godown_movement LIMIT 1")
+        ).isInstanceOf(Exception.class);
     }
 
     @Test

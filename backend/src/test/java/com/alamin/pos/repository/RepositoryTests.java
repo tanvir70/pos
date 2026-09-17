@@ -5,7 +5,6 @@ import com.alamin.pos.dto.InventoryLotDto;
 import com.alamin.pos.dto.ProductDto;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
-import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.Sale;
@@ -42,9 +41,6 @@ class RepositoryTests {
 
     @Autowired
     private StockInventoryRepository stockInventoryRepository;
-
-    @Autowired
-    private GodownMovementRepository godownMovementRepository;
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -124,33 +120,16 @@ class RepositoryTests {
     }
 
     @Test
-    @DisplayName("StockInventory queries for DOKAN and GODOWN allocations")
+    @DisplayName("StockInventory queries for DOKAN store allocation")
     void testStockInventoryQueries() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
 
         Optional<StockInventory> dokanStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN");
         assertThat(dokanStock).isPresent();
-        assertThat(dokanStock.get().getQuantity()).isEqualByComparingTo("10.000");
+        assertThat(dokanStock.get().getQuantity()).isEqualByComparingTo("40.000");
 
         Optional<StockInventory> godownStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN");
-        assertThat(godownStock).isPresent();
-        assertThat(godownStock.get().getQuantity()).isEqualByComparingTo("30.000");
-
-        List<StockInventory> lotInventories = stockInventoryRepository.findByLotId(lot.getId());
-        assertThat(lotInventories).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("GodownMovement query audit history by lot ID")
-    void testGodownMovementQuery() {
-        InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
-
-        List<GodownMovement> movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId());
-        assertThat(movements).isNotEmpty();
-        GodownMovement first = movements.get(0);
-        assertThat(first.getMovementType()).isEqualTo("PURCHASE_ENTRY");
-        assertThat(first.getQuantity()).isEqualByComparingTo("40.000");
-        assertThat(first.getReferenceNo()).isEqualTo("CH-SYN-7712");
+        assertThat(godownStock).isEmpty();
     }
 
     @Test
@@ -220,8 +199,6 @@ class RepositoryTests {
                 .sale(savedSale)
                 .lot(lot)
                 .totalQuantity(new BigDecimal("10.000"))
-                .dokanQuantity(new BigDecimal("5.000"))
-                .godownQuantity(new BigDecimal("5.000"))
                 .unitPrice(new BigDecimal("580.00"))
                 .unitCost(new BigDecimal("500.00"))
                 .subtotal(new BigDecimal("5800.00"))

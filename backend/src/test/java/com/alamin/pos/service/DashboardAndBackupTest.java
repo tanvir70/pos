@@ -118,8 +118,6 @@ class DashboardAndBackupTest {
         SaleItemRequest itemReq = SaleItemRequest.builder()
                 .lotId(lot.getId())
                 .totalQuantity(new BigDecimal("2.000"))
-                .dokanQuantity(new BigDecimal("2.000"))
-                .godownQuantity(BigDecimal.ZERO)
                 .unitPrice(new BigDecimal("650.00"))
                 .build();
 
@@ -158,8 +156,6 @@ class DashboardAndBackupTest {
         SaleItemRequest itemReq = SaleItemRequest.builder()
                 .lotId(lot.getId())
                 .totalQuantity(new BigDecimal("2.000"))
-                .dokanQuantity(new BigDecimal("2.000"))
-                .godownQuantity(BigDecimal.ZERO)
                 .unitPrice(new BigDecimal("500.00"))
                 .build();
 
@@ -186,7 +182,6 @@ class DashboardAndBackupTest {
                 .quantity(new BigDecimal("1.000"))
                 .refundPrice(new BigDecimal("350.00"))
                 .isDamaged(false)
-                .restockLocation("DOKAN")
                 .build();
 
         SaleReturnRequest returnReq = SaleReturnRequest.builder()
@@ -252,11 +247,6 @@ class DashboardAndBackupTest {
                 .location("DOKAN")
                 .quantity(new BigDecimal("4.000"))
                 .build());
-        stockInventoryRepository.save(StockInventory.builder()
-                .lot(expiringLot)
-                .location("GODOWN")
-                .quantity(new BigDecimal("8.000"))
-                .build());
 
         DashboardSummaryDto summary = dashboardService.getSummary();
 
@@ -279,8 +269,7 @@ class DashboardAndBackupTest {
         assertThat(expLotDto).isNotNull();
         assertThat(expLotDto.getProductCode()).isEqualTo("SYN-AMI-TOP");
         assertThat(expLotDto.getDaysUntilExpiry()).isEqualTo(15);
-        assertThat(expLotDto.getDokanQuantity()).isEqualByComparingTo("4.000");
-        assertThat(expLotDto.getGodownQuantity()).isEqualByComparingTo("8.000");
+        assertThat(expLotDto.getQuantity()).isEqualByComparingTo("4.000");
     }
 
     @Test

@@ -3,7 +3,6 @@ import Navbar from "./components/Navbar"
 import PosCounter from "./pages/PosCounter"
 import Dashboard from "./pages/Dashboard"
 import Inventory from "./pages/Inventory"
-import Godown from "./pages/Godown"
 import Customers from "./pages/Customers"
 import Returns from "./pages/Returns"
 import type { NavigationTab } from "./types"
@@ -64,7 +63,6 @@ export default function App() {
           />
         )}
         {tab === "inventory" && <Inventory isOwner={isOwner} />}
-        {tab === "godown" && <Godown isOwner={isOwner} />}
         {tab === "customers" && <Customers isOwner={isOwner} />}
         {tab === "returns" && <Returns isOwner={isOwner} />}
       </main>

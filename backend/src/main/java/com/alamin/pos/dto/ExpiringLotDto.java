@@ -20,6 +20,5 @@ public class ExpiringLotDto {
     private String lotNumber;
     private LocalDate expiryDate;
     private long daysUntilExpiry;
-    private BigDecimal dokanQuantity;
-    private BigDecimal godownQuantity;
+    private BigDecimal quantity;
 }

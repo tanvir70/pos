@@ -6,16 +6,13 @@ import com.alamin.pos.dto.SaleRequest;
 import com.alamin.pos.dto.SaleResponse;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
-import com.alamin.pos.exception.BusinessRuleViolationException;
-import com.alamin.pos.exception.InsufficientStockException;
-import com.alamin.pos.exception.ValidationException;
-import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.StockInventory;
+import com.alamin.pos.exception.BusinessRuleViolationException;
+import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
-import com.alamin.pos.repository.GodownMovementRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.alamin.pos.repository.ProductRepository;
 import com.alamin.pos.repository.SaleItemRepository;
@@ -54,9 +51,6 @@ class SaleServiceTest {
     private StockInventoryRepository stockInventoryRepository;
 
     @Autowired
-    private GodownMovementRepository godownMovementRepository;
-
-    @Autowired
     private CustomerRepository customerRepository;
 
     @Autowired
@@ -66,22 +60,17 @@ class SaleServiceTest {
     private ProductRepository productRepository;
 
     @Test
-    @DisplayName("1. Split Deduction: 4 from Dokan + 6 from Godown reduces both and logs Godown movement")
-    void testSplitStockDeduction() {
+    @DisplayName("1. Store Stock Deduction: Selling 10 units reduces DOKAN store stock")
+    void testStoreStockDeduction() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
         StockInventory initialDokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-        StockInventory initialGodown = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN").orElseThrow();
-
-        BigDecimal startDokanQty = initialDokan.getQuantity(); // 10.000
-        BigDecimal startGodownQty = initialGodown.getQuantity(); // 30.000
+        BigDecimal startDokanQty = initialDokan.getQuantity(); // 40.000 (after V4 migration)
 
         Customer customer = customerRepository.findByPhone("01711000001").orElseThrow();
 
         SaleItemRequest itemReq = SaleItemRequest.builder()
                 .lotId(lot.getId())
                 .totalQuantity(new BigDecimal("10.000"))
-                .dokanQuantity(new BigDecimal("4.000"))
-                .godownQuantity(new BigDecimal("6.000"))
                 .unitPrice(new BigDecimal("580.00"))
                 .build();
 
@@ -98,20 +87,9 @@ class SaleServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.getInvoiceNo()).startsWith("INV-");
 
-        // Verify Dokan stock decreased by 4.000
+        // Verify Dokan store stock decreased by 10.000
         StockInventory updatedDokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-        assertThat(updatedDokan.getQuantity()).isEqualByComparingTo(startDokanQty.subtract(new BigDecimal("4.000")));
-
-        // Verify Godown stock decreased by 6.000
-        StockInventory updatedGodown = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN").orElseThrow();
-        assertThat(updatedGodown.getQuantity()).isEqualByComparingTo(startGodownQty.subtract(new BigDecimal("6.000")));
-
-        // Verify GodownMovement audit entry
-        List<GodownMovement> movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId());
-        GodownMovement latestMovement = movements.get(0);
-        assertThat(latestMovement.getMovementType()).isEqualTo("DIRECT_WHOLESALE_DISPATCH");
-        assertThat(latestMovement.getQuantity()).isEqualByComparingTo("6.000");
-        assertThat(latestMovement.getReferenceNo()).isEqualTo(response.getInvoiceNo());
+        assertThat(updatedDokan.getQuantity()).isEqualByComparingTo(startDokanQty.subtract(new BigDecimal("10.000")));
     }
 
     @Test
@@ -143,8 +121,6 @@ class SaleServiceTest {
         SaleItemRequest itemReq = SaleItemRequest.builder()
                 .lotId(lot.getId())
                 .totalQuantity(new BigDecimal("5.000"))
-                .dokanQuantity(new BigDecimal("5.000"))
-                .godownQuantity(BigDecimal.ZERO)
                 .unitPrice(new BigDecimal("650.00"))
                 .build();
 
@@ -298,33 +274,7 @@ class SaleServiceTest {
     }
 
     @Test
-    @DisplayName("7. Insufficient Godown stock throws InsufficientStockException")
-    void testInsufficientGodownStockThrowsException() {
-        InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
-        StockInventory godown = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN").orElseThrow();
-        BigDecimal availableGodown = godown.getQuantity();
-
-        SaleItemRequest itemReq = SaleItemRequest.builder()
-                .lotId(lot.getId())
-                .totalQuantity(availableGodown.add(new BigDecimal("10.000")))
-                .dokanQuantity(BigDecimal.ZERO)
-                .godownQuantity(availableGodown.add(new BigDecimal("10.000"))) // Exceeds godown
-                .unitPrice(new BigDecimal("650.00"))
-                .build();
-
-        SaleRequest request = SaleRequest.builder()
-                .saleMode("RETAIL")
-                .items(List.of(itemReq))
-                .cashPaid(new BigDecimal("100000.00"))
-                .build();
-
-        assertThatThrownBy(() -> saleService.processSale(request))
-                .isInstanceOf(InsufficientStockException.class)
-                .hasMessageContaining("Insufficient Godown stock");
-    }
-
-    @Test
-    @DisplayName("8. Query sale by ID, Invoice No, and Recent Sales")
+    @DisplayName("7. Query sale by ID, Invoice No, and Recent Sales")
     void testQuerySaleMethods() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
 
@@ -356,26 +306,24 @@ class SaleServiceTest {
     }
 
     @Test
-    @DisplayName("9. Validation: Split quantities do not match total quantity throws ValidationException")
-    void testSplitQuantityMismatchThrowsValidationException() {
+    @DisplayName("8. Validation: Total quantity <= 0 throws ValidationException")
+    void testZeroQuantityThrowsValidationException() {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
 
         SaleItemRequest itemReq = SaleItemRequest.builder()
                 .lotId(lot.getId())
-                .totalQuantity(new BigDecimal("5.000"))
-                .dokanQuantity(new BigDecimal("2.000"))
-                .godownQuantity(new BigDecimal("2.000")) // Sum = 4 != 5
+                .totalQuantity(BigDecimal.ZERO)
                 .unitPrice(new BigDecimal("650.00"))
                 .build();
 
         SaleRequest request = SaleRequest.builder()
                 .saleMode("RETAIL")
                 .items(List.of(itemReq))
-                .cashPaid(new BigDecimal("3250.00"))
+                .cashPaid(new BigDecimal("650.00"))
                 .build();
 
         assertThatThrownBy(() -> saleService.processSale(request))
                 .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("must equal total quantity");
+                .hasMessageContaining("Total quantity must be greater than zero");
     }
 }

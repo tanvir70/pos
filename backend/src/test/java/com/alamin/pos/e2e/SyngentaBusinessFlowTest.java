@@ -9,16 +9,13 @@ import com.alamin.pos.dto.SaleResponse;
 import com.alamin.pos.dto.SaleReturnItemRequest;
 import com.alamin.pos.dto.SaleReturnRequest;
 import com.alamin.pos.dto.SaleReturnResponse;
-import com.alamin.pos.dto.StockTransferRequest;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
-import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.StockInventory;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
-import com.alamin.pos.repository.GodownMovementRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.alamin.pos.repository.ProductRepository;
 import com.alamin.pos.repository.StockInventoryRepository;
@@ -48,15 +45,14 @@ import org.springframework.test.annotation.DirtiesContext;
 
 /**
  * End-to-End System Integration Test for Syngenta Agrochemical Dealership.
- * Verifies the full 8-step real-world operational lifecycle:
- * 1. Shipment Arrival (Godown bulk intake with carton conversion)
- * 2. Internal Stock Transfer (Godown -> Dokan counter shelf)
- * 3. Wholesale Sale (Split-stock deduction, bargaining override, multi-channel payment)
- * 4. Counter Retail Sale with Negative Stock (Dokan counter overdraw allowance)
- * 5. Direct Receipt-less Return (Restock to Dokan with customer due balance credit)
- * 6. Customer Debt Repayment (Cash collection with formal Money Receipt MR No.)
- * 7. Executive Dashboard Live Analytics (Cash in drawer, market due, sales totals)
- * 8. 1-Click Disaster Recovery SQL Backup (Native DDL/INSERT dump stream)
+ * Verifies the full operational lifecycle:
+ * 1. Shipment Arrival (Intake with carton multiplier conversion into DOKAN store stock)
+ * 2. Wholesale Sale (Dokan store deduction, bargaining override, multi-channel split payment)
+ * 3. Counter Retail Sale with Negative Stock (Dokan counter overdraw allowance)
+ * 4. Direct Receipt-less Return (Restock to Dokan with customer due balance credit)
+ * 5. Customer Debt Repayment (Cash collection with formal Money Receipt MR No.)
+ * 6. Executive Dashboard Live Analytics (Cash in drawer, market due, sales totals)
+ * 7. 1-Click Disaster Recovery SQL Backup (Native DDL/INSERT dump stream)
  */
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -92,9 +88,6 @@ class SyngentaBusinessFlowTest {
     private StockInventoryRepository stockInventoryRepository;
 
     @Autowired
-    private GodownMovementRepository godownMovementRepository;
-
-    @Autowired
     private CustomerRepository customerRepository;
 
     @Autowired
@@ -106,7 +99,6 @@ class SyngentaBusinessFlowTest {
     @org.junit.jupiter.api.BeforeEach
     @org.junit.jupiter.api.AfterEach
     void cleanUpE2eTestData() {
-        // BUSINESS DECISION: H2 SCRIPT backup command issues an implicit SQL COMMIT; SyngentaBusinessFlowTest employs idempotent pre/post cleanup handlers to guarantee strict test isolation and pristine seed database state.
         try {
             jdbcTemplate.execute("DELETE FROM sale_return_item WHERE lot_id IN (SELECT id FROM inventory_lot WHERE lot_number = 'LOT-E2E-AMI-01')");
             jdbcTemplate.execute("DELETE FROM sale_return WHERE reason LIKE '%unopened excess bottle%'");
@@ -114,7 +106,6 @@ class SyngentaBusinessFlowTest {
             jdbcTemplate.execute("DELETE FROM sale_item WHERE lot_id IN (SELECT id FROM inventory_lot WHERE lot_number = 'LOT-E2E-AMI-01')");
             jdbcTemplate.execute("DELETE FROM sale WHERE cashier_name = 'Al-Amin' AND (sale_mode = 'WHOLESALE' OR sale_mode = 'RETAIL')");
 
-            jdbcTemplate.execute("DELETE FROM godown_movement WHERE lot_id IN (SELECT id FROM inventory_lot WHERE lot_number = 'LOT-E2E-AMI-01')");
             jdbcTemplate.execute("DELETE FROM stock_inventory WHERE lot_id IN (SELECT id FROM inventory_lot WHERE lot_number = 'LOT-E2E-AMI-01')");
             jdbcTemplate.execute("DELETE FROM inventory_lot WHERE lot_number = 'LOT-E2E-AMI-01'");
 
@@ -126,14 +117,14 @@ class SyngentaBusinessFlowTest {
     }
 
     @Test
-    @DisplayName("Complete 8-step Syngenta dealership business lifecycle flow: arrival -> transfer -> wholesale -> negative stock -> return -> repayment -> analytics -> backup")
+    @DisplayName("Complete Syngenta dealership business lifecycle flow: arrival -> wholesale -> negative stock -> return -> repayment -> analytics -> backup")
     void testCompleteSyngentaDealershipBusinessFlow() {
 
         // =========================================================================
-        // Step 1: Shipment Arrival (Godown intake with carton conversion)
+        // Step 1: Shipment Arrival (Intake with carton conversion)
         // Record lot for Amistar Top (2 cartons = 40 bottles @ ৳500 purchase cost,
         // entry date today, challan CH-E2E-001).
-        // Verify 40 bottles in GODOWN, PURCHASE_ENTRY in godown_movement.
+        // Verify 40 bottles in DOKAN store stock.
         // =========================================================================
         log.info("--- Step 1: Shipment Arrival ---");
         Product amistar = productRepository.findByProductCode("SYN-AMI-TOP")
@@ -150,72 +141,29 @@ class SyngentaBusinessFlowTest {
                 .lotWholesalePrice(new BigDecimal("580.00"))
                 .quantityCartons(new BigDecimal("2"))
                 .quantityBaseUnits(BigDecimal.ZERO)
-                .location("GODOWN")
                 .supplierName("Syngenta Bangladesh Ltd.")
                 .challanNo("CH-E2E-001")
                 .build();
 
-        // BUSINESS DECISION: Incoming shipments default to Godown bulk warehouse with automatic carton multiplier conversion into base units.
         InventoryLot lot = inventoryService.recordLotEntry(lotEntryReq);
 
         assertThat(lot).isNotNull();
         assertThat(lot.getId()).isNotNull();
         assertThat(lot.getBarcode()).isEqualTo("SYN-AMI-TOP-LOT-E2E-AMI-01");
 
-        // Verify exactly 40 base units (2 cartons * 20 multiplier) in GODOWN
-        StockInventory step1Godown = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN")
-                .orElseThrow(() -> new AssertionError("Godown stock missing for lot"));
-        assertThat(step1Godown.getQuantity()).isEqualByComparingTo("40.000");
-
-        // Verify PURCHASE_ENTRY audit row in godown_movement
-        List<GodownMovement> step1Movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId());
-        assertThat(step1Movements).hasSize(1);
-        GodownMovement purchaseMovement = step1Movements.get(0);
-        assertThat(purchaseMovement.getMovementType()).isEqualTo("PURCHASE_ENTRY");
-        assertThat(purchaseMovement.getQuantity()).isEqualByComparingTo("40.000");
-        assertThat(purchaseMovement.getReferenceNo()).isEqualTo("CH-E2E-001");
+        // Verify exactly 40 base units (2 cartons * 20 multiplier) in DOKAN store stock
+        StockInventory step1Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN")
+                .orElseThrow(() -> new AssertionError("Dokan stock missing for lot"));
+        assertThat(step1Dokan.getQuantity()).isEqualByComparingTo("40.000");
 
 
         // =========================================================================
-        // Step 2: Internal Stock Transfer (Godown -> Dokan shelf replenishment)
-        // Transfer 15 bottles from GODOWN to DOKAN.
-        // Verify 25 in GODOWN, 15 in DOKAN, TRANSFER_TO_DOKAN in godown_movement.
-        // =========================================================================
-        log.info("--- Step 2: Internal Transfer ---");
-        StockTransferRequest transferReq = StockTransferRequest.builder()
-                .lotId(lot.getId())
-                .fromLocation("GODOWN")
-                .toLocation("DOKAN")
-                .quantity(new BigDecimal("15.000"))
-                .remarks("Morning counter replenishment")
-                .build();
-
-        inventoryService.transferStock(transferReq);
-
-        StockInventory step2Godown = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN")
-                .orElseThrow(() -> new AssertionError("Godown stock missing"));
-        StockInventory step2Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN")
-                .orElseThrow(() -> new AssertionError("Dokan stock missing"));
-
-        // 40 - 15 = 25 in GODOWN, 0 + 15 = 15 in DOKAN
-        assertThat(step2Godown.getQuantity()).isEqualByComparingTo("25.000");
-        assertThat(step2Dokan.getQuantity()).isEqualByComparingTo("15.000");
-
-        // Verify TRANSFER_TO_DOKAN logged in godown_movement
-        List<GodownMovement> step2Movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId());
-        assertThat(step2Movements).hasSize(2);
-        GodownMovement transferMovement = step2Movements.get(0);
-        assertThat(transferMovement.getMovementType()).isEqualTo("TRANSFER_TO_DOKAN");
-        assertThat(transferMovement.getQuantity()).isEqualByComparingTo("15.000");
-
-
-        // =========================================================================
-        // Step 3: Wholesale Sale (Split-Stock & Bargaining)
-        // Sell 20 bottles (15 Dokan + 5 Godown) with price override ৳575 (std ৳580),
+        // Step 2: Wholesale Sale (Store Deduction & Bargaining)
+        // Sell 20 bottles with price override ৳575 (std ৳580),
         // discount ৳100, round-off ৳10, payment ৳5,000 cash + ৳3,000 bKash + remaining due.
-        // Verify Dokan=0, Godown=20, customer due increased, gross profit exact.
+        // Verify Dokan=20, customer due increased, gross profit exact.
         // =========================================================================
-        log.info("--- Step 3: Wholesale Sale (Split-Stock & Bargaining) ---");
+        log.info("--- Step 2: Wholesale Sale (Store Deduction & Bargaining) ---");
         Customer customer = customerRepository.findByPhone("01711000001")
                 .orElseThrow(() -> new IllegalStateException("Seeded customer 01711000001 not found"));
         BigDecimal customerInitialDue = customer.getCurrentDue(); // 15,000.00 from seeds
@@ -224,8 +172,6 @@ class SyngentaBusinessFlowTest {
         SaleItemRequest wholesaleItem = SaleItemRequest.builder()
                 .lotId(lot.getId())
                 .totalQuantity(new BigDecimal("20.000"))
-                .dokanQuantity(new BigDecimal("15.000"))
-                .godownQuantity(new BigDecimal("5.000"))
                 .unitPrice(new BigDecimal("575.00")) // Bargained price override (standard is ৳580.00)
                 .build();
 
@@ -258,42 +204,31 @@ class SyngentaBusinessFlowTest {
         // Gross Profit: (575.00 unitPrice - 500.00 purchaseCost) * 20 - 100.00 discount - 10.00 round-off = ৳1,390.00
         assertThat(wholesaleSaleResp.getTotalProfit()).isEqualByComparingTo("1390.00");
 
-        // Verify stock levels: Dokan 15 - 15 = 0, Godown 25 - 5 = 20
-        StockInventory step3Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-        StockInventory step3Godown = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN").orElseThrow();
-        assertThat(step3Dokan.getQuantity()).isEqualByComparingTo("0.000");
-        assertThat(step3Godown.getQuantity()).isEqualByComparingTo("20.000");
+        // Verify stock levels: Dokan drops from 40 to 20
+        StockInventory step2Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
+        assertThat(step2Dokan.getQuantity()).isEqualByComparingTo("20.000");
 
         // Verify customer due increased by ৳3,390.00 (from 15,000 to 18,390)
         Customer customerAfterWholesale = customerRepository.findById(customer.getId()).orElseThrow();
         assertThat(customerAfterWholesale.getCurrentDue()).isEqualByComparingTo("18390.00");
 
-        // Verify DIRECT_WHOLESALE_DISPATCH logged in godown_movement for 5 bottles
-        List<GodownMovement> step3Movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId());
-        GodownMovement dispatchMovement = step3Movements.get(0);
-        assertThat(dispatchMovement.getMovementType()).isEqualTo("DIRECT_WHOLESALE_DISPATCH");
-        assertThat(dispatchMovement.getQuantity()).isEqualByComparingTo("5.000");
-        assertThat(dispatchMovement.getReferenceNo()).isEqualTo(wholesaleSaleResp.getInvoiceNo());
-
 
         // =========================================================================
-        // Step 4: Counter Sale (Negative Stock)
-        // Sell 3 bottles from Dokan (currently 0).
+        // Step 3: Counter Sale (Negative Stock)
+        // Sell 23 bottles from Dokan (currently 20).
         // Verify Dokan becomes -3, sale succeeds.
         // =========================================================================
-        log.info("--- Step 4: Counter Sale (Negative Stock) ---");
+        log.info("--- Step 3: Counter Sale (Negative Stock) ---");
         SaleItemRequest retailItem = SaleItemRequest.builder()
                 .lotId(lot.getId())
-                .totalQuantity(new BigDecimal("3.000"))
-                .dokanQuantity(new BigDecimal("3.000"))
-                .godownQuantity(BigDecimal.ZERO)
+                .totalQuantity(new BigDecimal("23.000"))
                 .unitPrice(new BigDecimal("650.00")) // Standard retail price
                 .build();
 
         SaleRequest retailSaleReq = SaleRequest.builder()
                 .saleMode("RETAIL")
                 .items(List.of(retailItem))
-                .cashPaid(new BigDecimal("1950.00")) // 3 * 650 = ৳1,950.00 in cash
+                .cashPaid(new BigDecimal("14950.00")) // 23 * 650 = ৳14,950.00 in cash
                 .paymentMethod("CASH")
                 .cashierName("Al-Amin")
                 .build();
@@ -303,29 +238,24 @@ class SyngentaBusinessFlowTest {
 
         assertThat(retailSaleResp).isNotNull();
         assertThat(retailSaleResp.getInvoiceNo()).startsWith("INV-");
-        assertThat(retailSaleResp.getTotalAmount()).isEqualByComparingTo("1950.00");
+        assertThat(retailSaleResp.getTotalAmount()).isEqualByComparingTo("14950.00");
 
-        // Dokan stock drops from 0 to -3.000
-        StockInventory step4Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-        assertThat(step4Dokan.getQuantity()).isEqualByComparingTo("-3.000");
-
-        // Godown stock remains intact at 20.000
-        StockInventory step4Godown = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN").orElseThrow();
-        assertThat(step4Godown.getQuantity()).isEqualByComparingTo("20.000");
+        // Dokan stock drops from 20 to -3.000
+        StockInventory step3Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
+        assertThat(step3Dokan.getQuantity()).isEqualByComparingTo("-3.000");
 
 
         // =========================================================================
-        // Step 5: Direct Return
+        // Step 4: Direct Return
         // Return 1 bottle to Dokan with due adjustment.
         // Verify Dokan becomes -2, customer due credited.
         // =========================================================================
-        log.info("--- Step 5: Direct Return ---");
+        log.info("--- Step 4: Direct Return ---");
         SaleReturnItemRequest returnItem = SaleReturnItemRequest.builder()
                 .lotId(lot.getId())
                 .quantity(new BigDecimal("1.000"))
                 .refundPrice(new BigDecimal("575.00")) // Credited at the wholesale bargained rate
                 .isDamaged(false)
-                .restockLocation("DOKAN")
                 .build();
 
         SaleReturnRequest returnReq = SaleReturnRequest.builder()
@@ -344,8 +274,8 @@ class SyngentaBusinessFlowTest {
         assertThat(returnResp.getTotalRefundAmount()).isEqualByComparingTo("575.00");
 
         // Dokan stock was -3, restocked with 1 bottle -> becomes -2.000
-        StockInventory step5Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-        assertThat(step5Dokan.getQuantity()).isEqualByComparingTo("-2.000");
+        StockInventory step4Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
+        assertThat(step4Dokan.getQuantity()).isEqualByComparingTo("-2.000");
 
         // Customer due: was 18,390.00, credited 575.00 -> 17,815.00
         Customer customerAfterReturn = customerRepository.findById(customer.getId()).orElseThrow();
@@ -360,11 +290,11 @@ class SyngentaBusinessFlowTest {
 
 
         // =========================================================================
-        // Step 6: Debt Repayment
+        // Step 5: Debt Repayment
         // Repay ৳2,000 cash with MR No MR-E2E-999.
         // Verify customer due drops by ৳2,000, ledger row has MR number.
         // =========================================================================
-        log.info("--- Step 6: Debt Repayment ---");
+        log.info("--- Step 5: Debt Repayment ---");
         CustomerPaymentRequest payReq = CustomerPaymentRequest.builder()
                 .amount(new BigDecimal("2000.00"))
                 .moneyReceiptNo("MR-E2E-999")
@@ -387,22 +317,22 @@ class SyngentaBusinessFlowTest {
 
 
         // =========================================================================
-        // Step 7: Dashboard Summary
+        // Step 6: Dashboard Summary
         // Verify getSummary() cash in drawer, market due, and sales metrics match.
         // =========================================================================
-        log.info("--- Step 7: Dashboard Summary ---");
+        log.info("--- Step 6: Dashboard Summary ---");
         DashboardSummaryDto summary = dashboardService.getSummary();
 
         assertThat(summary).isNotNull();
 
-        // Total sales today: Step 3 wholesale (11,390.00) + Step 4 retail (1,950.00) = ৳13,340.00
-        assertThat(summary.getTotalSalesToday()).isEqualByComparingTo("13340.00");
+        // Total sales today: Step 2 wholesale (11,390.00) + Step 3 retail (14,950.00) = ৳26,340.00
+        assertThat(summary.getTotalSalesToday()).isEqualByComparingTo("26340.00");
 
-        // Gross profit today: Step 3 (1,390.00) + Step 4 ((650 - 500) * 3 = 450.00) = ৳1,840.00
-        assertThat(summary.getGrossProfitToday()).isEqualByComparingTo("1840.00");
+        // Gross profit today: Step 2 (1,390.00) + Step 3 ((650 - 500) * 23 = 3,450.00) = ৳4,840.00
+        assertThat(summary.getGrossProfitToday()).isEqualByComparingTo("4840.00");
 
-        // Cash in drawer today: sales cash (5,000.00 + 1,950.00 = 6,950.00) + repayment cash (2,000.00) - refunds cash (0.00) = ৳8,950.00
-        assertThat(summary.getCashInDrawerToday()).isEqualByComparingTo("8950.00");
+        // Cash in drawer today: sales cash (5,000.00 + 14,950.00 = 19,950.00) + repayment cash (2,000.00) - refunds cash (0.00) = ৳21,950.00
+        assertThat(summary.getCashInDrawerToday()).isEqualByComparingTo("21950.00");
 
         // Total market due: Rafiqul Islam outstanding balance = ৳15,815.00
         assertThat(summary.getTotalMarketDue()).isEqualByComparingTo("15815.00");
@@ -412,10 +342,10 @@ class SyngentaBusinessFlowTest {
 
 
         // =========================================================================
-        // Step 8: 1-Click SQL Backup
+        // Step 7: 1-Click SQL Backup
         // Verify exportSqlBackup() produces valid SQL statements.
         // =========================================================================
-        log.info("--- Step 8: 1-Click SQL Backup ---");
+        log.info("--- Step 7: 1-Click SQL Backup ---");
         byte[] backupBytes = backupService.exportSqlBackup();
 
         assertThat(backupBytes).isNotNull();

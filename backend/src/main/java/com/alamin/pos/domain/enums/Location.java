@@ -2,7 +2,6 @@ package com.alamin.pos.domain.enums;
 
 public enum Location {
     DOKAN,
-    GODOWN,
     QUARANTINE;
 
     public static boolean isValid(String val) {

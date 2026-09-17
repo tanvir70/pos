@@ -28,8 +28,4 @@ public class SaleReturnItemRequest {
 
     @Builder.Default
     private Boolean isDamaged = false;
-
-    // 'DOKAN' or 'GODOWN', default 'DOKAN'
-    @Builder.Default
-    private String restockLocation = "DOKAN";
 }

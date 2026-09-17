@@ -41,14 +41,6 @@ public class SaleItem {
     @Column(name = "total_quantity", nullable = false, precision = 12, scale = 3)
     private BigDecimal totalQuantity;
 
-    @Column(name = "dokan_quantity", nullable = false, precision = 12, scale = 3)
-    @Builder.Default
-    private BigDecimal dokanQuantity = BigDecimal.ZERO;
-
-    @Column(name = "godown_quantity", nullable = false, precision = 12, scale = 3)
-    @Builder.Default
-    private BigDecimal godownQuantity = BigDecimal.ZERO;
-
     @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
 

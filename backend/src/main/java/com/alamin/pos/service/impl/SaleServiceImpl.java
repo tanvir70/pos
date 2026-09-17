@@ -6,7 +6,6 @@ import com.alamin.pos.dto.SaleRequest;
 import com.alamin.pos.dto.SaleResponse;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
-import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.Sale;
@@ -19,7 +18,6 @@ import com.alamin.pos.exception.ResourceNotFoundException;
 import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
-import com.alamin.pos.repository.GodownMovementRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.alamin.pos.repository.SaleItemRepository;
 import com.alamin.pos.repository.SaleRepository;
@@ -53,7 +51,6 @@ public class SaleServiceImpl implements SaleService {
     private final StockInventoryRepository stockInventoryRepository;
     private final CustomerRepository customerRepository;
     private final CustomerLedgerRepository customerLedgerRepository;
-    private final GodownMovementRepository godownMovementRepository;
     private final DocumentSequenceService documentSequenceService;
 
     @Override
@@ -112,64 +109,15 @@ public class SaleServiceImpl implements SaleService {
                 throw new ValidationException("Total quantity must be greater than zero for lot " + lot.getLotNumber());
             }
 
-            // BUSINESS DECISION: Default split deduction when unspecified assigns entire quantity to Dokan counter stock; partial specification auto-balances to fulfill total quantity.
-            BigDecimal dokanQty = itemReq.getDokanQuantity();
-            BigDecimal godownQty = itemReq.getGodownQuantity();
-
-            if (dokanQty == null && godownQty == null) {
-                dokanQty = totalQty;
-                godownQty = BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP);
-            } else if (dokanQty == null) {
-                dokanQty = totalQty.subtract(godownQty).setScale(3, RoundingMode.HALF_UP);
-            } else if (godownQty == null) {
-                godownQty = totalQty.subtract(dokanQty).setScale(3, RoundingMode.HALF_UP);
-            } else {
-                dokanQty = dokanQty.setScale(3, RoundingMode.HALF_UP);
-                godownQty = godownQty.setScale(3, RoundingMode.HALF_UP);
-            }
-
-            if (dokanQty.add(godownQty).compareTo(totalQty) != 0) {
-                throw new ValidationException("Split quantities (Dokan: " + dokanQty + ", Godown: " + godownQty + ") must equal total quantity: " + totalQty);
-            }
-            if (dokanQty.compareTo(BigDecimal.ZERO) < 0 || godownQty.compareTo(BigDecimal.ZERO) < 0) {
-                throw new ValidationException("Split quantities cannot be negative");
-            }
-
-            // 1. Deduct Dokan stock
-            if (dokanQty.compareTo(BigDecimal.ZERO) > 0) {
-                StockInventory dokanStock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), "DOKAN")
-                        .orElseGet(() -> StockInventory.builder()
-                                .lot(lot)
-                                .location("DOKAN")
-                                .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
-                                .build());
-                // BUSINESS DECISION: Allow Dokan counter stock to go negative to support ringing up newly arrived goods before supplier challan entry.
-                dokanStock.setQuantity(dokanStock.getQuantity().subtract(dokanQty).setScale(3, RoundingMode.HALF_UP));
-                stockInventoryRepository.save(dokanStock);
-            }
-
-            // 2. Deduct Godown stock
-            if (godownQty.compareTo(BigDecimal.ZERO) > 0) {
-                StockInventory godownStock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), "GODOWN")
-                        .orElseThrow(() -> new InsufficientStockException("Insufficient Godown stock for lot " + lot.getLotNumber()));
-                // BUSINESS DECISION: Strictly prevent negative inventory in Godown bulk storage to protect physical warehouse audit counts.
-                if (godownStock.getQuantity().compareTo(godownQty) < 0) {
-                    throw new InsufficientStockException("Insufficient Godown stock for lot " + lot.getLotNumber());
-                }
-                godownStock.setQuantity(godownStock.getQuantity().subtract(godownQty).setScale(3, RoundingMode.HALF_UP));
-                stockInventoryRepository.save(godownStock);
-
-                // BUSINESS DECISION: Audit log direct wholesale dispatches from Godown as DIRECT_WHOLESALE_DISPATCH in godown_movement.
-                GodownMovement movement = GodownMovement.builder()
-                        .lot(lot)
-                        .movementType("DIRECT_WHOLESALE_DISPATCH")
-                        .quantity(godownQty)
-                        .movementDate(LocalDateTime.now())
-                        .referenceNo(invoiceNo)
-                        .remarks("Direct wholesale dispatch from Godown for invoice " + invoiceNo)
-                        .build();
-                godownMovementRepository.save(movement);
-            }
+            // BUSINESS DECISION: Deduct total sale quantity from active DOKAN counter stock. Dokan stock can go negative to allow ringing up arriving goods before paper challan entry.
+            StockInventory dokanStock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), "DOKAN")
+                    .orElseGet(() -> StockInventory.builder()
+                            .lot(lot)
+                            .location("DOKAN")
+                            .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
+                            .build());
+            dokanStock.setQuantity(dokanStock.getQuantity().subtract(totalQty).setScale(3, RoundingMode.HALF_UP));
+            stockInventoryRepository.save(dokanStock);
 
             // BUSINESS DECISION: Freeze unit_cost = lot.purchaseCost on sale_item snapshot to permanently preserve historical gross profit margins.
             BigDecimal unitCost = lot.getPurchaseCost().setScale(2, RoundingMode.HALF_UP);
@@ -180,8 +128,6 @@ public class SaleServiceImpl implements SaleService {
             SaleItem saleItem = SaleItem.builder()
                     .lot(lot)
                     .totalQuantity(totalQty)
-                    .dokanQuantity(dokanQty)
-                    .godownQuantity(godownQty)
                     .unitPrice(unitPrice)
                     .unitCost(unitCost)
                     .subtotal(itemSubtotal)
@@ -353,8 +299,6 @@ public class SaleServiceImpl implements SaleService {
                             .productNameEn(product != null ? product.getNameEn() : null)
                             .productNameBn(product != null ? product.getNameBn() : null)
                             .totalQuantity(item.getTotalQuantity())
-                            .dokanQuantity(item.getDokanQuantity())
-                            .godownQuantity(item.getGodownQuantity())
                             .unitPrice(item.getUnitPrice())
                             .unitCost(item.getUnitCost())
                             .subtotal(item.getSubtotal())

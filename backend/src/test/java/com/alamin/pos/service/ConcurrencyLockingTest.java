@@ -142,8 +142,6 @@ class ConcurrencyLockingTest {
                                 SaleItemRequest.builder()
                                         .lotId(lot.getId())
                                         .totalQuantity(sellQtyPerSale)
-                                        .dokanQuantity(sellQtyPerSale)
-                                        .godownQuantity(BigDecimal.ZERO)
                                         .unitPrice(new BigDecimal("650.00"))
                                         .build()
                         ))

@@ -8,7 +8,6 @@ import type {
   InventoryLot,
   StockItem,
   LotEntryRequest,
-  StockTransferRequest,
   Customer,
   CustomerRequest,
   CustomerLedger,
@@ -66,15 +65,6 @@ export async function getLots(
 
 export async function createLot(data: LotEntryRequest): Promise<InventoryLot> {
   return apiClient<InventoryLot>("/inventory/lots", {
-    method: "POST",
-    body: JSON.stringify(data),
-  })
-}
-
-export async function transferStock(
-  data: StockTransferRequest,
-): Promise<{ message: string }> {
-  return apiClient<{ message: string }>("/inventory/transfer", {
     method: "POST",
     body: JSON.stringify(data),
   })

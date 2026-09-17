@@ -3,7 +3,6 @@ package com.alamin.pos.controller;
 import com.alamin.pos.dto.InventoryLotDto;
 import com.alamin.pos.dto.LotEntryRequest;
 import com.alamin.pos.dto.StockItemResponse;
-import com.alamin.pos.dto.StockTransferRequest;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.mapper.InventoryLotMapper;
 import com.alamin.pos.service.InventoryService;
@@ -38,12 +37,6 @@ public class InventoryController {
             dto.setPurchaseCost(null);
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
-    }
-
-    @PostMapping("/transfer")
-    public ResponseEntity<Map<String, String>> transferStock(@Valid @RequestBody StockTransferRequest request) {
-        inventoryService.transferStock(request);
-        return ResponseEntity.ok(Map.of("message", "Stock transferred successfully"));
     }
 
     @GetMapping("/stock")

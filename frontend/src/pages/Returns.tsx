@@ -5,7 +5,6 @@ import type {
   SaleReturnRequest,
   SaleReturnResponse,
   SaleResponse,
-  StockLocation,
   RefundType,
 } from "../types"
 import {
@@ -51,7 +50,6 @@ export default function Returns({ isOwner }: ReturnsProps) {
   const [quantity, setQuantity] = useState<string>("1")
   const [refundPrice, setRefundPrice] = useState<string>("")
   const [isDamaged, setIsDamaged] = useState<boolean>(false)
-  const [restockLocation, setRestockLocation] = useState<StockLocation>("DOKAN")
   const [refundType, setRefundType] = useState<RefundType>("CASH_REFUND")
   const [reason, setReason] = useState<string>("")
 
@@ -216,7 +214,6 @@ export default function Returns({ isOwner }: ReturnsProps) {
             quantity: qtyNum,
             refundPrice: priceNum,
             isDamaged,
-            restockLocation: isDamaged ? "GODOWN" : restockLocation,
           },
         ],
       }
@@ -472,7 +469,7 @@ export default function Returns({ isOwner }: ReturnsProps) {
                     <span className="font-bold">নির্বাচিত:</span> {selectedStockItem.nameBn} (লট: {selectedStockItem.lotNumber})
                   </div>
                   <span className="font-semibold text-[11px]">
-                    বর্তমান দোকান স্টক: {selectedStockItem.dokanQuantity} | গুদাম: {selectedStockItem.godownQuantity}
+                    বর্তমান মজুদ: {selectedStockItem.quantity} {selectedStockItem.baseUnit}
                   </span>
                 </div>
               )}
@@ -533,38 +530,19 @@ export default function Returns({ isOwner }: ReturnsProps) {
               </label>
             </div>
 
-            {/* 6. Restock Location & Refund Type */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {/* Location */}
-              <div>
-                <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                  মজুদ যোগ করার স্থান {isDamaged ? "(কোয়ারেন্টাইন গুদাম)" : "*"}
-                </label>
-                <select
-                  disabled={isDamaged}
-                  value={isDamaged ? "GODOWN" : restockLocation}
-                  onChange={(e) => setRestockLocation(e.target.value as StockLocation)}
-                  className="w-full px-3 py-2 border border-frost-border rounded-lg text-xs sm:text-sm bn-text bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="DOKAN">দোকান কাউন্টার (Dokan Stock)</option>
-                  <option value="GODOWN">মূল গুদাম (Godown Warehouse)</option>
-                </select>
-              </div>
-
-              {/* Refund Type */}
-              <div>
-                <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                  ফেরত প্রদানের ধরণ *
-                </label>
-                <select
-                  value={refundType}
-                  onChange={(e) => setRefundType(e.target.value as RefundType)}
-                  className="w-full px-3 py-2 border border-frost-border rounded-lg text-xs sm:text-sm bn-text bg-white"
-                >
-                  <option value="CASH_REFUND">💵 নগদ ফেরত (Cash Refund from Till)</option>
-                  <option value="DUE_ADJUSTMENT">📒 বাকি সমন্বয় (Customer Due Adjustment)</option>
-                </select>
-              </div>
+            {/* 6. Refund Type */}
+            <div>
+              <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
+                ফেরত প্রদানের ধরণ *
+              </label>
+              <select
+                value={refundType}
+                onChange={(e) => setRefundType(e.target.value as RefundType)}
+                className="w-full px-3 py-2 border border-frost-border rounded-lg text-xs sm:text-sm bn-text bg-white"
+              >
+                <option value="CASH_REFUND">💵 নগদ ফেরত (Cash Refund from Till)</option>
+                <option value="DUE_ADJUSTMENT">📒 বাকি সমন্বয় (Customer Due Adjustment)</option>
+              </select>
             </div>
 
             {/* 7. Reason */}

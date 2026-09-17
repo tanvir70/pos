@@ -96,15 +96,8 @@ public class DashboardServiceImpl implements DashboardService {
             Product product = lot.getProduct();
             List<StockInventory> lotStocks = stocksByLot.getOrDefault(lot.getId(), List.of());
 
-            BigDecimal dokanQty = lotStocks.stream()
+            BigDecimal quantity = lotStocks.stream()
                     .filter(s -> "DOKAN".equalsIgnoreCase(s.getLocation()))
-                    .map(StockInventory::getQuantity)
-                    .findFirst()
-                    .orElse(BigDecimal.ZERO)
-                    .setScale(3, RoundingMode.HALF_UP);
-
-            BigDecimal godownQty = lotStocks.stream()
-                    .filter(s -> "GODOWN".equalsIgnoreCase(s.getLocation()))
                     .map(StockInventory::getQuantity)
                     .findFirst()
                     .orElse(BigDecimal.ZERO)
@@ -120,8 +113,7 @@ public class DashboardServiceImpl implements DashboardService {
                     .lotNumber(lot.getLotNumber())
                     .expiryDate(lot.getExpiryDate())
                     .daysUntilExpiry(daysUntilExpiry)
-                    .dokanQuantity(dokanQty)
-                    .godownQuantity(godownQty)
+                    .quantity(quantity)
                     .build());
         }
 

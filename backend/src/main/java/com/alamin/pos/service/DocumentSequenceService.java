@@ -5,6 +5,4 @@ public interface DocumentSequenceService {
     String generateInvoiceNumber();
 
     String generateReturnNumber();
-
-    String generateTransferNumber();
 }

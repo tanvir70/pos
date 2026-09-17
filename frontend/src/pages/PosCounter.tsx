@@ -11,14 +11,13 @@ import type {
 } from "../types"
 import { getStock, getCustomers, createSale } from "../api/endpoints"
 import LotSelectorDropdown from "../components/LotSelectorDropdown"
-import SplitStockModal from "../components/SplitStockModal"
 import ThermalReceipt from "../components/ThermalReceipt"
 import A4InvoicePrint from "../components/A4InvoicePrint"
 
 // BUSINESS DECISION: PosCounter connects directly to live Spring Boot endpoints (/api/inventory/stock,
 // /api/customers, /api/sales). It features FEFO lot defaulting with 1-click cashier manual overrides,
-// line-item price bargaining overrides, asymmetric split-stock allocation (Dokan allows negative;
-// Godown strictly enforced), 1-click round-off, and dual print formats (80mm thermal and A4 invoice).
+// line-item price bargaining overrides, single store inventory with negative stock allowance,
+// 1-click round-off, and dual print formats (80mm thermal and A4 invoice).
 
 export interface PosCounterProps {
   isOwner: boolean
@@ -54,7 +53,6 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
   // ─── Modals State ───────────────────────────────────────────────
-  const [activeSplitItem, setActiveSplitItem] = useState<CartItem | null>(null)
   const [completedSale, setCompletedSale] = useState<SaleResponse | null>(null)
   const [showThermalPrint, setShowThermalPrint] = useState<boolean>(false)
   const [showA4Print, setShowA4Print] = useState<boolean>(false)
@@ -178,13 +176,9 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
           return prevCart.map((item, idx) => {
             if (idx !== existingIndex) return item
             const newQty = Number((item.quantity + 1).toFixed(3))
-            // Auto allocate Dokan if stock exists, otherwise split
-            const newDokan = Number((item.dokanQuantity + 1).toFixed(3))
             return {
               ...item,
               quantity: newQty,
-              totalQuantity: newQty,
-              dokanQuantity: newDokan,
             }
           })
         }
@@ -208,12 +202,8 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
           lotRetailPrice: targetLot.lotRetailPrice,
           lotWholesalePrice: targetLot.lotWholesalePrice,
           barcode: targetLot.barcode,
-          dokanAvailable: activeLotStock.dokanQuantity,
-          godownAvailable: activeLotStock.godownQuantity,
+          availableStock: activeLotStock ? (activeLotStock.quantity ?? activeLotStock.totalQuantity ?? 0) : 0,
           quantity: 1,
-          totalQuantity: 1,
-          dokanQuantity: 1,
-          godownQuantity: 0,
           unitPrice: defaultPrice,
           originalUnitPrice: defaultPrice,
           availableLots: allProductLots,
@@ -264,18 +254,9 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
           if (item.id !== itemId) return item
           const newQty = Number((item.quantity + delta).toFixed(3))
           if (newQty <= 0) return null
-
-          // Scale dokan and godown quantity proportionally
-          const dokanRatio = item.quantity > 0 ? item.dokanQuantity / item.quantity : 1
-          const newDokan = Number((newQty * dokanRatio).toFixed(3))
-          const newGodown = Number((newQty - newDokan).toFixed(3))
-
           return {
             ...item,
             quantity: newQty,
-            totalQuantity: newQty,
-            dokanQuantity: newDokan,
-            godownQuantity: newGodown,
           }
         })
         .filter((item): item is CartItem => item !== null),
@@ -287,15 +268,9 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
     setCart((prev) =>
       prev.map((item) => {
         if (item.id !== itemId) return item
-        const dokanRatio = item.quantity > 0 ? item.dokanQuantity / item.quantity : 1
-        const newDokan = Number((val * dokanRatio).toFixed(3))
-        const newGodown = Number((val - newDokan).toFixed(3))
         return {
           ...item,
           quantity: val,
-          totalQuantity: val,
-          dokanQuantity: newDokan,
-          godownQuantity: newGodown,
         }
       }),
     )
@@ -328,30 +303,12 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
           lotRetailPrice: newLot.lotRetailPrice,
           lotWholesalePrice: newLot.lotWholesalePrice,
           barcode: newLot.barcode,
-          dokanAvailable: activeLotStock ? activeLotStock.dokanQuantity : 0,
-          godownAvailable: activeLotStock ? activeLotStock.godownQuantity : 0,
+          availableStock: activeLotStock ? (activeLotStock.quantity ?? activeLotStock.totalQuantity ?? 0) : 0,
           unitPrice: defaultPrice,
           originalUnitPrice: defaultPrice,
         }
       }),
     )
-  }
-
-  // ─── Apply Split Stock ──────────────────────────────────────────
-  const handleApplySplit = (dokanQty: number, godownQty: number) => {
-    if (!activeSplitItem) return
-    setCart((prev) =>
-      prev.map((item) =>
-        item.id === activeSplitItem.id
-          ? {
-              ...item,
-              dokanQuantity: dokanQty,
-              godownQuantity: godownQty,
-            }
-          : item,
-      ),
-    )
-    setActiveSplitItem(null)
   }
 
   // ─── Remove Item ────────────────────────────────────────────────
@@ -477,8 +434,6 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
         items: cart.map((item) => ({
           lotId: item.lotId,
           totalQuantity: item.quantity,
-          dokanQuantity: item.dokanQuantity,
-          godownQuantity: item.godownQuantity,
           unitPrice: item.unitPrice,
         })),
         discount: computedDiscount,
@@ -639,7 +594,8 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
                     saleMode === "RETAIL"
                       ? item.lotRetailPrice
                       : item.lotWholesalePrice
-                  const isLowDokan = item.dokanQuantity <= 0
+                  const availableUnits = item.quantity ?? item.totalQuantity ?? 0
+                  const isLowStock = availableUnits <= 0
                   return (
                     <button
                       key={`${item.productId}-${item.lotId}`}
@@ -669,15 +625,12 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
                         <div className="text-[11px] mt-1 flex items-center gap-2">
                           <span
                             className={`px-1.5 py-0.2 rounded font-semibold bn-text ${
-                              isLowDokan
+                              isLowStock
                                 ? "bg-amber-100 text-amber-800 border border-amber-300"
                                 : "bg-emerald-50 text-emerald-800"
                             }`}
                           >
-                            দোকান স্টক: {item.dokanQuantity} {item.baseUnit}
-                          </span>
-                          <span className="px-1.5 py-0.2 rounded font-semibold bg-purple-50 text-purple-800 bn-text">
-                            গুদাম স্টক: {item.godownQuantity} {item.baseUnit}
+                            মজুদ স্টক: {availableUnits} {item.baseUnit}
                           </span>
                         </div>
                       </div>
@@ -736,7 +689,7 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
                   const isPriceOverridden =
                     item.originalUnitPrice !== undefined &&
                     item.unitPrice !== item.originalUnitPrice
-                  const isDokanShort = item.dokanAvailable < item.dokanQuantity
+                  const isStockShort = (item.availableStock ?? 0) < item.quantity
 
                   // Line profit calculation for owner mode
                   const lineCost = item.purchaseCost * item.quantity
@@ -869,27 +822,23 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
                           )}
                         </div>
 
-                        {/* Split Stock Badge & Deficit Indicator */}
+                        {/* Stock Availability & Deficit Indicator */}
                         <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setActiveSplitItem(item)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-frost-surface hover:bg-frost-hover border border-frost-border transition-colors cursor-pointer"
-                            title="দোকান ও গুদামের মধ্যে স্টক বণ্টন পরিবর্তন করুন"
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bn-text ${
+                              isStockShort
+                                ? "bg-amber-50 text-amber-900 border border-amber-300"
+                                : "bg-frost-surface text-frost-dark border border-frost-border"
+                            }`}
                           >
-                            <span className="text-[11px]">🏭</span>
-                            <span className="bn-text text-frost-dark">
-                              দোকান: {item.dokanQuantity} | গুদাম: {item.godownQuantity}
-                            </span>
-                            <span className="text-[10px] text-frost-muted underline">
-                              বণ্টন
-                            </span>
-                          </button>
+                            <span className="text-[11px]">📦</span>
+                            <span>মজুদ: {item.availableStock ?? 0} {item.baseUnit}</span>
+                          </span>
 
-                          {/* Dokan Stock Deficit Alert Badge */}
-                          {isDokanShort && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 bn-text">
-                              ⚠️ দোকান ঘাটতি ({item.dokanAvailable - item.dokanQuantity})
+                          {/* Negative stock warning badge */}
+                          {isStockShort && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-300 bn-text">
+                              ⚠️ ঘাটতি ({(item.quantity - (item.availableStock ?? 0)).toFixed(2)})
                             </span>
                           )}
                         </div>
@@ -1290,15 +1239,7 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
         </div>
       </div>
 
-      {/* Split Stock Modal */}
-      {activeSplitItem && (
-        <SplitStockModal
-          item={activeSplitItem}
-          isOpen={Boolean(activeSplitItem)}
-          onClose={() => setActiveSplitItem(null)}
-          onApplySplit={handleApplySplit}
-        />
-      )}
+
 
       {/* Completed Sale Confirmation Modal */}
       {completedSale && !showThermalPrint && !showA4Print && (

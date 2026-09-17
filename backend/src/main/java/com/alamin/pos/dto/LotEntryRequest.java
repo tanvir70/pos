@@ -45,6 +45,4 @@ public class LotEntryRequest {
     private BigDecimal quantityCartons;
 
     private BigDecimal quantityBaseUnits;
-
-    private String location;
 }

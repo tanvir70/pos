@@ -124,11 +124,6 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
                       </div>
                       <div className="text-[9px] text-gray-600 font-mono">
                         #{item.lotNumber}
-                        {item.godownQuantity > 0 && (
-                          <span className="ml-1 text-[9px] text-gray-800 bn-text">
-                            (গো: {item.godownQuantity})
-                          </span>
-                        )}
                       </div>
                     </td>
                     <td className="py-1.5 text-center font-bold tabular-nums">

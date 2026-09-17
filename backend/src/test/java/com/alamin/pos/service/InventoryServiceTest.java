@@ -2,15 +2,13 @@ package com.alamin.pos.service;
 
 import com.alamin.pos.dto.InventoryLotDto;
 import com.alamin.pos.dto.LotEntryRequest;
+import com.alamin.pos.dto.QuarantineDisposalRequest;
 import com.alamin.pos.dto.StockItemResponse;
-import com.alamin.pos.dto.StockTransferRequest;
-import com.alamin.pos.entity.GodownMovement;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.StockInventory;
 import com.alamin.pos.exception.InsufficientStockException;
 import com.alamin.pos.exception.ValidationException;
-import com.alamin.pos.repository.GodownMovementRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.alamin.pos.repository.ProductRepository;
 import com.alamin.pos.repository.StockInventoryRepository;
@@ -44,11 +42,8 @@ class InventoryServiceTest {
     @Autowired
     private StockInventoryRepository stockInventoryRepository;
 
-    @Autowired
-    private GodownMovementRepository godownMovementRepository;
-
     @Test
-    @DisplayName("1. Record lot with 2 cartons (multiplier 20) + 5 loose bottles credits 45 base units to GODOWN and logs movement")
+    @DisplayName("1. Record lot with 2 cartons (multiplier 20) + 5 loose bottles credits 45 base units to DOKAN store stock")
     void testRecordLotWithCartonConversion() {
         Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
         assertThat(product.getCartonMultiplier()).isEqualByComparingTo("20.000");
@@ -63,7 +58,6 @@ class InventoryServiceTest {
                 .lotWholesalePrice(new BigDecimal("580.00"))
                 .quantityCartons(new BigDecimal("2"))
                 .quantityBaseUnits(new BigDecimal("5"))
-                .location("GODOWN")
                 .supplierName("Syngenta Bangladesh Ltd.")
                 .challanNo("CH-SYN-TEST-01")
                 .build();
@@ -76,130 +70,37 @@ class InventoryServiceTest {
         // Verifies auto-generated barcode format SYN-<CODE>-<LOT>
         assertThat(createdLot.getBarcode()).isEqualTo("SYN-AMI-TOP-LOT-2026-TEST45");
 
-        // Verify GODOWN stock inventory has exactly 45 base units (2 * 20 + 5)
-        Optional<StockInventory> godownStock = stockInventoryRepository.findByLotIdAndLocation(createdLot.getId(), "GODOWN");
-        assertThat(godownStock).isPresent();
-        assertThat(godownStock.get().getQuantity()).isEqualByComparingTo("45.000");
-
-        // Verify GodownMovement audit entry
-        List<GodownMovement> movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(createdLot.getId());
-        assertThat(movements).hasSize(1);
-        GodownMovement movement = movements.get(0);
-        assertThat(movement.getMovementType()).isEqualTo("PURCHASE_ENTRY");
-        assertThat(movement.getQuantity()).isEqualByComparingTo("45.000");
-        assertThat(movement.getReferenceNo()).isEqualTo("CH-SYN-TEST-01");
+        // Verify DOKAN stock inventory has exactly 45 base units (2 * 20 + 5)
+        Optional<StockInventory> dokanStock = stockInventoryRepository.findByLotIdAndLocation(createdLot.getId(), "DOKAN");
+        assertThat(dokanStock).isPresent();
+        assertThat(dokanStock.get().getQuantity()).isEqualByComparingTo("45.000");
     }
 
     @Test
-    @DisplayName("2. Stock transfer of 20 base units from GODOWN to DOKAN decreases GODOWN to 25 and increases DOKAN to 20")
-    void testStockTransferGodownToDokan() {
-        Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
-
-        LotEntryRequest entryRequest = LotEntryRequest.builder()
-                .productId(product.getId())
-                .lotNumber("LOT-TRANSFER-01")
-                .entryDate(LocalDate.now())
-                .expiryDate(LocalDate.of(2028, 12, 31))
-                .purchaseCost(new BigDecimal("510.00"))
-                .lotRetailPrice(new BigDecimal("650.00"))
-                .lotWholesalePrice(new BigDecimal("580.00"))
-                .quantityCartons(new BigDecimal("2"))
-                .quantityBaseUnits(new BigDecimal("5"))
-                .location("GODOWN")
-                .challanNo("CH-TRANSFER-01")
-                .build();
-
-        InventoryLot lot = inventoryService.recordLotEntry(entryRequest);
-
-        StockTransferRequest transferRequest = StockTransferRequest.builder()
-                .lotId(lot.getId())
-                .fromLocation("GODOWN")
-                .toLocation("DOKAN")
-                .quantity(new BigDecimal("20.000"))
-                .remarks("Replenish retail counter shelf")
-                .build();
-
-        inventoryService.transferStock(transferRequest);
-
-        StockInventory godownStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN").orElseThrow();
-        StockInventory dokanStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-
-        // 45 - 20 = 25
-        assertThat(godownStock.getQuantity()).isEqualByComparingTo("25.000");
-        // 0 + 20 = 20
-        assertThat(dokanStock.getQuantity()).isEqualByComparingTo("20.000");
-
-        // Movement audit logging check
-        List<GodownMovement> movements = godownMovementRepository.findByLotIdOrderByMovementDateDesc(lot.getId());
-        assertThat(movements).hasSize(2);
-        GodownMovement latest = movements.get(0);
-        assertThat(latest.getMovementType()).isEqualTo("TRANSFER_TO_DOKAN");
-        assertThat(latest.getQuantity()).isEqualByComparingTo("20.000");
-        assertThat(latest.getRemarks()).isEqualTo("Replenish retail counter shelf");
-    }
-
-    @Test
-    @DisplayName("3. Attempting to transfer more than available stock in GODOWN throws InsufficientStockException")
-    void testTransferMoreThanAvailableStockThrowsException() {
-        Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
-
-        LotEntryRequest entryRequest = LotEntryRequest.builder()
-                .productId(product.getId())
-                .lotNumber("LOT-OVERDRAW-01")
-                .expiryDate(LocalDate.of(2028, 12, 31))
-                .purchaseCost(new BigDecimal("500.00"))
-                .lotRetailPrice(new BigDecimal("650.00"))
-                .lotWholesalePrice(new BigDecimal("580.00"))
-                .quantityCartons(new BigDecimal("1"))
-                .quantityBaseUnits(new BigDecimal("5")) // 1 * 20 + 5 = 25
-                .location("GODOWN")
-                .build();
-
-        InventoryLot lot = inventoryService.recordLotEntry(entryRequest);
-
-        StockTransferRequest overdrawRequest = StockTransferRequest.builder()
-                .lotId(lot.getId())
-                .fromLocation("GODOWN")
-                .toLocation("DOKAN")
-                .quantity(new BigDecimal("30.000")) // Exceeds 25
-                .remarks("Overdraw attempt")
-                .build();
-
-        assertThatThrownBy(() -> inventoryService.transferStock(overdrawRequest))
-                .isInstanceOf(InsufficientStockException.class)
-                .hasMessageContaining("Insufficient stock in GODOWN");
-    }
-
-    @Test
-    @DisplayName("4. Query live stock overview verifies calculated totals across locations")
+    @DisplayName("2. Query live stock overview verifies store stock and quarantine stock")
     void testGetStockOverviewCalculatesTotals() {
         List<StockItemResponse> overview = inventoryService.getStockOverview();
 
         assertThat(overview).isNotEmpty();
 
-        // Verify totalQuantity equals dokanQuantity + godownQuantity for each item
         for (StockItemResponse item : overview) {
             assertThat(item.getProductId()).isNotNull();
             assertThat(item.getProductCode()).isNotBlank();
             assertThat(item.getLotId()).isNotNull();
             assertThat(item.getLotNumber()).isNotBlank();
-            assertThat(item.getDokanQuantity()).isNotNull();
-            assertThat(item.getGodownQuantity()).isNotNull();
-            assertThat(item.getTotalQuantity()).isEqualByComparingTo(item.getDokanQuantity().add(item.getGodownQuantity()));
+            assertThat(item.getQuantity()).isNotNull();
         }
 
-        // Check seeded lot SYN-AMI-202502: DOKAN = 10, GODOWN = 30 -> TOTAL = 40
+        // Check seeded lot SYN-AMI-202502: merged to 40.000 in DOKAN
         StockItemResponse seededItem = overview.stream()
                 .filter(i -> "SYN-AMI-202502".equals(i.getBarcode()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(seededItem.getDokanQuantity()).isEqualByComparingTo("10.000");
-        assertThat(seededItem.getGodownQuantity()).isEqualByComparingTo("30.000");
-        assertThat(seededItem.getTotalQuantity()).isEqualByComparingTo("40.000");
+        assertThat(seededItem.getQuantity()).isEqualByComparingTo("40.000");
     }
 
     @Test
-    @DisplayName("5. FEFO lot query orders lots strictly by expiryDate ascending")
+    @DisplayName("3. FEFO lot query orders lots strictly by expiryDate ascending")
     void testFefoLotOrdering() {
         Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
 
@@ -220,11 +121,46 @@ class InventoryServiceTest {
     }
 
     @Test
-    @DisplayName("Validation edge cases: identical transfer locations, negative quantity, zero base units")
-    void testValidationEdgeCases() {
+    @DisplayName("4. Quarantine stock disposal decreases quarantine balance and throws InsufficientStockException on overdraw")
+    void testQuarantineStockDisposal() {
+        InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
+
+        // Seed quarantine stock for this lot
+        stockInventoryRepository.save(StockInventory.builder()
+                .lot(lot)
+                .location("QUARANTINE")
+                .quantity(new BigDecimal("10.000"))
+                .build());
+
+        QuarantineDisposalRequest request = QuarantineDisposalRequest.builder()
+                .lotId(lot.getId())
+                .quantity(new BigDecimal("4.000"))
+                .disposalType("SUPPLIER_CLAIM")
+                .remarks("Defective seal returned to Syngenta")
+                .build();
+
+        inventoryService.disposeQuarantineStock(request);
+
+        StockInventory remaining = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "QUARANTINE").orElseThrow();
+        assertThat(remaining.getQuantity()).isEqualByComparingTo("6.000");
+
+        // Attempting to dispose more than 6.000 throws InsufficientStockException
+        QuarantineDisposalRequest overdraw = QuarantineDisposalRequest.builder()
+                .lotId(lot.getId())
+                .quantity(new BigDecimal("10.000"))
+                .disposalType("WRITE_OFF")
+                .build();
+
+        assertThatThrownBy(() -> inventoryService.disposeQuarantineStock(overdraw))
+                .isInstanceOf(InsufficientStockException.class)
+                .hasMessageContaining("exceeds available quarantine stock");
+    }
+
+    @Test
+    @DisplayName("5. Zero total quantity lot entry throws ValidationException")
+    void testZeroQuantityLotEntryThrowsException() {
         Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
 
-        // 1. Zero total quantity lot entry
         LotEntryRequest zeroLot = LotEntryRequest.builder()
                 .productId(product.getId())
                 .lotNumber("LOT-ZERO")
@@ -235,30 +171,9 @@ class InventoryServiceTest {
                 .quantityCartons(BigDecimal.ZERO)
                 .quantityBaseUnits(BigDecimal.ZERO)
                 .build();
+
         assertThatThrownBy(() -> inventoryService.recordLotEntry(zeroLot))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("Total quantity must be greater than zero");
-
-        // 2. Same source and destination transfer
-        StockTransferRequest sameLocRequest = StockTransferRequest.builder()
-                .lotId(1L)
-                .fromLocation("GODOWN")
-                .toLocation("GODOWN")
-                .quantity(BigDecimal.ONE)
-                .build();
-        assertThatThrownBy(() -> inventoryService.transferStock(sameLocRequest))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("cannot be the same");
-
-        // 3. Zero transfer quantity
-        StockTransferRequest zeroQtyRequest = StockTransferRequest.builder()
-                .lotId(1L)
-                .fromLocation("GODOWN")
-                .toLocation("DOKAN")
-                .quantity(BigDecimal.ZERO)
-                .build();
-        assertThatThrownBy(() -> inventoryService.transferStock(zeroQtyRequest))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("greater than zero");
     }
 }

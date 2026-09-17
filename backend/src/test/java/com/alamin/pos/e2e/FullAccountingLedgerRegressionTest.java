@@ -104,8 +104,6 @@ public class FullAccountingLedgerRegressionTest {
         SaleItemRequest cashItem = SaleItemRequest.builder()
                 .lotId(lot.getId())
                 .totalQuantity(new BigDecimal("2.000"))
-                .dokanQuantity(new BigDecimal("2.000"))
-                .godownQuantity(BigDecimal.ZERO)
                 .unitPrice(new BigDecimal("500.00"))
                 .build();
 
@@ -131,8 +129,6 @@ public class FullAccountingLedgerRegressionTest {
         SaleItemRequest creditItem = SaleItemRequest.builder()
                 .lotId(lot.getId())
                 .totalQuantity(new BigDecimal("2.000"))
-                .dokanQuantity(new BigDecimal("2.000"))
-                .godownQuantity(BigDecimal.ZERO)
                 .unitPrice(new BigDecimal("500.00"))
                 .build();
 
@@ -157,7 +153,6 @@ public class FullAccountingLedgerRegressionTest {
                 .quantity(new BigDecimal("1.000"))
                 .refundPrice(new BigDecimal("500.00"))
                 .isDamaged(false)
-                .restockLocation("DOKAN")
                 .build();
 
         SaleReturnRequest returnRequest = SaleReturnRequest.builder()
