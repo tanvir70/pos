@@ -6,6 +6,8 @@ import com.alamin.pos.mapper.ProductMapper;
 import com.alamin.pos.repository.ProductRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,11 +27,22 @@ public class ProductController {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
 
-    // BUSINESS DECISION: Product catalog REST endpoint enables frontend to retrieve all products
-    // or filter by English/Bengali name, and create new products directly in the database.
     @GetMapping
-    public ResponseEntity<List<ProductDto>> getAllProducts(
-            @RequestParam(name = "query", required = false) String query) {
+    public ResponseEntity<?> getAllProducts(
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "paged", defaultValue = "false") boolean paged,
+            Pageable pageable) {
+        if (paged) {
+            Page<Product> page;
+            if (query != null && !query.trim().isEmpty()) {
+                page = productRepository.findByNameEnContainingIgnoreCaseOrNameBnContainingIgnoreCase(
+                        query.trim(), query.trim(), pageable);
+            } else {
+                page = productRepository.findAll(pageable);
+            }
+            return ResponseEntity.ok(page.map(productMapper::toDto));
+        }
+
         List<Product> products;
         if (query != null && !query.trim().isEmpty()) {
             products = productRepository.findByNameEnContainingIgnoreCaseOrNameBnContainingIgnoreCase(

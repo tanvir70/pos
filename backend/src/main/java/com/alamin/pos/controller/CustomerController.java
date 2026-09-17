@@ -1,13 +1,17 @@
 package com.alamin.pos.controller;
 
-import com.alamin.pos.dto.CustomerLedgerDto;
+import com.alamin.pos.dto.CustomerLedgerEntryDto;
 import com.alamin.pos.dto.CustomerPaymentRequest;
 import com.alamin.pos.dto.CustomerRequest;
+import com.alamin.pos.dto.CustomerResponseDto;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
+import com.alamin.pos.mapper.CustomerMapper;
 import com.alamin.pos.service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,63 +31,58 @@ import java.util.List;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final CustomerMapper customerMapper;
 
     @PostMapping
-    public ResponseEntity<Customer> createCustomer(@Valid @RequestBody CustomerRequest request) {
+    public ResponseEntity<CustomerResponseDto> createCustomer(@Valid @RequestBody CustomerRequest request) {
         Customer customer = customerService.createCustomer(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(customer);
+        return ResponseEntity.status(HttpStatus.CREATED).body(customerMapper.toResponseDto(customer));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Customer> updateCustomer(
+    public ResponseEntity<CustomerResponseDto> updateCustomer(
             @PathVariable Long id,
             @Valid @RequestBody CustomerRequest request) {
         Customer customer = customerService.updateCustomer(id, request);
-        return ResponseEntity.ok(customer);
+        return ResponseEntity.ok(customerMapper.toResponseDto(customer));
     }
 
     @GetMapping
-    public ResponseEntity<List<Customer>> searchCustomers(
+    public ResponseEntity<?> searchCustomers(
             @RequestParam(name = "query", required = false) String query,
-            @RequestParam(name = "type", required = false) String type) {
-        return ResponseEntity.ok(customerService.searchCustomers(query, type));
+            @RequestParam(name = "type", required = false) String type,
+            @RequestParam(name = "paged", defaultValue = "false") boolean paged,
+            Pageable pageable) {
+        if (paged) {
+            Page<Customer> page = customerService.searchCustomers(query, type, pageable);
+            return ResponseEntity.ok(page.map(customerMapper::toResponseDto));
+        }
+        return ResponseEntity.ok(customerMapper.toResponseDtoList(customerService.searchCustomers(query, type)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Customer> getCustomer(@PathVariable Long id) {
-        return ResponseEntity.ok(customerService.getCustomer(id));
+    public ResponseEntity<CustomerResponseDto> getCustomer(@PathVariable Long id) {
+        return ResponseEntity.ok(customerMapper.toResponseDto(customerService.getCustomer(id)));
     }
 
     @GetMapping("/{id}/ledger")
-    public ResponseEntity<List<CustomerLedgerDto>> getCustomerLedger(@PathVariable Long id) {
+    public ResponseEntity<?> getCustomerLedger(
+            @PathVariable Long id,
+            @RequestParam(name = "paged", defaultValue = "false") boolean paged,
+            Pageable pageable) {
+        if (paged) {
+            Page<CustomerLedger> page = customerService.getCustomerLedger(id, pageable);
+            return ResponseEntity.ok(page.map(customerMapper::toLedgerEntryDto));
+        }
         List<CustomerLedger> ledgers = customerService.getCustomerLedger(id);
-        List<CustomerLedgerDto> dtoList = ledgers.stream()
-                .map(this::toLedgerDto)
-                .toList();
-        return ResponseEntity.ok(dtoList);
+        return ResponseEntity.ok(customerMapper.toLedgerEntryDtoList(ledgers));
     }
 
     @PostMapping("/{id}/payments")
-    public ResponseEntity<CustomerLedgerDto> recordPayment(
+    public ResponseEntity<CustomerLedgerEntryDto> recordPayment(
             @PathVariable Long id,
             @Valid @RequestBody CustomerPaymentRequest request) {
         CustomerLedger ledger = customerService.recordPayment(id, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toLedgerDto(ledger));
-    }
-
-    private CustomerLedgerDto toLedgerDto(CustomerLedger ledger) {
-        return CustomerLedgerDto.builder()
-                .id(ledger.getId())
-                .customerId(ledger.getCustomer() != null ? ledger.getCustomer().getId() : null)
-                .customerName(ledger.getCustomer() != null ? ledger.getCustomer().getName() : null)
-                .transactionDate(ledger.getTransactionDate())
-                .transactionType(ledger.getTransactionType())
-                .debit(ledger.getDebit())
-                .credit(ledger.getCredit())
-                .balanceAfter(ledger.getBalanceAfter())
-                .moneyReceiptNo(ledger.getMoneyReceiptNo())
-                .saleId(ledger.getSaleId())
-                .notes(ledger.getNotes())
-                .build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(customerMapper.toLedgerEntryDto(ledger));
     }
 }

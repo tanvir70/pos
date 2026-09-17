@@ -226,4 +226,22 @@ public class CustomerServiceImpl implements CustomerService {
         }
         return customerLedgerRepository.findByCustomerIdOrderByTransactionDateDescIdDesc(customerId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<Customer> searchCustomers(String query, String customerType, org.springframework.data.domain.Pageable pageable) {
+        String cleanQuery = (query != null && !query.trim().isBlank()) ? query.trim() : null;
+        String cleanType = (customerType != null && !customerType.trim().isBlank()) ? customerType.trim().toUpperCase() : null;
+        return customerRepository.searchCustomers(cleanQuery, cleanType, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<CustomerLedger> getCustomerLedger(Long customerId, org.springframework.data.domain.Pageable pageable) {
+        if (!customerRepository.existsById(customerId)) {
+            throw new ResourceNotFoundException("Customer not found with id: " + customerId);
+        }
+        return customerLedgerRepository.findByCustomerIdOrderByTransactionDateDescIdDesc(customerId, pageable);
+    }
 }
+

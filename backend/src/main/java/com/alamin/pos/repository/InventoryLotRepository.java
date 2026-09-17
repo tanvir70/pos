@@ -2,6 +2,8 @@ package com.alamin.pos.repository;
 
 import com.alamin.pos.entity.InventoryLot;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -23,5 +25,10 @@ public interface InventoryLotRepository extends JpaRepository<InventoryLot, Long
     List<InventoryLot> findAllByOrderByExpiryDateAsc();
 
     List<InventoryLot> findByExpiryDateLessThanEqualOrderByExpiryDateAsc(LocalDate expiryDate);
-}
 
+    @Query("SELECT l FROM InventoryLot l JOIN FETCH l.product p WHERE l.expiryDate <= :expiryDate ORDER BY l.expiryDate ASC")
+    List<InventoryLot> findExpiringLotsWithProduct(@Param("expiryDate") LocalDate expiryDate);
+
+    @Query("SELECT l FROM InventoryLot l JOIN FETCH l.product p")
+    List<InventoryLot> findAllWithProduct();
+}

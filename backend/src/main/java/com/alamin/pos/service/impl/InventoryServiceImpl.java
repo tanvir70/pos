@@ -179,12 +179,18 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public List<StockItemResponse> getStockOverview() {
-        List<InventoryLot> lots = inventoryLotRepository.findAll();
+        List<InventoryLot> lots = inventoryLotRepository.findAllWithProduct();
+        List<Long> lotIds = lots.stream().map(InventoryLot::getId).toList();
+        java.util.Map<Long, List<StockInventory>> stocksByLot = lotIds.isEmpty()
+                ? java.util.Map.of()
+                : stockInventoryRepository.findByLotIdIn(lotIds).stream()
+                .collect(java.util.stream.Collectors.groupingBy(si -> si.getLot().getId()));
+
         List<StockItemResponse> overview = new ArrayList<>();
 
         for (InventoryLot lot : lots) {
             Product product = lot.getProduct();
-            List<StockInventory> stocks = stockInventoryRepository.findByLotId(lot.getId());
+            List<StockInventory> stocks = stocksByLot.getOrDefault(lot.getId(), List.of());
 
             BigDecimal dokanQty = stocks.stream()
                     .filter(s -> "DOKAN".equalsIgnoreCase(s.getLocation()))
@@ -201,14 +207,14 @@ public class InventoryServiceImpl implements InventoryService {
             BigDecimal totalQty = dokanQty.add(godownQty).setScale(3, RoundingMode.HALF_UP);
 
             overview.add(StockItemResponse.builder()
-                    .productId(product.getId())
-                    .productCode(product.getProductCode())
-                    .productNameEn(product.getNameEn())
-                    .productNameBn(product.getNameBn())
-                    .category(product.getCategory())
-                    .baseUnit(product.getBaseUnit())
-                    .cartonMultiplier(product.getCartonMultiplier())
-                    .defaultBarcode(product.getDefaultBarcode())
+                    .productId(product != null ? product.getId() : null)
+                    .productCode(product != null ? product.getProductCode() : null)
+                    .productNameEn(product != null ? product.getNameEn() : null)
+                    .productNameBn(product != null ? product.getNameBn() : null)
+                    .category(product != null ? product.getCategory() : null)
+                    .baseUnit(product != null ? product.getBaseUnit() : null)
+                    .cartonMultiplier(product != null ? product.getCartonMultiplier() : null)
+                    .defaultBarcode(product != null ? product.getDefaultBarcode() : null)
                     .lotId(lot.getId())
                     .lotNumber(lot.getLotNumber())
                     .entryDate(lot.getEntryDate())
@@ -225,6 +231,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         return overview;
     }
+
 
     @Override
     @Transactional(readOnly = true)

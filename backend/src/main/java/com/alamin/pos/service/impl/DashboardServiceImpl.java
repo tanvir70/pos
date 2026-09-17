@@ -3,18 +3,12 @@ package com.alamin.pos.service.impl;
 import com.alamin.pos.dto.DashboardSummaryDto;
 import com.alamin.pos.dto.ExpiringLotDto;
 import com.alamin.pos.dto.LowStockProductDto;
-import com.alamin.pos.entity.Customer;
-import com.alamin.pos.entity.CustomerLedger;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
-import com.alamin.pos.entity.Sale;
-import com.alamin.pos.entity.SaleItem;
-import com.alamin.pos.entity.SaleReturn;
 import com.alamin.pos.entity.StockInventory;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
 import com.alamin.pos.repository.InventoryLotRepository;
-import com.alamin.pos.repository.ProductRepository;
 import com.alamin.pos.repository.SaleItemRepository;
 import com.alamin.pos.repository.SaleRepository;
 import com.alamin.pos.repository.SaleReturnRepository;
@@ -33,7 +27,8 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -45,7 +40,6 @@ public class DashboardServiceImpl implements DashboardService {
     private final CustomerRepository customerRepository;
     private final CustomerLedgerRepository customerLedgerRepository;
     private final SaleReturnRepository saleReturnRepository;
-    private final ProductRepository productRepository;
     private final InventoryLotRepository inventoryLotRepository;
     private final StockInventoryRepository stockInventoryRepository;
 
@@ -57,96 +51,62 @@ public class DashboardServiceImpl implements DashboardService {
         LocalDateTime endOfToday = today.atTime(LocalTime.MAX);
         LocalDateTime startOfMonth = today.withDayOfMonth(1).atStartOfDay();
 
-        // 1. Sales & Gross Profit Today
-        List<Sale> salesToday = saleRepository.findBySaleDateBetween(startOfToday, endOfToday);
-        BigDecimal totalSalesToday = salesToday.stream()
-                .map(Sale::getTotalAmount)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
+        // 1. Sales & Gross Profit Today via single SQL aggregates
+        BigDecimal totalSalesToday = saleRepository.sumTotalAmountBySaleDateBetween(startOfToday, endOfToday)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        BigDecimal grossProfitToday = calculateGrossProfit(salesToday);
+        BigDecimal grossProfitToday = calculateGrossProfit(startOfToday, endOfToday);
 
-        // 2. Sales & Gross Profit This Month
-        List<Sale> salesMonth = saleRepository.findBySaleDateBetween(startOfMonth, endOfToday);
-        BigDecimal totalSalesMonth = salesMonth.stream()
-                .map(Sale::getTotalAmount)
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
+        // 2. Sales & Gross Profit This Month via single SQL aggregates
+        BigDecimal totalSalesMonth = saleRepository.sumTotalAmountBySaleDateBetween(startOfMonth, endOfToday)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        BigDecimal grossProfitMonth = calculateGrossProfit(salesMonth);
+        BigDecimal grossProfitMonth = calculateGrossProfit(startOfMonth, endOfToday);
 
-        // 3. Live Cash in Drawer Today
-        // BUSINESS DECISION: Live Cash in Drawer computes net cash received today across sales cash payments, debt repayment receipts, and cash refunds.
-        BigDecimal salesCash = salesToday.stream()
-                .map(s -> s.getCashPaid() != null ? s.getCashPaid() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        List<CustomerLedger> repaymentsToday = customerLedgerRepository
-                .findByTransactionDateBetweenAndTransactionType(startOfToday, endOfToday, "CASH_PAYMENT");
-        BigDecimal repaymentsCash = repaymentsToday.stream()
-                .map(cl -> cl.getCredit() != null ? cl.getCredit() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        List<SaleReturn> refundsToday = saleReturnRepository
-                .findByReturnDateBetweenAndRefundType(startOfToday, endOfToday, "CASH_REFUND");
-        BigDecimal refundsCash = refundsToday.stream()
-                .map(sr -> sr.getTotalRefundAmount() != null ? sr.getTotalRefundAmount() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // 3. Live Cash in Drawer Today (Sales Cash + Repayments - Refunds)
+        BigDecimal salesCash = saleRepository.sumCashPaidBySaleDateBetween(startOfToday, endOfToday);
+        BigDecimal repaymentsCash = customerLedgerRepository.sumCreditByDateBetweenAndTransactionType(
+                startOfToday, endOfToday, "CASH_PAYMENT");
+        BigDecimal refundsCash = saleReturnRepository.sumRefundAmountByDateBetweenAndRefundType(
+                startOfToday, endOfToday, "CASH_REFUND");
 
         BigDecimal cashInDrawerToday = salesCash.add(repaymentsCash).subtract(refundsCash)
                 .setScale(2, RoundingMode.HALF_UP);
 
         // 4. Total Market Due & Total Customers
-        List<Customer> allCustomers = customerRepository.findAll();
-        BigDecimal totalMarketDue = allCustomers.stream()
-                .map(Customer::getCurrentDue)
-                .filter(due -> due != null && due.compareTo(BigDecimal.ZERO) > 0)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
+        BigDecimal totalMarketDue = customerRepository.sumTotalMarketDue()
                 .setScale(2, RoundingMode.HALF_UP);
+        long totalCustomers = customerRepository.count();
 
-        long totalCustomers = allCustomers.size();
+        // 5. Low Stock Products via single GROUP BY query (eliminates N+1 cascade)
+        List<LowStockProductDto> lowStockProducts = stockInventoryRepository.findLowStockProducts();
 
-        // 5. Low Stock Alerts
-        List<Product> allProducts = productRepository.findAll();
-        List<LowStockProductDto> lowStockProducts = new ArrayList<>();
-        for (Product product : allProducts) {
-            BigDecimal totalStock = stockInventoryRepository.sumQuantityByProductId(product.getId());
-            if (totalStock == null) {
-                totalStock = BigDecimal.ZERO;
-            }
-            totalStock = totalStock.setScale(3, RoundingMode.HALF_UP);
-
-            int minAlert = product.getMinStockAlert() != null ? product.getMinStockAlert() : 0;
-            if (totalStock.compareTo(BigDecimal.valueOf(minAlert)) <= 0) {
-                lowStockProducts.add(LowStockProductDto.builder()
-                        .productId(product.getId())
-                        .productCode(product.getProductCode())
-                        .nameEn(product.getNameEn())
-                        .nameBn(product.getNameBn())
-                        .minStockAlert(minAlert)
-                        .totalStock(totalStock)
-                        .build());
-            }
-        }
-
-        // 6. Expiring Lot Alerts (within 30 days)
-        // BUSINESS DECISION: Expiring lot alerts include any lot expiring on or before LocalDate.now().plusDays(30) sorted by expiryDate ascending (FEFO priority).
+        // 6. Expiring Lot Alerts (within 30 days) via 2 batch queries (eliminates N+1)
         LocalDate expiryCutoff = today.plusDays(30);
-        List<InventoryLot> expiringLotEntities = inventoryLotRepository
-                .findByExpiryDateLessThanEqualOrderByExpiryDateAsc(expiryCutoff);
-        List<ExpiringLotDto> expiringLots = new ArrayList<>();
+        List<InventoryLot> expiringLotEntities = inventoryLotRepository.findExpiringLotsWithProduct(expiryCutoff);
+        List<Long> lotIds = expiringLotEntities.stream().map(InventoryLot::getId).toList();
 
+        Map<Long, List<StockInventory>> stocksByLot = lotIds.isEmpty()
+                ? Map.of()
+                : stockInventoryRepository.findByLotIdIn(lotIds).stream()
+                .collect(Collectors.groupingBy(si -> si.getLot().getId()));
+
+        List<ExpiringLotDto> expiringLots = new ArrayList<>();
         for (InventoryLot lot : expiringLotEntities) {
             Product product = lot.getProduct();
-            BigDecimal dokanQty = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN")
+            List<StockInventory> lotStocks = stocksByLot.getOrDefault(lot.getId(), List.of());
+
+            BigDecimal dokanQty = lotStocks.stream()
+                    .filter(s -> "DOKAN".equalsIgnoreCase(s.getLocation()))
                     .map(StockInventory::getQuantity)
+                    .findFirst()
                     .orElse(BigDecimal.ZERO)
                     .setScale(3, RoundingMode.HALF_UP);
 
-            BigDecimal godownQty = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "GODOWN")
+            BigDecimal godownQty = lotStocks.stream()
+                    .filter(s -> "GODOWN".equalsIgnoreCase(s.getLocation()))
                     .map(StockInventory::getQuantity)
+                    .findFirst()
                     .orElse(BigDecimal.ZERO)
                     .setScale(3, RoundingMode.HALF_UP);
 
@@ -180,32 +140,9 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
     }
 
-    private BigDecimal calculateGrossProfit(List<Sale> sales) {
-        if (sales == null || sales.isEmpty()) {
-            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        }
-
-        List<Long> saleIds = sales.stream().map(Sale::getId).toList();
-        List<SaleItem> items = saleItemRepository.findBySaleIdIn(saleIds);
-
-        // BUSINESS DECISION: Gross profit uses frozen sale_item.unit_cost snapshots minus invoice-level discounts to ensure true historical profit accuracy.
-        BigDecimal totalLineProfit = items.stream()
-                .map(item -> {
-                    BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
-                    BigDecimal unitCost = item.getUnitCost() != null ? item.getUnitCost() : BigDecimal.ZERO;
-                    BigDecimal qty = item.getTotalQuantity() != null ? item.getTotalQuantity() : BigDecimal.ZERO;
-                    return unitPrice.subtract(unitCost).multiply(qty);
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalDiscounts = sales.stream()
-                .map(s -> s.getDiscount() != null ? s.getDiscount() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalRoundOff = sales.stream()
-                .map(s -> s.getRoundOff() != null ? s.getRoundOff() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        return totalLineProfit.subtract(totalDiscounts).subtract(totalRoundOff).setScale(2, RoundingMode.HALF_UP);
+    private BigDecimal calculateGrossProfit(LocalDateTime start, LocalDateTime end) {
+        BigDecimal totalLineProfit = saleItemRepository.sumLineProfitBySaleDateBetween(start, end);
+        BigDecimal totalDiscountsAndRoundOff = saleRepository.sumDiscountsAndRoundOffBySaleDateBetween(start, end);
+        return totalLineProfit.subtract(totalDiscountsAndRoundOff).setScale(2, RoundingMode.HALF_UP);
     }
 }

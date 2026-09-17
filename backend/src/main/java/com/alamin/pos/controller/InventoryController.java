@@ -47,13 +47,24 @@ public class InventoryController {
     }
 
     @GetMapping("/stock")
-    public ResponseEntity<List<StockItemResponse>> getStockOverview() {
+    public ResponseEntity<?> getStockOverview(
+            @RequestParam(name = "paged", defaultValue = "false") boolean paged,
+            org.springframework.data.domain.Pageable pageable) {
         List<StockItemResponse> stock = inventoryService.getStockOverview();
         if (!SecurityUtils.isOwner()) {
             stock.forEach(item -> item.setPurchaseCost(null));
         }
+        if (paged) {
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), stock.size());
+            List<StockItemResponse> subList = start > stock.size() ? List.of() : stock.subList(start, end);
+            org.springframework.data.domain.Page<StockItemResponse> page =
+                    new org.springframework.data.domain.PageImpl<>(subList, pageable, stock.size());
+            return ResponseEntity.ok(page);
+        }
         return ResponseEntity.ok(stock);
     }
+
 
     @GetMapping("/lots")
     public ResponseEntity<List<InventoryLotDto>> getLots(
