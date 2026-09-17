@@ -75,7 +75,8 @@ body {
   }
   .print-area, .print-area *,
   .thermal-receipt-print, .thermal-receipt-print *,
-  .a4-invoice-print, .a4-invoice-print * {
+  .a4-invoice-print, .a4-invoice-print *,
+  .barcode-sticker-print, .barcode-sticker-print * {
     visibility: visible !important;
   }
   .thermal-receipt-print, .print-area {
@@ -98,6 +99,18 @@ body {
     max-width: 100% !important;
     margin: 0 auto !important;
     padding: 8mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+  }
+  .barcode-sticker-print {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 50mm !important;
+    max-width: 50mm !important;
+    margin: 0 !important;
+    padding: 1mm !important;
     box-shadow: none !important;
     border: none !important;
     background: white !important;

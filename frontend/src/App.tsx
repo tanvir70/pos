@@ -1,6 +1,8 @@
 import { useState, useRef } from "react"
 import Navbar from "./components/Navbar"
 import PosCounter from "./pages/PosCounter"
+import Inventory from "./pages/Inventory"
+import Godown from "./pages/Godown"
 import type { NavigationTab } from "./types"
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -967,213 +969,6 @@ function ProductEntry({ onAdd }: { onAdd: (p: Product) => void }) {
   )
 }
 
-function Inventory({
-  products,
-  isOwner = false,
-}: {
-  products: Product[]
-  isOwner?: boolean
-}) {
-  const [search, setSearch] = useState("")
-
-  const filtered = products.filter(
-    (p) =>
-      !search ||
-      p.nameBn.includes(search) ||
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.category.includes(search),
-  )
-
-  const totalValue = products.reduce((s, p) => s + p.stock * p.purchasePrice, 0)
-  const lowCount = products.filter((p) => p.stock <= 5).length
-
-  const printLabel = (p: Product) => {
-    const bars = p.barcode
-      .replace(/\D/g, "")
-      .padEnd(13, "0")
-      .slice(0, 13)
-      .split("")
-      .map(Number)
-    const barsHtml = bars
-      .map(
-        (d) =>
-          `<div style="width:${
-            d % 3 === 0 ? 2 : 3
-          }px;height:${28 + (d % 4) * 2}px;background:#000;display:inline-block;margin:0 0.5px"></div>`,
-      )
-      .join("")
-    const win = window.open("", "_blank", "width=300,height=240")
-    if (!win) return
-    win.document.write(`<!DOCTYPE html><html><head><title>Barcode</title>
-      <style>body{font-family:monospace;text-align:center;padding:16px;margin:0}
-      .name{font-size:12px;font-weight:bold;margin-bottom:6px}
-      .bars{display:flex;justify-content:center;align-items:flex-end;margin:6px 0;height:44px}
-      .code{font-size:8px;letter-spacing:1.5px;color:#555;margin-bottom:4px}
-      .price{font-size:16px;font-weight:bold}</style></head>
-      <body onload="window.print();window.close()">
-      <div class="name">${p.nameBn}</div>
-      <div class="bars">${barsHtml}</div>
-      <div class="code">${p.barcode}</div>
-      <div class="price">৳${p.retailPrice}</div>
-      </body></html>`)
-    win.document.close()
-  }
-
-  return (
-    <div className="space-y-4">
-      {/* Summary row */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          {
-            label: "মোট পণ্য",
-            labelEn: "Total Items",
-            value: products.length.toString(),
-            unit: "",
-          },
-          {
-            label: "কম স্টক",
-            labelEn: "Low Stock",
-            value: lowCount.toString(),
-            unit: "টি",
-            warn: lowCount > 0,
-          },
-          {
-            label: "স্টক মূল্য",
-            labelEn: "Stock Value",
-            value: isOwner ? tk(totalValue) : "🔒 গোপন",
-            unit: "",
-          },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className={`bg-white border rounded-xl p-4 ${
-              s.warn ? "border-amber-300 bg-amber-50/60" : "border-frost-border"
-            }`}
-          >
-            <p className="text-xs text-frost-muted bn-text">{s.label}</p>
-            <p
-              className={`text-xl font-bold tabular-nums mt-1 ${
-                s.warn ? "text-amber-700" : "text-frost-dark"
-              }`}
-            >
-              {s.value}
-              {s.unit}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="পণ্য খুঁজুন… / Search"
-          className="flex-1 bg-white border border-frost-border rounded-xl px-4 py-2.5 text-frost-dark placeholder-frost-muted focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 bn-text transition-all"
-        />
-        <span className="text-sm text-frost-muted whitespace-nowrap">
-          {filtered.length} পণ্য
-        </span>
-      </div>
-
-      <div className="bg-white border border-frost-border rounded-xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-frost-surface border-b border-frost-border text-xs text-frost-muted">
-              <th className="text-left px-4 py-3 font-semibold bn-text">পণ্য</th>
-              <th className="text-left px-3 py-3 font-semibold bn-text hidden sm:table-cell">
-                ক্যাটাগরি
-              </th>
-              <th className="text-right px-3 py-3 font-semibold bn-text">
-                স্টক
-              </th>
-              <th className="text-right px-3 py-3 font-semibold bn-text hidden md:table-cell">
-                খুচরা
-              </th>
-              <th className="text-right px-3 py-3 font-semibold bn-text hidden md:table-cell">
-                পাইকারি
-              </th>
-              {isOwner && (
-                <th className="text-right px-3 py-3 font-semibold bn-text hidden lg:table-cell text-emerald-800">
-                  কেনা দাম
-                </th>
-              )}
-              <th className="px-3 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-frost-border/60">
-            {filtered.map((p) => {
-              const low = p.stock <= 5
-              return (
-                <tr
-                  key={p.id}
-                  className={`transition-colors ${
-                    low
-                      ? "bg-yellow-50 hover:bg-yellow-100/70"
-                      : "hover:bg-frost-surface/60"
-                  }`}
-                >
-                  <td className="px-4 py-3">
-                    <p className="font-semibold text-frost-dark bn-text text-sm">
-                      {p.nameBn}
-                    </p>
-                    <p className="text-xs text-frost-muted mt-0.5">{p.name}</p>
-                  </td>
-                  <td className="px-3 py-3 text-sm text-frost-muted bn-text hidden sm:table-cell">
-                    {p.category}
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    <span
-                      className={`tabular-nums font-bold text-sm ${
-                        low ? "text-amber-700" : "text-frost-dark"
-                      }`}
-                    >
-                      {p.stock}
-                      {low && (
-                        <span className="ml-1 text-xs text-amber-500 bn-text font-normal">
-                          ↓
-                        </span>
-                      )}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-right tabular-nums text-sm text-frost-dark hidden md:table-cell">
-                    {tk(p.retailPrice)}
-                  </td>
-                  <td className="px-3 py-3 text-right tabular-nums text-sm text-frost-muted hidden md:table-cell">
-                    {tk(p.wholesalePrice)}
-                  </td>
-                  {isOwner && (
-                    <td className="px-3 py-3 text-right tabular-nums text-sm text-emerald-700 font-semibold hidden lg:table-cell">
-                      {tk(p.purchasePrice)}
-                    </td>
-                  )}
-                  <td className="px-3 py-3">
-                    <button
-                      onClick={() => printLabel(p)}
-                      className="text-xs border border-frost-border rounded-lg px-3 py-1.5 text-frost-muted hover:text-frost-dark hover:bg-frost-hover transition-colors bn-text whitespace-nowrap cursor-pointer"
-                    >
-                      স্টিকার
-                    </button>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <div className="py-16 text-center">
-            <p className="text-frost-muted bn-text">কোনো পণ্য পাওয়া যায়নি</p>
-          </div>
-        )}
-      </div>
-      <p className="text-xs text-frost-muted bn-text flex items-center gap-1.5">
-        <span className="inline-block w-3 h-3 bg-yellow-100 border border-yellow-300 rounded-sm"></span>
-        হলুদ সারি = কম স্টক (৫ বা তার কম)
-      </p>
-    </div>
-  )
-}
-
 // ─── Baki Ledger ───────────────────────────────────────────────────
 function BakiLedger() {
   const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS)
@@ -1407,10 +1202,6 @@ function BakiLedger() {
 export default function App() {
   const [tab, setTab] = useState<NavigationTab>("pos")
   const [isOwner, setIsOwner] = useState(false)
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS)
-
-  const addProduct = (p: Product) => setProducts((prev) => [...prev, p])
-  const updateProducts = (fn: (p: Product[]) => Product[]) => setProducts(fn)
 
   return (
     <div className="min-h-screen bg-frost-bg">
@@ -1424,17 +1215,7 @@ export default function App() {
       {/* Main */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 py-5">
         {tab === "pos" && <PosCounter isOwner={isOwner} />}
-        {tab === "inventory" && (
-          <div className="space-y-6">
-            <Inventory products={products} isOwner={isOwner} />
-            <div className="pt-5 border-t border-frost-border">
-              <h3 className="text-base font-bold text-frost-dark bn-text mb-3">
-                নতুন পণ্য ক্যাটালগ এন্ট্রি (Product Entry)
-              </h3>
-              <ProductEntry onAdd={addProduct} />
-            </div>
-          </div>
-        )}
+        {tab === "inventory" && <Inventory isOwner={isOwner} />}
         {tab === "customers" && <BakiLedger />}
         {tab === "dashboard" && (
           <div className="bg-white border border-frost-border rounded-2xl p-10 text-center shadow-xs">
@@ -1448,18 +1229,7 @@ export default function App() {
             </p>
           </div>
         )}
-        {tab === "godown" && (
-          <div className="bg-white border border-frost-border rounded-2xl p-10 text-center shadow-xs">
-            <div className="text-4xl mb-3">🏭</div>
-            <h2 className="text-xl font-bold text-frost-dark bn-text">
-              গুদাম ও চালান ব্যবস্থাপনা (Godown & Challan)
-            </h2>
-            <p className="text-sm text-frost-muted mt-2 bn-text max-w-md mx-auto">
-              সিনজেনটা চালান থেকে মাল আনলোড, কার্টন থেকে বেস ইউনিট ভাঙা এবং গুদাম থেকে
-              দোকানে স্টক স্থানান্তর।
-            </p>
-          </div>
-        )}
+        {tab === "godown" && <Godown isOwner={isOwner} />}
         {tab === "returns" && (
           <div className="bg-white border border-frost-border rounded-2xl p-10 text-center shadow-xs">
             <div className="text-4xl mb-3">🔄</div>
