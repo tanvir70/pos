@@ -53,16 +53,11 @@ export function formatTkCompact(amount: number | undefined | null): string {
   return formatTk(num)
 }
 
-/**
- * Computes line total strictly using integer paisa multiplication to avoid micro-penny drift.
- * (unitPrice in Tk * quantity)
- */
-export function calcLineTotal(unitPrice: number, quantity: number): number {
-  const unitPaisa = toPaisa(unitPrice)
-  // quantity can be fractional (e.g. 1.5 kg / liters)
-  const totalPaisa = Math.round(unitPaisa * quantity)
-  return fromPaisa(totalPaisa)
+export function calcLineTotal(quantity: number, unitPrice: number): number {
+  // Symmetrical and accounting-rounded to 2 decimal places (paisa)
+  return roundAccounting(quantity * unitPrice)
 }
+
 
 /**
  * Computes discount amount based on flat BDT or percentage.

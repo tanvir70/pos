@@ -1,0 +1,298 @@
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react"
+import { ApiError } from "../api/client"
+
+export type ToastType = "success" | "error" | "warning" | "info"
+
+export interface ToastItem {
+  id: string
+  type: ToastType
+  title?: string
+  message: string
+  timestamp: number
+  duration?: number
+}
+
+export interface ToastContextType {
+  showToast: (toast: Omit<ToastItem, "id" | "timestamp">) => string
+  showSuccess: (message: string, title?: string) => string
+  showError: (err: unknown, title?: string) => string
+  showWarning: (message: string, title?: string) => string
+  showInfo: (message: string, title?: string) => string
+  dismissToast: (id: string) => void
+  clearAll: () => void
+}
+
+const ToastContext = createContext<ToastContextType | undefined>(undefined)
+
+// Bengali translations for backend error codes & common errors
+function parseErrorMessage(err: unknown): { title: string; message: string } {
+  if (err instanceof ApiError) {
+    if (err.errorCode) {
+      switch (err.errorCode) {
+        case "INVALID_PIN":
+          return {
+            title: "ভুল পিন কোড",
+            message: "ভুল মালিক পিন কোড! সঠিক ৪ ডিজিটের পিন লিখুন।",
+          }
+        case "NEGATIVE_STOCK_NOT_ALLOWED":
+          return {
+            title: "স্টক ঘাটতি",
+            message: "স্টকে পর্যাপ্ত পণ্য নেই। স্টক চেক করে আবার চেষ্টা করুন।",
+          }
+        case "CUSTOMER_CREDIT_EXCEEDED":
+          return {
+            title: "বাকি সীমা অতিক্রম",
+            message: "এই গ্রাহকের বাকির সর্বোচ্চ সীমা অতিক্রম করেছে!",
+          }
+        case "LOT_NOT_FOUND":
+          return {
+            title: "লট পাওয়া যায়নি",
+            message: "অনুরোধকৃত ব্যাচ/লট ডেটাবেসে পাওয়া যায়নি।",
+          }
+        case "PRODUCT_NOT_FOUND":
+          return {
+            title: "পণ্য পাওয়া যায়নি",
+            message: "নির্দিষ্ট পণ্যটি পাওয়া যায়নি।",
+          }
+        case "DUPLICATE_PRODUCT_CODE":
+          return {
+            title: "ডুপ্লিকেট কোড",
+            message: "এই প্রোডাক্ট কোডটি ইতিমধ্যেই ব্যবহৃত হয়েছে। নতুন কোড দিন।",
+          }
+        case "VALIDATION_FAILED":
+          return {
+            title: "যাচাইকরণ ত্রুটি",
+            message: err.message || "প্রদত্ত তথ্যে ভুল রয়েছে। অনুগ্রহ করে ফর্মটি চেক করুন।",
+          }
+      }
+    }
+
+    if (err.status === 401) {
+      return {
+        title: "অননুমোদিত সেশন",
+        message: "আপনার সেশনটি শেষ হয়েছে। অনুগ্রহ করে পুনরায় লগইন করুন।",
+      }
+    }
+    if (err.status === 403) {
+      return {
+        title: "অনুমতি নেই",
+        message: "এই ক্রিয়াকলাপের জন্য মালিক মোড (Owner PIN) প্রয়োজন।",
+      }
+    }
+    if (err.status >= 500) {
+      return {
+        title: "সার্ভার সমস্যা",
+        message: "সার্ভারে একটি সাময়িক সমস্যা হয়েছে। অনুগ্রহ করে একটু পর চেষ্টা করুন।",
+      }
+    }
+
+    return {
+      title: "ত্রুটি",
+      message: err.message || "একটি অনাকাঙ্ক্ষিত ত্রুটি ঘটেছে।",
+    }
+  }
+
+  if (err instanceof Error) {
+    if (
+      err.message.includes("Failed to fetch") ||
+      err.message.includes("NetworkError")
+    ) {
+      return {
+        title: "নেটওয়ার্ক বিচ্ছিন্ন",
+        message: "সার্ভারের সাথে সংযোগ স্থাপন করা যায়নি। লোকাল সার্ভার চালু আছে কিনা চেক করুন।",
+      }
+    }
+    return {
+      title: "ত্রুটি",
+      message: err.message,
+    }
+  }
+
+  if (typeof err === "string") {
+    return {
+      title: "বিজ্ঞপ্তি",
+      message: err,
+    }
+  }
+
+  return {
+    title: "অপ্রত্যাশিত ত্রুটি",
+    message: "অনাকাঙ্ক্ষিত কিছু ঘটেছে। আবার চেষ্টা করুন।",
+  }
+}
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+  const timersRef = useRef<Map<string, number>>(new Map())
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
+    const timer = timersRef.current.get(id)
+    if (timer) {
+      window.clearTimeout(timer)
+      timersRef.current.delete(id)
+    }
+  }, [])
+
+  const clearAll = useCallback(() => {
+    setToasts([])
+    timersRef.current.forEach((timer) => window.clearTimeout(timer))
+    timersRef.current.clear()
+  }, [])
+
+  const showToast = useCallback(
+    (item: Omit<ToastItem, "id" | "timestamp">) => {
+      const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      const duration = item.duration ?? 4500
+      const newToast: ToastItem = {
+        ...item,
+        id,
+        timestamp: Date.now(),
+        duration,
+      }
+
+      setToasts((prev) => [newToast, ...prev.slice(0, 4)]) // Keep max 5 toasts
+
+      if (duration > 0) {
+        const timer = window.setTimeout(() => {
+          dismissToast(id)
+        }, duration)
+        timersRef.current.set(id, timer)
+      }
+
+      return id
+    },
+    [dismissToast],
+  )
+
+  const showSuccess = useCallback(
+    (message: string, title = "সফল হয়েছে") => {
+      return showToast({ type: "success", title, message })
+    },
+    [showToast],
+  )
+
+  const showError = useCallback(
+    (err: unknown, fallbackTitle?: string) => {
+      const { title, message } = parseErrorMessage(err)
+      return showToast({
+        type: "error",
+        title: fallbackTitle || title,
+        message,
+        duration: 6000,
+      })
+    },
+    [showToast],
+  )
+
+  const showWarning = useCallback(
+    (message: string, title = "সতর্কতা") => {
+      return showToast({ type: "warning", title, message, duration: 5500 })
+    },
+    [showToast],
+  )
+
+  const showInfo = useCallback(
+    (message: string, title = "তথ্য") => {
+      return showToast({ type: "info", title, message })
+    },
+    [showToast],
+  )
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach((t) => window.clearTimeout(t))
+    }
+  }, [])
+
+  return (
+    <ToastContext.Provider
+      value={{
+        showToast,
+        showSuccess,
+        showError,
+        showWarning,
+        showInfo,
+        dismissToast,
+        clearAll,
+      }}
+    >
+      {children}
+
+      {/* High-contrast accessible Floating Alert Toasts Container */}
+      <div
+        aria-live="polite"
+        className="fixed top-4 right-4 z-[9999] flex flex-col gap-2.5 max-w-sm sm:max-w-md w-full pointer-events-none px-3 sm:px-0"
+      >
+        {toasts.map((toast) => {
+          const isSuccess = toast.type === "success"
+          const isError = toast.type === "error"
+          const isWarning = toast.type === "warning"
+          const isInfo = toast.type === "info"
+
+          return (
+            <div
+              key={toast.id}
+              role="alert"
+              className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-xl border shadow-xl transition-all animate-in slide-in-from-top-2 duration-200 ${
+                isSuccess
+                  ? "bg-emerald-900/95 text-white border-emerald-500 shadow-emerald-950/30"
+                  : isError
+                    ? "bg-rose-900/95 text-white border-rose-500 shadow-rose-950/30"
+                    : isWarning
+                      ? "bg-amber-900/95 text-white border-amber-500 shadow-amber-950/30"
+                      : "bg-slate-900/95 text-white border-slate-600 shadow-slate-950/30"
+              }`}
+            >
+              {/* Semantic Icon */}
+              <div className="shrink-0 mt-0.5 text-lg select-none">
+                {isSuccess && "✅"}
+                {isError && "⛔"}
+                {isWarning && "⚠️"}
+                {isInfo && "ℹ️"}
+              </div>
+
+              {/* Message Content */}
+              <div className="flex-1 min-w-0 pr-1">
+                {toast.title && (
+                  <h4 className="font-bold text-sm tracking-tight bn-text leading-tight mb-0.5">
+                    {toast.title}
+                  </h4>
+                )}
+                <p className="text-xs text-white/90 bn-text leading-relaxed font-normal break-words">
+                  {toast.message}
+                </p>
+              </div>
+
+              {/* Dismiss Button */}
+              <button
+                type="button"
+                onClick={() => dismissToast(toast.id)}
+                className="shrink-0 text-white/70 hover:text-white rounded-md p-1 transition-colors leading-none cursor-pointer"
+                aria-label="Dismiss alert"
+              >
+                ✕
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </ToastContext.Provider>
+  )
+}
+
+export function useToast(): ToastContextType {
+  const context = useContext(ToastContext)
+  if (!context) {
+    throw new Error("useToast must be used within a ToastProvider")
+  }
+  return context
+}

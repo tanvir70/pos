@@ -8,7 +8,11 @@ import type { ErrorResponse } from "../types"
 // BUSINESS DECISION: Frontend uses native browser fetch targeting /api prefixed endpoints,
 // routed to backend via Vite development proxy and configurable via VITE_API_BASE_URL.
 // Eliminates external HTTP library weight (Axios) and adheres to Ponytail minimal architecture.
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api"
+export const API_BASE_URL =
+  (typeof import.meta !== "undefined" &&
+    import.meta?.env?.VITE_API_BASE_URL) ||
+  "/api"
+
 
 export class ApiError extends Error {
   status: number
@@ -32,6 +36,42 @@ export class ApiError extends Error {
   }
 }
 
+export const AUTH_TOKEN_KEY = "pos_auth_token"
+export const AUTH_ROLE_KEY = "pos_auth_role"
+
+export function getStoredToken(): string | null {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function setStoredAuth(token: string, role: string): void {
+  try {
+    localStorage.setItem(AUTH_TOKEN_KEY, token)
+    localStorage.setItem(AUTH_ROLE_KEY, role)
+  } catch {
+    // ignore storage failures in private browsing
+  }
+}
+
+export function clearStoredAuth(): void {
+  try {
+    localStorage.removeItem(AUTH_TOKEN_KEY)
+    localStorage.removeItem(AUTH_ROLE_KEY)
+  } catch {
+    // ignore storage failures
+  }
+}
+
+function generateIdempotencyKey(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return `idemp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 /**
  * Lean native fetch wrapper for typed JSON requests.
  */
@@ -53,6 +93,18 @@ export async function apiClient<T>(
   }
   if (!headers.has("Accept")) {
     headers.set("Accept", "application/json, text/plain, */*")
+  }
+
+  // Inject Bearer Auth token if available and not already set
+  const token = getStoredToken()
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`)
+  }
+
+  // Inject Idempotency key for mutating requests (POST, PUT, DELETE)
+  const method = (options?.method || "GET").toUpperCase()
+  if (["POST", "PUT", "DELETE"].includes(method) && !headers.has("X-Idempotency-Key")) {
+    headers.set("X-Idempotency-Key", generateIdempotencyKey())
   }
 
   const response = await fetch(url, {

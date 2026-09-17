@@ -88,3 +88,6 @@ export function TouchNumpad({
     </div>
   )
 }
+
+export default TouchNumpad
+

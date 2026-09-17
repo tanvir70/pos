@@ -98,3 +98,6 @@ export function CardFooter({ children, className = "", ...props }: CardFooterPro
     </div>
   )
 }
+
+export default Card
+

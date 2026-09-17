@@ -65,3 +65,6 @@ export function Badge({
     </span>
   )
 }
+
+export default Badge
+

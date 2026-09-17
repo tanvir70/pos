@@ -17,6 +17,8 @@ import type {
   SaleReturnRequest,
   SaleReturnResponse,
   DashboardSummary,
+  AuthTokenResponse,
+  PinVerificationRequest,
 } from "../types"
 
 // ----------------------------------------------------------------------------
@@ -215,3 +217,23 @@ export async function downloadDatabaseBackup(): Promise<void> {
     `syngenta-pos-backup-${timestamp}.sql`,
   )
 }
+
+// ----------------------------------------------------------------------------
+// 9. Authentication & Security
+// ----------------------------------------------------------------------------
+
+export async function createCashierSession(): Promise<AuthTokenResponse> {
+  return apiClient<AuthTokenResponse>("/auth/cashier-session", {
+    method: "POST",
+  })
+}
+
+export async function verifyOwnerPin(
+  request: PinVerificationRequest,
+): Promise<AuthTokenResponse> {
+  return apiClient<AuthTokenResponse>("/auth/verify-pin", {
+    method: "POST",
+    body: JSON.stringify(request),
+  })
+}
+

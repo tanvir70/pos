@@ -336,3 +336,19 @@ export interface ErrorResponse {
   path: string
   details?: Record<string, string> | null
 }
+
+// ----------------------------------------------------------------------------
+// Security & Authentication
+// ----------------------------------------------------------------------------
+export type AppRole = "ROLE_CASHIER" | "ROLE_OWNER"
+
+export interface AuthTokenResponse {
+  token: string
+  role: AppRole | string
+  expiresIn: number
+}
+
+export interface PinVerificationRequest {
+  pin: string
+}
+

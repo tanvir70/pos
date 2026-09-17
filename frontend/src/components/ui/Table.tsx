@@ -186,3 +186,6 @@ export function TableLoadingState({
     </tr>
   )
 }
+
+export default Table
+

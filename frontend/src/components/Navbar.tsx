@@ -1,17 +1,15 @@
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import type { NavigationTab } from "../types"
 import { downloadDatabaseBackup } from "../api/endpoints"
-
-// BUSINESS DECISION: Default 4-digit Owner PIN is "1234". Entering this PIN unlocks
-// Owner Mode, revealing purchase costs (কেনা দাম) and daily gross profits on counter terminals.
-// Cashier counter staff operate in Cashier Mode to prevent wholesale cost leakage during bargaining.
-const OWNER_PIN_DEFAULT = "1234"
+import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
+import Button from "./ui/Button"
 
 export interface NavbarProps {
   activeTab: NavigationTab
   onTabChange: (tab: NavigationTab) => void
-  isOwner: boolean
-  onToggleOwner: (isOwner: boolean) => void
+  isOwner?: boolean
+  onToggleOwner?: (isOwner: boolean) => void
 }
 
 interface TabItem {
@@ -32,24 +30,16 @@ const NAV_TABS: TabItem[] = [
 export default function Navbar({
   activeTab,
   onTabChange,
-  isOwner,
-  onToggleOwner,
+  isOwner: propIsOwner,
+  onToggleOwner: propOnToggleOwner,
 }: NavbarProps) {
-  const [isBackupLoading, setIsBackupLoading] = useState(false)
-  const [backupStatus, setBackupStatus] =
-    useState<"idle" | "success" | "error">("idle")
-  const [showPinModal, setShowPinModal] = useState(false)
-  const [pinInput, setPinInput] = useState("")
-  const [pinError, setPinError] = useState<string | null>(null)
-  const pinInputRef = useRef<HTMLInputElement>(null)
+  const auth = useAuth()
+  const { showSuccess, showError } = useToast()
 
-  useEffect(() => {
-    if (showPinModal) {
-      setPinInput("")
-      setPinError(null)
-      setTimeout(() => pinInputRef.current?.focus(), 50)
-    }
-  }, [showPinModal])
+  const isOwner = propIsOwner !== undefined ? propIsOwner : auth.isOwner
+
+  const [isBackupLoading, setIsBackupLoading] = useState(false)
+  const [backupStatus, setBackupStatus] = useState<"idle" | "success" | "error">("idle")
 
   const handleBackup = async () => {
     if (isBackupLoading) return
@@ -58,36 +48,25 @@ export default function Navbar({
       setBackupStatus("idle")
       await downloadDatabaseBackup()
       setBackupStatus("success")
+      showSuccess("ডাটাবেস ব্যাকআপ সফলভাবে ডাউনলোড হয়েছে!", "ব্যাকআপ সম্পন্ন")
       setTimeout(() => setBackupStatus("idle"), 3000)
-    } catch {
+    } catch (err) {
       setBackupStatus("error")
+      showError(err, "ব্যাকআপ ডাউনলোড ব্যর্থ")
       setTimeout(() => setBackupStatus("idle"), 4000)
     } finally {
       setIsBackupLoading(false)
     }
   }
 
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (pinInput.trim() === OWNER_PIN_DEFAULT) {
-      onToggleOwner(true)
-      setShowPinModal(false)
-      setPinInput("")
-      setPinError(null)
-    } else {
-      setPinError("ভুল পিন কোড! সঠিক ৪ ডিজিটের পিন দিন (ডিফল্ট: 1234)")
-      setPinInput("")
-      pinInputRef.current?.focus()
-    }
-  }
-
   const handleRoleToggle = () => {
     if (isOwner) {
-      // Lock back to Cashier Mode immediately
-      onToggleOwner(false)
+      if (propOnToggleOwner) {
+        propOnToggleOwner(false)
+      }
+      auth.lockToCashier()
     } else {
-      // Prompt for PIN to unlock Owner Mode
-      setShowPinModal(true)
+      auth.openPinModal()
     }
   }
 
@@ -98,7 +77,7 @@ export default function Navbar({
         <div className="flex items-center justify-between h-14 border-b border-frost-border/40 gap-2">
           {/* Brand Logo & Name */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
               🌾
             </div>
             <div className="truncate">
@@ -106,12 +85,12 @@ export default function Navbar({
                 <span className="font-bold text-frost-dark bn-text text-base sm:text-lg leading-tight tracking-tight">
                   আল-আমিন ট্রেডার্স
                 </span>
-                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 bn-text border border-emerald-200">
-                  সিনজেনটা ডিলার
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 bn-text border border-emerald-200">
+                  সিনজেনটা অনুমোদিত ডিলার
                 </span>
               </div>
               <p className="text-[11px] text-frost-muted hidden sm:block leading-none mt-0.5">
-                Al-Amin Traders (Syngenta Authorized Dealership)
+                Al-Amin Traders (Syngenta Dealership Cockpit)
               </p>
             </div>
           </div>
@@ -119,47 +98,43 @@ export default function Navbar({
           {/* Right Action Tools */}
           <div className="flex items-center gap-2 shrink-0">
             {/* 1-Click DB Backup Button */}
-            <button
-              onClick={handleBackup}
-              disabled={isBackupLoading}
-              title="সম্পূর্ণ ডেটাবেস ১-ক্লিকে এসকিউএল ফাইলে ডাউনলোড করুন"
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer ${
+            <Button
+              variant={
                 backupStatus === "success"
-                  ? "bg-emerald-600 text-white"
+                  ? "primary"
                   : backupStatus === "error"
-                    ? "bg-red-600 text-white"
-                    : "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
-              }`}
+                    ? "danger"
+                    : "outline"
+              }
+              size="sm"
+              onClick={handleBackup}
+              isLoading={isBackupLoading}
+              title="সম্পূর্ণ ডেটাবেস ১-ক্লিকে এসকিউএল ফাইলে ডাউনলোড করুন"
+              className={backupStatus === "idle" ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100" : ""}
             >
-              {isBackupLoading ? (
+              {backupStatus === "success" ? (
                 <>
-                  <span className="animate-spin text-sm">⏳</span>
-                  <span className="bn-text hidden sm:inline">
-                    ব্যাকআপ হচ্ছে...
-                  </span>
-                </>
-              ) : backupStatus === "success" ? (
-                <>
-                  <span className="text-sm">✅</span>
+                  <span>✅</span>
                   <span className="bn-text hidden sm:inline">ব্যাকআপ সম্পন্ন</span>
                 </>
               ) : backupStatus === "error" ? (
                 <>
-                  <span className="text-sm">❌</span>
+                  <span>❌</span>
                   <span className="bn-text hidden sm:inline">ব্যর্থ হয়েছে</span>
                 </>
               ) : (
                 <>
-                  <span className="text-sm">💾</span>
+                  <span>💾</span>
                   <span className="bn-text">ব্যাকআপ ডাউনলোড</span>
                 </>
               )}
-            </button>
+            </Button>
 
             {/* Cashier / Owner Mode Toggle Button */}
             <button
+              type="button"
               onClick={handleRoleToggle}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-xs cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-xs cursor-pointer ${
                 isOwner
                   ? "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 ring-2 ring-amber-400/40"
                   : "bg-frost-surface text-frost-dark border-frost-border hover:bg-frost-hover"
@@ -184,6 +159,7 @@ export default function Navbar({
             const isActive = activeTab === tab.id
             return (
               <button
+                type="button"
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
@@ -206,73 +182,6 @@ export default function Navbar({
           })}
         </nav>
       </div>
-
-      {/* 4-Digit Owner PIN Modal */}
-      {showPinModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-xl shadow-xl border border-frost-border max-w-sm w-full p-5">
-            <div className="flex items-center justify-between pb-3 border-b border-frost-border">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">👑</span>
-                <h3 className="font-bold text-frost-dark bn-text text-base">
-                  মালিক মোড আনলক করুন
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowPinModal(false)}
-                className="text-frost-muted hover:text-frost-dark text-lg leading-none cursor-pointer p-1"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-frost-muted bn-text mt-2.5">
-              কেনা দাম (Purchase Cost) এবং দৈনন্দিন গ্রস প্রফিট দেখতে মালিকের ৪
-              ডিজিটের পিন নম্বর লিখুন।
-            </p>
-
-            <form onSubmit={handlePinSubmit} className="mt-4">
-              <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                ৪ ডিজিটের পিন কোড:
-              </label>
-              <input
-                ref={pinInputRef}
-                type="password"
-                maxLength={8}
-                value={pinInput}
-                onChange={(e) => {
-                  setPinInput(e.target.value)
-                  if (pinError) setPinError(null)
-                }}
-                placeholder="**** (ডিফল্ট: 1234)"
-                className="w-full text-center tracking-[0.5em] text-xl font-bold py-2 px-3 border-2 border-frost-border rounded-lg focus:border-emerald-600 focus:outline-hidden tabular-nums"
-              />
-
-              {pinError && (
-                <p className="text-xs text-red-600 font-medium bn-text mt-2">
-                  {pinError}
-                </p>
-              )}
-
-              <div className="flex items-center justify-end gap-2 mt-5">
-                <button
-                  type="button"
-                  onClick={() => setShowPinModal(false)}
-                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-frost-muted hover:bg-frost-hover cursor-pointer bn-text"
-                >
-                  বাতিল
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-xs cursor-pointer bn-text"
-                >
-                  আনলক করুন
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </header>
   )
 }
