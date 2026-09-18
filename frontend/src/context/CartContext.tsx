@@ -295,8 +295,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       stockOrLot: StockItem | (InventoryLot & Partial<StockItem>),
       allLots: InventoryLot[] = [],
     ) => {
-      // Find candidate FEFO lot (earliest expiry)
-      const isLot = "lotRetailPrice" in stockOrLot && "lotNumber" in stockOrLot
+      // Find candidate FEFO lot (earliest expiry). InventoryLot objects carry an
+      // "id" field; StockItem rows also expose lotRetailPrice/lotNumber (they're a
+      // flattened product+lot DTO) but their own identifier field is "lotId", not
+      // "id" — so "id" is the only reliable discriminator between the two shapes.
+      const isLot = "id" in stockOrLot
       let targetLot: InventoryLot
 
       if (isLot) {

@@ -257,7 +257,6 @@ export interface SaleItemResponse {
 export interface SaleResponse {
   id: number
   invoiceNo: string
-  invoiceNumber?: string
   saleDate: string
   customerId?: number | null
   customerName?: string | null

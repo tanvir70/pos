@@ -84,11 +84,16 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
     .toUpperCase()
 
   // On mobile the sidebar overlays content, so picking a tab should close it;
-  // on desktop it's a permanent panel, so it stays exactly as the user left it.
+  // on desktop it's a permanent panel (open full or collapsed to an icon rail),
+  // so it stays exactly as the user left it.
   const handleTabClick = (tab: NavigationTab) => {
     onTabChange(tab)
     if (window.innerWidth < 768) onClose()
   }
+
+  // Desktop: full width when open, a narrow icon-only rail when collapsed (never
+  // fully hidden). Mobile: full width overlay that slides fully off-screen when closed.
+  const isRail = !isOpen
 
   return (
     <>
@@ -105,19 +110,23 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform transition-transform duration-250 ease-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
-        } md:relative md:z-auto md:transform-none md:translate-x-0 md:shrink-0 md:h-full md:transition-[width] md:duration-250 md:ease-out md:overflow-hidden ${
-          isOpen ? "md:w-72" : "md:w-0"
+        } md:relative md:z-auto md:transform-none md:translate-x-0 md:shrink-0 md:h-full md:transition-[width] md:duration-250 md:ease-out ${
+          isRail ? "md:w-16" : "md:w-72"
         }`}
         aria-hidden={!isOpen}
       >
-        <div className="w-72 h-full bg-white border-r border-slate-200 shadow-2xl md:shadow-none flex flex-col">
+        <div className="w-72 md:w-full h-full bg-white border-r border-slate-200 shadow-2xl md:shadow-none flex flex-col overflow-hidden">
           {/* Brand */}
-          <div className="flex items-center justify-between gap-2 px-4 h-16 border-b border-slate-200 shrink-0">
+          <div
+            className={`flex items-center justify-between px-4 h-16 border-b border-slate-200 shrink-0 gap-2 ${
+              isRail ? "md:justify-center md:px-0" : ""
+            }`}
+          >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center shadow-sm shrink-0">
                 <Sprout className="w-5 h-5" />
               </div>
-              <div className="truncate">
+              <div className={`truncate ${isRail ? "md:hidden" : ""}`}>
                 <div className="font-bold text-slate-900 text-sm leading-tight truncate">
                   Al-Amin Traders
                 </div>
@@ -137,7 +146,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+          <nav className={`flex-1 overflow-y-auto p-3 space-y-1 ${isRail ? "md:px-2.5" : ""}`}>
             {NAV_TABS.map((tab) => {
               const isActive = activeTab === tab.id
               const Icon = tab.icon
@@ -146,26 +155,34 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                   type="button"
                   key={tab.id}
                   onClick={() => handleTabClick(tab.id)}
+                  title={isRail ? tab.label : undefined}
                   className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                    isRail ? "md:justify-center md:px-0" : ""
+                  } ${
                     isActive
                       ? "bg-slate-900 text-white shadow-xs"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
-                  <span>{tab.label}</span>
+                  <span className={isRail ? "md:hidden" : ""}>{tab.label}</span>
                 </button>
               )
             })}
           </nav>
 
-          {/* Footer: user identity card + Backup / Logout action row */}
-          <div className="border-t border-slate-200 p-3 space-y-2.5 shrink-0">
-            <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200">
+          {/* Footer: user identity card + Backup / Logout actions */}
+          <div className={`border-t border-slate-200 p-3 space-y-2.5 shrink-0 ${isRail ? "md:px-2.5" : ""}`}>
+            <div
+              className={`flex items-center gap-2.5 rounded-xl bg-slate-50 border border-slate-200 ${
+                isRail ? "md:justify-center md:px-0 px-2.5 py-2" : "px-2.5 py-2"
+              }`}
+              title={isRail ? `${displayName || "Guest"} (${auth.isOwner ? "Owner" : "Cashier"})` : undefined}
+            >
               <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
                 {initials}
               </div>
-              <div className="min-w-0 flex-1">
+              <div className={`min-w-0 flex-1 ${isRail ? "md:hidden" : ""}`}>
                 <div className="text-xs font-bold text-slate-900 truncate">
                   {displayName || "Guest"}
                 </div>
@@ -175,7 +192,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid gap-2 ${isRail ? "md:grid-cols-1" : "grid-cols-2"}`}>
               <button
                 type="button"
                 onClick={handleBackup}
@@ -198,7 +215,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                 ) : (
                   <Download className="w-4 h-4" />
                 )}
-                <span>
+                <span className={isRail ? "md:hidden" : ""}>
                   {backupStatus === "success"
                     ? "Backed Up"
                     : backupStatus === "error"
@@ -210,10 +227,11 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
               <button
                 type="button"
                 onClick={auth.logout}
+                title="Logout"
                 className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl border border-slate-200 bg-white text-[11px] font-bold text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Logout</span>
+                <span className={isRail ? "md:hidden" : ""}>Logout</span>
               </button>
             </div>
           </div>
