@@ -4,6 +4,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
 } from "react"
+import { X } from "lucide-react"
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -40,21 +41,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     const sizeClasses = {
       sm: "py-1.5 px-3 text-xs min-h-[34px]",
-      md: "py-2 px-3.5 text-sm min-h-[42px]",
-      lg: "py-3 px-4 text-base min-h-[50px]",
+      md: "py-2 px-3.5 text-sm min-h-[40px]",
+      lg: "py-2.5 px-4 text-base min-h-[46px]",
     }[inputSize]
 
-    const fontClass = isMonospace ? "tabular-nums font-mono font-semibold" : ""
+    const fontClass = isMonospace ? "tabular-nums font-mono font-medium" : ""
     const borderClass = error
-      ? "border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 bg-red-50/20 text-red-950"
-      : "border-frost-border focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 bg-white text-frost-dark"
+      ? "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/30 text-red-900"
+      : "border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 bg-white text-slate-900"
 
     return (
       <div className="w-full text-left">
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-bold text-frost-dark bn-text mb-1.5"
+            className="block text-xs font-medium text-slate-700 mb-1.5"
           >
             {label}
           </label>
@@ -62,7 +63,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative flex items-center">
           {leftAdornment && (
-            <div className="absolute left-3 flex items-center pointer-events-none text-frost-muted text-sm">
+            <div className="absolute left-3 flex items-center pointer-events-none text-slate-400 text-sm">
               {leftAdornment}
             </div>
           )}
@@ -72,7 +73,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             value={value}
             disabled={disabled}
-            className={`w-full rounded-xl border transition-colors outline-hidden ${borderClass} ${sizeClasses} ${fontClass} ${
+            className={`w-full rounded-lg border transition-colors outline-hidden ${borderClass} ${sizeClasses} ${fontClass} ${
               leftAdornment ? "pl-9" : ""
             } ${rightAdornment || onClear ? "pr-9" : ""} ${
               disabled ? "bg-slate-100 text-slate-400 cursor-not-allowed" : ""
@@ -84,29 +85,28 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               onClick={onClear}
-              className="absolute right-3 p-0.5 text-frost-muted hover:text-frost-dark rounded-full hover:bg-frost-surface cursor-pointer text-xs"
-              title="মুছুন"
+              className="absolute right-3 p-0.5 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 cursor-pointer"
+              title="Clear"
             >
-              ✕
+              <X size={14} />
             </button>
           )}
 
           {!onClear && rightAdornment && (
-            <div className="absolute right-3 flex items-center pointer-events-none text-frost-muted text-sm">
+            <div className="absolute right-3 flex items-center pointer-events-none text-slate-400 text-sm">
               {rightAdornment}
             </div>
           )}
         </div>
 
         {error && (
-          <p className="mt-1 text-xs text-red-600 font-semibold bn-text flex items-center gap-1 animate-in fade-in duration-150">
-            <span>⚠️</span>
+          <p className="mt-1 text-xs text-red-600 font-medium flex items-center gap-1 animate-in fade-in duration-150">
             <span>{error}</span>
           </p>
         )}
 
         {!error && helperText && (
-          <p className="mt-1 text-xs text-frost-muted bn-text">{helperText}</p>
+          <p className="mt-1 text-xs text-slate-500">{helperText}</p>
         )}
       </div>
     )

@@ -27,7 +27,7 @@ app:
   security:
     owner-pin: "1234"
     jwt:
-      secret: "AlAminEnterprisePosSystemSecureKey2026SecureSecretForHmacSha256MustBe32BytesOrLonger"
+      secret: "PosSystemSecureKey2026SecureSecretForHmacSha256MustBe32BytesOrLonger"
       expiration-ms: 86400000
   cors:
     allowed-origins:

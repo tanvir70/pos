@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode } from "react"
+import { useEffect, type ReactNode } from "react"
+import { X } from "lucide-react"
 
 export interface ModalProps {
   isOpen: boolean
@@ -35,8 +36,6 @@ export function Modal({
   closeOnClickOutside = true,
   className = "",
 }: ModalProps) {
-  const contentRef = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     if (!isOpen) return
 
@@ -59,7 +58,7 @@ export function Modal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-150"
       onClick={(e) => {
         if (closeOnClickOutside && e.target === e.currentTarget) {
           onClose()
@@ -67,20 +66,21 @@ export function Modal({
       }}
     >
       <div
-        ref={contentRef}
-        className={`bg-white rounded-2xl shadow-2xl border border-frost-border w-full my-auto overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150 ${sizeClasses[size]} ${className}`.trim()}
+        className={`bg-white rounded-xl shadow-2xl border border-slate-200 w-full my-auto overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150 ${sizeClasses[size]} ${className}`.trim()}
       >
         {/* Modal Header */}
         {(title || icon) && (
-          <div className="bg-gradient-to-r from-emerald-800 to-emerald-700 text-white px-6 py-4 flex items-center justify-between shrink-0">
+          <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3 min-w-0">
-              {icon && <span className="text-2xl shrink-0">{icon}</span>}
+              {icon && (
+                <span className="text-emerald-400 shrink-0 flex items-center">{icon}</span>
+              )}
               <div className="min-w-0">
-                <h2 className="font-bold text-base sm:text-lg bn-text leading-tight truncate">
+                <h2 className="font-semibold text-base sm:text-lg leading-tight truncate">
                   {title}
                 </h2>
                 {subtitle && (
-                  <p className="text-xs text-emerald-100/90 bn-text mt-0.5 truncate">
+                  <p className="text-xs text-slate-300 mt-0.5 truncate">
                     {subtitle}
                   </p>
                 )}
@@ -90,10 +90,10 @@ export function Modal({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 cursor-pointer transition-colors text-sm"
-              title="বন্ধ করুন (Esc)"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
+              title="Close (Esc)"
             >
-              ✕
+              <X size={18} />
             </button>
           </div>
         )}
@@ -103,7 +103,7 @@ export function Modal({
 
         {/* Modal Footer */}
         {footer && (
-          <div className="px-6 py-3.5 bg-frost-surface border-t border-frost-border/60 flex items-center justify-end gap-2.5 shrink-0">
+          <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
             {footer}
           </div>
         )}
@@ -113,4 +113,3 @@ export function Modal({
 }
 
 export default Modal
-

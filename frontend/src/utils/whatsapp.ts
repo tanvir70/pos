@@ -1,4 +1,4 @@
-import { formatTk } from "./currency.ts"
+import { formatTk } from "./currency"
 
 /**
  * WhatsApp Integration Utility for Agrochemical Dealer Ledger

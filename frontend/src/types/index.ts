@@ -62,6 +62,9 @@ export interface StockItem {
   baseUnit: string
   cartonMultiplier: number
   defaultBarcode: string
+  minStockAlert?: number
+  standardRetailPrice?: number
+  standardWholesalePrice?: number
   lotId: number
   lotNumber: string
   entryDate: string
@@ -72,6 +75,7 @@ export interface StockItem {
   lotBarcode: string
   barcode?: string
   quantity: number
+  totalQuantity?: number
   quarantineQuantity?: number
 }
 
@@ -88,6 +92,7 @@ export interface LotEntryRequest {
   challanNo?: string
   quantityCartons?: number
   quantityBaseUnits?: number
+  location?: string
 }
 
 export interface QuarantineStockItem {
@@ -123,10 +128,12 @@ export interface Customer {
   name: string
   fatherName?: string | null
   businessName?: string | null
+  proprietorName?: string | null
   phone: string
   whatsappNumber?: string | null
   email?: string | null
   villageAddress?: string | null
+  address?: string | null
   customerType: CustomerType | string
   creditLimit: number
   currentDue: number
@@ -242,11 +249,15 @@ export interface SaleItemResponse {
   subtotal: number
   profit?: number
   lineProfit?: number
+  expiryDate?: string | null
+  cartonMultiplier?: number | null
+  baseUnit?: string | null
 }
 
 export interface SaleResponse {
   id: number
   invoiceNo: string
+  invoiceNumber?: string
   saleDate: string
   customerId?: number | null
   customerName?: string | null

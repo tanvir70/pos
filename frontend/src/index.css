@@ -1,16 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @theme {
-  --color-frost-bg: #e8eef5;
-  --color-frost-surface: #f0f5fa;
-  --color-frost-hover: #e0e8f2;
-  --color-frost-border: #c4d4e4;
-  --color-frost-muted: #6b83a0;
-  --color-frost-dark: #172537;
-  --font-body: 'Nunito', 'Noto Sans Bengali', system-ui, sans-serif;
-  --font-bn: 'Noto Sans Bengali', 'Nunito', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* Slate & Green design tokens (Slate & Green design system) */
+  --color-frost-bg: #f8fafc;        /* slate-50 app background */
+  --color-frost-surface: #ffffff;   /* surfaces stay white */
+  --color-frost-hover: #f1f5f9;     /* slate-100 hover */
+  --color-frost-border: #e2e8f0;    /* slate-200 borders */
+  --color-frost-muted: #64748b;     /* slate-500 secondary text */
+  --color-frost-dark: #0f172a;      /* slate-900 foreground */
+
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 body {
@@ -18,10 +19,6 @@ body {
   background-color: var(--color-frost-bg);
   color: var(--color-frost-dark);
   -webkit-font-smoothing: antialiased;
-}
-
-.bn-text {
-  font-family: var(--font-bn);
 }
 
 .tabular-nums {
@@ -32,34 +29,34 @@ body {
 .field {
   width: 100%;
   background: white;
-  border: 1.5px solid var(--color-frost-border);
+  border: 1.5px solid #cbd5e1;
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
-  color: var(--color-frost-dark);
+  color: #0f172a;
   font-family: var(--font-body);
-  font-size: 0.9rem;
-  transition: border-color 0.15s;
+  font-size: 0.875rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
 }
 
 .field:focus {
-  border-color: #16a34a;
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
 }
 
 .field::placeholder {
-  color: var(--color-frost-muted);
+  color: #94a3b8;
 }
 
 /* Scrollbar styling */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-frost-border) transparent;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-frost-border); border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
 
 /* Print styles */
 @media print {
