@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { PartyPopper, Printer, FileText, MessageCircle } from "lucide-react"
 import type { SaleResponse, Customer } from "../../types"
 import { formatTk } from "../../utils/currency"
 import { openWhatsAppPaymentReminder } from "../../utils/whatsapp"
@@ -55,7 +56,7 @@ export default function DualPrintModal({
     if (phone) {
       openWhatsAppPaymentReminder(
         phone,
-        customer?.name || "সম্মানিত গ্রাহক",
+        customer?.name || "Valued Customer",
         sale.totalAmount,
         remainingDue,
         sale.invoiceNumber,
@@ -67,33 +68,31 @@ export default function DualPrintModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="বিক্রি সফলভাবে সম্পন্ন হয়েছে!"
-      subtitle="ইনভয়েস এবং প্রিন্ট অপশন নির্বাচন করুন"
-      icon="🎉"
+      title="Sale Completed Successfully!"
+      subtitle="Choose your invoice and print option"
+      icon={<PartyPopper className="w-5 h-5" />}
       size="md"
       footer={
         <div className="flex items-center justify-between w-full">
-          <Button variant="ghost" size="sm" onClick={onClose} className="bn-text">
-            নতুন বিক্রি (Esc)
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            New Sale (Esc)
           </Button>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="md"
               onClick={() => setActivePrintView("thermal")}
-              leftIcon={<span>🖨️</span>}
-              className="bn-text"
+              leftIcon={<Printer className="w-4 h-4" />}
             >
-              থার্মাল রসিদ (80mm)
+              Thermal Receipt (80mm)
             </Button>
             <Button
               variant="primary"
               size="md"
               onClick={() => setActivePrintView("a4")}
-              leftIcon={<span>📄</span>}
-              className="bn-text"
+              leftIcon={<FileText className="w-4 h-4" />}
             >
-              A4 ইনভয়েস প্রিন্ট
+              A4 Invoice Print
             </Button>
           </div>
         </div>
@@ -103,8 +102,8 @@ export default function DualPrintModal({
         {/* Invoice Header Badge */}
         <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
           <div>
-            <span className="text-xs text-emerald-800 font-semibold bn-text block">
-              ইনভয়েস নম্বর:
+            <span className="text-xs text-emerald-800 font-semibold block">
+              Invoice Number:
             </span>
             <span className="text-base font-black font-mono text-emerald-950">
               #{sale.invoiceNumber}
@@ -112,8 +111,8 @@ export default function DualPrintModal({
           </div>
 
           <div className="text-right">
-            <span className="text-xs text-emerald-800 font-semibold bn-text block">
-              মোট বিল:
+            <span className="text-xs text-emerald-800 font-semibold block">
+              Total Bill:
             </span>
             <span className="text-base font-black font-mono text-emerald-950">
               {formatTk(sale.totalAmount)}
@@ -123,25 +122,25 @@ export default function DualPrintModal({
 
         {/* Financial Highlights */}
         <div className="grid grid-cols-3 gap-2 text-center">
-          <div className="p-2.5 bg-frost-surface border border-frost-border rounded-xl">
-            <span className="text-[11px] text-frost-muted bn-text block">পরিশোধ:</span>
-            <span className="text-sm font-bold font-mono text-frost-dark">
+          <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <span className="text-[11px] text-slate-500 block">Paid:</span>
+            <span className="text-sm font-bold font-mono text-slate-900">
               {formatTk(totalPaid)}
             </span>
           </div>
 
-          <div className="p-2.5 bg-frost-surface border border-frost-border rounded-xl">
-            <span className="text-[11px] text-frost-muted bn-text block">ফেরত:</span>
+          <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <span className="text-[11px] text-slate-500 block">Change:</span>
             <span className="text-sm font-bold font-mono text-emerald-800">
               {formatTk(changeToReturn)}
             </span>
           </div>
 
-          <div className="p-2.5 bg-frost-surface border border-frost-border rounded-xl">
-            <span className="text-[11px] text-frost-muted bn-text block">বাকি:</span>
+          <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+            <span className="text-[11px] text-slate-500 block">Due:</span>
             <span
               className={`text-sm font-bold font-mono ${
-                remainingDue > 0 ? "text-red-600" : "text-frost-dark"
+                remainingDue > 0 ? "text-red-600" : "text-slate-900"
               }`}
             >
               {formatTk(remainingDue)}
@@ -151,22 +150,22 @@ export default function DualPrintModal({
 
         {/* Customer Information (if available) */}
         {customer && (
-          <div className="p-3 bg-frost-surface/60 border border-frost-border rounded-xl flex items-center justify-between text-xs">
+          <div className="p-3 bg-slate-50/60 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
             <div>
-              <span className="font-bold text-frost-dark bn-text block">
-                ক্রেতা: {customer.name}
+              <span className="font-bold text-slate-900 block">
+                Customer: {customer.name}
               </span>
-              <span className="text-frost-muted font-mono">{customer.phone}</span>
+              <span className="text-slate-500 font-mono">{customer.phone}</span>
             </div>
 
             {customer.phone && (
               <button
                 type="button"
                 onClick={handleWhatsAppClick}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs bn-text transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors"
               >
-                <span>💬</span>
-                <span>WhatsApp চালান</span>
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>Send via WhatsApp</span>
               </button>
             )}
           </div>

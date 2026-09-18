@@ -19,6 +19,7 @@ import type {
   DashboardSummary,
   AuthTokenResponse,
   PinVerificationRequest,
+  LoginRequest,
   QuarantineStockItem,
   QuarantineDisposalRequest,
 } from "../types"
@@ -237,6 +238,13 @@ export async function downloadDatabaseBackup(): Promise<void> {
 // ----------------------------------------------------------------------------
 // 9. Authentication & Security
 // ----------------------------------------------------------------------------
+
+export async function login(request: LoginRequest): Promise<AuthTokenResponse> {
+  return apiClient<AuthTokenResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(request),
+  })
+}
 
 export async function createCashierSession(): Promise<AuthTokenResponse> {
   return apiClient<AuthTokenResponse>("/auth/cashier-session", {

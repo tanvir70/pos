@@ -1,10 +1,12 @@
 package com.alamin.pos.controller;
 
 import com.alamin.pos.dto.AuthTokenResponse;
+import com.alamin.pos.dto.LoginRequest;
 import com.alamin.pos.dto.PinVerificationRequest;
 import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.security.JwtTokenProvider;
 import com.alamin.pos.security.Role;
+import com.alamin.pos.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,9 +22,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final AuthService authService;
 
     @Value("${app.security.owner-pin:1234}")
     private String configuredOwnerPin;
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthTokenResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
+    }
 
     @PostMapping("/verify-pin")
     public ResponseEntity<AuthTokenResponse> verifyPin(@Valid @RequestBody PinVerificationRequest request) {

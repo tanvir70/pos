@@ -7,25 +7,37 @@ import React, {
   useRef,
 } from "react"
 import {
-  AUTH_TOKEN_KEY,
   AUTH_ROLE_KEY,
   getStoredToken,
+  getStoredUser,
   setStoredAuth,
   clearStoredAuth,
+  setActiveTokenOverride,
 } from "../api/client"
-import { createCashierSession, verifyOwnerPin } from "../api/endpoints"
+import { login as apiLogin, verifyOwnerPin } from "../api/endpoints"
 import { useToast } from "./ToastContext"
 import Modal from "../components/ui/Modal"
 import Button from "../components/ui/Button"
 import TouchNumpad from "../components/ui/TouchNumpad"
+import { Crown } from "lucide-react"
 
 export type AppRole = "ROLE_CASHIER" | "ROLE_OWNER"
 
 export interface AuthContextType {
   role: AppRole
   isOwner: boolean
+  /** True when Owner Mode is a real logged-in Owner account (not a temporary PIN unlock). */
+  isBaseOwner: boolean
+  /** True when Owner Mode is currently active via a temporary Owner PIN unlock. */
+  isElevated: boolean
+  isAuthenticated: boolean
   token: string | null
+  username: string | null
+  fullName: string | null
   isLoading: boolean
+  isLoggingIn: boolean
+  login: (username: string, password: string) => Promise<boolean>
+  logout: () => void
   isPinModalOpen: boolean
   openPinModal: () => void
   closePinModal: () => void
@@ -40,16 +52,18 @@ const OWNER_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { showSuccess, showError, showWarning, showInfo } = useToast()
 
-  const [token, setToken] = useState<string | null>(getStoredToken())
-  const [role, setRole] = useState<AppRole>(() => {
-    try {
-      const storedRole = localStorage.getItem(AUTH_ROLE_KEY)
-      return storedRole === "ROLE_OWNER" ? "ROLE_OWNER" : "ROLE_CASHIER"
-    } catch {
-      return "ROLE_CASHIER"
-    }
-  })
+  // ─── Base logged-in account session (from the Login page) ──────────
+  const [baseToken, setBaseToken] = useState<string | null>(null)
+  const [baseRole, setBaseRole] = useState<AppRole>("ROLE_CASHIER")
+  const [username, setUsername] = useState<string | null>(null)
+  const [fullName, setFullName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false)
+
+  // ─── Temporary Owner PIN elevation (cashier peeking at owner data) ──
+  const [elevatedToken, setElevatedToken] = useState<string | null>(null)
+  const [elevatedActive, setElevatedActive] = useState<boolean>(false)
+
   const [isPinModalOpen, setIsPinModalOpen] = useState<boolean>(false)
   const [pinInput, setPinInput] = useState<string>("")
   const [pinError, setPinError] = useState<string | null>(null)
@@ -58,70 +72,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const inactivityTimerRef = useRef<number | null>(null)
   const pinInputRef = useRef<HTMLInputElement>(null)
 
-  const isOwner = role === "ROLE_OWNER"
+  const isAuthenticated = baseToken !== null
+  const isOwner = elevatedActive || baseRole === "ROLE_OWNER"
+  const role: AppRole = isOwner ? "ROLE_OWNER" : "ROLE_CASHIER"
+  const token = elevatedActive && elevatedToken ? elevatedToken : baseToken
 
-  // ─── Cashier Session Init ──────────────────────────────────────────
-  const initCashierSession = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const res = await createCashierSession()
-      setToken(res.token)
-      setRole("ROLE_CASHIER")
-      setStoredAuth(res.token, "ROLE_CASHIER")
-    } catch (err) {
-      console.warn("Could not initiate cashier session with backend, running in offline/cached mode", err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  // Auto-init on app startup if no token or expired
+  // ─── Restore session from local storage on startup ──────────────────
   useEffect(() => {
     const existingToken = getStoredToken()
-    if (!existingToken) {
-      initCashierSession()
-    } else {
-      setIsLoading(false)
+    if (existingToken) {
+      const storedRole = (() => {
+        try {
+          return localStorage.getItem(AUTH_ROLE_KEY)
+        } catch {
+          return null
+        }
+      })()
+      const { username: storedUsername, fullName: storedFullName } = getStoredUser()
+      setBaseToken(existingToken)
+      setBaseRole(storedRole === "ROLE_OWNER" ? "ROLE_OWNER" : "ROLE_CASHIER")
+      setUsername(storedUsername)
+      setFullName(storedFullName)
     }
-  }, [initCashierSession])
+    setIsLoading(false)
+  }, [])
 
-  // ─── Lock to Cashier ───────────────────────────────────────────────
-  const lockToCashier = useCallback(async () => {
+  // ─── Login ────────────────────────────────────────────────────────
+  const login = useCallback(
+    async (usernameInput: string, password: string): Promise<boolean> => {
+      setIsLoggingIn(true)
+      try {
+        const res = await apiLogin({ username: usernameInput.trim(), password })
+        const resolvedRole: AppRole = res.role === "ROLE_OWNER" ? "ROLE_OWNER" : "ROLE_CASHIER"
+        setBaseToken(res.token)
+        setBaseRole(resolvedRole)
+        setUsername(res.username || usernameInput.trim())
+        setFullName(res.fullName || null)
+        setStoredAuth(res.token, resolvedRole, res.username, res.fullName)
+        setActiveTokenOverride(null)
+        showSuccess(`Welcome back${res.fullName ? `, ${res.fullName}` : ""}!`, "Signed In")
+        return true
+      } catch (err) {
+        showError(err, "Sign In Failed")
+        return false
+      } finally {
+        setIsLoggingIn(false)
+      }
+    },
+    [showSuccess, showError],
+  )
+
+  // ─── Logout ───────────────────────────────────────────────────────
+  const logout = useCallback(() => {
     if (inactivityTimerRef.current) {
       window.clearTimeout(inactivityTimerRef.current)
       inactivityTimerRef.current = null
     }
-
-    try {
-      const res = await createCashierSession()
-      setToken(res.token)
-      setRole("ROLE_CASHIER")
-      setStoredAuth(res.token, "ROLE_CASHIER")
-    } catch {
-      setRole("ROLE_CASHIER")
-      localStorage.setItem(AUTH_ROLE_KEY, "ROLE_CASHIER")
-    }
-
-    showInfo("🔒 ক্যাশিয়ার মোড সক্রিয়। কেনা দাম ও লাভ লুকানো হয়েছে।")
+    clearStoredAuth()
+    setActiveTokenOverride(null)
+    setBaseToken(null)
+    setBaseRole("ROLE_CASHIER")
+    setUsername(null)
+    setFullName(null)
+    setElevatedToken(null)
+    setElevatedActive(false)
+    showInfo("You have been signed out.")
   }, [showInfo])
 
-  // ─── Inactivity Auto-Lock for Owner Mode ───────────────────────────
+  // ─── Lock back to the base Cashier account (drop Owner PIN elevation) ─
+  const lockToCashier = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      window.clearTimeout(inactivityTimerRef.current)
+      inactivityTimerRef.current = null
+    }
+    setActiveTokenOverride(null)
+    setElevatedToken(null)
+    setElevatedActive(false)
+    showInfo("Cashier Mode active. Purchase cost and profit are now hidden.")
+  }, [showInfo])
+
+  // ─── Inactivity Auto-Lock for a temporary Owner PIN elevation ────────
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimerRef.current) {
       window.clearTimeout(inactivityTimerRef.current)
       inactivityTimerRef.current = null
     }
 
-    if (isOwner) {
+    if (elevatedActive) {
       inactivityTimerRef.current = window.setTimeout(() => {
         lockToCashier()
-        showWarning("⚠️ ৫ মিনিট কোনো কার্যকলাপ না থাকায় মালিক মোড স্বয়ংক্রিয়ভাবে লক করা হয়েছে।")
+        showWarning("Owner Mode auto-locked after 5 minutes of inactivity.")
       }, OWNER_INACTIVITY_TIMEOUT_MS)
     }
-  }, [isOwner, lockToCashier, showWarning])
+  }, [elevatedActive, lockToCashier, showWarning])
 
   useEffect(() => {
-    if (!isOwner) {
+    if (!elevatedActive) {
       if (inactivityTimerRef.current) {
         window.clearTimeout(inactivityTimerRef.current)
         inactivityTimerRef.current = null
@@ -146,7 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         inactivityTimerRef.current = null
       }
     }
-  }, [isOwner, resetInactivityTimer])
+  }, [elevatedActive, resetInactivityTimer])
 
   // ─── Modal Controls ────────────────────────────────────────────────
   const openPinModal = useCallback(() => {
@@ -169,12 +215,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isPinModalOpen])
 
-  // ─── PIN Verification (Owner Mode Escalation) ───────────────────────
+  // ─── PIN Verification (temporary Owner Mode elevation) ───────────────
   const unlockWithOwnerPin = useCallback(
     async (pinToVerify: string): Promise<boolean> => {
       const cleanPin = pinToVerify.trim()
       if (!cleanPin) {
-        setPinError("পিন কোড লিখুন")
+        setPinError("Please enter the PIN code")
         return false
       }
 
@@ -183,16 +229,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const response = await verifyOwnerPin({ pin: cleanPin })
-        setToken(response.token)
-        setRole("ROLE_OWNER")
-        setStoredAuth(response.token, "ROLE_OWNER")
+        setActiveTokenOverride(response.token)
+        setElevatedToken(response.token)
+        setElevatedActive(true)
         setIsPinModalOpen(false)
         setPinInput("")
-        showSuccess("👑 মালিক মোড সফলভাবে আনলক করা হয়েছে! কেনা দাম ও মোট লাভ দৃশ্যমান।")
+        showSuccess("Owner Mode unlocked successfully! Purchase cost and gross profit are now visible.")
         return true
       } catch (err) {
-        setPinError("ভুল পিন কোড! সঠিক ৪ ডিজিটের মালিক পিন লিখুন (ডিফল্ট: 1234)")
-        showError(err, "পিন যাচাইকরণ ব্যর্থ")
+        setPinError("Incorrect PIN! Enter the correct 4-digit Owner PIN (default: 1234)")
+        showError(err, "PIN Verification Failed")
         setPinInput("")
         pinInputRef.current?.focus()
         return false
@@ -230,8 +276,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         role,
         isOwner,
+        isBaseOwner: baseRole === "ROLE_OWNER",
+        isElevated: elevatedActive,
+        isAuthenticated,
         token,
+        username,
+        fullName,
         isLoading,
+        isLoggingIn,
+        login,
+        logout,
         isPinModalOpen,
         openPinModal,
         closePinModal,
@@ -245,21 +299,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       <Modal
         isOpen={isPinModalOpen}
         onClose={closePinModal}
-        title="👑 মালিক মোড আনলক করুন (Owner Mode)"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            <Crown className="w-4 h-4 text-amber-600" /> Unlock Owner Mode
+          </span>
+        }
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-xs text-frost-muted bn-text leading-relaxed">
-            পণ্য ক্রয়ের আসল খরচ (কেনা দাম) এবং দৈনিক নিট মুনাফা দেখতে ৪ ডিজিটের মালিক সিকিউরিটি পিন দিন।
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Enter the 4-digit Owner Security PIN to view the actual purchase cost and daily net profit.
           </p>
 
           <form onSubmit={handleModalFormSubmit} className="space-y-3">
             <div>
               <label
                 htmlFor="owner-pin-input"
-                className="block text-xs font-bold text-frost-dark bn-text mb-1.5"
+                className="block text-xs font-bold text-slate-900 mb-1.5"
               >
-                মালিক সিকিউরিটি পিন (৪ ডিজিট):
+                Owner Security PIN (4 digits):
               </label>
               <input
                 id="owner-pin-input"
@@ -272,21 +330,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   if (pinError) setPinError(null)
                 }}
                 placeholder="••••"
-                className="w-full text-center tracking-[0.5em] text-2xl font-black py-2.5 px-3 border-2 border-frost-border rounded-xl focus:border-emerald-600 focus:outline-hidden tabular-nums bg-frost-surface/50 text-frost-dark"
+                className="w-full text-center tracking-[0.5em] text-2xl font-black py-2.5 px-3 border-2 border-slate-200 rounded-xl focus:border-emerald-600 focus:outline-hidden tabular-nums bg-slate-50/50 text-slate-900"
                 disabled={isSubmittingPin}
               />
             </div>
 
             {pinError && (
-              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs font-semibold bn-text animate-in fade-in">
+              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs font-semibold animate-in fade-in">
                 {pinError}
               </div>
             )}
 
             {/* Quick Touch Keypad for Touch Screen POS monitors */}
-            <div className="pt-2 border-t border-frost-border/60">
-              <div className="text-[11px] font-semibold text-frost-muted bn-text mb-2 text-center">
-                টাচস্ক্রিন পিনপ্যাড
+            <div className="pt-2 border-t border-slate-200/60">
+              <div className="text-[11px] font-semibold text-slate-500 mb-2 text-center">
+                Touchscreen Keypad
               </div>
               <TouchNumpad
                 onDigit={handleNumpadPress}
@@ -297,7 +355,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-frost-border/60">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200/60">
               <Button
                 type="button"
                 variant="ghost"
@@ -305,7 +363,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 onClick={closePinModal}
                 disabled={isSubmittingPin}
               >
-                বাতিল
+                Cancel
               </Button>
               <Button
                 type="submit"
@@ -314,7 +372,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 isLoading={isSubmittingPin}
                 disabled={pinInput.trim().length === 0}
               >
-                আনলক করুন
+                Unlock
               </Button>
             </div>
           </form>

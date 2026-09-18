@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react"
+import { User, ShoppingCart, X, ChevronDown, Plus } from "lucide-react"
 import type { Customer } from "../../types"
 import { formatTk } from "../../utils/currency"
 import Badge from "../ui/Badge"
@@ -67,26 +68,26 @@ export default function CustomerSelect({
       {selectedCustomer ? (
         <div className="flex items-center justify-between p-2.5 bg-emerald-50/70 border border-emerald-300/80 rounded-xl shadow-xs">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shrink-0">
-              👤
+            <div className="w-8 h-8 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0">
+              <User className="w-4 h-4" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-xs text-frost-dark bn-text truncate">
+                <span className="font-bold text-xs text-slate-900 truncate">
                   {selectedCustomer.name}
                 </span>
                 <Badge
                   variant={selectedCustomer.customerType === "WHOLESALE" ? "purple" : "info"}
                   size="sm"
                 >
-                  {selectedCustomer.customerType === "WHOLESALE" ? "পাইকারি" : "খুচরা"}
+                  {selectedCustomer.customerType === "WHOLESALE" ? "Wholesale" : "Retail"}
                 </Badge>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-frost-muted mt-0.5">
+              <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
                 <span className="font-mono">{selectedCustomer.phone}</span>
                 {selectedCustomer.currentDue > 0 && (
-                  <span className="font-bold text-red-600 font-mono bn-text">
-                    বাকি: {formatTk(selectedCustomer.currentDue)}
+                  <span className="font-bold text-red-600 font-mono">
+                    Due: {formatTk(selectedCustomer.currentDue)}
                   </span>
                 )}
               </div>
@@ -97,17 +98,17 @@ export default function CustomerSelect({
             <button
               type="button"
               onClick={() => setIsOpen(true)}
-              className="px-2 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100 rounded-md cursor-pointer bn-text"
+              className="px-2 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100 rounded-md cursor-pointer"
             >
-              পরিবর্তন
+              Change
             </button>
             <button
               type="button"
               onClick={() => onSelectCustomer(null)}
-              className="p-1 text-frost-muted hover:text-red-600 rounded-md cursor-pointer text-xs"
-              title="সাধারণ ক্রেতা হিসেবে সেট করুন"
+              className="p-1 text-slate-500 hover:text-red-600 rounded-md cursor-pointer text-xs"
+              title="Set as walk-in customer"
             >
-              ✕
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -115,65 +116,65 @@ export default function CustomerSelect({
         <button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
-          className="w-full flex items-center justify-between p-2.5 bg-frost-surface/40 hover:bg-frost-surface border border-frost-border rounded-xl text-left transition-all cursor-pointer shadow-xs"
+          className="w-full flex items-center justify-between p-2.5 bg-slate-50/40 hover:bg-slate-50 border border-slate-200 rounded-xl text-left transition-all cursor-pointer shadow-xs"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm shrink-0">
-              🛒
+            <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+              <ShoppingCart className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <p className="font-bold text-xs text-frost-dark bn-text truncate">
-                সাধারণ / ওয়াক-ইন ক্রেতা (Walk-in Customer)
+              <p className="font-bold text-xs text-slate-900 truncate">
+                Walk-in Customer
               </p>
-              <p className="text-[11px] text-frost-muted bn-text">
-                নিয়মিত বা বাকি ক্রেতা নির্বাচন করতে ক্লিক করুন
+              <p className="text-[11px] text-slate-500">
+                Click to select a regular or due customer
               </p>
             </div>
           </div>
-          <span className="text-frost-muted text-xs shrink-0">▼</span>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0" />
         </button>
       )}
 
       {/* Autocomplete Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-frost-border rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in duration-150 max-h-80 flex flex-col">
+        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in duration-150 max-h-80 flex flex-col">
           {/* Search Header */}
-          <div className="p-2.5 border-b border-frost-border/60 bg-frost-surface/30">
+          <div className="p-2.5 border-b border-slate-200/60 bg-slate-50/30">
             <input
               ref={searchInputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="গ্রাহকের নাম বা ফোন নম্বর দিয়ে খুঁজুন..."
-              className="w-full text-xs py-1.5 px-3 bg-white border border-frost-border rounded-lg focus:border-emerald-600 focus:outline-hidden bn-text"
+              placeholder="Search by customer name or phone number..."
+              className="w-full text-xs py-1.5 px-3 bg-white border border-slate-200 rounded-lg focus:border-emerald-600 focus:outline-hidden"
             />
           </div>
 
           {/* Quick Select Walk-in Option */}
-          <div className="p-1.5 border-b border-frost-border/40">
+          <div className="p-1.5 border-b border-slate-200/40">
             <button
               type="button"
               onClick={() => {
                 onSelectCustomer(null)
                 setIsOpen(false)
               }}
-              className="w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg hover:bg-frost-hover cursor-pointer text-left transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg hover:bg-slate-100 cursor-pointer text-left transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span>🛒</span>
-                <span className="font-bold text-frost-dark bn-text">
-                  সাধারণ / ওয়াক-ইন ক্রেতা (নগদ বিক্রয়)
+                <ShoppingCart className="w-4 h-4 text-slate-500" />
+                <span className="font-bold text-slate-900">
+                  Walk-in Customer (Cash Sale)
                 </span>
               </div>
-              <span className="text-[10px] text-frost-muted font-mono">Walk-in</span>
+              <span className="text-[10px] text-slate-500 font-mono">Walk-in</span>
             </button>
           </div>
 
           {/* Customer Items List */}
           <div className="flex-1 overflow-y-auto p-1.5 space-y-1">
             {filteredCustomers.length === 0 ? (
-              <div className="p-4 text-center text-xs text-frost-muted bn-text">
-                কোনো গ্রাহক পাওয়া যায়নি।
+              <div className="p-4 text-center text-xs text-slate-500">
+                No customers found.
               </div>
             ) : (
               filteredCustomers.map((c) => {
@@ -191,18 +192,18 @@ export default function CustomerSelect({
                     className={`w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg cursor-pointer text-left transition-colors ${
                       isSelected
                         ? "bg-emerald-100 text-emerald-900 font-bold"
-                        : "hover:bg-frost-hover text-frost-dark"
+                        : "hover:bg-slate-100 text-slate-900"
                     }`}
                   >
                     <div className="min-w-0 pr-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold bn-text truncate">{c.name}</span>
-                        <span className="text-[10px] font-mono text-frost-muted">
+                        <span className="font-bold truncate">{c.name}</span>
+                        <span className="text-[10px] font-mono text-slate-500">
                           ({c.phone})
                         </span>
                       </div>
                       {c.address && (
-                        <p className="text-[10px] text-frost-muted truncate mt-0.5 bn-text">
+                        <p className="text-[10px] text-slate-500 truncate mt-0.5">
                           {c.address}
                         </p>
                       )}
@@ -211,11 +212,11 @@ export default function CustomerSelect({
                     <div className="text-right shrink-0">
                       {hasDue ? (
                         <span className="text-[11px] font-bold text-red-600 font-mono">
-                          বাকি {formatTk(c.currentDue)}
+                          Due {formatTk(c.currentDue)}
                         </span>
                       ) : (
-                        <span className="text-[10px] text-emerald-700 font-semibold bn-text">
-                          পরিশোধিত
+                        <span className="text-[10px] text-emerald-700 font-semibold">
+                          Settled
                         </span>
                       )}
                     </div>
@@ -227,16 +228,17 @@ export default function CustomerSelect({
 
           {/* Footer Action */}
           {onAddNewCustomer && (
-            <div className="p-2 border-t border-frost-border/60 bg-frost-surface/40 text-center">
+            <div className="p-2 border-t border-slate-200/60 bg-slate-50/40 text-center">
               <button
                 type="button"
                 onClick={() => {
                   setIsOpen(false)
                   onAddNewCustomer()
                 }}
-                className="text-xs font-bold text-emerald-800 hover:text-emerald-900 bn-text cursor-pointer"
+                className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 hover:text-emerald-900 cursor-pointer"
               >
-                + নতুন গ্রাহক তৈরি করুন
+                <Plus className="w-3.5 h-3.5" />
+                Add New Customer
               </button>
             </div>
           )}

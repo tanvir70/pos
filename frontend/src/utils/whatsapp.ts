@@ -2,9 +2,9 @@ import { formatTk } from "./currency"
 
 /**
  * WhatsApp Integration Utility for Agrochemical Dealer Ledger
- * 
+ *
  * BUSINESS DECISION: Direct WhatsApp messaging automatically formats Bangladesh mobile numbers
- * to 880 international format and generates a pre-composed polite Bengali balance reminder message.
+ * to 880 international format and generates a pre-composed polite English balance reminder message.
  */
 
 /**
@@ -44,14 +44,14 @@ export interface DueReminderParams {
 }
 
 /**
- * Generates an instant WhatsApp Click-to-Chat URL with polite Bengali debt notification text.
+ * Generates an instant WhatsApp Click-to-Chat URL with a polite English debt notification message.
  */
 export function generateDueReminderUrl({
   phone,
   customerName,
   businessName,
   dueAmount,
-  shopName = "মেসার্স আল-আমিন ট্রেডার্স",
+  shopName = "Al-Amin Traders",
 }: DueReminderParams): string {
   const normalizedPhone = normalizeBDPhone(phone)
   if (!normalizedPhone) return ""
@@ -59,12 +59,12 @@ export function generateDueReminderUrl({
   const displayName = businessName ? `${customerName} (${businessName})` : customerName
   const formattedDue = formatTk(dueAmount)
 
-  const message = `আসসালামু আলাইকুম ${displayName} সাহেব,
-${shopName} এ আপনার বর্তমান বকেয়া হিসাব ${formattedDue}। 
+  const message = `Dear ${displayName},
+Your current outstanding balance with ${shopName} is ${formattedDue}.
 
-অনুগ্ৰহ করে আপনার সুবিধাজনক সময়ে বকেয়া পরিশোধ করে সহযোগিতা করার জন্য বিনীত অনুরোধ জানাচ্ছি।
+Kindly settle the due amount at your earliest convenience. We appreciate your cooperation.
 
-ধন্যবাদান্তে,
+Thank you,
 ${shopName}`
 
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`
@@ -79,29 +79,28 @@ export function openWhatsAppPaymentReminder(
   totalAmount: number,
   remainingDue: number,
   invoiceNumber?: string,
-  shopName = "মেসার্স আল-আমিন ট্রেডার্স",
+  shopName = "Al-Amin Traders",
 ): void {
   const normalizedPhone = normalizeBDPhone(phone)
   if (!normalizedPhone) return
 
-  let message = `আসসালামু আলাইকুম ${customerName} সাহেব,
-${shopName} থেকে আপনার ক্রয়কৃত পণ্যের ইনভয়েস #${invoiceNumber || ""} সফলভাবে তৈরি হয়েছে।
-মোট বিল: ${formatTk(totalAmount)}।`
+  let message = `Dear ${customerName},
+Your invoice #${invoiceNumber || ""} from ${shopName} has been generated successfully.
+Total Bill: ${formatTk(totalAmount)}.`
 
   if (remainingDue > 0) {
     message += `
-পরিশোধের পর বর্তমান বাকি: ${formatTk(remainingDue)}।`
+Outstanding balance after payment: ${formatTk(remainingDue)}.`
   } else {
     message += `
-সম্পূর্ণ বিল পরিশোধিত হয়েছে।`
+The full bill has been paid in full.`
   }
 
   message += `
 
-ধন্যবাদান্তে,
+Thank you,
 ${shopName}`
 
   const url = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`
   window.open(url, "_blank", "noopener,noreferrer")
 }
-

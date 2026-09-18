@@ -10,7 +10,7 @@ import {
 } from "../utils/currency.ts"
 import { ApiError } from "../api/client.ts"
 
-console.log("▶ Running Phase 2 Context & Logic Verification Suite...")
+console.log("Running Phase 2 Context & Logic Verification Suite...")
 
 // 1. Currency Math Precision
 {
@@ -53,7 +53,7 @@ console.log("▶ Running Phase 2 Context & Logic Verification Suite...")
   const change = calcChangeReturn(1500, 1450)
   assert.equal(change, 50)
 
-  console.log("  ✔ Currency math precision verified.")
+  console.log("  - Currency math precision verified.")
 }
 
 // 2. Cart Serialization and Hydration
@@ -98,7 +98,7 @@ console.log("▶ Running Phase 2 Context & Logic Verification Suite...")
   assert.equal(deserialized.cart[0].productCode, "SYN-VIRT-100")
   assert.equal(deserialized.saleMode, "RETAIL")
   assert.equal(deserialized.selectedCustomerId, 2)
-  console.log("  ✔ Cart session serialization verified.")
+  console.log("  - Cart session serialization verified.")
 }
 
 // 3. ApiError Handling and Bengali Translation
@@ -115,7 +115,7 @@ console.log("▶ Running Phase 2 Context & Logic Verification Suite...")
 
   const errForbidden = new ApiError("Owner mode required", 403)
   assert.equal(errForbidden.status, 403)
-  console.log("  ✔ ApiError categorization verified.")
+  console.log("  - ApiError categorization verified.")
 }
 
 // 4. Token & Idempotency Key Headers Contract
@@ -124,7 +124,7 @@ console.log("▶ Running Phase 2 Context & Logic Verification Suite...")
   const uuid = crypto.randomUUID()
   assert.ok(uuid.length > 20)
   assert.match(uuid, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
-  console.log("  ✔ Idempotency UUID generation verified.")
+  console.log("  - Idempotency UUID generation verified.")
 }
 
-console.log("✅ ALL PHASE 2 VERIFICATION CHECKS PASSED CLEANLY!\n")
+console.log("ALL PHASE 2 VERIFICATION CHECKS PASSED CLEANLY!\n")

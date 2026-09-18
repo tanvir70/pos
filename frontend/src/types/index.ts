@@ -382,9 +382,16 @@ export interface AuthTokenResponse {
   token: string
   role: AppRole | string
   expiresIn: number
+  username?: string
+  fullName?: string
 }
 
 export interface PinVerificationRequest {
   pin: string
+}
+
+export interface LoginRequest {
+  username: string
+  password: string
 }
 

@@ -1,9 +1,35 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
+import {
+  Plus,
+  MessageCircle,
+  MapPin,
+  AlertTriangle,
+  Check,
+  Smartphone,
+  X,
+  Users,
+  ClipboardList,
+  Phone,
+  Building2,
+  Sprout,
+  User,
+  Landmark,
+  Save,
+  BookOpen,
+  Search,
+  ShoppingCart,
+  Store,
+  Banknote,
+  CheckCircle2,
+  Printer,
+  RefreshCw,
+  Loader2,
+} from "lucide-react"
 import type { Customer, CustomerRequest, CustomerLedger, CustomerPaymentRequest, CustomerType, PaymentMethod } from "../types"
 import { getCustomers, createCustomer, getCustomerLedger, recordPayment } from "../api/endpoints"
 
 // BUSINESS DECISION: Direct WhatsApp messaging automatically formats Bangladesh mobile numbers to +880
-// international format and generates a pre-composed polite Bengali balance reminder message.
+// international format and generates a pre-composed polite balance reminder message.
 // BUSINESS DECISION: Money Receipt (MR No.) auto-suggests 'MR-<timestamp>' if cashier doesn't enter a manual
 // serial from the physical paper memo book, ensuring unbroken voucher traceability for rural debt collections.
 // BUSINESS DECISION: Customer credit limit tracks utilization percentage and renders an amber/red warning
@@ -72,7 +98,7 @@ export default function Customers({ isOwner }: CustomersProps) {
       const data = await getCustomers()
       setCustomers(data)
     } catch (err: any) {
-      setErrorMessage(err?.message || "কাস্টমার তালিকা লোড করতে ব্যর্থ হয়েছে।")
+      setErrorMessage(err?.message || "Failed to load customer list.")
     } finally {
       setIsLoading(false)
     }
@@ -136,7 +162,7 @@ export default function Customers({ isOwner }: CustomersProps) {
     } else if (!digits.startsWith("880") && digits.length === 10) {
       digits = "880" + digits
     }
-    const message = `আসসালামু আলাইকুম ${name || "সম্মানিত গ্রাহক"} ভাই, আল-আমিন ট্রেডার্স (অনুমোদিত কৃষি পরিবেশক) থেকে আপনার বর্তমান বাকি হিসাব: ${tk(due || 0)}। বিস্তারিত জানতে দোকানে যোগাযোগের অনুরোধ রইল। ধন্যবাদ।`
+    const message = `Assalamu Alaikum ${name || "valued customer"}, this is Al-Amin Traders (authorized agrochemical dealer). Your current outstanding due balance is: ${tk(due || 0)}. Please contact the shop for details. Thank you.`
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
   }
 
@@ -172,11 +198,11 @@ export default function Customers({ isOwner }: CustomersProps) {
   const handleSaveCustomer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newCustomerForm.name.trim()) {
-      setFormError("কাস্টমারের নাম আবশ্যক!")
+      setFormError("Customer name is required!")
       return
     }
     if (!newCustomerForm.phone.trim()) {
-      setFormError("মোবাইল নম্বর আবশ্যক!")
+      setFormError("Mobile number is required!")
       return
     }
 
@@ -190,11 +216,11 @@ export default function Customers({ isOwner }: CustomersProps) {
         creditLimit: Number(newCustomerForm.creditLimit) || 0,
         initialDue: Number(newCustomerForm.initialDue) || 0,
       })
-      setSuccessMessage("নতুন কাস্টমার সফলভাবে যুক্ত হয়েছে!")
+      setSuccessMessage("New customer added successfully!")
       setIsAddModalOpen(false)
       await loadCustomers()
     } catch (err: any) {
-      setFormError(err?.message || "কাস্টমার সংরক্ষণে ত্রুটি হয়েছে।")
+      setFormError(err?.message || "Failed to save customer.")
     } finally {
       setIsSavingCustomer(false)
     }
@@ -216,11 +242,11 @@ export default function Customers({ isOwner }: CustomersProps) {
 
     const amountNum = parseFloat(repayAmount)
     if (isNaN(amountNum) || amountNum <= 0) {
-      setRepayError("সঠিক পরিশোধের পরিমাণ লিখুন!")
+      setRepayError("Enter a valid repayment amount!")
       return
     }
     if (amountNum > repayCustomer.currentDue) {
-      setRepayError(`সর্বোচ্চ বর্তমান বাকি ${tk(repayCustomer.currentDue)} পর্যন্ত পরিশোধ করা যাবে।`)
+      setRepayError(`You can repay up to a maximum of the current due of ${tk(repayCustomer.currentDue)}.`)
       return
     }
 
@@ -234,11 +260,11 @@ export default function Customers({ isOwner }: CustomersProps) {
         notes: repayNotes.trim() || undefined,
       }
       await recordPayment(repayCustomer.id, payload)
-      setSuccessMessage(`মানি রিসিট (${payload.moneyReceiptNo}) সহ ${tk(amountNum)} পরিশোধ সফলভাবে সংরক্ষিত হয়েছে!`)
+      setSuccessMessage(`Payment of ${tk(amountNum)} recorded successfully with Money Receipt (${payload.moneyReceiptNo})!`)
       setRepayCustomer(null)
       await loadCustomers()
     } catch (err: any) {
-      setRepayError(err?.message || "পরিশোধ সংরক্ষণে ত্রুটি হয়েছে।")
+      setRepayError(err?.message || "Failed to save payment.")
     } finally {
       setIsSavingRepayment(false)
     }
@@ -268,21 +294,21 @@ export default function Customers({ isOwner }: CustomersProps) {
       {/* Top Header & Quick Metrics */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-frost-dark bn-text flex items-center gap-2">
-            <span>📒</span>
-            <span>গ্রাহক ও বাকি খাতা (Customer Due Ledger)</span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <BookOpen className="w-5 h-5" />
+            <span>Customer Due Ledger</span>
           </h1>
-          <p className="text-xs sm:text-sm text-frost-muted bn-text mt-0.5">
-            পাইকারি ডিলার ও খুচরা কৃষকদের বাকি হিসাব, মানি রিসিট সংগ্রহ ও অডিট স্টেটমেন্ট
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Due balances for wholesale dealers and retail farmers, Money Receipt collection, and audit statements
           </p>
         </div>
 
         <button
           onClick={handleOpenAddModal}
-          className="flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-4 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer bn-text text-sm"
+          className="flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold px-4 py-2.5 rounded-xl transition-all shadow-xs cursor-pointer text-sm"
         >
-          <span>➕</span>
-          <span>নতুন কাস্টমার নিবন্ধন</span>
+          <Plus className="w-4 h-4" />
+          <span>Register New Customer</span>
         </button>
       </div>
 
@@ -291,178 +317,182 @@ export default function Customers({ isOwner }: CustomersProps) {
         {/* Total Due */}
         <div className="bg-white border border-red-200 rounded-xl p-4 bg-red-50/30 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-red-600 bn-text">মোট বকেয়া / বাকি</span>
-            <span className="text-base">🚨</span>
+            <span className="text-xs font-semibold text-red-600">Total Outstanding Due</span>
+            <AlertTriangle className="w-4 h-4 text-red-600" />
           </div>
           <p className="text-xl sm:text-2xl font-bold text-red-700 tabular-nums mt-1.5">
             {tk(totalMarketDue)}
           </p>
-          <p className="text-[11px] text-red-500/90 bn-text mt-0.5">
-            {customersWithDueCount} জন কৃষকের কাছে বাকি
+          <p className="text-[11px] text-red-500/90 mt-0.5">
+            {customersWithDueCount} customers have outstanding dues
           </p>
         </div>
 
         {/* Total Customers */}
-        <div className="bg-white border border-frost-border rounded-xl p-4 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-frost-muted bn-text">মোট নিবন্ধিত গ্রাহক</span>
-            <span className="text-base">👥</span>
+            <span className="text-xs font-semibold text-slate-500">Total Registered Customers</span>
+            <Users className="w-4 h-4 text-slate-500" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-frost-dark tabular-nums mt-1.5">
-            {customers.length} জন
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums mt-1.5">
+            {customers.length}
           </p>
-          <p className="text-[11px] text-frost-muted bn-text mt-0.5">
-            সক্রিয় কাস্টমার তালিকা
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Active customer directory
           </p>
         </div>
 
         {/* Wholesale Count */}
-        <div className="bg-white border border-frost-border rounded-xl p-4 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-frost-muted bn-text">পাইকারি ডিলার</span>
-            <span className="text-base">🏪</span>
+            <span className="text-xs font-semibold text-slate-500">Wholesale Dealers</span>
+            <Store className="w-4 h-4 text-slate-500" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-frost-dark tabular-nums mt-1.5">
-            {wholesaleCount} জন
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums mt-1.5">
+            {wholesaleCount}
           </p>
-          <p className="text-[11px] text-emerald-700 font-medium bn-text mt-0.5">
-            সাব-ডিলার ও পাইকারি প্রোফাইল
+          <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+            Sub-dealer and wholesale profiles
           </p>
         </div>
 
         {/* Retail Count */}
-        <div className="bg-white border border-frost-border rounded-xl p-4 shadow-xs">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-frost-muted bn-text">খুচরা কৃষক</span>
-            <span className="text-base">🌾</span>
+            <span className="text-xs font-semibold text-slate-500">Retail Farmers</span>
+            <Sprout className="w-4 h-4 text-slate-500" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-frost-dark tabular-nums mt-1.5">
-            {retailCount} জন
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums mt-1.5">
+            {retailCount}
           </p>
-          <p className="text-[11px] text-frost-muted bn-text mt-0.5">
-            স্থানীয় জমির চাষী ও বাগান মালিক
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Local farmers and orchard owners
           </p>
         </div>
       </div>
 
       {/* Feedback Alerts */}
       {successMessage && (
-        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-800 text-xs sm:text-sm font-semibold bn-text flex items-center justify-between">
+        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-800 text-xs sm:text-sm font-semibold flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span>✅</span>
+            <CheckCircle2 className="w-4 h-4" />
             <span>{successMessage}</span>
           </div>
-          <button onClick={() => setSuccessMessage(null)} className="cursor-pointer text-emerald-600 hover:text-emerald-900">✕</button>
+          <button onClick={() => setSuccessMessage(null)} className="cursor-pointer text-emerald-600 hover:text-emerald-900">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs sm:text-sm font-semibold bn-text flex items-center justify-between">
+        <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs sm:text-sm font-semibold flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span>⚠️</span>
+            <AlertTriangle className="w-4 h-4" />
             <span>{errorMessage}</span>
           </div>
-          <button onClick={() => setErrorMessage(null)} className="cursor-pointer text-red-600 hover:text-red-900">✕</button>
+          <button onClick={() => setErrorMessage(null)} className="cursor-pointer text-red-600 hover:text-red-900">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-white border border-frost-border rounded-xl p-3 sm:p-4 shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+      <div className="bg-white border border-slate-200 rounded-xl p-3 sm:p-4 shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
         {/* Search */}
         <div className="relative flex-1">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-frost-muted">
-            🔍
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+            <Search className="w-4 h-4" />
           </span>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="নাম, ব্যবসা প্রতিষ্ঠান, ফোন বা গ্রাম দিয়ে খুঁজুন..."
-            className="w-full pl-9 pr-4 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bn-text bg-white"
+            placeholder="Search by name, business, phone, or village..."
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bg-white"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-frost-muted hover:text-frost-dark cursor-pointer"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-500 hover:text-slate-900 cursor-pointer"
             >
-              মুছুন
+              Clear
             </button>
           )}
         </div>
 
         {/* Tab Filters */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-frost-surface p-1 rounded-lg border border-frost-border">
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-slate-50 p-1 rounded-lg border border-slate-200">
           <button
             onClick={() => setFilterType("ALL")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer bn-text ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer ${
               filterType === "ALL"
-                ? "bg-white text-frost-dark shadow-xs"
-                : "text-frost-muted hover:text-frost-dark"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-900"
             }`}
           >
-            সকল ({customers.length})
+            All ({customers.length})
           </button>
           <button
             onClick={() => setFilterType("HAS_DUE")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer bn-text ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer ${
               filterType === "HAS_DUE"
                 ? "bg-red-600 text-white shadow-xs"
                 : "text-red-600 hover:bg-red-50"
             }`}
           >
-            বাকি আছে ({customersWithDueCount})
+            Has Due ({customersWithDueCount})
           </button>
           <button
             onClick={() => setFilterType("WHOLESALE")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer bn-text ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer ${
               filterType === "WHOLESALE"
-                ? "bg-white text-frost-dark shadow-xs"
-                : "text-frost-muted hover:text-frost-dark"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-900"
             }`}
           >
-            পাইকারি ডিলার ({wholesaleCount})
+            Wholesale Dealers ({wholesaleCount})
           </button>
           <button
             onClick={() => setFilterType("RETAIL")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer bn-text ${
+            className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap cursor-pointer ${
               filterType === "RETAIL"
-                ? "bg-white text-frost-dark shadow-xs"
-                : "text-frost-muted hover:text-frost-dark"
+                ? "bg-white text-slate-900 shadow-xs"
+                : "text-slate-500 hover:text-slate-900"
             }`}
           >
-            খুচরা কৃষক ({retailCount})
+            Retail Farmers ({retailCount})
           </button>
         </div>
       </div>
 
       {/* Customers List Table / Cards */}
-      <div className="bg-white border border-frost-border rounded-xl shadow-xs overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
         {isLoading ? (
-          <div className="py-20 text-center text-frost-muted bn-text">
-            <span className="text-3xl animate-spin inline-block mb-2">⏳</span>
-            <p className="text-sm">কাস্টমার তথ্য লোড হচ্ছে...</p>
+          <div className="py-20 text-center text-slate-500">
+            <Loader2 className="w-8 h-8 animate-spin inline-block mb-2" />
+            <p className="text-sm">Loading customer data...</p>
           </div>
         ) : filteredCustomers.length === 0 ? (
-          <div className="py-20 text-center text-frost-muted bn-text">
-            <span className="text-4xl inline-block mb-2">🔍</span>
-            <p className="text-base font-semibold text-frost-dark">কোনো কাস্টমার পাওয়া যায়নি!</p>
-            <p className="text-xs mt-1">অনুসন্ধান বা ফিল্টার পরিবর্তন করে দেখুন।</p>
+          <div className="py-20 text-center text-slate-500">
+            <Search className="w-10 h-10 inline-block mb-2" />
+            <p className="text-base font-semibold text-slate-900">No customers found!</p>
+            <p className="text-xs mt-1">Try adjusting your search or filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-frost-surface border-b border-frost-border text-frost-dark bn-text font-bold">
+              <thead className="bg-slate-50 border-b border-slate-200 text-slate-900 font-bold">
                 <tr>
-                  <th className="px-4 py-3">কাস্টমার প্রোফাইল</th>
-                  <th className="px-3 py-3">ধরণ</th>
-                  <th className="px-3 py-3">ঠিকানা / গ্রাম</th>
-                  <th className="px-3 py-3">যোগাযোগ ও WhatsApp</th>
-                  <th className="px-4 py-3 text-right">ক্রেডিট লিমিট</th>
-                  <th className="px-4 py-3 text-right">বর্তমান বাকি</th>
-                  <th className="px-4 py-3 text-center">অ্যাকশন</th>
+                  <th className="px-4 py-3">Customer Profile</th>
+                  <th className="px-3 py-3">Type</th>
+                  <th className="px-3 py-3">Address / Village</th>
+                  <th className="px-3 py-3">Contact & WhatsApp</th>
+                  <th className="px-4 py-3 text-right">Credit Limit</th>
+                  <th className="px-4 py-3 text-right">Current Due</th>
+                  <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-frost-border/60">
+              <tbody className="divide-y divide-slate-200/60">
                 {filteredCustomers.map((c) => {
                   const due = Number(c.currentDue) || 0
                   const limit = Number(c.creditLimit) || 0
@@ -473,23 +503,23 @@ export default function Customers({ isOwner }: CustomersProps) {
                   return (
                     <tr
                       key={c.id}
-                      className={`hover:bg-frost-surface/40 transition-colors ${
+                      className={`hover:bg-slate-50/40 transition-colors ${
                         due > 0 ? "bg-red-50/15" : ""
                       }`}
                     >
                       {/* Name and Business */}
                       <td className="px-4 py-3">
-                        <div className="font-bold text-frost-dark bn-text text-sm sm:text-base">
+                        <div className="font-bold text-slate-900 text-sm sm:text-base">
                           {c.name}
                         </div>
                         {c.businessName && (
-                          <div className="text-xs font-semibold text-emerald-800 bn-text mt-0.5">
-                            🏢 {c.businessName}
+                          <div className="text-xs font-semibold text-emerald-800 mt-0.5 flex items-center gap-1">
+                            <Building2 className="w-3.5 h-3.5" /> {c.businessName}
                           </div>
                         )}
                         {c.fatherName && (
-                          <div className="text-[11px] text-frost-muted bn-text mt-0.5">
-                            পিতা: {c.fatherName}
+                          <div className="text-[11px] text-slate-500 mt-0.5">
+                            Father: {c.fatherName}
                           </div>
                         )}
                       </td>
@@ -497,32 +527,32 @@ export default function Customers({ isOwner }: CustomersProps) {
                       {/* Type Badge */}
                       <td className="px-3 py-3">
                         {c.customerType === "WHOLESALE" ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200 bn-text">
-                            পাইকারি ডিলার
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                            Wholesale Dealer
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 bn-text">
-                            খুচরা কৃষক
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Retail Farmer
                           </span>
                         )}
                       </td>
 
                       {/* Village */}
-                      <td className="px-3 py-3 bn-text text-frost-muted">
+                      <td className="px-3 py-3 text-slate-500">
                         {c.villageAddress ? (
                           <span className="flex items-center gap-1">
-                            <span>📍</span>
+                            <MapPin className="w-3.5 h-3.5" />
                             <span>{c.villageAddress}</span>
                           </span>
                         ) : (
-                          <span className="text-frost-muted/50">—</span>
+                          <span className="text-slate-400">—</span>
                         )}
                       </td>
 
                       {/* Contact & WhatsApp */}
                       <td className="px-3 py-3">
-                        <div className="flex items-center gap-1.5 tabular-nums text-frost-dark font-medium">
-                          <span>📞</span>
+                        <div className="flex items-center gap-1.5 tabular-nums text-slate-900 font-medium">
+                          <Phone className="w-3.5 h-3.5" />
                           <span>{c.phone}</span>
                         </div>
                         {waUrl && (
@@ -531,18 +561,18 @@ export default function Customers({ isOwner }: CustomersProps) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded cursor-pointer transition-colors"
-                            title="হোয়াটসঅ্যাপে বর্তমান বাকির তাগাদা মেসেজ পাঠান"
+                            title="Send a WhatsApp payment reminder for the current due"
                           >
-                            <span>💬</span>
-                            <span>WhatsApp বাকি তাগাদা</span>
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span>WhatsApp Reminder</span>
                           </a>
                         )}
                       </td>
 
                       {/* Credit Limit */}
                       <td className="px-4 py-3 text-right">
-                        <div className="tabular-nums font-semibold text-frost-dark">
-                          {limit > 0 ? tk(limit) : "অসীমিত"}
+                        <div className="tabular-nums font-semibold text-slate-900">
+                          {limit > 0 ? tk(limit) : "Unlimited"}
                         </div>
                         {limit > 0 && (
                           <div className="w-24 ml-auto mt-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
@@ -570,13 +600,13 @@ export default function Customers({ isOwner }: CustomersProps) {
                           {tk(due)}
                         </div>
                         {isOverLimit && (
-                          <span className="inline-block mt-0.5 text-[10px] font-bold text-red-700 bg-red-100 border border-red-200 rounded px-1.5 py-0.2 bn-text">
-                            ⚠️ লিমিট অতিক্রম!
+                          <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-bold text-red-700 bg-red-100 border border-red-200 rounded px-1.5 py-0.2">
+                            <AlertTriangle className="w-3 h-3" /> Over Limit!
                           </span>
                         )}
                         {due === 0 && (
-                          <span className="text-[11px] text-emerald-700 bn-text font-medium">
-                            পরিশোধিত ✓
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
+                            Settled <Check className="w-3 h-3" />
                           </span>
                         )}
                       </td>
@@ -588,19 +618,19 @@ export default function Customers({ isOwner }: CustomersProps) {
                           <button
                             onClick={() => handleOpenRepayModal(c)}
                             disabled={due <= 0}
-                            className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer bn-text disabled:opacity-30 disabled:cursor-not-allowed bg-emerald-700 hover:bg-emerald-800 text-white"
-                            title="মানি রিসিট (MR No) সহ বাকি আদায় জমা করুন"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed bg-emerald-700 hover:bg-emerald-800 text-white"
+                            title="Record a due repayment with a Money Receipt (MR No.)"
                           >
-                            💵 বাকি আদায়
+                            <Banknote className="w-3.5 h-3.5" /> Collect Due
                           </button>
 
                           {/* Ledger Drawer Button */}
                           <button
                             onClick={() => handleOpenLedger(c)}
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-frost-surface hover:bg-frost-hover text-frost-dark border border-frost-border transition-all cursor-pointer bn-text"
-                            title="গ্রাহকের পূর্ণাঙ্গ হিসাব খাতা ও অডিট স্টেটমেন্ট দেখুন"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-900 border border-slate-200 transition-all cursor-pointer"
+                            title="View the customer's full ledger and audit statement"
                           >
-                            📋 খাতা / লেজার
+                            <ClipboardList className="w-3.5 h-3.5" /> Ledger
                           </button>
                         </div>
                       </td>
@@ -616,25 +646,25 @@ export default function Customers({ isOwner }: CustomersProps) {
       {/* ─── Add Customer Modal ─────────────────────────────────────── */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl border border-frost-border max-w-2xl w-full p-5 sm:p-6 my-8">
-            <div className="flex items-center justify-between pb-3 border-b border-frost-border">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-5 sm:p-6 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <span className="text-xl">👤</span>
-                <h3 className="font-bold text-frost-dark bn-text text-lg">
-                  নতুন কাস্টমার নিবন্ধন ফরম
+                <User className="w-5 h-5 text-slate-900" />
+                <h3 className="font-bold text-slate-900 text-lg">
+                  New Customer Registration Form
                 </h3>
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-frost-muted hover:text-frost-dark text-lg leading-none cursor-pointer p-1"
+                className="text-slate-500 hover:text-slate-900 cursor-pointer p-1"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="mt-3 p-2.5 bg-red-50 border border-red-300 rounded-lg text-red-700 text-xs font-semibold bn-text">
-                ⚠️ {formError}
+              <div className="mt-3 p-2.5 bg-red-50 border border-red-300 rounded-lg text-red-700 text-xs font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> {formError}
               </div>
             )}
 
@@ -642,8 +672,8 @@ export default function Customers({ isOwner }: CustomersProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {/* Name */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    কাস্টমারের নাম *
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    Customer Name *
                   </label>
                   <input
                     type="text"
@@ -652,15 +682,15 @@ export default function Customers({ isOwner }: CustomersProps) {
                     onChange={(e) =>
                       setNewCustomerForm({ ...newCustomerForm, name: e.target.value })
                     }
-                    placeholder="যেমন: হাজী আব্দুর রহমান"
-                    className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bn-text"
+                    placeholder="e.g. Haji Abdur Rahman"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden"
                   />
                 </div>
 
                 {/* Father's Name */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    পিতার নাম
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    Father's Name
                   </label>
                   <input
                     type="text"
@@ -671,15 +701,15 @@ export default function Customers({ isOwner }: CustomersProps) {
                         fatherName: e.target.value,
                       })
                     }
-                    placeholder="যেমন: মরহুম কাছিম আলী"
-                    className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bn-text"
+                    placeholder="e.g. Late Kachim Ali"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden"
                   />
                 </div>
 
                 {/* Business Name */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    ব্যবসা প্রতিষ্ঠান / দোকানের নাম
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    Business Name / Shop Name
                   </label>
                   <input
                     type="text"
@@ -690,15 +720,15 @@ export default function Customers({ isOwner }: CustomersProps) {
                         businessName: e.target.value,
                       })
                     }
-                    placeholder="যেমন: রহমান ফার্টিলাইজার (ডিলারদের ক্ষেত্রে)"
-                    className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bn-text"
+                    placeholder="e.g. Rahman Fertilizer (for dealers)"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden"
                   />
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    মোবাইল নম্বর *
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    Mobile Number *
                   </label>
                   <input
                     type="text"
@@ -707,15 +737,15 @@ export default function Customers({ isOwner }: CustomersProps) {
                     onChange={(e) =>
                       setNewCustomerForm({ ...newCustomerForm, phone: e.target.value })
                     }
-                    placeholder="০১৭xxxxxxxx"
-                    className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden tabular-nums"
+                    placeholder="017xxxxxxxx"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden tabular-nums"
                   />
                 </div>
 
                 {/* WhatsApp */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    হোয়াটসঅ্যাপ নম্বর
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    WhatsApp Number
                   </label>
                   <input
                     type="text"
@@ -726,15 +756,15 @@ export default function Customers({ isOwner }: CustomersProps) {
                         whatsappNumber: e.target.value,
                       })
                     }
-                    placeholder="০১৭xxxxxxxx (খালি রাখলে ফোন নম্বর ব্যবহৃত হবে)"
-                    className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden tabular-nums"
+                    placeholder="017xxxxxxxx (leave blank to use phone number)"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden tabular-nums"
                   />
                 </div>
 
                 {/* Village / Address */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    গ্রাম / এলাকা / ঠিকানা
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    Village / Area / Address
                   </label>
                   <input
                     type="text"
@@ -745,15 +775,15 @@ export default function Customers({ isOwner }: CustomersProps) {
                         villageAddress: e.target.value,
                       })
                     }
-                    placeholder="যেমন: কান্দাপাড়া, বেলাবো"
-                    className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bn-text"
+                    placeholder="e.g. Kandapara, Belabo"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden"
                   />
                 </div>
 
                 {/* Customer Type */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    কাস্টমার ধরণ *
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    Customer Type *
                   </label>
                   <select
                     value={newCustomerForm.customerType}
@@ -763,17 +793,17 @@ export default function Customers({ isOwner }: CustomersProps) {
                         customerType: e.target.value as CustomerType,
                       })
                     }
-                    className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bn-text bg-white"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bg-white"
                   >
-                    <option value="RETAIL">খুচরা কৃষক (Retail Farmer)</option>
-                    <option value="WHOLESALE">পাইকারি ডিলার (Wholesale Dealer)</option>
+                    <option value="RETAIL">Retail Farmer</option>
+                    <option value="WHOLESALE">Wholesale Dealer</option>
                   </select>
                 </div>
 
                 {/* Credit Limit */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    সর্বোচ্চ বাকির সীমা / ক্রেডিট লিমিট (৳)
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    Maximum Credit Limit (৳)
                   </label>
                   <input
                     type="number"
@@ -786,15 +816,15 @@ export default function Customers({ isOwner }: CustomersProps) {
                         creditLimit: Number(e.target.value) || 0,
                       })
                     }
-                    placeholder="২০,০০০"
-                    className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden tabular-nums"
+                    placeholder="20,000"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden tabular-nums"
                   />
                 </div>
 
                 {/* Initial Due */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    পূর্বের প্রারম্ভিক বাকি (যদি থাকে ৳)
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    Opening Due Balance (if any, ৳)
                   </label>
                   <input
                     type="number"
@@ -807,15 +837,15 @@ export default function Customers({ isOwner }: CustomersProps) {
                         initialDue: Number(e.target.value) || 0,
                       })
                     }
-                    placeholder="০.০০"
-                    className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden tabular-nums"
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden tabular-nums"
                   />
                 </div>
 
                 {/* MFS Type & Number */}
                 <div>
-                  <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                    মোবাইল ব্যাংকিং (বিকাশ/নগদ)
+                  <label className="block text-xs font-semibold text-slate-900 mb-1">
+                    Mobile Financial Service (bKash/Nagad)
                   </label>
                   <div className="grid grid-cols-2 gap-2">
                     <select
@@ -826,13 +856,13 @@ export default function Customers({ isOwner }: CustomersProps) {
                           mfsType: e.target.value,
                         })
                       }
-                      className="px-2 py-2 border border-frost-border rounded-lg text-xs bn-text bg-white"
+                      className="px-2 py-2 border border-slate-200 rounded-lg text-xs bg-white"
                     >
-                      <option value="">চিহ্নিত নেই</option>
-                      <option value="bKash">বিকাশ</option>
-                      <option value="Nagad">নগদ</option>
-                      <option value="Rocket">রকেট</option>
-                      <option value="Upay">উপায়</option>
+                      <option value="">Not specified</option>
+                      <option value="bKash">bKash</option>
+                      <option value="Nagad">Nagad</option>
+                      <option value="Rocket">Rocket</option>
+                      <option value="Upay">Upay</option>
                     </select>
                     <input
                       type="text"
@@ -843,17 +873,17 @@ export default function Customers({ isOwner }: CustomersProps) {
                           mfsNumber: e.target.value,
                         })
                       }
-                      placeholder="MFS নম্বর"
-                      className="px-2 py-2 border border-frost-border rounded-lg text-xs tabular-nums"
+                      placeholder="MFS number"
+                      className="px-2 py-2 border border-slate-200 rounded-lg text-xs tabular-nums"
                     />
                   </div>
                 </div>
 
                 {/* Bank Info */}
-                <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2 bg-frost-surface/40 p-2.5 rounded-lg border border-frost-border">
+                <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50/40 p-2.5 rounded-lg border border-slate-200">
                   <div>
-                    <label className="block text-[11px] font-semibold text-frost-muted mb-0.5 bn-text">
-                      ব্যাংকের নাম
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-0.5">
+                      Bank Name
                     </label>
                     <input
                       type="text"
@@ -864,13 +894,13 @@ export default function Customers({ isOwner }: CustomersProps) {
                           bankName: e.target.value,
                         })
                       }
-                      placeholder="যেমন: সোনালী ব্যাংক"
-                      className="w-full px-2 py-1.5 border border-frost-border rounded-md text-xs bn-text"
+                      placeholder="e.g. Sonali Bank"
+                      className="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-frost-muted mb-0.5 bn-text">
-                      শাখা (Branch)
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-0.5">
+                      Branch
                     </label>
                     <input
                       type="text"
@@ -881,13 +911,13 @@ export default function Customers({ isOwner }: CustomersProps) {
                           bankBranch: e.target.value,
                         })
                       }
-                      placeholder="যেমন: বেলাবো শাখা"
-                      className="w-full px-2 py-1.5 border border-frost-border rounded-md text-xs bn-text"
+                      placeholder="e.g. Belabo Branch"
+                      className="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-frost-muted mb-0.5 bn-text">
-                      হিসাব নম্বর (Account No)
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-0.5">
+                      Account No.
                     </label>
                     <input
                       type="text"
@@ -898,35 +928,35 @@ export default function Customers({ isOwner }: CustomersProps) {
                           bankAccountNo: e.target.value,
                         })
                       }
-                      placeholder="A/C নং"
-                      className="w-full px-2 py-1.5 border border-frost-border rounded-md text-xs tabular-nums"
+                      placeholder="A/C No."
+                      className="w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs tabular-nums"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-frost-border">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-frost-muted hover:bg-frost-hover cursor-pointer bn-text"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100 cursor-pointer"
                 >
-                  বাতিল
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingCustomer}
-                  className="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-xs cursor-pointer bn-text flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
                   {isSavingCustomer ? (
                     <>
-                      <span className="animate-spin text-xs">⏳</span>
-                      <span>সংরক্ষণ হচ্ছে...</span>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
                     </>
                   ) : (
                     <>
-                      <span>💾</span>
-                      <span>কাস্টমার সেভ করুন</span>
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Save Customer</span>
                     </>
                   )}
                 </button>
@@ -939,39 +969,39 @@ export default function Customers({ isOwner }: CustomersProps) {
       {/* ─── Due Repayment Modal with MR No ─────────────────────────── */}
       {repayCustomer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-frost-border max-w-md w-full p-5 sm:p-6">
-            <div className="flex items-center justify-between pb-3 border-b border-frost-border">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 sm:p-6">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <span className="text-xl">💵</span>
-                <h3 className="font-bold text-frost-dark bn-text text-base sm:text-lg">
-                  বাকি আদায় ও মানি রিসিট (MR No)
+                <Banknote className="w-5 h-5 text-slate-900" />
+                <h3 className="font-bold text-slate-900 text-base sm:text-lg">
+                  Collect Due & Money Receipt (MR No.)
                 </h3>
               </div>
               <button
                 onClick={() => setRepayCustomer(null)}
-                className="text-frost-muted hover:text-frost-dark text-lg leading-none cursor-pointer p-1"
+                className="text-slate-500 hover:text-slate-900 cursor-pointer p-1"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Customer Info Box */}
-            <div className="mt-3 bg-frost-surface p-3 rounded-xl border border-frost-border flex justify-between items-center">
+            <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center">
               <div>
-                <p className="font-bold text-frost-dark bn-text text-sm">
+                <p className="font-bold text-slate-900 text-sm">
                   {repayCustomer.name}
                 </p>
                 {repayCustomer.businessName && (
-                  <p className="text-xs text-emerald-800 font-semibold bn-text">
+                  <p className="text-xs text-emerald-800 font-semibold">
                     {repayCustomer.businessName}
                   </p>
                 )}
-                <p className="text-xs text-frost-muted mt-0.5">
-                  📞 {repayCustomer.phone}
+                <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                  <Phone className="w-3 h-3" /> {repayCustomer.phone}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-red-500 font-semibold bn-text">বর্তমান বাকি</p>
+                <p className="text-xs text-red-500 font-semibold">Current Due</p>
                 <p className="text-xl font-bold text-red-600 tabular-nums">
                   {tk(repayCustomer.currentDue)}
                 </p>
@@ -979,16 +1009,16 @@ export default function Customers({ isOwner }: CustomersProps) {
             </div>
 
             {repayError && (
-              <div className="mt-3 p-2 bg-red-50 border border-red-300 rounded-lg text-red-700 text-xs font-semibold bn-text">
-                ⚠️ {repayError}
+              <div className="mt-3 p-2 bg-red-50 border border-red-300 rounded-lg text-red-700 text-xs font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> {repayError}
               </div>
             )}
 
             <form onSubmit={handleSaveRepayment} className="mt-4 space-y-3.5">
               {/* Repay Amount */}
               <div>
-                <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                  পরিশোধের পরিমাণ (৳) *
+                <label className="block text-xs font-semibold text-slate-900 mb-1">
+                  Repayment Amount (৳) *
                 </label>
                 <input
                   type="number"
@@ -1001,7 +1031,7 @@ export default function Customers({ isOwner }: CustomersProps) {
                     setRepayAmount(e.target.value)
                     setRepayError(null)
                   }}
-                  placeholder="০.০০"
+                  placeholder="0.00"
                   className="w-full px-3 py-2 border-2 border-emerald-600/40 rounded-lg text-lg font-bold tabular-nums focus:border-emerald-600 focus:outline-hidden"
                   autoFocus
                 />
@@ -1014,9 +1044,9 @@ export default function Customers({ isOwner }: CustomersProps) {
                       setRepayAmount(Math.round(repayCustomer.currentDue * 0.5).toString())
                       setRepayError(null)
                     }}
-                    className="py-1 px-2 border border-frost-border rounded text-xs font-semibold hover:bg-frost-surface transition-colors bn-text"
+                    className="py-1 px-2 border border-slate-200 rounded text-xs font-semibold hover:bg-slate-50 transition-colors"
                   >
-                    ৫০% ({tk(Math.round(repayCustomer.currentDue * 0.5))})
+                    50% ({tk(Math.round(repayCustomer.currentDue * 0.5))})
                   </button>
                   <button
                     type="button"
@@ -1024,9 +1054,9 @@ export default function Customers({ isOwner }: CustomersProps) {
                       setRepayAmount(Math.round(repayCustomer.currentDue * 0.75).toString())
                       setRepayError(null)
                     }}
-                    className="py-1 px-2 border border-frost-border rounded text-xs font-semibold hover:bg-frost-surface transition-colors bn-text"
+                    className="py-1 px-2 border border-slate-200 rounded text-xs font-semibold hover:bg-slate-50 transition-colors"
                   >
-                    ৭৫% ({tk(Math.round(repayCustomer.currentDue * 0.75))})
+                    75% ({tk(Math.round(repayCustomer.currentDue * 0.75))})
                   </button>
                   <button
                     type="button"
@@ -1034,92 +1064,92 @@ export default function Customers({ isOwner }: CustomersProps) {
                       setRepayAmount(repayCustomer.currentDue.toString())
                       setRepayError(null)
                     }}
-                    className="py-1 px-2 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-xs font-bold hover:bg-emerald-200 transition-colors bn-text"
+                    className="py-1 px-2 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-xs font-bold hover:bg-emerald-200 transition-colors"
                   >
-                    পূর্ণ বাকি (১০০%)
+                    Full Due (100%)
                   </button>
                 </div>
               </div>
 
               {/* Payment Method */}
               <div>
-                <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                  পরিশোধের মাধ্যম *
+                <label className="block text-xs font-semibold text-slate-900 mb-1">
+                  Payment Method *
                 </label>
                 <select
                   value={repayMethod}
                   onChange={(e) => setRepayMethod(e.target.value as PaymentMethod)}
-                  className="w-full px-3 py-2 border border-frost-border rounded-lg text-xs sm:text-sm bn-text bg-white"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm bg-white"
                 >
-                  <option value="CASH">💵 নগদ (Cash)</option>
-                  <option value="BKASH">📱 বিকাশ (bKash)</option>
-                  <option value="NAGAD">📱 নগদ (Nagad)</option>
-                  <option value="BANK_TRANSFER">🏦 ব্যাংক ট্রান্সফার (Bank Transfer)</option>
+                  <option value="CASH">Cash</option>
+                  <option value="BKASH">bKash</option>
+                  <option value="NAGAD">Nagad</option>
+                  <option value="BANK_TRANSFER">Bank Transfer</option>
                 </select>
               </div>
 
               {/* Money Receipt No (MR No.) */}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-frost-dark bn-text">
-                    মানি রিসিট নম্বর (MR No. / রসিদ বইয়ের ক্রমিক)
+                  <label className="text-xs font-semibold text-slate-900">
+                    Money Receipt No. (MR No. / Receipt Book Serial)
                   </label>
                   <button
                     type="button"
                     onClick={() => setRepayMrNo(generateSuggestedMrNo())}
-                    className="text-[11px] text-emerald-700 hover:underline cursor-pointer bn-text"
+                    className="flex items-center gap-1 text-[11px] text-emerald-700 hover:underline cursor-pointer"
                   >
-                    স্বয়ংক্রিয় নম্বর দিন
+                    <RefreshCw className="w-3 h-3" /> Auto-generate
                   </button>
                 </div>
                 <input
                   type="text"
                   value={repayMrNo}
                   onChange={(e) => setRepayMrNo(e.target.value)}
-                  placeholder="যেমন: MR-1042 অথবা রসিদ নং"
-                  className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden font-mono"
+                  placeholder="e.g. MR-1042 or receipt no."
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden font-mono"
                 />
-                <p className="text-[11px] text-frost-muted bn-text mt-0.5">
-                  কাগজের মানি রিসিট বইয়ের নম্বর লিখুন যাতে পরবর্তীতে হিসাব মেলানো যায়।
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Enter the paper Money Receipt book number so records can be reconciled later.
                 </p>
               </div>
 
               {/* Notes */}
               <div>
-                <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                  মন্তব্য / বিবরণ (ঐচ্ছিক)
+                <label className="block text-xs font-semibold text-slate-900 mb-1">
+                  Notes / Remarks (optional)
                 </label>
                 <input
                   type="text"
                   value={repayNotes}
                   onChange={(e) => setRepayNotes(e.target.value)}
-                  placeholder="যেমন: ধান বিক্রির টাকা থেকে পরিশোধ"
-                  className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bn-text"
+                  placeholder="e.g. Paid from paddy sale proceeds"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-frost-border">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setRepayCustomer(null)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-frost-muted hover:bg-frost-hover cursor-pointer bn-text"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100 cursor-pointer"
                 >
-                  বাতিল
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingRepayment}
-                  className="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-xs cursor-pointer bn-text flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
                   {isSavingRepayment ? (
                     <>
-                      <span className="animate-spin text-xs">⏳</span>
-                      <span>সংরক্ষণ হচ্ছে...</span>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
                     </>
                   ) : (
                     <>
-                      <span>✅</span>
-                      <span>জমা নিশ্চিত করুন</span>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Confirm Payment</span>
                     </>
                   )}
                 </button>
@@ -1132,86 +1162,86 @@ export default function Customers({ isOwner }: CustomersProps) {
       {/* ─── Customer Ledger Statement Drawer / Modal ──────────────── */}
       {ledgerCustomer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl border border-frost-border max-w-3xl w-full p-5 sm:p-6 my-6 print:m-0 print:p-0 print:border-none print:shadow-none print-area">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-5 sm:p-6 my-6 print:m-0 print:p-0 print:border-none print:shadow-none print-area">
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-frost-border no-print">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 no-print">
               <div className="flex items-center gap-2">
-                <span className="text-2xl">📋</span>
+                <ClipboardList className="w-6 h-6 text-slate-900" />
                 <div>
-                  <h3 className="font-bold text-frost-dark bn-text text-lg">
-                    গ্রাহকের লেজার স্টেটমেন্ট (Ledger Audit)
+                  <h3 className="font-bold text-slate-900 text-lg">
+                    Customer Ledger Statement (Audit)
                   </h3>
-                  <p className="text-xs text-frost-muted bn-text">
-                    সমস্ত চালান বিল, নগদ পরিশোধ ও সমন্বয় অডিট বিবরণ
+                  <p className="text-xs text-slate-500">
+                    All invoice bills, cash payments, and adjustment audit details
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handlePrintLedger}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-frost-dark text-white hover:bg-black transition-colors cursor-pointer shadow-xs bn-text"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white hover:bg-black transition-colors cursor-pointer shadow-xs"
                 >
-                  <span>🖨️</span>
-                  <span>প্রিন্ট স্টেটমেন্ট</span>
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print Statement</span>
                 </button>
                 <button
                   onClick={() => setLedgerCustomer(null)}
-                  className="text-frost-muted hover:text-frost-dark text-xl leading-none cursor-pointer p-1"
+                  className="text-slate-500 hover:text-slate-900 cursor-pointer p-1"
                 >
-                  ✕
+                  <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
             {/* Printable Shop Banner Header */}
-            <div className="text-center py-3 border-b border-dashed border-frost-border mb-4">
-              <h2 className="text-xl font-bold text-frost-dark bn-text">
-                আল-আমিন ট্রেডার্স (Al-Amin Traders)
+            <div className="text-center py-3 border-b border-dashed border-slate-200 mb-4">
+              <h2 className="text-xl font-bold text-slate-900">
+                Al-Amin Traders
               </h2>
-              <p className="text-xs text-emerald-800 font-semibold bn-text">
-                অনুমোদিত কৃষি পরিবেশক
+              <p className="text-xs text-emerald-800 font-semibold">
+                Authorized Agrochemical Dealer
               </p>
-              <p className="text-xs text-frost-muted bn-text mt-0.5">
-                উত্তর বাজার, বেলাবো, নরসিংদী · মোবাইল: ০১৭১১-১২৩৪৫৬
+              <p className="text-xs text-slate-500 mt-0.5">
+                Uttar Bazar, Belabo, Narsingdi · Mobile: 01711-123456
               </p>
-              <div className="inline-block mt-1 bg-frost-surface px-3 py-0.5 rounded text-xs font-bold bn-text text-frost-dark border border-frost-border">
-                গ্রাহক খাতা ও বাকি বিবরণী
+              <div className="inline-block mt-1 bg-slate-50 px-3 py-0.5 rounded text-xs font-bold text-slate-900 border border-slate-200">
+                Customer Ledger & Due Statement
               </div>
             </div>
 
             {/* Customer Info Card */}
-            <div className="bg-frost-surface/50 border border-frost-border rounded-xl p-3 sm:p-4 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-3 sm:p-4 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div>
-                <span className="text-frost-muted bn-text block">কাস্টমার নাম:</span>
-                <span className="font-bold text-frost-dark bn-text text-sm">
+                <span className="text-slate-500 block">Customer Name:</span>
+                <span className="font-bold text-slate-900 text-sm">
                   {ledgerCustomer.name}
                 </span>
                 {ledgerCustomer.businessName && (
-                  <span className="block font-semibold text-emerald-800 bn-text text-xs mt-0.5">
-                    🏢 {ledgerCustomer.businessName}
+                  <span className="flex items-center gap-1 font-semibold text-emerald-800 text-xs mt-0.5">
+                    <Building2 className="w-3 h-3" /> {ledgerCustomer.businessName}
                   </span>
                 )}
               </div>
               <div>
-                <span className="text-frost-muted bn-text block">যোগাযোগ:</span>
-                <span className="font-semibold text-frost-dark tabular-nums">
+                <span className="text-slate-500 block">Contact:</span>
+                <span className="font-semibold text-slate-900 tabular-nums">
                   {ledgerCustomer.phone}
                 </span>
-                <span className="block text-frost-muted bn-text mt-0.5">
-                  {ledgerCustomer.villageAddress || "গ্রাম উল্লেখ নেই"}
+                <span className="block text-slate-500 mt-0.5">
+                  {ledgerCustomer.villageAddress || "No village listed"}
                 </span>
               </div>
               <div>
-                <span className="text-frost-muted bn-text block">ক্রেডিট লিমিট:</span>
-                <span className="font-bold text-frost-dark tabular-nums">
-                  {ledgerCustomer.creditLimit > 0 ? tk(ledgerCustomer.creditLimit) : "অসীমিত"}
+                <span className="text-slate-500 block">Credit Limit:</span>
+                <span className="font-bold text-slate-900 tabular-nums">
+                  {ledgerCustomer.creditLimit > 0 ? tk(ledgerCustomer.creditLimit) : "Unlimited"}
                 </span>
-                <span className="block text-[11px] text-frost-muted bn-text mt-0.5">
-                  {ledgerCustomer.customerType === "WHOLESALE" ? "পাইকারি ডিলার" : "খুচরা কৃষক"}
+                <span className="block text-[11px] text-slate-500 mt-0.5">
+                  {ledgerCustomer.customerType === "WHOLESALE" ? "Wholesale Dealer" : "Retail Farmer"}
                 </span>
               </div>
               <div className="text-right sm:text-right">
-                <span className="text-red-500 font-semibold bn-text block">সর্বশেষ বাকি জের:</span>
+                <span className="text-red-500 font-semibold block">Latest Due Balance:</span>
                 <span className="text-lg font-bold text-red-600 tabular-nums">
                   {tk(ledgerCustomer.currentDue)}
                 </span>
@@ -1220,63 +1250,63 @@ export default function Customers({ isOwner }: CustomersProps) {
 
             {/* Ledger Entries Table */}
             {isLedgerLoading ? (
-              <div className="py-16 text-center text-frost-muted bn-text">
-                <span className="text-2xl animate-spin inline-block mb-1">⏳</span>
-                <p>লেজার অডিট হিসাব আনা হচ্ছে...</p>
+              <div className="py-16 text-center text-slate-500">
+                <Loader2 className="w-6 h-6 animate-spin inline-block mb-1" />
+                <p>Loading ledger audit records...</p>
               </div>
             ) : ledgerEntries.length === 0 ? (
-              <div className="py-12 text-center text-frost-muted bn-text border border-dashed border-frost-border rounded-xl">
-                <p className="text-sm font-semibold">কোনো লেনদেনের রেকর্ড নেই।</p>
-                <p className="text-xs mt-1">এই কাস্টমারের কোনো পূর্ববর্তী চালান বা পরিশোধ নেই।</p>
+              <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl">
+                <p className="text-sm font-semibold">No transaction records found.</p>
+                <p className="text-xs mt-1">This customer has no previous invoices or payments.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto border border-frost-border rounded-xl">
+              <div className="overflow-x-auto border border-slate-200 rounded-xl">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-frost-surface border-b border-frost-border text-frost-dark bn-text font-bold">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-900 font-bold">
                     <tr>
-                      <th className="px-3 py-2.5">তারিখ</th>
-                      <th className="px-3 py-2.5">বিবরণ / লেনদেন ধরণ</th>
-                      <th className="px-2 py-2.5">MR / চালান নং</th>
-                      <th className="px-3 py-2.5 text-right text-red-600">ডেবিট (বাকি ৳)</th>
-                      <th className="px-3 py-2.5 text-right text-emerald-600">ক্রেডিট (জমা ৳)</th>
-                      <th className="px-3 py-2.5 text-right font-bold">অবশিষ্ট জের (৳)</th>
-                      <th className="px-3 py-2.5">মন্তব্য</th>
+                      <th className="px-3 py-2.5">Date</th>
+                      <th className="px-3 py-2.5">Description / Transaction Type</th>
+                      <th className="px-2 py-2.5">MR / Invoice No.</th>
+                      <th className="px-3 py-2.5 text-right text-red-600">Debit (Due ৳)</th>
+                      <th className="px-3 py-2.5 text-right text-emerald-600">Credit (Paid ৳)</th>
+                      <th className="px-3 py-2.5 text-right font-bold">Balance After (৳)</th>
+                      <th className="px-3 py-2.5">Notes</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-frost-border/60">
+                  <tbody className="divide-y divide-slate-200/60">
                     {ledgerEntries.map((item) => {
                       const isPayment = item.transactionType === "CASH_PAYMENT"
                       const isReturn = item.transactionType === "RETURN_CREDIT"
                       const isInvoice = item.transactionType === "INVOICE_BILL"
 
                       return (
-                        <tr key={item.id} className="hover:bg-frost-surface/30">
-                          <td className="px-3 py-2 whitespace-nowrap text-frost-muted tabular-nums">
+                        <tr key={item.id} className="hover:bg-slate-50/30">
+                          <td className="px-3 py-2 whitespace-nowrap text-slate-500 tabular-nums">
                             {item.transactionDate
-                              ? new Date(item.transactionDate).toLocaleDateString("bn-BD")
+                              ? new Date(item.transactionDate).toLocaleDateString("en-GB")
                               : "—"}
                           </td>
-                          <td className="px-3 py-2 bn-text font-semibold">
+                          <td className="px-3 py-2 font-semibold">
                             {isPayment && (
                               <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                <span>💵</span> নগদ আদায়
+                                <Banknote className="w-3 h-3" /> Cash Collection
                               </span>
                             )}
                             {isReturn && (
                               <span className="inline-flex items-center gap-1 text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                                <span>🔄</span> পণ্য ফেরত সমন্বয়
+                                <RefreshCw className="w-3 h-3" /> Product Return Adjustment
                               </span>
                             )}
                             {isInvoice && (
                               <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                                <span>🛒</span> পণ্য বিক্রয় চালান
+                                <ShoppingCart className="w-3 h-3" /> Sales Invoice
                               </span>
                             )}
                             {!isPayment && !isReturn && !isInvoice && (
-                              <span className="text-frost-dark">{item.transactionType}</span>
+                              <span className="text-slate-900">{item.transactionType}</span>
                             )}
                           </td>
-                          <td className="px-2 py-2 font-mono text-[11px] text-frost-dark whitespace-nowrap">
+                          <td className="px-2 py-2 font-mono text-[11px] text-slate-900 whitespace-nowrap">
                             {item.moneyReceiptNo || (item.saleId ? `INV-${item.saleId}` : "—")}
                           </td>
                           <td className="px-3 py-2 text-right tabular-nums text-red-600 font-semibold">
@@ -1285,10 +1315,10 @@ export default function Customers({ isOwner }: CustomersProps) {
                           <td className="px-3 py-2 text-right tabular-nums text-emerald-600 font-semibold">
                             {item.credit > 0 ? tk(item.credit) : "—"}
                           </td>
-                          <td className="px-3 py-2 text-right tabular-nums font-bold text-frost-dark">
+                          <td className="px-3 py-2 text-right tabular-nums font-bold text-slate-900">
                             {tk(item.balanceAfter)}
                           </td>
-                          <td className="px-3 py-2 bn-text text-frost-muted text-[11px]">
+                          <td className="px-3 py-2 text-slate-500 text-[11px]">
                             {item.notes || "—"}
                           </td>
                         </tr>
@@ -1300,15 +1330,15 @@ export default function Customers({ isOwner }: CustomersProps) {
             )}
 
             {/* Printable Signatures */}
-            <div className="mt-8 pt-6 border-t border-frost-border grid grid-cols-2 text-center text-xs bn-text">
+            <div className="mt-8 pt-6 border-t border-slate-200 grid grid-cols-2 text-center text-xs">
               <div>
-                <div className="border-t border-frost-dark/40 w-36 mx-auto pt-1 font-semibold text-frost-muted">
-                  গ্রাহকের স্বাক্ষর
+                <div className="border-t border-slate-900/40 w-36 mx-auto pt-1 font-semibold text-slate-500">
+                  Customer Signature
                 </div>
               </div>
               <div>
-                <div className="border-t border-frost-dark/40 w-36 mx-auto pt-1 font-semibold text-frost-muted">
-                  আল-আমিন ট্রেডার্স
+                <div className="border-t border-slate-900/40 w-36 mx-auto pt-1 font-semibold text-slate-500">
+                  Al-Amin Traders
                 </div>
               </div>
             </div>

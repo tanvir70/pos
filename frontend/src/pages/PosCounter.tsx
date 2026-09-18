@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { RefreshCw } from "lucide-react"
 import type {
   StockItem,
   Customer,
@@ -58,7 +59,7 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
       setStocks(stockData)
       setCustomers(customerData)
     } catch (err) {
-      showError(err, "তথ্য লোড ব্যর্থ")
+      showError(err, "Failed to load data")
     } finally {
       setIsLoading(false)
     }
@@ -66,7 +67,9 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
 
   useEffect(() => {
     loadInitialData()
-  }, [loadInitialData])
+    // Re-fetch when Owner Mode toggles: purchase cost fields are stripped
+    // server-side for non-owner requests, so cached data must be refreshed.
+  }, [loadInitialData, isOwner])
 
   // Extract all lots for a product
   const getLotsForProduct = useCallback(
@@ -107,9 +110,11 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
 
       if (matchedStock) {
         addToCart(matchedStock, getLotsForProduct(matchedStock.productId))
-        showSuccess(`বারকোড স্ক্যান সফল: ${matchedStock.nameBn || matchedStock.productNameBn}`)
+        showSuccess(
+          `Barcode scan successful: ${matchedStock.nameEn || matchedStock.productNameEn}`,
+        )
       } else {
-        showWarning(`স্ক্যান করা বারকোড (${scannedCode}) ডাটাবেসে পাওয়া যায়নি!`)
+        showWarning(`Scanned barcode (${scannedCode}) was not found in the database!`)
       }
     },
     enabled: true,
@@ -123,12 +128,12 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
   // ─── Complete Sale Execution ────────────────────────────────────
   const handleCompleteSale = async () => {
     if (cart.length === 0) {
-      showWarning("কার্টে কোনো পণ্য নেই!")
+      showWarning("Cart is empty!")
       return
     }
 
     if (paymentMethod === "DUE" && !selectedCustomerId) {
-      showWarning("বাকি বিক্রয়ের জন্য নির্দিষ্ট গ্রাহক নির্বাচন করতে হবে!")
+      showWarning("A specific customer must be selected for a due sale!")
       return
     }
 
@@ -157,7 +162,7 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
           ? digitalMedium
           : null,
       digitalTrxId: digitalTrxId ? digitalTrxId.trim() : null,
-      cashierName: isOwner ? "মালিক (Owner)" : "কাউন্টার ক্যাশিয়ার",
+      cashierName: isOwner ? "Owner" : "Counter Cashier",
     }
 
     try {
@@ -165,12 +170,12 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
       const res = await createSale(saleRequest)
       setCompletedSale(res)
       clearCart()
-      showSuccess(`বিক্রি সফলভাবে সম্পন্ন হয়েছে! ইনভয়েস #${res.invoiceNumber}`)
+      showSuccess(`Sale completed successfully! Invoice #${res.invoiceNumber}`)
 
       // Refresh stock counts in background
       getStock().then(setStocks).catch(console.error)
     } catch (err) {
-      showError(err, "বিক্রি সম্পন্ন করা যায়নি")
+      showError(err, "Could not complete the sale")
     } finally {
       setIsSubmitting(false)
     }
@@ -179,49 +184,49 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
   return (
     <div className="flex flex-col gap-3 h-[calc(100vh-5rem)] min-h-[620px]">
       {/* Top Counter Status Bar */}
-      <div className="bg-white px-4 py-2 rounded-xl border border-frost-border shadow-xs flex items-center justify-between gap-3 shrink-0">
+      <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-frost-dark bn-text">
-              কাউন্টার টার্মিনাল সক্রিয়
+            <span className="text-xs font-bold text-slate-900">
+              Counter Terminal Active
             </span>
           </div>
 
-          <div className="h-4 w-px bg-frost-border hidden sm:block" />
+          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
 
           {/* Sale Mode Toggle (Retail vs Wholesale) */}
-          <div className="flex items-center bg-frost-surface p-0.5 rounded-lg border border-frost-border">
+          <div className="flex items-center bg-slate-50 p-0.5 rounded-lg border border-slate-200">
             <button
               type="button"
               onClick={() => toggleSaleMode("RETAIL")}
-              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer bn-text ${
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                 saleMode === "RETAIL"
                   ? "bg-emerald-700 text-white shadow-xs"
-                  : "text-frost-muted hover:text-frost-dark"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
-              খুচরা বিক্রয় (Retail)
+              Retail
             </button>
             <button
               type="button"
               onClick={() => toggleSaleMode("WHOLESALE")}
-              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer bn-text ${
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                 saleMode === "WHOLESALE"
                   ? "bg-purple-700 text-white shadow-xs"
-                  : "text-frost-muted hover:text-frost-dark"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
-              পাইকারি বিক্রয় (Wholesale)
+              Wholesale
             </button>
           </div>
         </div>
 
         {/* Counter Info & Refresh */}
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 text-xs text-frost-muted bn-text">
-            <span>স্টক আইটেম:</span>
-            <span className="font-bold font-mono text-frost-dark">
+          <div className="hidden md:flex items-center gap-2 text-xs text-slate-500">
+            <span>Stock items:</span>
+            <span className="font-bold font-mono text-slate-900">
               {stocks.length}
             </span>
           </div>
@@ -230,10 +235,10 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
             type="button"
             onClick={loadInitialData}
             disabled={isLoading}
-            className="p-1.5 text-frost-muted hover:text-frost-dark rounded-lg hover:bg-frost-surface cursor-pointer text-xs"
-            title="স্টক ও ডেটা রিফ্রেশ করুন"
+            className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-50 cursor-pointer text-xs"
+            title="Refresh stock and data"
           >
-            🔄
+            <RefreshCw className="w-4 h-4" />
           </button>
         </div>
       </div>

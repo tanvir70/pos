@@ -1,6 +1,27 @@
 import { useState, useEffect, useCallback } from "react"
 import type { DashboardSummary, NavigationTab } from "../types"
 import { getDashboardSummary, downloadDatabaseBackup } from "../api/endpoints"
+import { StatCard } from "../components/ui/StatCard"
+import {
+  BarChart3,
+  RefreshCw,
+  Save,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  X,
+  ShoppingCart,
+  Calendar,
+  Banknote,
+  BookOpen,
+  Crown,
+  Check,
+  Lock,
+  Users,
+  Package,
+  Hourglass,
+  ArrowRight,
+} from "lucide-react"
 
 // BUSINESS DECISION: Daily Gross Profit and Monthly Profit metrics are strictly masked unless Owner Mode is
 // active (unlocked via 4-digit PIN) to prevent counter assistants from viewing wholesale dealer margins during sales.
@@ -40,7 +61,7 @@ export default function Dashboard({
       const data = await getDashboardSummary()
       setSummary(data)
     } catch (err: any) {
-      setErrorMessage(err?.message || "ড্যাশবোর্ড তথ্য লোড করতে সমস্যা হয়েছে।")
+      setErrorMessage(err?.message || "Failed to load dashboard data.")
     } finally {
       setIsLoading(false)
     }
@@ -48,7 +69,8 @@ export default function Dashboard({
 
   useEffect(() => {
     loadDashboard()
-  }, [loadDashboard])
+    // Re-fetch when Owner Mode toggles: this endpoint is Owner-only server-side.
+  }, [loadDashboard, isOwner])
 
   // ─── Database Backup Action ─────────────────────────────────────────
   const handleBackup = async () => {
@@ -73,16 +95,16 @@ export default function Dashboard({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-frost-dark bn-text flex items-center gap-2">
-              <span>📊</span>
-              <span>ব্যবসা বিশ্লেষণ ও ড্যাশবোর্ড (Analytics Dashboard)</span>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              <span>Analytics Dashboard</span>
             </h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 bn-text border border-emerald-200">
-              লাইভ ডেটা
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              Live Data
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-frost-muted bn-text mt-0.5">
-            দৈনিক ও মাসিক বিক্রয়, ক্যাশ ড্রয়ার স্থিতি, বাকির খাতা ও মেয়াদোত্তীর্ণ সতর্কবার্তা
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Daily and monthly sales, cash drawer status, outstanding dues, and expiry alerts
           </p>
         </div>
 
@@ -91,45 +113,45 @@ export default function Dashboard({
           <button
             onClick={loadDashboard}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-frost-surface border border-frost-border text-frost-dark shadow-xs transition-all cursor-pointer bn-text"
-            title="সর্বশেষ ডেটা রিফ্রেশ করুন"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-200 text-slate-900 shadow-xs transition-all cursor-pointer"
+            title="Refresh latest data"
           >
-            <span className={isLoading ? "animate-spin" : ""}>🔄</span>
-            <span>{isLoading ? "লোড হচ্ছে..." : "রিফ্রেশ"}</span>
+            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+            <span>{isLoading ? "Loading..." : "Refresh"}</span>
           </button>
 
           {/* Quick Backup */}
           <button
             onClick={handleBackup}
             disabled={isBackupLoading}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer bn-text ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer ${
               backupStatus === "success"
                 ? "bg-emerald-600 text-white"
                 : backupStatus === "error"
                 ? "bg-red-600 text-white"
                 : "bg-emerald-700 hover:bg-emerald-800 text-white"
             }`}
-            title="১-ক্লিকে ডেটাবেজের ব্যাকআপ ফাইল ডাউনলোড করুন"
+            title="Download a database backup file in one click"
           >
             {isBackupLoading ? (
               <>
-                <span className="animate-spin text-xs">⏳</span>
-                <span>ব্যাকআপ হচ্ছে...</span>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Backing up...</span>
               </>
             ) : backupStatus === "success" ? (
               <>
-                <span>✅</span>
-                <span>ব্যাকআপ ডাউনলোড সম্পন্ন</span>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Backup download complete</span>
               </>
             ) : backupStatus === "error" ? (
               <>
-                <span>❌</span>
-                <span>ব্যর্থ হয়েছে</span>
+                <XCircle className="w-4 h-4" />
+                <span>Backup failed</span>
               </>
             ) : (
               <>
-                <span>💾</span>
-                <span>ডাটাবেজ ব্যাকআপ</span>
+                <Save className="w-4 h-4" />
+                <span>Database Backup</span>
               </>
             )}
           </button>
@@ -138,221 +160,155 @@ export default function Dashboard({
 
       {/* Error Alert */}
       {errorMessage && (
-        <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs sm:text-sm font-semibold bn-text flex items-center justify-between shadow-xs">
+        <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs sm:text-sm font-semibold flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
-            <span>⚠️</span>
+            <AlertTriangle className="w-4 h-4" />
             <span>{errorMessage}</span>
           </div>
-          <button onClick={() => setErrorMessage(null)} className="cursor-pointer text-red-600 hover:text-red-900">✕</button>
+          <button onClick={() => setErrorMessage(null)} className="cursor-pointer text-red-600 hover:text-red-900">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {/* ─── Metric Cards Grid ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* 1. Today's Sales */}
-        <div className="bg-white border border-frost-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-frost-muted uppercase tracking-wider bn-text">
-              আজকের বিক্রয় (Today)
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-base">
-              🛒
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-frost-dark tabular-nums">
-              {summary ? tk(summary.totalSalesToday) : "৳০.০০"}
-            </p>
-            <p className="text-[11px] text-frost-muted bn-text mt-1">
-              আজকের ক্যাশ ও বাকির মোট ইনভয়েস মূল্য
-            </p>
-          </div>
-        </div>
-
-        {/* 2. Month's Sales */}
-        <div className="bg-white border border-frost-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-frost-muted uppercase tracking-wider bn-text">
-              চলতি মাসের বিক্রয় (Month)
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center text-base">
-              📅
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-frost-dark tabular-nums">
-              {summary ? tk(summary.totalSalesMonth) : "৳০.০০"}
-            </p>
-            <p className="text-[11px] text-frost-muted bn-text mt-1">
-              ১ম তারিখ হতে আজ পর্যন্ত মোট বিক্রয়
-            </p>
-          </div>
-        </div>
-
-        {/* 3. Live Cash in Drawer */}
-        <div className="bg-white border border-emerald-300 rounded-2xl p-5 shadow-xs bg-emerald-50/20 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider bn-text">
-              ক্যাশ ড্রয়ারে বর্তমান নগদ
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-base">
-              💵
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-emerald-700 tabular-nums">
-              {summary ? tk(summary.cashInDrawerToday) : "৳০.০০"}
-            </p>
-            <p className="text-[11px] text-emerald-800/80 bn-text mt-1">
-              কাউন্টার ড্রয়ারের নগদ (বিক্রয় + বাকি আদায় - ফেরত)
-            </p>
-          </div>
-        </div>
-
-        {/* 4. Total Market Due */}
-        <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-xs bg-red-50/25 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-red-700 uppercase tracking-wider bn-text">
-              বাজারে মোট বাকি (Market Due)
-            </span>
-            <div className="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center text-base">
-              📒
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-2xl sm:text-3xl font-bold text-red-600 tabular-nums">
-              {summary ? tk(summary.totalMarketDue) : "৳০.০০"}
-            </p>
-            <p className="text-[11px] text-red-600/80 bn-text mt-1">
-              কৃষক ও সাব-ডিলারদের কাছে অবশিষ্ট পাওনা
-            </p>
-          </div>
-        </div>
+        <StatCard
+          title="Today's Sales"
+          value={summary ? tk(summary.totalSalesToday) : "৳0.00"}
+          subtitle="Total invoice value from cash and credit sales today"
+          icon={<ShoppingCart className="w-5 h-5" />}
+          color="emerald"
+        />
+        <StatCard
+          title="Monthly Sales"
+          value={summary ? tk(summary.totalSalesMonth) : "৳0.00"}
+          subtitle="Total sales from the 1st of the month to date"
+          icon={<Calendar className="w-5 h-5" />}
+          color="blue"
+        />
+        <StatCard
+          title="Cash in Drawer"
+          value={summary ? tk(summary.cashInDrawerToday) : "৳0.00"}
+          subtitle="Counter drawer cash (sales + debt recovery - refunds)"
+          icon={<Banknote className="w-5 h-5" />}
+          color="emerald"
+        />
+        <StatCard
+          title="Total Market Due"
+          value={summary ? tk(summary.totalMarketDue) : "৳0.00"}
+          subtitle="Outstanding dues from farmers and sub-dealers"
+          icon={<BookOpen className="w-5 h-5" />}
+          color="red"
+        />
       </div>
 
       {/* ─── Row 2: Gross Profit (Protected) & Overview Badges ──────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Gross Profit Card (Owner Protected) - 7 cols */}
-        <div className="lg:col-span-7 bg-white border border-frost-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b border-frost-border">
+        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
             <div className="flex items-center gap-2">
-              <span className="text-lg">👑</span>
-              <h2 className="font-bold text-frost-dark bn-text text-sm sm:text-base">
-                মোট গ্রস প্রফিট (Gross Profit Margins)
+              <Crown className="w-4 h-4 text-amber-600" />
+              <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+                Gross Profit Margins
               </h2>
             </div>
             {isOwner ? (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 bn-text">
-                মালিক মোড সক্রিয় ✓
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                Owner Mode Active
+                <Check className="w-3 h-3" />
               </span>
             ) : (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-300 bn-text">
-                🔒 ক্যাশিয়ার মোডে সুরক্ষিত
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-300">
+                <Lock className="w-3 h-3" />
+                Protected in Cashier Mode
               </span>
             )}
           </div>
 
           <div className="py-4">
-            {isOwner ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-4">
-                  <span className="text-xs font-bold text-emerald-800 bn-text">
-                    আজকের গ্রস লাভ (Today's Profit)
-                  </span>
-                  <p className="text-2xl sm:text-3xl font-bold text-emerald-700 tabular-nums mt-1">
-                    {summary ? tk(summary.grossProfitToday) : "৳০.০০"}
-                  </p>
-                  <p className="text-[11px] text-emerald-800/80 bn-text mt-1">
-                    বিক্রয় মূল্য থেকে কেনা খরচ বাদ
-                  </p>
-                </div>
-
-                <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-4">
-                  <span className="text-xs font-bold text-blue-800 bn-text">
-                    চলতি মাসের মোট লাভ (Month's Profit)
-                  </span>
-                  <p className="text-2xl sm:text-3xl font-bold text-blue-700 tabular-nums mt-1">
-                    {summary ? tk(summary.grossProfitMonth) : "৳০.০০"}
-                  </p>
-                  <p className="text-[11px] text-blue-800/80 bn-text mt-1">
-                    চলতি মাসের মোট অর্জিত নিট মার্জিন
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-frost-surface/60 border border-frost-border rounded-xl p-6 text-center">
-                <div className="text-3xl mb-1">🔒</div>
-                <h3 className="text-sm font-bold text-frost-dark bn-text">
-                  গ্রস প্রফিট ও কেনা দাম লক করা
-                </h3>
-                <p className="text-xs text-frost-muted bn-text mt-1 max-w-sm mx-auto">
-                  ক্যাশিয়ারদের সামনে ব্যবসার নিট লাভ গোপন রাখা হয়েছে। মালিকের ৪ ডিজিটের পিন দিয়ে দেখুন।
-                </p>
-                <button
-                  onClick={onOpenPinModal}
-                  className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition-all shadow-xs cursor-pointer bn-text"
-                >
-                  <span>🔑</span>
-                  <span>মালিক পিন দিয়ে দেখুন (Unlock PIN)</span>
-                </button>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <StatCard
+                title="Today's Profit"
+                value={summary ? tk(summary.grossProfitToday) : "৳0.00"}
+                subtitle="Sales value minus purchase cost"
+                icon={<Banknote className="w-5 h-5" />}
+                color="emerald"
+                isMasked={!isOwner}
+                onUnlockClick={onOpenPinModal}
+              />
+              <StatCard
+                title="Month's Profit"
+                value={summary ? tk(summary.grossProfitMonth) : "৳0.00"}
+                subtitle="Total net margin earned this month"
+                icon={<BarChart3 className="w-5 h-5" />}
+                color="blue"
+                isMasked={!isOwner}
+                onUnlockClick={onOpenPinModal}
+              />
+            </div>
+            {!isOwner && (
+              <p className="text-xs text-slate-500 mt-3 text-center">
+                Net business profit is hidden from cashiers. Click a card and enter the owner's 4-digit PIN to view.
+              </p>
             )}
           </div>
 
-          <div className="text-[11px] text-frost-muted bn-text border-t border-frost-border/60 pt-2">
-            * ইনভয়েসের প্রতিটি আইটেমের ফ্রিজকৃত ক্রয় মূল্যের (Freeze Unit Cost) উপর ভিত্তি করে লাভ নির্ণীত হয়।
+          <div className="text-[11px] text-slate-500 border-t border-slate-200/60 pt-2">
+            * Profit is calculated based on the frozen unit cost (Freeze Unit Cost) of each invoice item.
           </div>
         </div>
 
         {/* Overview Stats (5 cols) */}
-        <div className="lg:col-span-5 bg-white border border-frost-border rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-frost-border">
-            <h2 className="font-bold text-frost-dark bn-text text-sm sm:text-base">
-              দ্রুত পরিসংখ্যান (Store Summary)
+        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+            <h2 className="font-bold text-slate-900 text-sm sm:text-base">
+              Store Summary
             </h2>
-            <span className="text-xs text-frost-muted">কৃষি ডিলারশিপ</span>
+            <span className="text-xs text-slate-500">Agro Dealership</span>
           </div>
 
           <div className="space-y-3">
             {/* Total Customers */}
-            <div className="flex items-center justify-between p-3 rounded-xl bg-frost-surface/40 border border-frost-border">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/40 border border-slate-200">
               <div className="flex items-center gap-2.5">
-                <span className="text-lg">👥</span>
+                <Users className="w-4 h-4 text-slate-500" />
                 <div>
-                  <p className="text-xs font-bold text-frost-dark bn-text">মোট গ্রাহক সংখ্যা</p>
-                  <p className="text-[11px] text-frost-muted bn-text">খুচরা কৃষক ও পাইকারি ডিলার</p>
+                  <p className="text-xs font-bold text-slate-900">Total Customers</p>
+                  <p className="text-[11px] text-slate-500">Retail farmers and wholesale dealers</p>
                 </div>
               </div>
-              <span className="text-lg font-bold tabular-nums text-frost-dark">
-                {summary?.totalCustomers ?? 0} জন
+              <span className="text-lg font-bold tabular-nums text-slate-900">
+                {summary?.totalCustomers ?? 0}
               </span>
             </div>
 
             {/* Low Stock Alert Count */}
             <div className="flex items-center justify-between p-3 rounded-xl bg-amber-50/40 border border-amber-200">
               <div className="flex items-center gap-2.5">
-                <span className="text-lg">📦</span>
+                <Package className="w-4 h-4 text-amber-700" />
                 <div>
-                  <p className="text-xs font-bold text-amber-900 bn-text">স্টক ঘাটতি পণ্য</p>
-                  <p className="text-[11px] text-amber-800/80 bn-text">সতর্কতার নিচে থাকা পণ্য</p>
+                  <p className="text-xs font-bold text-amber-900">Low Stock Products</p>
+                  <p className="text-[11px] text-amber-800/80">Products below alert threshold</p>
                 </div>
               </div>
               <span className="text-lg font-bold tabular-nums text-amber-800">
-                {summary?.lowStockCount ?? 0} টি
+                {summary?.lowStockCount ?? 0}
               </span>
             </div>
 
             {/* Expiring Soon Count */}
             <div className="flex items-center justify-between p-3 rounded-xl bg-red-50/40 border border-red-200">
               <div className="flex items-center gap-2.5">
-                <span className="text-lg">⏳</span>
+                <Hourglass className="w-4 h-4 text-red-700" />
                 <div>
-                  <p className="text-xs font-bold text-red-900 bn-text">মেয়াদ শেষ হবার লট (&lt;৩০ দিন)</p>
-                  <p className="text-[11px] text-red-800/80 bn-text">জরুরি বিক্রয় বা ফেরত প্রয়োজন</p>
+                  <p className="text-xs font-bold text-red-900">Expiring Lots (&lt;30 days)</p>
+                  <p className="text-[11px] text-red-800/80">Urgent sale or return required</p>
                 </div>
               </div>
               <span className="text-lg font-bold tabular-nums text-red-700">
-                {summary?.expiringSoonCount ?? 0} টি
+                {summary?.expiringSoonCount ?? 0}
               </span>
             </div>
           </div>
@@ -361,50 +317,51 @@ export default function Dashboard({
           {onNavigate && (
             <button
               onClick={() => onNavigate("customers")}
-              className="w-full py-2 text-center text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 rounded-xl transition-colors cursor-pointer bn-text border border-emerald-200"
+              className="w-full flex items-center justify-center gap-1.5 py-2 text-center text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 rounded-xl transition-colors cursor-pointer border border-emerald-200"
             >
-              বাকি খাতা ও কাস্টমার তালিকা দেখুন →
+              <span>View Ledger and Customer List</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
       </div>
 
       {/* ─── Quick Actions Toolbar ─────────────────────────────────── */}
-      <div className="bg-white border border-frost-border rounded-2xl p-4 shadow-xs">
-        <h3 className="text-xs font-bold text-frost-muted uppercase tracking-wider bn-text mb-3">
-          দ্রুত কার্যধারা (Quick Actions)
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+          Quick Actions
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             onClick={() => onNavigate?.("pos")}
-            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer bn-text"
+            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
           >
-            <span>🛒</span>
-            <span>নতুন বিক্রয় (POS)</span>
+            <ShoppingCart className="w-4 h-4" />
+            <span>New Sale (POS)</span>
           </button>
 
           <button
             onClick={() => onNavigate?.("inventory")}
-            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer bn-text"
+            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
           >
-            <span>📦</span>
-            <span>ইনভেন্টরি (Inventory)</span>
+            <Package className="w-4 h-4" />
+            <span>Inventory</span>
           </button>
 
           <button
             onClick={() => onNavigate?.("customers")}
-            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer bn-text"
+            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
           >
-            <span>📒</span>
-            <span>বাকি আদায় (Ledger)</span>
+            <BookOpen className="w-4 h-4" />
+            <span>Ledger</span>
           </button>
 
           <button
             onClick={() => onNavigate?.("returns")}
-            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer bn-text"
+            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
           >
-            <span>🔄</span>
-            <span>পণ্য ফেরত (Returns)</span>
+            <RefreshCw className="w-4 h-4" />
+            <span>Returns</span>
           </button>
         </div>
       </div>
@@ -413,32 +370,32 @@ export default function Dashboard({
       <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-red-100">
           <div className="flex items-center gap-2">
-            <span className="text-xl">⚠️</span>
+            <AlertTriangle className="w-5 h-5 text-red-600" />
             <div>
-              <h2 className="font-bold text-red-800 bn-text text-base">
-                মেয়াদোত্তীর্ণের ঝুঁকিতে থাকা লট (&lt; ৩০ দিন)
+              <h2 className="font-bold text-red-800 text-base">
+                Lots at Risk of Expiring (&lt; 30 days)
               </h2>
-              <p className="text-xs text-red-600/80 bn-text">
-                FEFO অগ্রাধিকার অনুযায়ী এই লটগুলো দ্রুত কাউন্টারে বিক্রয় বা ফেরত দেওয়া আবশ্যক
+              <p className="text-xs text-red-600/80">
+                Per FEFO priority, these lots must be sold at the counter or returned quickly
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200 bn-text">
-            {summary?.expiringLots?.length ?? 0} টি ঝুঁকিপূর্ণ লট
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">
+            {summary?.expiringLots?.length ?? 0} lots at risk
           </span>
         </div>
 
         {summary?.expiringLots && summary.expiringLots.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-red-50/50 text-red-900 border-b border-red-100 font-bold bn-text">
+              <thead className="bg-red-50/50 text-red-900 border-b border-red-100 font-bold">
                 <tr>
-                  <th className="px-3 py-2.5">পণ্য</th>
-                  <th className="px-3 py-2.5">লট নম্বর</th>
-                  <th className="px-3 py-2.5">মেয়াদ শেষের তারিখ</th>
-                  <th className="px-3 py-2.5 text-center">বাকি দিন</th>
-                  <th className="px-3 py-2.5 text-right">বর্তমান মজুদ</th>
-                  <th className="px-3 py-2.5 text-center">করণীয়</th>
+                  <th className="px-3 py-2.5">Product</th>
+                  <th className="px-3 py-2.5">Lot Number</th>
+                  <th className="px-3 py-2.5">Expiry Date</th>
+                  <th className="px-3 py-2.5 text-center">Days Left</th>
+                  <th className="px-3 py-2.5 text-right">Current Stock</th>
+                  <th className="px-3 py-2.5 text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-red-100">
@@ -446,16 +403,16 @@ export default function Dashboard({
                   const isCritical = lot.daysUntilExpiry <= 15
                   return (
                     <tr key={lot.lotId} className="hover:bg-red-50/30">
-                      <td className="px-3 py-2.5 font-bold text-frost-dark bn-text">
-                        {lot.productNameBn || lot.productNameEn}
-                        <span className="block text-[11px] font-mono text-frost-muted">
+                      <td className="px-3 py-2.5 font-bold text-slate-900">
+                        {lot.productNameEn || lot.productNameBn}
+                        <span className="block text-[11px] font-mono text-slate-500">
                           {lot.productCode}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 font-mono font-semibold text-frost-dark">
+                      <td className="px-3 py-2.5 font-mono font-semibold text-slate-900">
                         {lot.lotNumber}
                       </td>
-                      <td className="px-3 py-2.5 tabular-nums text-frost-dark">
+                      <td className="px-3 py-2.5 tabular-nums text-slate-900">
                         {lot.expiryDate}
                       </td>
                       <td className="px-3 py-2.5 text-center">
@@ -466,18 +423,18 @@ export default function Dashboard({
                               : "bg-amber-100 text-amber-800 border border-amber-300"
                           }`}
                         >
-                          {lot.daysUntilExpiry} দিন বাকি
+                          {lot.daysUntilExpiry} days left
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-right font-bold tabular-nums text-frost-dark">
+                      <td className="px-3 py-2.5 text-right font-bold tabular-nums text-slate-900">
                         {lot.quantity}
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <button
                           onClick={() => onNavigate?.("pos")}
-                          className="px-2.5 py-1 rounded text-[11px] font-bold bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 cursor-pointer bn-text"
+                          className="px-2.5 py-1 rounded text-[11px] font-bold bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 cursor-pointer"
                         >
-                          কাউন্টারে তুলুন
+                          Move to Counter
                         </button>
                       </td>
                     </tr>
@@ -487,9 +444,9 @@ export default function Dashboard({
             </table>
           </div>
         ) : (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold bn-text flex items-center gap-2">
-            <span>✅</span>
-            <span>কোনো লটের মেয়াদ ৩০ দিনের মধ্যে শেষ হচ্ছে না। সব স্টক নিরাপদ।</span>
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>No lots are expiring within 30 days. All stock is safe.</span>
           </div>
         )}
       </div>
@@ -498,32 +455,32 @@ export default function Dashboard({
       <div className="bg-white border border-amber-200 rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-amber-100">
           <div className="flex items-center gap-2">
-            <span className="text-xl">📦</span>
+            <Package className="w-5 h-5 text-amber-700" />
             <div>
-              <h2 className="font-bold text-amber-900 bn-text text-base">
-                স্টক ঘাটতি সতর্কতা (Low Stock Alert)
+              <h2 className="font-bold text-amber-900 text-base">
+                Low Stock Alert
               </h2>
-              <p className="text-xs text-amber-800/80 bn-text">
-                ন্যূনতম নির্ধারিত সীমার নিচে থাকা রাসায়নিক ও পণ্যসমূহ
+              <p className="text-xs text-amber-800/80">
+                Chemicals and products below the minimum stock threshold
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 bn-text">
-            {summary?.lowStockProducts?.length ?? 0} টি পণ্য ঘাটতিতে
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+            {summary?.lowStockProducts?.length ?? 0} products low
           </span>
         </div>
 
         {summary?.lowStockProducts && summary.lowStockProducts.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-amber-50/50 text-amber-900 border-b border-amber-100 font-bold bn-text">
+              <thead className="bg-amber-50/50 text-amber-900 border-b border-amber-100 font-bold">
                 <tr>
-                  <th className="px-3 py-2.5">পণ্য কোড</th>
-                  <th className="px-3 py-2.5">পণ্যের নাম</th>
-                  <th className="px-3 py-2.5 text-right">ন্যূনতম সীমা</th>
-                  <th className="px-3 py-2.5 text-right">বর্তমান মোট মজুদ</th>
-                  <th className="px-3 py-2.5 text-center">ঘাটতি</th>
-                  <th className="px-3 py-2.5 text-center">পুনর্বিন্যাস পরামর্শ</th>
+                  <th className="px-3 py-2.5">Product Code</th>
+                  <th className="px-3 py-2.5">Product Name</th>
+                  <th className="px-3 py-2.5 text-right">Minimum Threshold</th>
+                  <th className="px-3 py-2.5 text-right">Current Total Stock</th>
+                  <th className="px-3 py-2.5 text-center">Shortage</th>
+                  <th className="px-3 py-2.5 text-center">Reorder Suggestion</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-amber-100">
@@ -531,16 +488,16 @@ export default function Dashboard({
                   const shortage = p.minStockAlert - p.totalStock
                   return (
                     <tr key={p.productId} className="hover:bg-amber-50/30">
-                      <td className="px-3 py-2.5 font-mono font-semibold text-frost-dark">
+                      <td className="px-3 py-2.5 font-mono font-semibold text-slate-900">
                         {p.productCode}
                       </td>
-                      <td className="px-3 py-2.5 font-bold text-frost-dark bn-text">
-                        {p.nameBn}
-                        <span className="block text-[11px] font-normal text-frost-muted">
-                          {p.nameEn}
+                      <td className="px-3 py-2.5 font-bold text-slate-900">
+                        {p.nameEn}
+                        <span className="block text-[11px] font-normal text-slate-500">
+                          {p.nameBn}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-frost-dark font-medium">
+                      <td className="px-3 py-2.5 text-right tabular-nums text-slate-900 font-medium">
                         {p.minStockAlert}
                       </td>
                       <td className="px-3 py-2.5 text-right tabular-nums font-bold text-red-600">
@@ -548,15 +505,15 @@ export default function Dashboard({
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 text-red-700 border border-red-200">
-                          {shortage > 0 ? `-${shortage}` : "০"}
+                          {shortage > 0 ? `-${shortage}` : "0"}
                         </span>
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <button
                           onClick={() => onNavigate?.("inventory")}
-                          className="px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-pointer bn-text"
+                          className="px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-pointer"
                         >
-                          নতুন চালান তুলুন
+                          Create Purchase Order
                         </button>
                       </td>
                     </tr>
@@ -566,9 +523,9 @@ export default function Dashboard({
             </table>
           </div>
         ) : (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold bn-text flex items-center gap-2">
-            <span>✅</span>
-            <span>সকল পণ্যের মজুদ পর্যাপ্ত রয়েছে। কোনো ঘাটতি নেই।</span>
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>All products have adequate stock. No shortages.</span>
           </div>
         )}
       </div>
