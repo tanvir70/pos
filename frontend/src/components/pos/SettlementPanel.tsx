@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react"
 import {
   Banknote,
   Smartphone,
@@ -21,6 +20,10 @@ import Collapse from "../ui/Collapse"
 export interface SettlementPanelProps {
   isOwner?: boolean
   isSubmitting?: boolean
+  /** Controlled by PosCounter, which also drives it from the Enter/F9 hotkey. */
+  isPaymentStep: boolean
+  onProceedToPayment: () => void
+  onBackToSummary: () => void
   onSubmitSale: () => void
   customerDue?: number
 }
@@ -36,6 +39,9 @@ const PAYMENT_METHODS: { id: PaymentMethod; label: string; icon: LucideIcon }[] 
 export default function SettlementPanel({
   isOwner = false,
   isSubmitting = false,
+  isPaymentStep,
+  onProceedToPayment,
+  onBackToSummary,
   onSubmitSale,
   customerDue = 0,
 }: SettlementPanelProps) {
@@ -72,32 +78,6 @@ export default function SettlementPanel({
     totalGrossProfit,
     grossProfitMargin,
   } = useCart()
-
-  // Two-step settlement: review the summary first, then reveal payment
-  // method selection + tender amount only once the cashier proceeds.
-  const [isPaymentStep, setIsPaymentStep] = useState(false)
-
-  // Drop back to the summary step whenever the cart empties out (e.g. after
-  // a completed sale), so the next customer starts from a clean screen.
-  useEffect(() => {
-    if (cart.length === 0) setIsPaymentStep(false)
-  }, [cart.length])
-
-  // Hotkey F9: advance to the payment step, or complete the sale if already there
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "F9" && cart.length > 0 && !isSubmitting) {
-        e.preventDefault()
-        if (isPaymentStep) {
-          onSubmitSale()
-        } else {
-          setIsPaymentStep(true)
-        }
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [cart.length, isSubmitting, isPaymentStep, onSubmitSale])
 
   // Quick cash addition
   const handleQuickCashAdd = (addAmount: number) => {
@@ -221,14 +201,14 @@ export default function SettlementPanel({
             size="lg"
             fullWidth
             disabled={isCartEmpty}
-            onClick={() => setIsPaymentStep(true)}
+            onClick={onProceedToPayment}
             className="h-12 text-sm font-bold shadow-md cursor-pointer"
           >
             <div className="flex items-center justify-center gap-2">
               <span>Proceed to Payment</span>
               <ArrowRight className="w-4 h-4" />
               <span className="text-xs font-mono font-semibold bg-white/20 px-1.5 py-0.5 rounded ml-1">
-                F9
+                Enter
               </span>
             </div>
           </Button>
@@ -240,7 +220,7 @@ export default function SettlementPanel({
       <div className="p-3.5 space-y-3">
         <button
           type="button"
-          onClick={() => setIsPaymentStep(false)}
+          onClick={onBackToSummary}
           className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-900 cursor-pointer -mt-1 -ml-1 px-1 py-0.5"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
@@ -426,7 +406,7 @@ export default function SettlementPanel({
             <CheckCircle2 className="w-4 h-4" />
             <span>Complete Sale</span>
             <span className="text-xs font-mono font-semibold bg-white/20 px-1.5 py-0.5 rounded ml-1">
-              F9
+              Enter
             </span>
           </div>
         </Button>

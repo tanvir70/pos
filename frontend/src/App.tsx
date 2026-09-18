@@ -11,11 +11,13 @@ import type { NavigationTab } from "./types"
 import { ToastProvider } from "./context/ToastContext"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { CartProvider } from "./context/CartContext"
+import { isTypingTarget } from "./utils/keyboard"
 
 const SIDEBAR_OPEN_KEY = "pos_sidebar_open"
 
 function AppShell() {
   const [tab, setTab] = useState<NavigationTab>("pos")
+  const [isFocusMode, setIsFocusMode] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_OPEN_KEY)
@@ -37,6 +39,23 @@ function AppShell() {
     }
   }, [isSidebarOpen])
 
+  // Focus mode: hide the sidebar and header so the counter fills the screen.
+  // It only applies to the POS tab, so leaving that tab drops out of it.
+  useEffect(() => {
+    if (tab !== "pos") setIsFocusMode(false)
+  }, [tab])
+
+  useEffect(() => {
+    if (tab !== "pos") return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "F8" || isTypingTarget(e.target)) return
+      e.preventDefault()
+      setIsFocusMode((v) => !v)
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [tab])
+
   if (isLoading) {
     return <div className="min-h-screen bg-slate-50" />
   }
@@ -47,19 +66,23 @@ function AppShell() {
 
   return (
     <div className="h-screen flex bg-slate-50 overflow-hidden">
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        activeTab={tab}
-        onTabChange={setTab}
-      />
+      {!isFocusMode && (
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          activeTab={tab}
+          onTabChange={setTab}
+        />
+      )}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <TopBar
-          isSidebarOpen={isSidebarOpen}
-          onToggleSidebar={() => setIsSidebarOpen((v) => !v)}
-          activeTab={tab}
-        />
+        {!isFocusMode && (
+          <TopBar
+            isSidebarOpen={isSidebarOpen}
+            onToggleSidebar={() => setIsSidebarOpen((v) => !v)}
+            activeTab={tab}
+          />
+        )}
 
         {/* Main Content Shell */}
         <main
@@ -69,7 +92,13 @@ function AppShell() {
               : "overflow-y-auto max-w-7xl mx-auto"
           }`}
         >
-          {tab === "pos" && <PosCounter isOwner={isOwner} />}
+          {tab === "pos" && (
+            <PosCounter
+              isOwner={isOwner}
+              isFocusMode={isFocusMode}
+              onToggleFocusMode={() => setIsFocusMode((v) => !v)}
+            />
+          )}
           {tab === "dashboard" && (
             <Dashboard
               isOwner={isOwner}

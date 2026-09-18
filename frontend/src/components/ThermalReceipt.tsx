@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { Printer, X } from "lucide-react"
 import type { SaleResponse } from "../types"
 
@@ -7,11 +8,24 @@ import type { SaleResponse } from "../types"
 export interface ThermalReceiptProps {
   sale: SaleResponse
   onClose: () => void
+  /** Open the browser print dialog as soon as the receipt renders (Enter-driven checkout). */
+  autoPrint?: boolean
 }
 
 const tk = (n: number | undefined | null) => `৳${(n ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
+export default function ThermalReceipt({
+  sale,
+  onClose,
+  autoPrint = false,
+}: ThermalReceiptProps) {
+  // Let the receipt paint before handing over to the (blocking) print dialog.
+  useEffect(() => {
+    if (!autoPrint) return
+    const timer = window.setTimeout(() => window.print(), 150)
+    return () => window.clearTimeout(timer)
+  }, [autoPrint])
+
   const formattedDate = sale.saleDate
     ? new Date(sale.saleDate).toLocaleString("en-US", {
         year: "numeric",
@@ -228,7 +242,7 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
             className="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
           >
             <Printer className="w-4 h-4" />
-            <span>Print Cash Memo (F2)</span>
+            <span>Print Cash Memo</span>
           </button>
           <button
             type="button"
