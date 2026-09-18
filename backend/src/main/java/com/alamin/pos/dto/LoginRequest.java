@@ -1,5 +1,6 @@
 package com.alamin.pos.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,11 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AuthTokenResponse {
+public class LoginRequest {
 
-    private String token;
-    private String role;
-    private long expiresIn;
+    @NotBlank(message = "Username is required")
     private String username;
-    private String fullName;
+
+    @NotBlank(message = "Password is required")
+    private String password;
 }

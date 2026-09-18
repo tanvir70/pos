@@ -38,6 +38,8 @@ export class ApiError extends Error {
 
 export const AUTH_TOKEN_KEY = "pos_auth_token"
 export const AUTH_ROLE_KEY = "pos_auth_role"
+export const AUTH_USERNAME_KEY = "pos_auth_username"
+export const AUTH_FULLNAME_KEY = "pos_auth_fullname"
 
 export function getStoredToken(): string | null {
   try {
@@ -47,10 +49,45 @@ export function getStoredToken(): string | null {
   }
 }
 
-export function setStoredAuth(token: string, role: string): void {
+// In-memory override for the active request token, used for a temporary Owner PIN
+// elevation that should drive live API calls without persisting to localStorage
+// (so it never survives a refresh and doesn't replace the underlying account session).
+let activeTokenOverride: string | null = null
+
+export function setActiveTokenOverride(token: string | null): void {
+  activeTokenOverride = token
+}
+
+function resolveActiveToken(): string | null {
+  return activeTokenOverride ?? getStoredToken()
+}
+
+export function getStoredUser(): { username: string | null; fullName: string | null } {
+  try {
+    return {
+      username: localStorage.getItem(AUTH_USERNAME_KEY),
+      fullName: localStorage.getItem(AUTH_FULLNAME_KEY),
+    }
+  } catch {
+    return { username: null, fullName: null }
+  }
+}
+
+export function setStoredAuth(
+  token: string,
+  role: string,
+  username?: string | null,
+  fullName?: string | null,
+): void {
   try {
     localStorage.setItem(AUTH_TOKEN_KEY, token)
     localStorage.setItem(AUTH_ROLE_KEY, role)
+    if (username) {
+      localStorage.setItem(AUTH_USERNAME_KEY, username)
+    }
+    if (fullName) {
+      localStorage.setItem(AUTH_FULLNAME_KEY, fullName)
+    }
   } catch {
     // ignore storage failures in private browsing
   }
@@ -60,6 +97,8 @@ export function clearStoredAuth(): void {
   try {
     localStorage.removeItem(AUTH_TOKEN_KEY)
     localStorage.removeItem(AUTH_ROLE_KEY)
+    localStorage.removeItem(AUTH_USERNAME_KEY)
+    localStorage.removeItem(AUTH_FULLNAME_KEY)
   } catch {
     // ignore storage failures
   }
@@ -96,7 +135,7 @@ export async function apiClient<T>(
   }
 
   // Inject Bearer Auth token if available and not already set
-  const token = getStoredToken()
+  const token = resolveActiveToken()
   if (token && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${token}`)
   }
@@ -171,7 +210,13 @@ export async function downloadBlob(
     ? endpoint
     : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`
 
-  const response = await fetch(url, options)
+  const headers = new Headers(options?.headers)
+  const token = resolveActiveToken()
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`)
+  }
+
+  const response = await fetch(url, { ...options, headers })
 
   if (!response.ok) {
     let message = `Failed to download file (${response.status} ${response.statusText})`

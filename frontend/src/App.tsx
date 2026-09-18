@@ -1,5 +1,6 @@
 import { useState } from "react"
 import Navbar from "./components/Navbar"
+import LoginPage from "./pages/LoginPage"
 import PosCounter from "./pages/PosCounter"
 import Dashboard from "./pages/Dashboard"
 import Inventory from "./pages/Inventory"
@@ -12,7 +13,15 @@ import { CartProvider } from "./context/CartContext"
 
 function AppShell() {
   const [tab, setTab] = useState<NavigationTab>("pos")
-  const { isOwner, openPinModal } = useAuth()
+  const { isOwner, isAuthenticated, isLoading, openPinModal } = useAuth()
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-slate-50" />
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">

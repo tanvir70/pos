@@ -122,7 +122,9 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
 
   useEffect(() => {
     loadData()
-  }, [loadData])
+    // Re-fetch when Owner Mode toggles: purchase cost fields are stripped
+    // server-side for non-owner requests, so cached data must be refreshed.
+  }, [loadData, isOwner])
 
   // Extract categories
   const categories = useMemo(() => {

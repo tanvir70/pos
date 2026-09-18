@@ -69,7 +69,8 @@ export default function Dashboard({
 
   useEffect(() => {
     loadDashboard()
-  }, [loadDashboard])
+    // Re-fetch when Owner Mode toggles: this endpoint is Owner-only server-side.
+  }, [loadDashboard, isOwner])
 
   // ─── Database Backup Action ─────────────────────────────────────────
   const handleBackup = async () => {

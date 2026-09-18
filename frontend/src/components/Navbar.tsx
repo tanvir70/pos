@@ -16,6 +16,7 @@ import {
   XCircle,
   ShieldCheck,
   Lock,
+  LogOut,
   type LucideIcon,
 } from "lucide-react"
 
@@ -77,11 +78,15 @@ export default function Navbar({
       if (propOnToggleOwner) {
         propOnToggleOwner(false)
       }
-      auth.lockToCashier()
+      if (auth.isElevated) {
+        auth.lockToCashier()
+      }
     } else {
       auth.openPinModal()
     }
   }
+
+  const displayName = auth.fullName || auth.username
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
@@ -143,26 +148,55 @@ export default function Navbar({
               )}
             </Button>
 
-            {/* Cashier / Owner Mode Toggle Button */}
-            <button
-              type="button"
-              onClick={handleRoleToggle}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-xs cursor-pointer ${
-                isOwner
-                  ? "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 ring-2 ring-amber-400/40"
-                  : "bg-slate-50 text-slate-900 border-slate-200 hover:bg-slate-100"
-              }`}
-              title={
-                isOwner
-                  ? "Owner Mode active: purchase cost and gross profit are visible. Click to lock back to Cashier Mode."
-                  : "Cashier Mode: purchase cost and profit are hidden. Unlock with the 4-digit Owner PIN."
-              }
-            >
-              {isOwner ? <ShieldCheck className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-              <span className="font-bold">
-                {isOwner ? "Owner Mode (Admin)" : "Cashier Mode"}
+            {/* Signed-in User */}
+            {displayName && (
+              <span className="hidden md:inline text-xs text-slate-500 font-medium">
+                Hi, <span className="text-slate-900 font-bold">{displayName}</span>
               </span>
-            </button>
+            )}
+
+            {/* Cashier / Owner Mode Toggle */}
+            {isOwner && !auth.isElevated ? (
+              <span
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border shadow-xs bg-amber-100 text-amber-900 border-amber-300"
+                title="Signed in as Owner: purchase cost and gross profit are visible."
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span className="font-bold">Owner (Admin)</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={handleRoleToggle}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-xs cursor-pointer ${
+                  isOwner
+                    ? "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 ring-2 ring-amber-400/40"
+                    : "bg-slate-50 text-slate-900 border-slate-200 hover:bg-slate-100"
+                }`}
+                title={
+                  isOwner
+                    ? "Owner Mode unlocked: purchase cost and gross profit are visible. Click to lock back to Cashier Mode."
+                    : "Cashier Mode: purchase cost and profit are hidden. Unlock with the 4-digit Owner PIN."
+                }
+              >
+                {isOwner ? <ShieldCheck className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                <span className="font-bold">
+                  {isOwner ? "Owner Mode (Unlocked)" : "Cashier Mode"}
+                </span>
+              </button>
+            )}
+
+            {/* Logout */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={auth.logout}
+              title="Sign out"
+              className="text-slate-500 hover:text-red-600"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </Button>
           </div>
         </div>
 

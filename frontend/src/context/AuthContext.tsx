@@ -7,13 +7,14 @@ import React, {
   useRef,
 } from "react"
 import {
-  AUTH_TOKEN_KEY,
   AUTH_ROLE_KEY,
   getStoredToken,
+  getStoredUser,
   setStoredAuth,
   clearStoredAuth,
+  setActiveTokenOverride,
 } from "../api/client"
-import { createCashierSession, verifyOwnerPin } from "../api/endpoints"
+import { login as apiLogin, verifyOwnerPin } from "../api/endpoints"
 import { useToast } from "./ToastContext"
 import Modal from "../components/ui/Modal"
 import Button from "../components/ui/Button"
@@ -25,8 +26,18 @@ export type AppRole = "ROLE_CASHIER" | "ROLE_OWNER"
 export interface AuthContextType {
   role: AppRole
   isOwner: boolean
+  /** True when Owner Mode is a real logged-in Owner account (not a temporary PIN unlock). */
+  isBaseOwner: boolean
+  /** True when Owner Mode is currently active via a temporary Owner PIN unlock. */
+  isElevated: boolean
+  isAuthenticated: boolean
   token: string | null
+  username: string | null
+  fullName: string | null
   isLoading: boolean
+  isLoggingIn: boolean
+  login: (username: string, password: string) => Promise<boolean>
+  logout: () => void
   isPinModalOpen: boolean
   openPinModal: () => void
   closePinModal: () => void
@@ -41,16 +52,18 @@ const OWNER_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { showSuccess, showError, showWarning, showInfo } = useToast()
 
-  const [token, setToken] = useState<string | null>(getStoredToken())
-  const [role, setRole] = useState<AppRole>(() => {
-    try {
-      const storedRole = localStorage.getItem(AUTH_ROLE_KEY)
-      return storedRole === "ROLE_OWNER" ? "ROLE_OWNER" : "ROLE_CASHIER"
-    } catch {
-      return "ROLE_CASHIER"
-    }
-  })
+  // ─── Base logged-in account session (from the Login page) ──────────
+  const [baseToken, setBaseToken] = useState<string | null>(null)
+  const [baseRole, setBaseRole] = useState<AppRole>("ROLE_CASHIER")
+  const [username, setUsername] = useState<string | null>(null)
+  const [fullName, setFullName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false)
+
+  // ─── Temporary Owner PIN elevation (cashier peeking at owner data) ──
+  const [elevatedToken, setElevatedToken] = useState<string | null>(null)
+  const [elevatedActive, setElevatedActive] = useState<boolean>(false)
+
   const [isPinModalOpen, setIsPinModalOpen] = useState<boolean>(false)
   const [pinInput, setPinInput] = useState<string>("")
   const [pinError, setPinError] = useState<string | null>(null)
@@ -59,70 +72,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const inactivityTimerRef = useRef<number | null>(null)
   const pinInputRef = useRef<HTMLInputElement>(null)
 
-  const isOwner = role === "ROLE_OWNER"
+  const isAuthenticated = baseToken !== null
+  const isOwner = elevatedActive || baseRole === "ROLE_OWNER"
+  const role: AppRole = isOwner ? "ROLE_OWNER" : "ROLE_CASHIER"
+  const token = elevatedActive && elevatedToken ? elevatedToken : baseToken
 
-  // ─── Cashier Session Init ──────────────────────────────────────────
-  const initCashierSession = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const res = await createCashierSession()
-      setToken(res.token)
-      setRole("ROLE_CASHIER")
-      setStoredAuth(res.token, "ROLE_CASHIER")
-    } catch (err) {
-      console.warn("Could not initiate cashier session with backend, running in offline/cached mode", err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  // Auto-init on app startup if no token or expired
+  // ─── Restore session from local storage on startup ──────────────────
   useEffect(() => {
     const existingToken = getStoredToken()
-    if (!existingToken) {
-      initCashierSession()
-    } else {
-      setIsLoading(false)
+    if (existingToken) {
+      const storedRole = (() => {
+        try {
+          return localStorage.getItem(AUTH_ROLE_KEY)
+        } catch {
+          return null
+        }
+      })()
+      const { username: storedUsername, fullName: storedFullName } = getStoredUser()
+      setBaseToken(existingToken)
+      setBaseRole(storedRole === "ROLE_OWNER" ? "ROLE_OWNER" : "ROLE_CASHIER")
+      setUsername(storedUsername)
+      setFullName(storedFullName)
     }
-  }, [initCashierSession])
+    setIsLoading(false)
+  }, [])
 
-  // ─── Lock to Cashier ───────────────────────────────────────────────
-  const lockToCashier = useCallback(async () => {
+  // ─── Login ────────────────────────────────────────────────────────
+  const login = useCallback(
+    async (usernameInput: string, password: string): Promise<boolean> => {
+      setIsLoggingIn(true)
+      try {
+        const res = await apiLogin({ username: usernameInput.trim(), password })
+        const resolvedRole: AppRole = res.role === "ROLE_OWNER" ? "ROLE_OWNER" : "ROLE_CASHIER"
+        setBaseToken(res.token)
+        setBaseRole(resolvedRole)
+        setUsername(res.username || usernameInput.trim())
+        setFullName(res.fullName || null)
+        setStoredAuth(res.token, resolvedRole, res.username, res.fullName)
+        setActiveTokenOverride(null)
+        showSuccess(`Welcome back${res.fullName ? `, ${res.fullName}` : ""}!`, "Signed In")
+        return true
+      } catch (err) {
+        showError(err, "Sign In Failed")
+        return false
+      } finally {
+        setIsLoggingIn(false)
+      }
+    },
+    [showSuccess, showError],
+  )
+
+  // ─── Logout ───────────────────────────────────────────────────────
+  const logout = useCallback(() => {
     if (inactivityTimerRef.current) {
       window.clearTimeout(inactivityTimerRef.current)
       inactivityTimerRef.current = null
     }
+    clearStoredAuth()
+    setActiveTokenOverride(null)
+    setBaseToken(null)
+    setBaseRole("ROLE_CASHIER")
+    setUsername(null)
+    setFullName(null)
+    setElevatedToken(null)
+    setElevatedActive(false)
+    showInfo("You have been signed out.")
+  }, [showInfo])
 
-    try {
-      const res = await createCashierSession()
-      setToken(res.token)
-      setRole("ROLE_CASHIER")
-      setStoredAuth(res.token, "ROLE_CASHIER")
-    } catch {
-      setRole("ROLE_CASHIER")
-      localStorage.setItem(AUTH_ROLE_KEY, "ROLE_CASHIER")
+  // ─── Lock back to the base Cashier account (drop Owner PIN elevation) ─
+  const lockToCashier = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      window.clearTimeout(inactivityTimerRef.current)
+      inactivityTimerRef.current = null
     }
-
+    setActiveTokenOverride(null)
+    setElevatedToken(null)
+    setElevatedActive(false)
     showInfo("Cashier Mode active. Purchase cost and profit are now hidden.")
   }, [showInfo])
 
-  // ─── Inactivity Auto-Lock for Owner Mode ───────────────────────────
+  // ─── Inactivity Auto-Lock for a temporary Owner PIN elevation ────────
   const resetInactivityTimer = useCallback(() => {
     if (inactivityTimerRef.current) {
       window.clearTimeout(inactivityTimerRef.current)
       inactivityTimerRef.current = null
     }
 
-    if (isOwner) {
+    if (elevatedActive) {
       inactivityTimerRef.current = window.setTimeout(() => {
         lockToCashier()
         showWarning("Owner Mode auto-locked after 5 minutes of inactivity.")
       }, OWNER_INACTIVITY_TIMEOUT_MS)
     }
-  }, [isOwner, lockToCashier, showWarning])
+  }, [elevatedActive, lockToCashier, showWarning])
 
   useEffect(() => {
-    if (!isOwner) {
+    if (!elevatedActive) {
       if (inactivityTimerRef.current) {
         window.clearTimeout(inactivityTimerRef.current)
         inactivityTimerRef.current = null
@@ -147,7 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         inactivityTimerRef.current = null
       }
     }
-  }, [isOwner, resetInactivityTimer])
+  }, [elevatedActive, resetInactivityTimer])
 
   // ─── Modal Controls ────────────────────────────────────────────────
   const openPinModal = useCallback(() => {
@@ -170,7 +215,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isPinModalOpen])
 
-  // ─── PIN Verification (Owner Mode Escalation) ───────────────────────
+  // ─── PIN Verification (temporary Owner Mode elevation) ───────────────
   const unlockWithOwnerPin = useCallback(
     async (pinToVerify: string): Promise<boolean> => {
       const cleanPin = pinToVerify.trim()
@@ -184,9 +229,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const response = await verifyOwnerPin({ pin: cleanPin })
-        setToken(response.token)
-        setRole("ROLE_OWNER")
-        setStoredAuth(response.token, "ROLE_OWNER")
+        setActiveTokenOverride(response.token)
+        setElevatedToken(response.token)
+        setElevatedActive(true)
         setIsPinModalOpen(false)
         setPinInput("")
         showSuccess("Owner Mode unlocked successfully! Purchase cost and gross profit are now visible.")
@@ -231,8 +276,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         role,
         isOwner,
+        isBaseOwner: baseRole === "ROLE_OWNER",
+        isElevated: elevatedActive,
+        isAuthenticated,
         token,
+        username,
+        fullName,
         isLoading,
+        isLoggingIn,
+        login,
+        logout,
         isPinModalOpen,
         openPinModal,
         closePinModal,

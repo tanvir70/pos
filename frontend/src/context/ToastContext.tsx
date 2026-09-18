@@ -42,6 +42,11 @@ function parseErrorMessage(err: unknown): { title: string; message: string } {
             title: "Incorrect PIN",
             message: "Incorrect Owner PIN! Enter the correct 4-digit PIN.",
           }
+        case "INVALID_CREDENTIALS":
+          return {
+            title: "Sign In Failed",
+            message: err.message || "Invalid username or password.",
+          }
         case "NEGATIVE_STOCK_NOT_ALLOWED":
           return {
             title: "Insufficient Stock",

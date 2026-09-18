@@ -67,7 +67,9 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
 
   useEffect(() => {
     loadInitialData()
-  }, [loadInitialData])
+    // Re-fetch when Owner Mode toggles: purchase cost fields are stripped
+    // server-side for non-owner requests, so cached data must be refreshed.
+  }, [loadInitialData, isOwner])
 
   // Extract all lots for a product
   const getLotsForProduct = useCallback(
