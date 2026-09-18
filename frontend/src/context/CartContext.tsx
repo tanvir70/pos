@@ -21,6 +21,11 @@ import {
   calcChangeReturn,
   roundAccounting,
 } from "../utils/currency"
+import {
+  calcWholesalePrice,
+  getWholesaleSettings,
+  type WholesaleSettings,
+} from "../utils/wholesaleSettings"
 
 const STORAGE_KEY = "pos_active_cart_v1"
 
@@ -348,7 +353,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const defaultPrice =
         saleMode === "RETAIL"
           ? targetLot.lotRetailPrice
-          : targetLot.lotWholesalePrice
+          : calcWholesalePrice(targetLot.lotRetailPrice)
 
       setCart((prevCart) => {
         const existingIndex = prevCart.findIndex((i) => i.lotId === targetLot.id)
@@ -367,9 +372,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const newItem: CartItem = {
           id: `cart-${targetLot.id}-${Date.now()}`,
           productId: stockOrLot.productId,
-          productCode: stockOrLot.productCode,
-          nameEn: stockOrLot.productNameEn || stockOrLot.nameEn,
-          nameBn: stockOrLot.productNameBn || stockOrLot.nameBn,
+          productCode: stockOrLot.productCode || "",
+          nameEn: stockOrLot.productNameEn || stockOrLot.nameEn || "",
+          nameBn: stockOrLot.productNameBn || stockOrLot.nameBn || "",
           category: stockOrLot.category,
           baseUnit: stockOrLot.baseUnit || "Piece",
           cartonMultiplier: stockOrLot.cartonMultiplier || 1,
@@ -444,7 +449,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           const defaultPrice =
             saleMode === "RETAIL"
               ? newLot.lotRetailPrice
-              : newLot.lotWholesalePrice
+              : calcWholesalePrice(newLot.lotRetailPrice)
           return {
             ...item,
             lotId: newLot.id,
@@ -487,10 +492,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const toggleSaleMode = useCallback((newMode: SaleMode) => {
     setSaleMode(newMode)
+    const settings = getWholesaleSettings()
     setCart((prev) =>
       prev.map((item) => {
         const standardPrice =
-          newMode === "RETAIL" ? item.lotRetailPrice : item.lotWholesalePrice
+          newMode === "RETAIL"
+            ? item.lotRetailPrice
+            : calcWholesalePrice(item.lotRetailPrice, settings)
         return {
           ...item,
           unitPrice: standardPrice,
@@ -499,6 +507,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }),
     )
   }, [])
+
+  // Auto-sync cart item prices if wholesale ratio configuration is updated
+  useEffect(() => {
+    const handleSettingsUpdated = (e: Event) => {
+      const custom = e as CustomEvent<WholesaleSettings>
+      if (custom.detail && saleMode === "WHOLESALE") {
+        setCart((prev) =>
+          prev.map((item) => {
+            const updatedPrice = calcWholesalePrice(item.lotRetailPrice, custom.detail)
+            return {
+              ...item,
+              unitPrice: updatedPrice,
+              originalUnitPrice: updatedPrice,
+            }
+          }),
+        )
+      }
+    }
+    window.addEventListener("wholesale-settings-updated", handleSettingsUpdated)
+    return () => window.removeEventListener("wholesale-settings-updated", handleSettingsUpdated)
+  }, [saleMode])
 
   return (
     <CartContext.Provider

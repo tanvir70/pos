@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Sidebar from "./components/Sidebar"
 import TopBar from "./components/TopBar"
 import LoginPage from "./pages/LoginPage"
@@ -7,6 +7,8 @@ import Dashboard from "./pages/Dashboard"
 import Inventory from "./pages/Inventory"
 import Customers from "./pages/Customers"
 import Returns from "./pages/Returns"
+import WholesaleSettings from "./pages/WholesaleSettings"
+import Settings from "./pages/Settings"
 import type { NavigationTab } from "./types"
 import { ToastProvider } from "./context/ToastContext"
 import { AuthProvider, useAuth } from "./context/AuthContext"
@@ -21,15 +23,12 @@ function AppShell() {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_OPEN_KEY)
-      if (stored !== null) return stored === "true"
+      return stored === null ? true : stored === "true"
     } catch {
-      // ignore storage failures, fall through to viewport-based default
+      return true
     }
-    // No saved preference yet: default open on desktop (like Claude's own
-    // sidebar), closed on mobile where it would otherwise cover the screen.
-    return typeof window === "undefined" || window.innerWidth >= 768
   })
-  const { isOwner, isAuthenticated, isLoading, openPinModal } = useAuth()
+  const { isAuthenticated, isOwner, isLoading, openPinModal } = useAuth()
 
   useEffect(() => {
     try {
@@ -39,22 +38,61 @@ function AppShell() {
     }
   }, [isSidebarOpen])
 
-  // Focus mode: hide the sidebar and header so the counter fills the screen.
+  // Full Page Focus mode: hide the sidebar and header so the counter fills the screen.
   // It only applies to the POS tab, so leaving that tab drops out of it.
   useEffect(() => {
-    if (tab !== "pos") setIsFocusMode(false)
+    if (tab !== "pos") {
+      setIsFocusMode(false)
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {})
+      }
+    }
   }, [tab])
+
+  const toggleFocusMode = useCallback(() => {
+    setIsFocusMode((prev) => {
+      const next = !prev
+      if (next) {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {})
+        }
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {})
+        }
+      }
+      return next
+    })
+  }, [])
+
+  // Sync native fullscreen exits (e.g. user presses Esc) back to focus mode state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && isFocusMode) {
+        setIsFocusMode(false)
+      }
+    }
+    document.addEventListener("fullscreenchange", handleFullscreenChange)
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
+  }, [isFocusMode])
 
   useEffect(() => {
     if (tab !== "pos") return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "F8" || isTypingTarget(e.target)) return
       e.preventDefault()
-      setIsFocusMode((v) => !v)
+      toggleFocusMode()
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [tab])
+  }, [tab, toggleFocusMode])
+
+  // Cashier mode cannot see Analytics ("dashboard") or Settings ("settings" / "wholesale")
+  useEffect(() => {
+    if (!isOwner && (tab === "dashboard" || tab === "settings" || tab === "wholesale")) {
+      setTab("pos")
+    }
+  }, [isOwner, tab])
 
   if (isLoading) {
     return <div className="min-h-screen bg-slate-50" />
@@ -86,20 +124,20 @@ function AppShell() {
 
         {/* Main Content Shell */}
         <main
-          className={`flex-1 min-h-0 w-full px-3 sm:px-6 py-4 ${
-            tab === "pos"
-              ? "overflow-hidden"
-              : "overflow-y-auto max-w-7xl mx-auto"
+          className={`flex-1 min-h-0 w-full ${
+            isFocusMode ? "p-2 sm:p-2.5" : "px-3 sm:px-6 py-4"
+          } ${
+            tab === "pos" ? "overflow-hidden" : "overflow-y-auto"
           }`}
         >
           {tab === "pos" && (
             <PosCounter
               isOwner={isOwner}
               isFocusMode={isFocusMode}
-              onToggleFocusMode={() => setIsFocusMode((v) => !v)}
+              onToggleFocusMode={toggleFocusMode}
             />
           )}
-          {tab === "dashboard" && (
+          {tab === "dashboard" && isOwner && (
             <Dashboard
               isOwner={isOwner}
               onOpenPinModal={openPinModal}
@@ -109,6 +147,8 @@ function AppShell() {
           {tab === "inventory" && <Inventory isOwner={isOwner} />}
           {tab === "customers" && <Customers isOwner={isOwner} />}
           {tab === "returns" && <Returns isOwner={isOwner} />}
+          {tab === "wholesale" && isOwner && <Settings isOwner={isOwner} />}
+          {tab === "settings" && isOwner && <Settings isOwner={isOwner} />}
         </main>
       </div>
     </div>

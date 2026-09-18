@@ -1,5 +1,6 @@
 package com.alamin.pos.service;
 
+import com.alamin.pos.dto.PagedResponse;
 import com.alamin.pos.dto.SaleRequest;
 import com.alamin.pos.dto.SaleResponse;
 
@@ -14,4 +15,6 @@ public interface SaleService {
     SaleResponse getSaleByInvoiceNo(String invoiceNo);
 
     List<SaleResponse> getRecentSales(int limit);
+
+    PagedResponse<SaleResponse> getSales(int page, int size, String period, String saleMode);
 }

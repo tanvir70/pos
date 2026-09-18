@@ -9,7 +9,14 @@ export type RefundType = "CASH_REFUND" | "DUE_ADJUSTMENT"
 export type StockLocation = "DOKAN" | "QUARANTINE"
 export type PaymentMethod = "CASH" | "BKASH" | "NAGAD" | "BANK_TRANSFER" | "DUE" | "SPLIT"
 
-export type NavigationTab = "pos" | "dashboard" | "inventory" | "customers" | "returns"
+export type NavigationTab =
+  | "pos"
+  | "dashboard"
+  | "inventory"
+  | "customers"
+  | "returns"
+  | "wholesale"
+  | "settings"
 
 // ----------------------------------------------------------------------------
 // Product
@@ -25,7 +32,8 @@ export interface Product {
   cartonMultiplier: number
   defaultBarcode: string
   standardRetailPrice: number
-  standardWholesalePrice: number
+  standardWholesalePrice?: number
+  buyingPrice?: number
   minStockAlert: number
   imagePath?: string | null
   createdAt?: string
@@ -65,6 +73,7 @@ export interface StockItem {
   minStockAlert?: number
   standardRetailPrice?: number
   standardWholesalePrice?: number
+  buyingPrice?: number
   lotId: number
   lotNumber: string
   entryDate: string
@@ -346,9 +355,32 @@ export interface LowStockProduct {
   totalStock: number
 }
 
+export interface TopSellingProduct {
+  productId: number
+  productCode: string
+  nameEn: string
+  nameBn: string
+  unit: string
+  totalQuantity: number
+  totalRevenue: number
+  percentageShare?: number
+}
+
+export interface PagedResponse<T> {
+  content: T[]
+  pageNumber: number
+  pageSize: number
+  totalElements: number
+  totalPages: number
+  first: boolean
+  last: boolean
+}
+
 export interface DashboardSummary {
   totalSalesToday: number
   totalSalesMonth: number
+  totalOrdersToday?: number
+  totalReturnsToday?: number
   grossProfitToday: number
   grossProfitMonth: number
   cashInDrawerToday: number
@@ -356,6 +388,10 @@ export interface DashboardSummary {
   totalCustomers: number
   lowStockCount: number
   expiringSoonCount: number
+  salesGrowth?: number
+  ordersGrowth?: number
+  profitGrowth?: number
+  returnsGrowth?: number
   expiringLots: ExpiringLot[]
   lowStockProducts: LowStockProduct[]
 }
@@ -392,5 +428,10 @@ export interface PinVerificationRequest {
 export interface LoginRequest {
   username: string
   password: string
+}
+
+export interface ChangePinRequest {
+  currentPin: string
+  newPin: string
 }
 

@@ -15,6 +15,8 @@ import java.util.List;
 public class DashboardSummaryDto {
     private BigDecimal totalSalesToday;
     private BigDecimal totalSalesMonth;
+    private long totalOrdersToday;
+    private BigDecimal totalReturnsToday;
     private BigDecimal grossProfitToday;
     private BigDecimal grossProfitMonth;
     private BigDecimal cashInDrawerToday;
@@ -22,6 +24,10 @@ public class DashboardSummaryDto {
     private long totalCustomers;
     private long lowStockCount;
     private long expiringSoonCount;
+    private Double salesGrowth;
+    private Double ordersGrowth;
+    private Double profitGrowth;
+    private Double returnsGrowth;
     private List<ExpiringLotDto> expiringLots;
     private List<LowStockProductDto> lowStockProducts;
 }

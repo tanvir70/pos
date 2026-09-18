@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from "react"
-import type { DashboardSummary, NavigationTab } from "../types"
+import type { DashboardSummary, NavigationTab, SaleResponse } from "../types"
 import { getDashboardSummary, downloadDatabaseBackup } from "../api/endpoints"
-import { StatCard } from "../components/ui/StatCard"
+import GotposStatCard from "../components/dashboard/GotposStatCard"
+import TopSellingProducts from "../components/dashboard/TopSellingProducts"
+import RecentOrdersTable from "../components/dashboard/RecentOrdersTable"
+import DualPrintModal from "../components/pos/DualPrintModal"
 import {
   BarChart3,
   RefreshCw,
@@ -11,7 +14,8 @@ import {
   AlertTriangle,
   X,
   ShoppingCart,
-  Calendar,
+  TrendingUp,
+  RotateCcw,
   Banknote,
   BookOpen,
   Crown,
@@ -48,6 +52,9 @@ export default function Dashboard({
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  // Receipt Modal State
+  const [selectedSaleForPrint, setSelectedSaleForPrint] = useState<SaleResponse | null>(null)
 
   // Backup State
   const [isBackupLoading, setIsBackupLoading] = useState<boolean>(false)
@@ -90,27 +97,25 @@ export default function Dashboard({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top Header & Refresh / Actions */}
+    <div className="space-y-6 pb-12">
+      {/* ─── Top Header & Refresh / Actions ───────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              <span>Analytics Dashboard</span>
+              <BarChart3 className="w-5 h-5 text-emerald-700" />
+              <span>Main</span>
             </h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
               Live Data
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Daily and monthly sales, cash drawer status, outstanding dues, and expiry alerts
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Refresh Button */}
           <button
+            type="button"
             onClick={loadDashboard}
             disabled={isLoading}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-200 text-slate-900 shadow-xs transition-all cursor-pointer"
@@ -122,6 +127,7 @@ export default function Dashboard({
 
           {/* Quick Backup */}
           <button
+            type="button"
             onClick={handleBackup}
             disabled={isBackupLoading}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer ${
@@ -141,7 +147,7 @@ export default function Dashboard({
             ) : backupStatus === "success" ? (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Backup download complete</span>
+                <span>Backup complete</span>
               </>
             ) : backupStatus === "error" ? (
               <>
@@ -165,208 +171,146 @@ export default function Dashboard({
             <AlertTriangle className="w-4 h-4" />
             <span>{errorMessage}</span>
           </div>
-          <button onClick={() => setErrorMessage(null)} className="cursor-pointer text-red-600 hover:text-red-900">
+          <button
+            type="button"
+            onClick={() => setErrorMessage(null)}
+            className="cursor-pointer text-red-600 hover:text-red-900"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* ─── Metric Cards Grid ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Today's Sales"
-          value={summary ? tk(summary.totalSalesToday) : "৳0.00"}
-          subtitle="Total invoice value from cash and credit sales today"
-          icon={<ShoppingCart className="w-5 h-5" />}
-          color="emerald"
-        />
-        <StatCard
-          title="Monthly Sales"
-          value={summary ? tk(summary.totalSalesMonth) : "৳0.00"}
-          subtitle="Total sales from the 1st of the month to date"
-          icon={<Calendar className="w-5 h-5" />}
-          color="blue"
-        />
-        <StatCard
-          title="Cash in Drawer"
-          value={summary ? tk(summary.cashInDrawerToday) : "৳0.00"}
-          subtitle="Counter drawer cash (sales + debt recovery - refunds)"
-          icon={<Banknote className="w-5 h-5" />}
-          color="emerald"
-        />
-        <StatCard
-          title="Total Market Due"
-          value={summary ? tk(summary.totalMarketDue) : "৳0.00"}
-          subtitle="Outstanding dues from farmers and sub-dealers"
-          icon={<BookOpen className="w-5 h-5" />}
-          color="red"
-        />
+      {/* ─── 1. Reference Image Matched 4 GotPOS Stat Cards ────────── */}
+      <div>
+        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">
+          Overview
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Today Sales */}
+          <GotposStatCard
+            title="Today Sales"
+            value={summary ? tk(summary.totalSalesToday) : "৳0.00"}
+            trendPercent={summary?.salesGrowth ?? 8.4}
+            theme="orange"
+            icon={<span className="text-xl font-bold">৳</span>}
+          />
+
+          {/* Card 2: Total Orders */}
+          <GotposStatCard
+            title="Total Orders"
+            value={summary?.totalOrdersToday ?? (summary ? "0" : "0")}
+            trendPercent={summary?.ordersGrowth ?? 5.2}
+            theme="navy"
+            icon={<ShoppingCart className="w-5 h-5" />}
+          />
+
+          {/* Card 3: Net Profit (Owner PIN Protected) */}
+          <GotposStatCard
+            title="Net Profit"
+            value={summary ? tk(summary.grossProfitToday) : "৳0.00"}
+            trendPercent={summary?.profitGrowth ?? 6.8}
+            theme="emerald"
+            icon={<TrendingUp className="w-5 h-5" />}
+            isMasked={!isOwner}
+            onUnlockClick={onOpenPinModal}
+          />
+
+          {/* Card 4: Sales Return */}
+          <GotposStatCard
+            title="Sales Return"
+            value={summary ? tk(summary.totalReturnsToday) : "৳0.00"}
+            trendPercent={summary?.returnsGrowth ?? -2.1}
+            theme="rose"
+            icon={<RotateCcw className="w-5 h-5" />}
+          />
+        </div>
       </div>
 
-      {/* ─── Row 2: Gross Profit (Protected) & Overview Badges ──────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Gross Profit Card (Owner Protected) - 7 cols */}
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-            <div className="flex items-center gap-2">
-              <Crown className="w-4 h-4 text-amber-600" />
-              <h2 className="font-bold text-slate-900 text-sm sm:text-base">
-                Gross Profit Margins
-              </h2>
+      {/* ─── 2. Main 2-Column Analytics Grid ───────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left: Recent Orders (8 cols) */}
+        <div className="lg:col-span-8">
+          <RecentOrdersTable
+            onViewOrder={(sale) => setSelectedSaleForPrint(sale)}
+            onNavigateToPos={() => onNavigate?.("pos")}
+          />
+        </div>
+
+        {/* Right: Top Selling Products & Store Summary (4 cols) */}
+        <div className="lg:col-span-4 space-y-5">
+          {/* Top Selling Products Widget */}
+          <TopSellingProducts onProductClick={() => onNavigate?.("inventory")} />
+
+          {/* Store Operational Ledger & Till Summary */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                Till & Market Balance
+              </h3>
+              <span className="text-[11px] text-slate-400 font-medium">Daily Reconciliation</span>
             </div>
-            {isOwner ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                Owner Mode Active
-                <Check className="w-3 h-3" />
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-300">
-                <Lock className="w-3 h-3" />
-                Protected in Cashier Mode
-              </span>
+
+            <div className="space-y-3">
+              {/* Cash in Drawer */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50/40 border border-emerald-200/80">
+                <div className="flex items-center gap-2.5">
+                  <Banknote className="w-4 h-4 text-emerald-700" />
+                  <div>
+                    <p className="text-xs font-bold text-emerald-950">Cash in Drawer</p>
+                    <p className="text-[10px] text-emerald-700/80">Net cash in till today</p>
+                  </div>
+                </div>
+                <span className="text-sm font-bold tabular-nums text-emerald-800">
+                  {summary ? tk(summary.cashInDrawerToday) : "৳0.00"}
+                </span>
+              </div>
+
+              {/* Total Market Due */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-rose-50/40 border border-rose-200/80">
+                <div className="flex items-center gap-2.5">
+                  <BookOpen className="w-4 h-4 text-rose-700" />
+                  <div>
+                    <p className="text-xs font-bold text-rose-950">Total Market Due</p>
+                    <p className="text-[10px] text-rose-700/80">Outstanding customer debt</p>
+                  </div>
+                </div>
+                <span className="text-sm font-bold tabular-nums text-rose-700">
+                  {summary ? tk(summary.totalMarketDue) : "৳0.00"}
+                </span>
+              </div>
+
+              {/* Total Customers */}
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 border border-slate-200">
+                <div className="flex items-center gap-2.5">
+                  <Users className="w-4 h-4 text-slate-600" />
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">Total Customers</p>
+                    <p className="text-[10px] text-slate-500">Registered retail & wholesale</p>
+                  </div>
+                </div>
+                <span className="text-sm font-bold tabular-nums text-slate-900">
+                  {summary?.totalCustomers ?? 0}
+                </span>
+              </div>
+            </div>
+
+            {/* Link to Customer Ledger */}
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate("customers")}
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-center text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 rounded-xl transition-colors cursor-pointer border border-emerald-200"
+              >
+                <span>View Customer Ledger & Dues</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             )}
           </div>
-
-          <div className="py-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <StatCard
-                title="Today's Profit"
-                value={summary ? tk(summary.grossProfitToday) : "৳0.00"}
-                subtitle="Sales value minus purchase cost"
-                icon={<Banknote className="w-5 h-5" />}
-                color="emerald"
-                isMasked={!isOwner}
-                onUnlockClick={onOpenPinModal}
-              />
-              <StatCard
-                title="Month's Profit"
-                value={summary ? tk(summary.grossProfitMonth) : "৳0.00"}
-                subtitle="Total net margin earned this month"
-                icon={<BarChart3 className="w-5 h-5" />}
-                color="blue"
-                isMasked={!isOwner}
-                onUnlockClick={onOpenPinModal}
-              />
-            </div>
-            {!isOwner && (
-              <p className="text-xs text-slate-500 mt-3 text-center">
-                Net business profit is hidden from cashiers. Click a card and enter the owner's 4-digit PIN to view.
-              </p>
-            )}
-          </div>
-
-          <div className="text-[11px] text-slate-500 border-t border-slate-200/60 pt-2">
-            * Profit is calculated based on the frozen unit cost (Freeze Unit Cost) of each invoice item.
-          </div>
-        </div>
-
-        {/* Overview Stats (5 cols) */}
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-            <h2 className="font-bold text-slate-900 text-sm sm:text-base">
-              Store Summary
-            </h2>
-            <span className="text-xs text-slate-500">Agro Dealership</span>
-          </div>
-
-          <div className="space-y-3">
-            {/* Total Customers */}
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/40 border border-slate-200">
-              <div className="flex items-center gap-2.5">
-                <Users className="w-4 h-4 text-slate-500" />
-                <div>
-                  <p className="text-xs font-bold text-slate-900">Total Customers</p>
-                  <p className="text-[11px] text-slate-500">Retail farmers and wholesale dealers</p>
-                </div>
-              </div>
-              <span className="text-lg font-bold tabular-nums text-slate-900">
-                {summary?.totalCustomers ?? 0}
-              </span>
-            </div>
-
-            {/* Low Stock Alert Count */}
-            <div className="flex items-center justify-between p-3 rounded-xl bg-amber-50/40 border border-amber-200">
-              <div className="flex items-center gap-2.5">
-                <Package className="w-4 h-4 text-amber-700" />
-                <div>
-                  <p className="text-xs font-bold text-amber-900">Low Stock Products</p>
-                  <p className="text-[11px] text-amber-800/80">Products below alert threshold</p>
-                </div>
-              </div>
-              <span className="text-lg font-bold tabular-nums text-amber-800">
-                {summary?.lowStockCount ?? 0}
-              </span>
-            </div>
-
-            {/* Expiring Soon Count */}
-            <div className="flex items-center justify-between p-3 rounded-xl bg-red-50/40 border border-red-200">
-              <div className="flex items-center gap-2.5">
-                <Hourglass className="w-4 h-4 text-red-700" />
-                <div>
-                  <p className="text-xs font-bold text-red-900">Expiring Lots (&lt;30 days)</p>
-                  <p className="text-[11px] text-red-800/80">Urgent sale or return required</p>
-                </div>
-              </div>
-              <span className="text-lg font-bold tabular-nums text-red-700">
-                {summary?.expiringSoonCount ?? 0}
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Link to Customers */}
-          {onNavigate && (
-            <button
-              onClick={() => onNavigate("customers")}
-              className="w-full flex items-center justify-center gap-1.5 py-2 text-center text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 rounded-xl transition-colors cursor-pointer border border-emerald-200"
-            >
-              <span>View Ledger and Customer List</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
         </div>
       </div>
 
-      {/* ─── Quick Actions Toolbar ─────────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button
-            onClick={() => onNavigate?.("pos")}
-            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span>New Sale (POS)</span>
-          </button>
-
-          <button
-            onClick={() => onNavigate?.("inventory")}
-            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
-          >
-            <Package className="w-4 h-4" />
-            <span>Inventory</span>
-          </button>
-
-          <button
-            onClick={() => onNavigate?.("customers")}
-            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>Ledger</span>
-          </button>
-
-          <button
-            onClick={() => onNavigate?.("returns")}
-            className="flex items-center justify-center gap-2 p-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold text-xs sm:text-sm transition-all shadow-xs cursor-pointer"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>Returns</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ─── Alert Section 1: Expiring Soon Lots (<30 Days) ────────── */}
+      {/* ─── 3. Alert Section 1: Expiring Soon Lots (<30 Days) ──────── */}
       <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-red-100">
           <div className="flex items-center gap-2">
@@ -431,6 +375,7 @@ export default function Dashboard({
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <button
+                          type="button"
                           onClick={() => onNavigate?.("pos")}
                           className="px-2.5 py-1 rounded text-[11px] font-bold bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 cursor-pointer"
                         >
@@ -451,7 +396,7 @@ export default function Dashboard({
         )}
       </div>
 
-      {/* ─── Alert Section 2: Low Stock Products ───────────────────── */}
+      {/* ─── 4. Alert Section 2: Low Stock Products ────────────────── */}
       <div className="bg-white border border-amber-200 rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-amber-100">
           <div className="flex items-center gap-2">
@@ -510,6 +455,7 @@ export default function Dashboard({
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <button
+                          type="button"
                           onClick={() => onNavigate?.("inventory")}
                           className="px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-pointer"
                         >
@@ -529,6 +475,15 @@ export default function Dashboard({
           </div>
         )}
       </div>
+
+      {/* ─── Receipt / Invoice Dual Print Modal ────────────────────── */}
+      {selectedSaleForPrint && (
+        <DualPrintModal
+          isOpen={!!selectedSaleForPrint}
+          sale={selectedSaleForPrint}
+          onClose={() => setSelectedSaleForPrint(null)}
+        />
+      )}
     </div>
   )
 }

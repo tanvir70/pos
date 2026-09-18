@@ -296,4 +296,30 @@ class DashboardAndBackupTest {
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("Database Backup")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(org.hamcrest.Matchers.containsString("INSERT INTO ")));
     }
+
+    @Test
+    @DisplayName("6. Top Selling Products: Verify GET /api/dashboard/top-selling returns top movers with percentage shares")
+    void testTopSellingProducts() throws Exception {
+        mockMvc.perform(get("/api/dashboard/top-selling")
+                        .param("period", "month")
+                        .param("limit", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    @DisplayName("7. Paginated Sales Query: Verify GET /api/sales with page and size returns PagedResponse structure")
+    void testPaginatedSalesQuery() throws Exception {
+        mockMvc.perform(get("/api/sales")
+                        .param("page", "0")
+                        .param("size", "5")
+                        .param("period", "month")
+                        .param("saleMode", "ALL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.pageNumber").value(0))
+                .andExpect(jsonPath("$.pageSize").value(5))
+                .andExpect(jsonPath("$.totalElements").isNumber())
+                .andExpect(jsonPath("$.totalPages").isNumber());
+    }
 }

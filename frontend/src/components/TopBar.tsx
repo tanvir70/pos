@@ -11,9 +11,11 @@ export interface TopBarProps {
 const TAB_LABELS: Record<NavigationTab, string> = {
   pos: "POS",
   dashboard: "Analytics",
-  inventory: "Inventory",
+  inventory: "Dokan Stock",
   customers: "Customer Ledger",
   returns: "Sales Returns",
+  wholesale: "Wholesale Settings",
+  settings: "Settings",
 }
 
 export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: TopBarProps) {

@@ -43,6 +43,8 @@ public class ProductDto {
     @DecimalMin(value = "0.01", message = "Standard wholesale price must be positive")
     private BigDecimal standardWholesalePrice;
 
+    private BigDecimal buyingPrice;
+
     private Integer minStockAlert;
     private String imagePath;
     private LocalDateTime createdAt;

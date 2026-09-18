@@ -9,6 +9,11 @@ import {
 } from "lucide-react"
 import type { StockItem, SaleMode } from "../../types"
 import { formatTk } from "../../utils/currency"
+import {
+  calcWholesalePrice,
+  getWholesaleSettings,
+  type WholesaleSettings,
+} from "../../utils/wholesaleSettings"
 import Input from "../ui/Input"
 
 export interface ProductCatalogGridProps {
@@ -16,7 +21,7 @@ export interface ProductCatalogGridProps {
   isLoading?: boolean
   onAddToCart: (stock: StockItem) => void
   saleMode: SaleMode
-  onToggleSaleMode: (mode: SaleMode) => void
+  onToggleSaleMode?: (mode: SaleMode) => void
   onRefresh?: () => void
   /** Enter on an empty search box advances the checkout instead of doing nothing. */
   onEmptyEnter?: () => void
@@ -40,7 +45,19 @@ export default function ProductCatalogGrid({
   const [search, setSearch] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL")
   const [stockFilter, setStockFilter] = useState<"ALL" | "IN_STOCK" | "LOW_STOCK">("ALL")
+  const [wholesaleSettings, setWholesaleSettings] = useState<WholesaleSettings>(getWholesaleSettings)
   const searchInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const handleSettingsUpdated = (e: Event) => {
+      const custom = e as CustomEvent<WholesaleSettings>
+      if (custom.detail) {
+        setWholesaleSettings(custom.detail)
+      }
+    }
+    window.addEventListener("wholesale-settings-updated", handleSettingsUpdated)
+    return () => window.removeEventListener("wholesale-settings-updated", handleSettingsUpdated)
+  }, [])
 
   // Hotkey F2 to focus search input
   useEffect(() => {
@@ -143,32 +160,6 @@ export default function ProductCatalogGrid({
       {/* Search & Filter Header */}
       <div className="p-3.5 border-b border-slate-200/60 bg-slate-50/30 space-y-2.5">
         <div className="flex items-center gap-2">
-          {/* Sale Mode Toggle (Retail vs Wholesale) */}
-          <div className="flex items-center bg-white p-0.5 rounded-xl border border-slate-200 shadow-xs shrink-0">
-            <button
-              type="button"
-              onClick={() => onToggleSaleMode("RETAIL")}
-              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                saleMode === "RETAIL"
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              Retail
-            </button>
-            <button
-              type="button"
-              onClick={() => onToggleSaleMode("WHOLESALE")}
-              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                saleMode === "WHOLESALE"
-                  ? "bg-purple-700 text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              Wholesale
-            </button>
-          </div>
-
           <div className="flex-1 relative">
             <Input
               ref={searchInputRef}
@@ -192,26 +183,29 @@ export default function ProductCatalogGrid({
             <button
               type="button"
               onClick={onToggleFocusMode}
-              className={`shrink-0 flex items-center gap-1.5 px-2.5 py-2 rounded-xl border cursor-pointer shadow-xs transition-colors ${
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border cursor-pointer shadow-xs transition-all duration-200 text-xs font-semibold ${
                 isFocusMode
-                  ? "bg-slate-900 text-white border-slate-900 hover:bg-slate-800"
-                  : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-emerald-50 text-emerald-950 border-emerald-300 ring-1 ring-emerald-500/20 shadow-xs hover:bg-emerald-100"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-emerald-50/70 hover:text-emerald-950 hover:border-emerald-300"
               }`}
               title={
                 isFocusMode
-                  ? "Exit focus mode (F8) — show the menu and header again"
-                  : "Focus mode (F8) — hide the menu and header for a full-screen counter"
+                  ? "Exit full page focus mode (F8) — show sidebar menu and top header"
+                  : "Enter full page focus mode (F8) — full-screen counter without menu or header"
               }
             >
               {isFocusMode ? (
-                <Minimize2 className="w-4 h-4" />
+                <Minimize2 className="w-4 h-4 text-emerald-700" />
               ) : (
-                <Maximize2 className="w-4 h-4" />
+                <Maximize2 className="w-4 h-4 text-slate-600" />
               )}
+              <span className="font-bold">
+                {isFocusMode ? "Exit Full Page" : "Full Page"}
+              </span>
               <span
-                className={`hidden lg:inline text-xs font-mono font-bold px-1 rounded border ${
+                className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${
                   isFocusMode
-                    ? "bg-white/15 border-white/25"
+                    ? "bg-emerald-100 text-emerald-800 border-emerald-200"
                     : "text-emerald-800 bg-emerald-50 border-emerald-200"
                 }`}
               >
@@ -326,10 +320,12 @@ export default function ProductCatalogGrid({
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
             {filteredStocks.map((item) => {
+              const retailPrice =
+                (item as any).lotRetailPrice ?? item.standardRetailPrice ?? 0
               const activePrice =
                 saleMode === "RETAIL"
-                  ? (item as any).lotRetailPrice ?? item.standardRetailPrice ?? 0
-                  : (item as any).lotWholesalePrice ?? item.standardWholesalePrice ?? 0
+                  ? retailPrice
+                  : calcWholesalePrice(retailPrice, wholesaleSettings)
               const purchaseCost = (item as any).purchaseCost ?? 0
 
               return (
@@ -346,9 +342,12 @@ export default function ProductCatalogGrid({
                     <h4 className="font-bold text-sm text-slate-900 group-hover:text-emerald-800 leading-snug line-clamp-2 transition-colors">
                       {item.productNameEn || item.nameEn}
                     </h4>
-                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                      {item.productNameBn || item.nameBn}
-                    </p>
+                    {(item.productNameBn || item.nameBn) &&
+                      (item.productNameBn || item.nameBn) !== (item.productNameEn || item.nameEn) && (
+                        <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                          {item.productNameBn || item.nameBn}
+                        </p>
+                      )}
                   </div>
 
                   {/* Unit & Price Footer */}
@@ -357,13 +356,6 @@ export default function ProductCatalogGrid({
                       <span className="text-[11px] text-slate-500 font-semibold">
                         {item.baseUnit || ""}
                       </span>
-
-                      {/* Owner Mode: Purchase Cost Hint */}
-                      {isOwner && purchaseCost > 0 && (
-                        <div className="text-[10px] text-amber-700 font-semibold mt-1">
-                          Cost: {formatTk(purchaseCost)}
-                        </div>
-                      )}
                     </div>
 
                     <div className="text-right shrink-0">
@@ -371,7 +363,9 @@ export default function ProductCatalogGrid({
                         {formatTk(activePrice)}
                       </div>
                       <span className="text-[10px] text-slate-500 font-medium">
-                        {saleMode === "RETAIL" ? "Retail price" : "Wholesale price"}
+                        {saleMode === "RETAIL"
+                          ? "Retail price"
+                          : `Wholesale (-${wholesaleSettings.discountPercentage}%)`}
                       </span>
                     </div>
                   </div>

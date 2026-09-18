@@ -299,7 +299,7 @@ export default function Customers({ isOwner }: CustomersProps) {
             <span>Customer Due Ledger</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Due balances for wholesale dealers and retail farmers, Money Receipt collection, and audit statements
+            Due balances for wholesale and retail customers, Money Receipt collection, and audit statements
           </p>
         </div>
 
@@ -345,14 +345,14 @@ export default function Customers({ isOwner }: CustomersProps) {
         {/* Wholesale Count */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Wholesale Dealers</span>
+            <span className="text-xs font-semibold text-slate-500">Wholesale Customers</span>
             <Store className="w-4 h-4 text-slate-500" />
           </div>
           <p className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums mt-1.5">
             {wholesaleCount}
           </p>
           <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
-            Sub-dealer and wholesale profiles
+            Wholesale customer accounts
           </p>
         </div>
 
@@ -450,7 +450,7 @@ export default function Customers({ isOwner }: CustomersProps) {
                 : "text-slate-500 hover:text-slate-900"
             }`}
           >
-            Wholesale Dealers ({wholesaleCount})
+            Wholesale Customers ({wholesaleCount})
           </button>
           <button
             onClick={() => setFilterType("RETAIL")}
@@ -528,7 +528,7 @@ export default function Customers({ isOwner }: CustomersProps) {
                       <td className="px-3 py-3">
                         {c.customerType === "WHOLESALE" ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
-                            Wholesale Dealer
+                            Wholesale Customer
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -720,7 +720,7 @@ export default function Customers({ isOwner }: CustomersProps) {
                         businessName: e.target.value,
                       })
                     }
-                    placeholder="e.g. Rahman Fertilizer (for dealers)"
+                    placeholder="e.g. Rahman Traders / Farm Enterprise"
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden"
                   />
                 </div>
@@ -796,7 +796,7 @@ export default function Customers({ isOwner }: CustomersProps) {
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bg-white"
                   >
                     <option value="RETAIL">Retail Farmer</option>
-                    <option value="WHOLESALE">Wholesale Dealer</option>
+                    <option value="WHOLESALE">Wholesale Customer</option>
                   </select>
                 </div>
 
@@ -1237,7 +1237,7 @@ export default function Customers({ isOwner }: CustomersProps) {
                   {ledgerCustomer.creditLimit > 0 ? tk(ledgerCustomer.creditLimit) : "Unlimited"}
                 </span>
                 <span className="block text-[11px] text-slate-500 mt-0.5">
-                  {ledgerCustomer.customerType === "WHOLESALE" ? "Wholesale Dealer" : "Retail Farmer"}
+                  {ledgerCustomer.customerType === "WHOLESALE" ? "Wholesale Customer" : "Retail Farmer"}
                 </span>
               </div>
               <div className="text-right sm:text-right">

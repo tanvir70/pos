@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import {
   Banknote,
   Smartphone,
@@ -9,11 +10,15 @@ import {
   CheckCircle2,
   ArrowRight,
   ChevronLeft,
+  Percent,
+  Check,
   type LucideIcon,
 } from "lucide-react"
-import type { PaymentMethod } from "../../types"
+import type { PaymentMethod, SaleMode } from "../../types"
 import { useCart } from "../../context/CartContext"
+import { useToast } from "../../context/ToastContext"
 import { formatTk, roundAccounting } from "../../utils/currency"
+import { getWholesaleSettings, type WholesaleSettings } from "../../utils/wholesaleSettings"
 import Button from "../ui/Button"
 import Collapse from "../ui/Collapse"
 
@@ -76,8 +81,42 @@ export default function SettlementPanel({
     changeToReturn,
     totalPurchaseCost,
     totalGrossProfit,
-    grossProfitMargin,
+    saleMode,
+    toggleSaleMode,
   } = useCart()
+
+  const { showSuccess, showInfo } = useToast()
+  const [wholesaleSettings, setWholesaleSettings] = useState<WholesaleSettings>(getWholesaleSettings)
+
+  useEffect(() => {
+    const handleSettingsUpdated = (e: Event) => {
+      const custom = e as CustomEvent<WholesaleSettings>
+      if (custom.detail) {
+        setWholesaleSettings(custom.detail)
+      }
+    }
+    window.addEventListener("wholesale-settings-updated", handleSettingsUpdated)
+    return () => window.removeEventListener("wholesale-settings-updated", handleSettingsUpdated)
+  }, [])
+
+  const handleToggleWholesale = () => {
+    // 1. Fetch fresh wholesale configuration settings directly from storage
+    const latestSettings = getWholesaleSettings()
+    setWholesaleSettings(latestSettings)
+
+    // 2. Toggle sale mode and recalculate cart item prices and subtotal
+    const nextMode: SaleMode = saleMode === "WHOLESALE" ? "RETAIL" : "WHOLESALE"
+    toggleSaleMode(nextMode)
+
+    if (nextMode === "WHOLESALE") {
+      showSuccess(
+        `Wholesale discount (-${latestSettings.discountPercentage}%) applied! Subtotal recalculated.`,
+        "Whole Sale Applied",
+      )
+    } else {
+      showInfo("Reverted order back to standard Retail pricing.", "Retail Mode")
+    }
+  }
 
   // Quick cash addition
   const handleQuickCashAdd = (addAmount: number) => {
@@ -97,7 +136,14 @@ export default function SettlementPanel({
       <div className="p-3.5 space-y-2 border-b border-slate-200/60 bg-slate-50/20 text-xs">
         {/* Subtotal */}
         <div className="flex items-center justify-between text-slate-500">
-          <span className="font-medium">Item Subtotal:</span>
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium">Item Subtotal:</span>
+            {saleMode === "WHOLESALE" && (
+              <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">
+                Wholesale (-{wholesaleSettings.discountPercentage}%)
+              </span>
+            )}
+          </div>
           <span className="font-mono font-bold text-slate-900 text-sm tabular-nums">
             {formatTk(subtotal)}
           </span>
@@ -121,9 +167,9 @@ export default function SettlementPanel({
               </button>
               <button
                 type="button"
-                onClick={() => setDiscountType("percent")}
+                onClick={() => setDiscountType("percentage")}
                 className={`px-1.5 py-0.5 text-[10px] font-bold cursor-pointer ${
-                  discountType === "percent"
+                  discountType === "percentage"
                     ? "bg-slate-900 text-white"
                     : "text-slate-500 hover:bg-slate-100"
                 }`}
@@ -140,29 +186,27 @@ export default function SettlementPanel({
               value={discountValue}
               onChange={(e) => setDiscountValue(e.target.value)}
               placeholder="0"
-              className="w-16 py-0.5 px-2 text-right font-mono font-bold text-xs bg-white border border-slate-200 rounded focus:border-emerald-600 focus:outline-hidden"
+              className="w-20 py-0.5 px-2 text-right font-mono font-bold text-xs bg-white border border-slate-200 rounded focus:border-emerald-600 focus:outline-hidden"
             />
             {computedDiscount > 0 && (
-              <span className="font-mono text-red-600 font-bold tabular-nums">
-                -{formatTk(computedDiscount)}
+              <span className="text-[11px] font-mono text-emerald-800 font-semibold">
+                (-{formatTk(computedDiscount)})
               </span>
             )}
           </div>
         </div>
 
-        {/* 1-Click Quick Round-Off */}
-        <div className="flex items-center justify-between pt-1 border-t border-slate-200/40">
+        {/* Round Off Row */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/40">
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-500 font-medium">Round-off:</span>
+            <span className="text-slate-500 font-medium">Round Off:</span>
             {roundOffDeficit > 0 && (
               <button
                 type="button"
                 onClick={applyQuickRoundOff}
-                className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded cursor-pointer"
-                title="Drop the loose change (1-click round-off)"
+                className="text-[10px] font-bold text-emerald-800 hover:underline cursor-pointer bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200"
               >
-                <Zap className="w-3 h-3" />
-                Drop {roundOffDeficit}
+                Round (-৳{roundOffDeficit})
               </button>
             )}
           </div>
@@ -194,7 +238,57 @@ export default function SettlementPanel({
 
       {/* Step 1: Summary only — proceed when ready to take payment */}
       {!isPaymentStep && (
-        <div className="p-3.5">
+        <div className="p-3.5 space-y-2.5">
+          {/* Whole Sale Button */}
+          <button
+            type="button"
+            onClick={handleToggleWholesale}
+            title={
+              saleMode === "WHOLESALE"
+                ? "Click to revert to standard Retail prices"
+                : `Click to fetch wholesale settings (-${wholesaleSettings.discountPercentage}%) and recalculate subtotal`
+            }
+            className={`w-full h-11 flex items-center justify-between px-3.5 rounded-xl border text-sm font-bold transition-all cursor-pointer shadow-xs ${
+              saleMode === "WHOLESALE"
+                ? "bg-purple-700 border-purple-800 text-white hover:bg-purple-800"
+                : "bg-purple-50/90 border-purple-200 text-purple-900 hover:bg-purple-100 hover:border-purple-300"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className={`w-6 h-6 rounded-md flex items-center justify-center ${
+                  saleMode === "WHOLESALE"
+                    ? "bg-purple-900/60 text-purple-100"
+                    : "bg-purple-200/70 text-purple-800"
+                }`}
+              >
+                {saleMode === "WHOLESALE" ? (
+                  <Check className="w-3.5 h-3.5" />
+                ) : (
+                  <Percent className="w-3.5 h-3.5" />
+                )}
+              </div>
+              <span>{saleMode === "WHOLESALE" ? "Whole Sale (Applied)" : "Whole Sale"}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`text-xs font-mono font-extrabold px-2 py-0.5 rounded-md ${
+                  saleMode === "WHOLESALE"
+                    ? "bg-purple-900/60 text-purple-100"
+                    : "bg-purple-200/80 text-purple-900"
+                }`}
+              >
+                -{wholesaleSettings.discountPercentage}% Off
+              </span>
+              {saleMode === "WHOLESALE" && (
+                <span className="text-[11px] font-normal text-purple-200 underline">
+                  Revert
+                </span>
+              )}
+            </div>
+          </button>
+
+          {/* Proceed to Payment Button */}
           <Button
             type="button"
             variant="primary"
@@ -372,22 +466,6 @@ export default function SettlementPanel({
             <span className="font-mono font-black text-base text-rose-700 tabular-nums">
               {formatTk(liveDue)}
             </span>
-          </div>
-        </Collapse>
-
-        {/* Owner Mode Gross Profit KPI */}
-        <Collapse show={isOwner && finalTotalAmount > 0}>
-          <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs space-y-1 text-amber-900">
-            <div className="flex items-center justify-between">
-              <span>Total Cost:</span>
-              <span className="font-mono font-bold">{formatTk(totalPurchaseCost)}</span>
-            </div>
-            <div className="flex items-center justify-between font-bold text-emerald-800">
-              <span>Estimated Gross Profit:</span>
-              <span className="font-mono">
-                {formatTk(totalGrossProfit)} ({grossProfitMargin}%)
-              </span>
-            </div>
           </div>
         </Collapse>
 

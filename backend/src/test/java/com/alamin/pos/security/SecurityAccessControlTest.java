@@ -110,6 +110,54 @@ public class SecurityAccessControlTest {
     }
 
     @Test
+    @DisplayName("6a. Change PIN: Change PIN with valid current PIN and verify with new PIN")
+    void testChangeOwnerPin() throws Exception {
+        com.alamin.pos.dto.ChangePinRequest changeRequest = com.alamin.pos.dto.ChangePinRequest.builder()
+                .currentPin("1234")
+                .newPin("5678")
+                .build();
+
+        mockMvc.perform(post("/api/auth/change-pin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(changeRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"));
+
+        PinVerificationRequest verifyNew = PinVerificationRequest.builder()
+                .pin("5678")
+                .build();
+        mockMvc.perform(post("/api/auth/verify-pin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(verifyNew)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ROLE_OWNER"));
+
+        com.alamin.pos.dto.ChangePinRequest restoreRequest = com.alamin.pos.dto.ChangePinRequest.builder()
+                .currentPin("5678")
+                .newPin("1234")
+                .build();
+        mockMvc.perform(post("/api/auth/change-pin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(restoreRequest)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("6b. Change PIN: Invalid current PIN returns 400 Bad Request")
+    void testChangeOwnerPinInvalidCurrent() throws Exception {
+        com.alamin.pos.dto.ChangePinRequest changeRequest = com.alamin.pos.dto.ChangePinRequest.builder()
+                .currentPin("0000")
+                .newPin("5678")
+                .build();
+
+        mockMvc.perform(post("/api/auth/change-pin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(changeRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Current PIN is incorrect")));
+    }
+
+    @Test
     @WithMockUser(roles = "CASHIER")
     @DisplayName("7. Cashier role: Access to /api/backup/download returns 403 Forbidden")
     void testCashierCannotDownloadBackup() throws Exception {

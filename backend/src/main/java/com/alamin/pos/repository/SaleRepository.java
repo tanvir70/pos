@@ -1,6 +1,7 @@
 package com.alamin.pos.repository;
 
 import com.alamin.pos.entity.Sale;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +21,16 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
     List<Sale> findByCustomerIdOrderBySaleDateDesc(Long customerId);
 
     List<Sale> findAllByOrderBySaleDateDesc(Pageable pageable);
+
+    Page<Sale> findAllBy(Pageable pageable);
+
+    Page<Sale> findBySaleDateBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+
+    Page<Sale> findBySaleMode(String saleMode, Pageable pageable);
+
+    Page<Sale> findBySaleModeAndSaleDateBetween(String saleMode, LocalDateTime start, LocalDateTime end, Pageable pageable);
+
+    long countBySaleDateBetween(LocalDateTime start, LocalDateTime end);
 
     List<Sale> findBySaleDateBetween(LocalDateTime start, LocalDateTime end);
 

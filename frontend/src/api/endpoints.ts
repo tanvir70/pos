@@ -17,8 +17,11 @@ import type {
   SaleReturnRequest,
   SaleReturnResponse,
   DashboardSummary,
+  TopSellingProduct,
+  PagedResponse,
   AuthTokenResponse,
   PinVerificationRequest,
+  ChangePinRequest,
   LoginRequest,
   QuarantineStockItem,
   QuarantineDisposalRequest,
@@ -134,6 +137,36 @@ export async function getSaleByInvoice(
 
 export async function getRecentSales(limit = 50): Promise<SaleResponse[]> {
   return apiClient<SaleResponse[]>(`/sales?limit=${limit}`)
+}
+
+export interface GetSalesParams {
+  page?: number
+  size?: number
+  period?: string
+  saleMode?: string
+}
+
+export async function getPaginatedSales(
+  params: GetSalesParams = {},
+): Promise<PagedResponse<SaleResponse>> {
+  const qs = new URLSearchParams()
+  if (params.page != null) qs.set("page", params.page.toString())
+  if (params.size != null) qs.set("size", params.size.toString())
+  if (params.period) qs.set("period", params.period)
+  if (params.saleMode) qs.set("saleMode", params.saleMode)
+  const queryStr = qs.toString()
+  return apiClient<PagedResponse<SaleResponse>>(
+    `/sales${queryStr ? `?${queryStr}` : ""}`,
+  )
+}
+
+export async function getTopSellingProducts(
+  period = "month",
+  limit = 5,
+): Promise<TopSellingProduct[]> {
+  return apiClient<TopSellingProduct[]>(
+    `/dashboard/top-selling?period=${encodeURIComponent(period)}&limit=${limit}`,
+  )
 }
 
 // ----------------------------------------------------------------------------
@@ -256,6 +289,15 @@ export async function verifyOwnerPin(
   request: PinVerificationRequest,
 ): Promise<AuthTokenResponse> {
   return apiClient<AuthTokenResponse>("/auth/verify-pin", {
+    method: "POST",
+    body: JSON.stringify(request),
+  })
+}
+
+export async function changeOwnerPin(
+  request: ChangePinRequest,
+): Promise<{ message: string; status?: string }> {
+  return apiClient<{ message: string; status?: string }>("/auth/change-pin", {
     method: "POST",
     body: JSON.stringify(request),
   })

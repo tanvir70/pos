@@ -23,6 +23,7 @@ public class StockItemResponse {
     private String baseUnit;
     private BigDecimal cartonMultiplier;
     private String defaultBarcode;
+    private BigDecimal buyingPrice;
 
     // Lot details
     private Long lotId;

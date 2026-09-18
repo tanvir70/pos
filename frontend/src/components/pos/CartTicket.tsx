@@ -64,8 +64,6 @@ export default function CartTicket({ isOwner = false }: CartTicketProps) {
         ) : (
           cart.map((item) => {
             const lineTotal = calcLineTotal(item.quantity, item.unitPrice)
-            const linePurchaseCost = item.purchaseCost * item.quantity
-            const lineProfit = lineTotal - linePurchaseCost
 
             return (
               <div
@@ -83,9 +81,11 @@ export default function CartTicket({ isOwner = false }: CartTicketProps) {
                         {item.baseUnit}
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-500 truncate block">
-                      {item.nameBn}
-                    </span>
+                    {item.nameBn && item.nameBn !== (item.nameEn || item.nameBn) && (
+                      <span className="text-[11px] text-slate-500 truncate block">
+                        {item.nameBn}
+                      </span>
+                    )}
                   </div>
 
                   <button
@@ -144,23 +144,6 @@ export default function CartTicket({ isOwner = false }: CartTicketProps) {
                     </div>
                   </div>
                 </div>
-
-                {/* Owner Mode Hint: Purchase Cost & Profit */}
-                {isOwner && (
-                  <div className="pt-1.5 border-t border-dashed border-amber-200 flex items-center justify-between text-[11px] text-amber-900 font-semibold bg-amber-50/50 -mx-3 -mb-3 px-3 py-1 rounded-b-xl">
-                    <span>
-                      Cost: {formatTk(item.purchaseCost)} × {item.quantity} ={" "}
-                      {formatTk(linePurchaseCost)}
-                    </span>
-                    <span
-                      className={`font-mono font-bold ${
-                        lineProfit >= 0 ? "text-emerald-800" : "text-red-600"
-                      }`}
-                    >
-                      Profit: {formatTk(lineProfit)}
-                    </span>
-                  </div>
-                )}
               </div>
             )
           })

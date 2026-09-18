@@ -1,11 +1,8 @@
 import { useState, useId } from "react"
 import type { Product, LotEntryRequest } from "../types"
 import { createLot } from "../api/endpoints"
-import { Package, X, AlertTriangle, Calculator, Loader2, Check } from "lucide-react"
-
-// BUSINESS DECISION: Incoming shipments calculate base units as (cartons * cartonMultiplier) + loose units.
-// Shipments enter DOKAN store stock directly. Barcodes are synthesized
-// automatically by backend if left blank.
+import { calcWholesalePrice, getWholesaleSettings } from "../utils/wholesaleSettings"
+import { Package, X, AlertTriangle, Loader2, Check } from "lucide-react"
 
 export interface LotEntryModalProps {
   products: Product[]
@@ -26,11 +23,9 @@ export default function LotEntryModal({
   const expiryDateId = useId()
   const challanNoId = useId()
   const supplierNameId = useId()
-  const quantityCartonsId = useId()
-  const quantityBaseUnitsId = useId()
+  const quantityId = useId()
   const purchaseCostId = useId()
   const lotRetailPriceId = useId()
-  const lotWholesalePriceId = useId()
   const barcodeId = useId()
 
   const [selectedProductId, setSelectedProductId] = useState<number | "">("")
@@ -43,11 +38,9 @@ export default function LotEntryModal({
   const [supplierName, setSupplierName] = useState<string>(
     "Agro Chemical Ltd.",
   )
-  const [quantityCartons, setQuantityCartons] = useState<string>("")
-  const [quantityBaseUnits, setQuantityBaseUnits] = useState<string>("")
+  const [quantity, setQuantity] = useState<string>("")
   const [purchaseCost, setPurchaseCost] = useState<string>("")
   const [lotRetailPrice, setLotRetailPrice] = useState<string>("")
-  const [lotWholesalePrice, setLotWholesalePrice] = useState<string>("")
   const [barcode, setBarcode] = useState<string>("")
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -62,9 +55,9 @@ export default function LotEntryModal({
     const prod = products.find((p) => p.id === id)
     if (prod) {
       setLotRetailPrice(String(prod.standardRetailPrice || ""))
-      setLotWholesalePrice(String(prod.standardWholesalePrice || ""))
-      // If purchase cost not set, give reasonable default based on wholesale price (~88%)
-      if (!purchaseCost && prod.standardWholesalePrice) {
+      if (prod.buyingPrice) {
+        setPurchaseCost(String(prod.buyingPrice))
+      } else if (prod.standardWholesalePrice) {
         setPurchaseCost(String(Math.round(prod.standardWholesalePrice * 0.88)))
       }
       if (!lotNumber) {
@@ -73,12 +66,6 @@ export default function LotEntryModal({
       }
     }
   }
-
-  // Calculate live total base units
-  const multiplier = Number(selectedProduct?.cartonMultiplier) || 1
-  const cartons = parseFloat(quantityCartons) || 0
-  const loose = parseFloat(quantityBaseUnits) || 0
-  const totalBaseUnits = cartons * multiplier + loose
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,26 +83,25 @@ export default function LotEntryModal({
       setErrorMessage("Expiry date is required")
       return
     }
-    if (totalBaseUnits <= 0) {
+    const parsedQty = parseFloat(quantity)
+    if (isNaN(parsedQty) || parsedQty <= 0) {
       setErrorMessage("Quantity must be greater than 0")
       return
     }
     const cost = parseFloat(purchaseCost)
     const retail = parseFloat(lotRetailPrice)
-    const wholesale = parseFloat(lotWholesalePrice)
 
     if (isNaN(cost) || cost <= 0) {
-      setErrorMessage("Enter a valid purchase cost")
+      setErrorMessage("Enter a valid purchase cost / buying price")
       return
     }
     if (isNaN(retail) || retail <= 0) {
       setErrorMessage("Enter a valid retail price")
       return
     }
-    if (isNaN(wholesale) || wholesale <= 0) {
-      setErrorMessage("Enter a valid wholesale price")
-      return
-    }
+
+    const wholesaleSettings = getWholesaleSettings()
+    const wholesale = calcWholesalePrice(retail, wholesaleSettings)
 
     try {
       setIsSubmitting(true)
@@ -130,8 +116,7 @@ export default function LotEntryModal({
         barcode: barcode.trim() || undefined,
         supplierName: supplierName.trim() || "Agro Chemical Ltd.",
         challanNo: challanNo.trim() || undefined,
-        quantityCartons: cartons > 0 ? cartons : undefined,
-        quantityBaseUnits: loose > 0 ? loose : undefined,
+        quantityBaseUnits: parsedQty,
         location: "DOKAN",
       }
 
@@ -200,8 +185,7 @@ export default function LotEntryModal({
               <option value="">-- Choose a product --</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.nameEn} ({p.nameBn}) — {p.category} [1 carton ={" "}
-                  {p.cartonMultiplier} {p.baseUnit}]
+                  {p.nameEn} ({p.nameBn}) — {p.category} ({p.baseUnit})
                 </option>
               ))}
             </select>
@@ -295,90 +279,47 @@ export default function LotEntryModal({
             </div>
           </div>
 
-          {/* Row 4: Carton Multiplier Quantity & Live Calculation */}
-          <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 space-y-3">
+          {/* Row 4: Quantity Entry */}
+          <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                <Calculator className="w-4 h-4" />
-                <span>Quantity Entry &amp; Automatic Base Unit Calculation</span>
-              </span>
-              <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-200">
-                1 carton = {multiplier} {selectedProduct?.baseUnit || "unit"}
+              <label
+                htmlFor={quantityId}
+                className="text-xs font-bold text-emerald-900 flex items-center gap-1.5"
+              >
+                <Package className="w-4 h-4 text-emerald-700" />
+                <span>Quantity to Receive *</span>
+              </label>
+              <span className="text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
+                Packaging: {selectedProduct?.baseUnit || "Unit"}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label
-                  htmlFor={quantityCartonsId}
-                  className="block text-xs font-semibold text-slate-900 mb-1"
-                >
-                  Cartons
-                </label>
-                <div className="relative">
-                  <input
-                    id={quantityCartonsId}
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={quantityCartons}
-                    onChange={(e) => setQuantityCartons(e.target.value)}
-                    placeholder="0 cartons"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-500">
-                    cartons
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor={quantityBaseUnitsId}
-                  className="block text-xs font-semibold text-slate-900 mb-1"
-                >
-                  Loose Units
-                </label>
-                <div className="relative">
-                  <input
-                    id={quantityBaseUnitsId}
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={quantityBaseUnits}
-                    onChange={(e) => setQuantityBaseUnits(e.target.value)}
-                    placeholder="0 units"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-500">
-                    {selectedProduct?.baseUnit || "unit"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Live Calculation Formula Badge */}
-            <div className="bg-white rounded-lg p-2.5 border border-emerald-200/80 flex items-center justify-between flex-wrap gap-2">
-              <span className="text-xs text-emerald-900">Total to be saved:</span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 tabular-nums">
-                  ({cartons} × {multiplier}) + {loose} =
-                </span>
-                <span className="text-sm font-black text-emerald-700 tabular-nums bg-emerald-100 px-2.5 py-0.5 rounded-md border border-emerald-300">
-                  {totalBaseUnits} {selectedProduct?.baseUnit || "units"}
-                </span>
-              </div>
+            <div className="relative">
+              <input
+                id={quantityId}
+                type="number"
+                min="0.001"
+                step="any"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder={`e.g. 50 ${selectedProduct?.baseUnit || "units"}`}
+                required
+                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
+              />
+              <span className="absolute right-3.5 top-3 text-xs font-semibold text-slate-500">
+                {selectedProduct?.baseUnit || "units"}
+              </span>
             </div>
           </div>
 
-          {/* Row 5: Pricing (Purchase Cost, Retail Price, Wholesale Price) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Row 5: Pricing (Buying Price & Retail Price) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label
                 htmlFor={purchaseCostId}
                 className="block text-xs font-bold text-slate-900 mb-1.5"
               >
-                Purchase Cost *
+                Buying Price (কেনা দাম) *
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-2 text-sm text-slate-500">৳</span>
@@ -394,7 +335,7 @@ export default function LotEntryModal({
                   className="w-full bg-white border border-slate-200 rounded-xl pl-7 pr-3 py-2 text-sm font-bold text-emerald-800 focus:border-emerald-600 focus:outline-hidden tabular-nums"
                 />
               </div>
-              <p className="text-[10px] text-slate-500 mt-0.5">Cost per unit</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Supplier purchase rate per unit</p>
             </div>
 
             <div>
@@ -402,7 +343,7 @@ export default function LotEntryModal({
                 htmlFor={lotRetailPriceId}
                 className="block text-xs font-bold text-slate-900 mb-1.5"
               >
-                Retail Price *
+                Retail Price (বিক্রয় মূল্য) *
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-2 text-sm text-slate-500">৳</span>
@@ -418,31 +359,7 @@ export default function LotEntryModal({
                   className="w-full bg-white border border-slate-200 rounded-xl pl-7 pr-3 py-2 text-sm font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
                 />
               </div>
-              <p className="text-[10px] text-slate-500 mt-0.5">Counter selling price</p>
-            </div>
-
-            <div>
-              <label
-                htmlFor={lotWholesalePriceId}
-                className="block text-xs font-bold text-slate-900 mb-1.5"
-              >
-                Wholesale Price *
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-2 text-sm text-slate-500">৳</span>
-                <input
-                  id={lotWholesalePriceId}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={lotWholesalePrice}
-                  onChange={(e) => setLotWholesalePrice(e.target.value)}
-                  placeholder="0.00"
-                  required
-                  className="w-full bg-white border border-slate-200 rounded-xl pl-7 pr-3 py-2 text-sm font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
-                />
-              </div>
-              <p className="text-[10px] text-slate-500 mt-0.5">Dealer / wholesale rate</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">Counter selling rate (Wholesale derived via settings)</p>
             </div>
           </div>
 

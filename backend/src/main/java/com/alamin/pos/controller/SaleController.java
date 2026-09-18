@@ -1,5 +1,6 @@
 package com.alamin.pos.controller;
 
+import com.alamin.pos.dto.PagedResponse;
 import com.alamin.pos.dto.SaleRequest;
 import com.alamin.pos.dto.SaleResponse;
 import com.alamin.pos.security.SecurityUtils;
@@ -42,9 +43,25 @@ public class SaleController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SaleResponse>> getRecentSales(
-            @RequestParam(name = "limit", defaultValue = "50") int limit) {
-        List<SaleResponse> sales = saleService.getRecentSales(limit);
+    public ResponseEntity<?> getSales(
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size,
+            @RequestParam(name = "period", required = false) String period,
+            @RequestParam(name = "saleMode", required = false) String saleMode,
+            @RequestParam(name = "limit", required = false) Integer limit) {
+
+        if (page != null || size != null || period != null || saleMode != null) {
+            PagedResponse<SaleResponse> paged = saleService.getSales(
+                    page != null ? page : 0,
+                    size != null ? size : 10,
+                    period,
+                    saleMode);
+            paged.setContent(paged.getContent().stream().map(this::maskCostsIfNeeded).toList());
+            return ResponseEntity.ok(paged);
+        }
+
+        int maxLimit = limit != null && limit > 0 ? limit : 50;
+        List<SaleResponse> sales = saleService.getRecentSales(maxLimit);
         return ResponseEntity.ok(sales.stream().map(this::maskCostsIfNeeded).toList());
     }
 

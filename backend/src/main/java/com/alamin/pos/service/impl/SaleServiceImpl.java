@@ -1,9 +1,11 @@
 package com.alamin.pos.service.impl;
 
+import com.alamin.pos.dto.PagedResponse;
 import com.alamin.pos.dto.SaleItemRequest;
 import com.alamin.pos.dto.SaleItemResponse;
 import com.alamin.pos.dto.SaleRequest;
 import com.alamin.pos.dto.SaleResponse;
+import org.springframework.data.domain.Page;
 import com.alamin.pos.entity.Customer;
 import com.alamin.pos.entity.CustomerLedger;
 import com.alamin.pos.entity.InventoryLot;
@@ -38,7 +40,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -263,9 +267,64 @@ public class SaleServiceImpl implements SaleService {
     public List<SaleResponse> getRecentSales(int limit) {
         Pageable pageable = PageRequest.of(0, limit > 0 ? limit : 50);
         List<Sale> sales = saleRepository.findAllByOrderBySaleDateDesc(pageable);
+        return mapSalesBatch(sales);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<SaleResponse> getSales(int page, int size, String period, String saleMode) {
+        int pageIndex = Math.max(0, page);
+        int pageSize = (size > 0 && size <= 100) ? size : 10;
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+
+        LocalDateTime startDate = null;
+        LocalDateTime endDate = LocalDateTime.now();
+        if ("today".equalsIgnoreCase(period)) {
+            startDate = LocalDate.now().atStartOfDay();
+        } else if ("week".equalsIgnoreCase(period)) {
+            startDate = LocalDate.now().minusDays(7).atStartOfDay();
+        } else if ("month".equalsIgnoreCase(period)) {
+            startDate = LocalDate.now().minusDays(30).atStartOfDay();
+        }
+
+        boolean hasMode = saleMode != null && !saleMode.isBlank() && !"ALL".equalsIgnoreCase(saleMode);
+        Page<Sale> salesPage;
+
+        if (hasMode && startDate != null) {
+            salesPage = saleRepository.findBySaleModeAndSaleDateBetween(saleMode.toUpperCase(), startDate, endDate, pageable);
+        } else if (hasMode) {
+            salesPage = saleRepository.findBySaleMode(saleMode.toUpperCase(), pageable);
+        } else if (startDate != null) {
+            salesPage = saleRepository.findBySaleDateBetween(startDate, endDate, pageable);
+        } else {
+            salesPage = saleRepository.findAllBy(pageable);
+        }
+
+        List<SaleResponse> mapped = mapSalesBatch(salesPage.getContent());
+
+        return PagedResponse.<SaleResponse>builder()
+                .content(mapped)
+                .pageNumber(salesPage.getNumber())
+                .pageSize(salesPage.getSize())
+                .totalElements(salesPage.getTotalElements())
+                .totalPages(salesPage.getTotalPages())
+                .first(salesPage.isFirst())
+                .last(salesPage.isLast())
+                .build();
+    }
+
+    private List<SaleResponse> mapSalesBatch(List<Sale> sales) {
+        if (sales == null || sales.isEmpty()) {
+            return List.of();
+        }
+        List<Long> saleIds = sales.stream().map(Sale::getId).toList();
+        List<SaleItem> allItems = saleItemRepository.findBySaleIdInWithLotAndProduct(saleIds);
+        Map<Long, List<SaleItem>> itemsBySale = allItems.stream()
+                .collect(Collectors.groupingBy(item -> item.getSale().getId()));
+
         return sales.stream()
                 .map(sale -> {
-                    List<SaleItem> items = saleItemRepository.findBySaleId(sale.getId());
+                    List<SaleItem> items = itemsBySale.getOrDefault(sale.getId(), List.of());
                     return mapToResponse(sale, items);
                 })
                 .toList();

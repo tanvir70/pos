@@ -63,8 +63,11 @@ public class Product {
     @Column(name = "standard_retail_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal standardRetailPrice;
 
-    @Column(name = "standard_wholesale_price", nullable = false, precision = 12, scale = 2)
+    @Column(name = "standard_wholesale_price", precision = 12, scale = 2)
     private BigDecimal standardWholesalePrice;
+
+    @Column(name = "buying_price", precision = 12, scale = 2)
+    private BigDecimal buyingPrice;
 
     @Column(name = "min_stock_alert")
     @Builder.Default
@@ -89,6 +92,12 @@ public class Product {
         }
         if (minStockAlert == null) {
             minStockAlert = 5;
+        }
+        if (buyingPrice == null && standardWholesalePrice != null) {
+            buyingPrice = standardWholesalePrice;
+        }
+        if (standardWholesalePrice == null && standardRetailPrice != null) {
+            standardWholesalePrice = standardRetailPrice.multiply(new BigDecimal("0.95")).setScale(2, java.math.RoundingMode.HALF_UP);
         }
     }
 }
