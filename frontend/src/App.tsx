@@ -63,8 +63,10 @@ function AppShell() {
 
         {/* Main Content Shell */}
         <main
-          className={`flex-1 min-h-0 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 ${
-            tab === "pos" ? "overflow-hidden" : "overflow-y-auto"
+          className={`flex-1 min-h-0 w-full px-3 sm:px-6 py-4 ${
+            tab === "pos"
+              ? "overflow-hidden"
+              : "overflow-y-auto max-w-7xl mx-auto"
           }`}
         >
           {tab === "pos" && <PosCounter isOwner={isOwner} />}

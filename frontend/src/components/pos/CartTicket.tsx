@@ -1,69 +1,22 @@
-import { useState } from "react"
-import { Receipt, Trash2, ShoppingCart, X, Check, Pencil } from "lucide-react"
-import type { CartItem, InventoryLot, StockItem } from "../../types"
+import { Receipt, Trash2, ShoppingCart, X } from "lucide-react"
 import { useCart } from "../../context/CartContext"
 import { formatTk, calcLineTotal } from "../../utils/currency"
-import LotSelectorDropdown from "../LotSelectorDropdown"
 import Button from "../ui/Button"
 
 export interface CartTicketProps {
   isOwner?: boolean
-  stocks?: StockItem[]
 }
 
-export default function CartTicket({
-  isOwner = false,
-  stocks = [],
-}: CartTicketProps) {
+export default function CartTicket({ isOwner = false }: CartTicketProps) {
   const {
     cart,
     adjustQuantity,
     setQuantity,
-    setUnitPrice,
-    selectLot,
     removeItem,
     clearCart,
     totalItemsCount,
     totalUnitsCount,
   } = useCart()
-
-  const [editingPriceItemId, setEditingPriceItemId] = useState<string | null>(null)
-  const [tempPriceInput, setTempPriceInput] = useState<string>("")
-
-  const handleStartPriceEdit = (item: CartItem) => {
-    setEditingPriceItemId(item.id)
-    setTempPriceInput(String(item.unitPrice))
-  }
-
-  const handleSavePriceEdit = (itemId: string) => {
-    const parsed = parseFloat(tempPriceInput)
-    if (!isNaN(parsed) && parsed >= 0) {
-      setUnitPrice(itemId, parsed)
-    }
-    setEditingPriceItemId(null)
-  }
-
-  // Extract available lots for a product from stocks if availableLots is not on the item
-  const getProductLots = (item: CartItem): InventoryLot[] => {
-    if (item.availableLots && item.availableLots.length > 0) {
-      return item.availableLots
-    }
-    return stocks
-      .filter((s) => s.productId === item.productId)
-      .map((s) => ({
-        id: (s as any).lotId,
-        productId: s.productId,
-        productCode: s.productCode,
-        productNameEn: s.productNameEn || s.nameEn,
-        lotNumber: (s as any).lotNumber || "DEF",
-        entryDate: (s as any).entryDate || new Date().toISOString(),
-        expiryDate: (s as any).expiryDate || "2099-12-31",
-        purchaseCost: (s as any).purchaseCost || 0,
-        lotRetailPrice: (s as any).lotRetailPrice || s.standardRetailPrice || 0,
-        lotWholesalePrice: (s as any).lotWholesalePrice || s.standardWholesalePrice || 0,
-        barcode: (s as any).lotBarcode || (s as any).barcode || "",
-      }))
-  }
 
   return (
     <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -111,11 +64,6 @@ export default function CartTicket({
         ) : (
           cart.map((item) => {
             const lineTotal = calcLineTotal(item.quantity, item.unitPrice)
-            const isPriceModified =
-              item.originalUnitPrice !== undefined &&
-              item.unitPrice !== item.originalUnitPrice
-            const availableLots = getProductLots(item)
-
             const linePurchaseCost = item.purchaseCost * item.quantity
             const lineProfit = lineTotal - linePurchaseCost
 
@@ -134,11 +82,6 @@ export default function CartTicket({
                       <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-50 font-mono font-semibold text-slate-500 border border-slate-200">
                         {item.baseUnit}
                       </span>
-                      {isPriceModified && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300">
-                          Price changed
-                        </span>
-                      )}
                     </div>
                     <span className="text-[11px] text-slate-500 truncate block">
                       {item.nameBn}
@@ -155,20 +98,7 @@ export default function CartTicket({
                   </button>
                 </div>
 
-                {/* Row 2: Lot Selector */}
-                <div className="flex items-center justify-between gap-2 text-xs pt-1 border-t border-slate-200/40">
-                  <span className="text-[11px] text-slate-500 font-medium">
-                    Lot/Batch:
-                  </span>
-                  <LotSelectorDropdown
-                    lots={availableLots}
-                    selectedLotId={item.lotId}
-                    onSelectLot={(newLot) => selectLot(item.id, newLot)}
-                    isOwner={isOwner}
-                  />
-                </div>
-
-                {/* Row 3: Stepper + Bargaining Price + Line Total */}
+                {/* Row 2: Stepper + Price (read-only) + Line Total */}
                 <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/40">
                   {/* Quantity Stepper */}
                   <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50/40 shrink-0">
@@ -199,46 +129,12 @@ export default function CartTicket({
                     </button>
                   </div>
 
-                  {/* Unit Price (Bargaining editable) */}
+                  {/* Unit Price (read-only) */}
                   <div className="flex items-center gap-1">
                     <span className="text-[11px] text-slate-500">Price:</span>
-                    {editingPriceItemId === item.id ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          step="any"
-                          value={tempPriceInput}
-                          onChange={(e) => setTempPriceInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSavePriceEdit(item.id)
-                            if (e.key === "Escape") setEditingPriceItemId(null)
-                          }}
-                          className="w-16 py-0.5 px-1.5 text-xs font-mono font-bold border border-emerald-500 rounded bg-white focus:outline-hidden"
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleSavePriceEdit(item.id)}
-                          className="text-xs text-emerald-800 font-bold px-1 py-0.5 hover:bg-emerald-50 rounded cursor-pointer"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleStartPriceEdit(item)}
-                        className={`flex items-center gap-1 text-xs font-mono font-bold px-1.5 py-0.5 rounded border border-dashed transition-colors cursor-pointer ${
-                          isPriceModified
-                            ? "bg-amber-50 text-amber-900 border-amber-400 hover:bg-amber-100"
-                            : "bg-slate-50/60 text-slate-900 border-slate-200 hover:border-slate-900"
-                        }`}
-                        title="Click to change price (bargaining)"
-                      >
-                        <span>৳{item.unitPrice}</span>
-                        <Pencil className="w-3 h-3" />
-                      </button>
-                    )}
+                    <span className="text-xs font-mono font-bold px-1.5 py-0.5 text-slate-900">
+                      {formatTk(item.unitPrice)}
+                    </span>
                   </div>
 
                   {/* Line Total */}

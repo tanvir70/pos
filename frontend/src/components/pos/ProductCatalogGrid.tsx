@@ -1,15 +1,16 @@
 import { useState, useMemo, useRef, useEffect } from "react"
-import { Search, Loader2, Wheat } from "lucide-react"
+import { Search, Loader2, Wheat, RefreshCw } from "lucide-react"
 import type { StockItem, SaleMode } from "../../types"
 import { formatTk } from "../../utils/currency"
 import Input from "../ui/Input"
-import Badge from "../ui/Badge"
 
 export interface ProductCatalogGridProps {
   stocks: StockItem[]
   isLoading?: boolean
   onAddToCart: (stock: StockItem) => void
   saleMode: SaleMode
+  onToggleSaleMode: (mode: SaleMode) => void
+  onRefresh?: () => void
   isOwner?: boolean
 }
 
@@ -18,6 +19,8 @@ export default function ProductCatalogGrid({
   isLoading = false,
   onAddToCart,
   saleMode,
+  onToggleSaleMode,
+  onRefresh,
   isOwner = false,
 }: ProductCatalogGridProps) {
   const [search, setSearch] = useState("")
@@ -121,6 +124,32 @@ export default function ProductCatalogGrid({
       {/* Search & Filter Header */}
       <div className="p-3.5 border-b border-slate-200/60 bg-slate-50/30 space-y-2.5">
         <div className="flex items-center gap-2">
+          {/* Sale Mode Toggle (Retail vs Wholesale) */}
+          <div className="flex items-center bg-white p-0.5 rounded-xl border border-slate-200 shadow-xs shrink-0">
+            <button
+              type="button"
+              onClick={() => onToggleSaleMode("RETAIL")}
+              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                saleMode === "RETAIL"
+                  ? "bg-emerald-700 text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Retail
+            </button>
+            <button
+              type="button"
+              onClick={() => onToggleSaleMode("WHOLESALE")}
+              className={`px-3 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                saleMode === "WHOLESALE"
+                  ? "bg-purple-700 text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Wholesale
+            </button>
+          </div>
+
           <div className="flex-1 relative">
             <Input
               ref={searchInputRef}
@@ -128,7 +157,7 @@ export default function ProductCatalogGrid({
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleSearchKeyDown}
               onClear={() => setSearch("")}
-              placeholder="Search product or scan barcode... (Press F2)"
+              placeholder="Search or scan barcode... (F2)"
               leftAdornment={<Search className="w-4 h-4 text-slate-400" />}
               inputSize="md"
               className="bg-white shadow-xs"
@@ -140,6 +169,17 @@ export default function ProductCatalogGrid({
             </span>
             <span>Search</span>
           </div>
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isLoading}
+              className="shrink-0 p-2 text-slate-500 hover:text-slate-900 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer shadow-xs disabled:opacity-50"
+              title="Refresh stock and data"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Category & Status Pills */}
@@ -236,17 +276,11 @@ export default function ProductCatalogGrid({
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
             {filteredStocks.map((item) => {
-              const available =
-                item.quantity ?? (item as any).totalQuantity ?? 0
-              const minAlert = item.minStockAlert ?? 5
               const activePrice =
                 saleMode === "RETAIL"
                   ? (item as any).lotRetailPrice ?? item.standardRetailPrice ?? 0
                   : (item as any).lotWholesalePrice ?? item.standardWholesalePrice ?? 0
               const purchaseCost = (item as any).purchaseCost ?? 0
-
-              const isLowStock = available > 0 && available <= minAlert
-              const isOutOfStock = available <= 0
 
               return (
                 <div
@@ -254,53 +288,25 @@ export default function ProductCatalogGrid({
                   onClick={() => onAddToCart(item)}
                   className="group flex flex-col justify-between p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-500 hover:shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden"
                 >
-                  {/* Category Accent Line */}
+                  {/* Accent Line */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-600 group-hover:h-1.5 transition-all" />
 
-                  {/* Top Product Info */}
+                  {/* Product Name */}
                   <div className="pt-1">
-                    <div className="flex items-start justify-between gap-1.5 mb-1">
-                      <span className="font-mono text-[10px] font-bold text-slate-500 tracking-tight truncate">
-                        {item.productCode}
-                      </span>
-                      {item.category && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60 truncate max-w-[90px]">
-                          {item.category}
-                        </span>
-                      )}
-                    </div>
-
                     <h4 className="font-bold text-sm text-slate-900 group-hover:text-emerald-800 leading-snug line-clamp-2 transition-colors">
                       {item.productNameEn || item.nameEn}
                     </h4>
                     <p className="text-[11px] text-slate-500 truncate mt-0.5">
                       {item.productNameBn || item.nameBn}
                     </p>
-
-                    {/* Expiry Date (if available) */}
-                    {(item as any).expiryDate && (
-                      <p className="text-[10px] text-slate-500 mt-1">
-                        Expiry: <span className="font-mono">{(item as any).expiryDate}</span>
-                      </p>
-                    )}
                   </div>
 
-                  {/* Bottom Stock & Price Footer */}
+                  {/* Unit & Price Footer */}
                   <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-end justify-between gap-1">
                     <div>
-                      {isOutOfStock ? (
-                        <Badge variant="danger" size="sm" dot>
-                          Out of stock ({available})
-                        </Badge>
-                      ) : isLowStock ? (
-                        <Badge variant="warning" size="sm" dot>
-                          Low stock: {available} {item.baseUnit || ""}
-                        </Badge>
-                      ) : (
-                        <Badge variant="success" size="sm">
-                          Stock: {available} {item.baseUnit || ""}
-                        </Badge>
-                      )}
+                      <span className="text-[11px] text-slate-500 font-semibold">
+                        {item.baseUnit || ""}
+                      </span>
 
                       {/* Owner Mode: Purchase Cost Hint */}
                       {isOwner && purchaseCost > 0 && (
