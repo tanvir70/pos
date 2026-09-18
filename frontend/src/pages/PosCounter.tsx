@@ -11,6 +11,7 @@ import { getStock, getCustomers, createSale } from "../api/endpoints"
 import { useCart } from "../context/CartContext"
 import { useToast } from "../context/ToastContext"
 import { useBarcodeScanner } from "../utils/barcode"
+import { isTypingTarget } from "../utils/keyboard"
 import ProductCatalogGrid from "../components/pos/ProductCatalogGrid"
 import CustomerSelect from "../components/pos/CustomerSelect"
 import CartTicket from "../components/pos/CartTicket"
@@ -19,9 +20,15 @@ import DualPrintModal from "../components/pos/DualPrintModal"
 
 export interface PosCounterProps {
   isOwner: boolean
+  isFocusMode?: boolean
+  onToggleFocusMode?: () => void
 }
 
-export default function PosCounter({ isOwner }: PosCounterProps) {
+export default function PosCounter({
+  isOwner,
+  isFocusMode = false,
+  onToggleFocusMode,
+}: PosCounterProps) {
   const { showSuccess, showError, showWarning } = useToast()
   const {
     cart,
@@ -46,6 +53,16 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [completedSale, setCompletedSale] = useState<SaleResponse | null>(null)
+
+  // ─── Checkout Step ──────────────────────────────────────────────
+  // false = order summary, true = payment method & tender entry.
+  const [isPaymentStep, setIsPaymentStep] = useState<boolean>(false)
+
+  // Drop back to the summary step whenever the cart empties out (e.g. after
+  // a completed sale), so the next customer starts from a clean screen.
+  useEffect(() => {
+    if (cart.length === 0) setIsPaymentStep(false)
+  }, [cart.length])
 
   // ─── Fetch Stock and Customers ──────────────────────────────────
   const loadInitialData = useCallback(async () => {
@@ -94,8 +111,8 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
 
   // ─── Hardware Barcode Scanner Listener ──────────────────────────
   // Intercepts physical scanner keyboard wedges (<=35ms burst rate)
-  useBarcodeScanner({
-    onScan: (scannedCode) => {
+  useBarcodeScanner(
+    (scannedCode) => {
       const q = scannedCode.trim().toLowerCase()
       if (!q) return
 
@@ -116,8 +133,8 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
         showWarning(`Scanned barcode (${scannedCode}) was not found in the database!`)
       }
     },
-    enabled: true,
-  })
+    { enabled: true },
+  )
 
   // Selected customer object
   const selectedCustomer = useMemo(() => {
@@ -125,7 +142,7 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
   }, [customers, selectedCustomerId])
 
   // ─── Complete Sale Execution ────────────────────────────────────
-  const handleCompleteSale = async () => {
+  const handleCompleteSale = useCallback(async () => {
     if (cart.length === 0) {
       showWarning("Cart is empty!")
       return
@@ -178,7 +195,54 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
     } finally {
       setIsSubmitting(false)
     }
-  }
+  }, [
+    cart,
+    paymentMethod,
+    selectedCustomerId,
+    saleMode,
+    computedDiscount,
+    roundOff,
+    cashPaid,
+    digitalPaid,
+    digitalMedium,
+    digitalTrxId,
+    isOwner,
+    clearCart,
+    showSuccess,
+    showWarning,
+    showError,
+  ])
+
+  // ─── Enter-driven checkout: review -> payment -> complete ────────
+  // Enter advances one step at a time so the counter can be run entirely
+  // from the keyboard: Enter proceeds to payment, Enter again completes the
+  // sale on the selected method (Cash by default, pre-filled to the exact
+  // amount), and Enter on the receipt dialog prints the cash memo.
+  const advanceCheckout = useCallback(() => {
+    if (cart.length === 0 || isSubmitting) return
+    if (isPaymentStep) {
+      handleCompleteSale()
+    } else {
+      setIsPaymentStep(true)
+    }
+  }, [cart.length, isSubmitting, isPaymentStep, handleCompleteSale])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // While the receipt dialog is up it owns Enter (print the cash memo).
+      if (completedSale) return
+      if (e.key !== "Enter" && e.key !== "F9") return
+      // Enter inside a text field belongs to that field (search, cash amount…).
+      if (e.key === "Enter" && isTypingTarget(e.target)) return
+      if (cart.length === 0 || isSubmitting) return
+
+      e.preventDefault()
+      advanceCheckout()
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [advanceCheckout, completedSale, cart.length, isSubmitting])
 
   return (
     <div className="flex flex-col gap-3 h-full min-h-[520px]">
@@ -195,6 +259,9 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
             saleMode={saleMode}
             onToggleSaleMode={toggleSaleMode}
             onRefresh={loadInitialData}
+            onEmptyEnter={advanceCheckout}
+            isFocusMode={isFocusMode}
+            onToggleFocusMode={onToggleFocusMode}
             isOwner={isOwner}
           />
         </div>
@@ -220,6 +287,9 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
             <SettlementPanel
               isOwner={isOwner}
               isSubmitting={isSubmitting}
+              isPaymentStep={isPaymentStep}
+              onProceedToPayment={() => setIsPaymentStep(true)}
+              onBackToSummary={() => setIsPaymentStep(false)}
               onSubmitSale={handleCompleteSale}
               customerDue={selectedCustomer?.currentDue || 0}
             />

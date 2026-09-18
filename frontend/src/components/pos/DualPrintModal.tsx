@@ -1,7 +1,8 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { PartyPopper, Printer, FileText, MessageCircle } from "lucide-react"
 import type { SaleResponse, Customer } from "../../types"
 import { formatTk } from "../../utils/currency"
+import { isTypingTarget } from "../../utils/keyboard"
 import { openWhatsAppPaymentReminder } from "../../utils/whatsapp"
 import Modal from "../ui/Modal"
 import Button from "../ui/Button"
@@ -22,6 +23,22 @@ export default function DualPrintModal({
   onClose,
 }: DualPrintModalProps) {
   const [activePrintView, setActivePrintView] = useState<"thermal" | "a4" | null>(null)
+  const [autoPrint, setAutoPrint] = useState(false)
+
+  // Third Enter of the checkout chain: print the cash memo straight away.
+  useEffect(() => {
+    if (!isOpen || activePrintView) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Enter" || isTypingTarget(e.target)) return
+      e.preventDefault()
+      setAutoPrint(true)
+      setActivePrintView("thermal")
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, activePrintView])
 
   if (!sale) return null
 
@@ -30,7 +47,11 @@ export default function DualPrintModal({
     return (
       <ThermalReceipt
         sale={sale}
-        onClose={() => setActivePrintView(null)}
+        autoPrint={autoPrint}
+        onClose={() => {
+          setActivePrintView(null)
+          setAutoPrint(false)
+        }}
       />
     )
   }
@@ -85,6 +106,9 @@ export default function DualPrintModal({
               leftIcon={<Printer className="w-4 h-4" />}
             >
               Thermal Receipt (80mm)
+              <span className="text-[11px] font-mono font-semibold bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded ml-1.5">
+                Enter
+              </span>
             </Button>
             <Button
               variant="primary"

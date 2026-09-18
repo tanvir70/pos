@@ -1,5 +1,12 @@
 import { useState, useMemo, useRef, useEffect } from "react"
-import { Search, Loader2, Wheat, RefreshCw } from "lucide-react"
+import {
+  Search,
+  Loader2,
+  Wheat,
+  RefreshCw,
+  Maximize2,
+  Minimize2,
+} from "lucide-react"
 import type { StockItem, SaleMode } from "../../types"
 import { formatTk } from "../../utils/currency"
 import Input from "../ui/Input"
@@ -11,6 +18,10 @@ export interface ProductCatalogGridProps {
   saleMode: SaleMode
   onToggleSaleMode: (mode: SaleMode) => void
   onRefresh?: () => void
+  /** Enter on an empty search box advances the checkout instead of doing nothing. */
+  onEmptyEnter?: () => void
+  isFocusMode?: boolean
+  onToggleFocusMode?: () => void
   isOwner?: boolean
 }
 
@@ -21,6 +32,9 @@ export default function ProductCatalogGrid({
   saleMode,
   onToggleSaleMode,
   onRefresh,
+  onEmptyEnter,
+  isFocusMode = false,
+  onToggleFocusMode,
   isOwner = false,
 }: ProductCatalogGridProps) {
   const [search, setSearch] = useState("")
@@ -94,7 +108,12 @@ export default function ProductCatalogGrid({
     if (e.key === "Enter") {
       e.preventDefault()
       const q = search.trim().toLowerCase()
-      if (!q) return
+      // Nothing typed: the cashier is driving checkout from the keyboard while
+      // focus sits in the (barcode-facing) search box, so advance the sale.
+      if (!q) {
+        onEmptyEnter?.()
+        return
+      }
 
       // Exact barcode / product code match takes immediate precedence
       const exactMatch = stocks.find(
@@ -169,6 +188,37 @@ export default function ProductCatalogGrid({
             </span>
             <span>Search</span>
           </div>
+          {onToggleFocusMode && (
+            <button
+              type="button"
+              onClick={onToggleFocusMode}
+              className={`shrink-0 flex items-center gap-1.5 px-2.5 py-2 rounded-xl border cursor-pointer shadow-xs transition-colors ${
+                isFocusMode
+                  ? "bg-slate-900 text-white border-slate-900 hover:bg-slate-800"
+                  : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+              }`}
+              title={
+                isFocusMode
+                  ? "Exit focus mode (F8) — show the menu and header again"
+                  : "Focus mode (F8) — hide the menu and header for a full-screen counter"
+              }
+            >
+              {isFocusMode ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+              <span
+                className={`hidden lg:inline text-xs font-mono font-bold px-1 rounded border ${
+                  isFocusMode
+                    ? "bg-white/15 border-white/25"
+                    : "text-emerald-800 bg-emerald-50 border-emerald-200"
+                }`}
+              >
+                F8
+              </span>
+            </button>
+          )}
           {onRefresh && (
             <button
               type="button"
