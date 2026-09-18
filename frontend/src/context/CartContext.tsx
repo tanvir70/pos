@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useCallback,
 } from "react"
@@ -224,8 +225,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return Math.max(0, roundAccounting(preRoundTotal - roundOff))
   }, [preRoundTotal, roundOff])
 
-  // Auto-sync cash/digital tender when payment method or total changes
-  useEffect(() => {
+  // Auto-sync cash/digital tender when payment method or total changes.
+  // Uses useLayoutEffect (not useEffect) so this correction happens before the
+  // browser paints: otherwise the settlement panel briefly renders with a stale
+  // cashPaidInput against the new finalTotalAmount, flashing the change/due
+  // badges in and out on every cart edit or discount keystroke.
+  useLayoutEffect(() => {
     if (paymentMethod === "CASH") {
       setCashPaidInput(finalTotalAmount > 0 ? String(finalTotalAmount) : "")
       setDigitalPaidInput("")
