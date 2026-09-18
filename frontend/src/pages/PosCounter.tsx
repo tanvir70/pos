@@ -170,7 +170,7 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
       const res = await createSale(saleRequest)
       setCompletedSale(res)
       clearCart()
-      showSuccess(`Sale completed successfully! Invoice #${res.invoiceNumber}`)
+      showSuccess(`Sale completed successfully! Invoice #${res.invoiceNo}`)
 
       // Refresh stock counts in background
       getStock().then(setStocks).catch(console.error)

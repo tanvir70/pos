@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import {
   Banknote,
   Smartphone,
@@ -8,6 +8,8 @@ import {
   Zap,
   AlertTriangle,
   CheckCircle2,
+  ArrowRight,
+  ChevronLeft,
   type LucideIcon,
 } from "lucide-react"
 import type { PaymentMethod } from "../../types"
@@ -71,17 +73,31 @@ export default function SettlementPanel({
     grossProfitMargin,
   } = useCart()
 
-  // Hotkey F9 to submit sale
+  // Two-step settlement: review the summary first, then reveal payment
+  // method selection + tender amount only once the cashier proceeds.
+  const [isPaymentStep, setIsPaymentStep] = useState(false)
+
+  // Drop back to the summary step whenever the cart empties out (e.g. after
+  // a completed sale), so the next customer starts from a clean screen.
+  useEffect(() => {
+    if (cart.length === 0) setIsPaymentStep(false)
+  }, [cart.length])
+
+  // Hotkey F9: advance to the payment step, or complete the sale if already there
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "F9" && cart.length > 0 && !isSubmitting) {
         e.preventDefault()
-        onSubmitSale()
+        if (isPaymentStep) {
+          onSubmitSale()
+        } else {
+          setIsPaymentStep(true)
+        }
       }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [cart.length, isSubmitting, onSubmitSale])
+  }, [cart.length, isSubmitting, isPaymentStep, onSubmitSale])
 
   // Quick cash addition
   const handleQuickCashAdd = (addAmount: number) => {
@@ -196,8 +212,41 @@ export default function SettlementPanel({
         </div>
       </div>
 
-      {/* Payment Method Selector */}
+      {/* Step 1: Summary only — proceed when ready to take payment */}
+      {!isPaymentStep && (
+        <div className="p-3.5">
+          <Button
+            type="button"
+            variant="primary"
+            size="lg"
+            fullWidth
+            disabled={isCartEmpty}
+            onClick={() => setIsPaymentStep(true)}
+            className="h-12 text-sm font-bold shadow-md cursor-pointer"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <span>Proceed to Payment</span>
+              <ArrowRight className="w-4 h-4" />
+              <span className="text-xs font-mono font-semibold bg-white/20 px-1.5 py-0.5 rounded ml-1">
+                F9
+              </span>
+            </div>
+          </Button>
+        </div>
+      )}
+
+      {/* Step 2: Payment Method Selector */}
+      {isPaymentStep && (
       <div className="p-3.5 space-y-3">
+        <button
+          type="button"
+          onClick={() => setIsPaymentStep(false)}
+          className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-900 cursor-pointer -mt-1 -ml-1 px-1 py-0.5"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+          Back to summary
+        </button>
+
         <div>
           <label className="block text-xs font-bold text-slate-900 mb-1.5">
             Payment Method:
@@ -382,6 +431,7 @@ export default function SettlementPanel({
           </div>
         </Button>
       </div>
+      )}
     </div>
   )
 }

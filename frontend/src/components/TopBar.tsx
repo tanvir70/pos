@@ -28,7 +28,7 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
   }
 
   return (
-    <header className="h-14 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between gap-3 px-3 sm:px-4 shadow-xs">
+    <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between gap-3 px-3 sm:px-4 shadow-xs">
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
@@ -44,12 +44,14 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
           )}
         </button>
 
+        {/* Brand — only needed on mobile when the sidebar is fully hidden off-screen;
+            on desktop the collapsed sidebar stays visible as an icon rail with its own brand mark. */}
         {!isSidebarOpen && (
-          <div className="flex items-center gap-2 min-w-0 shrink-0">
+          <div className="flex items-center gap-2 min-w-0 shrink-0 md:hidden">
             <div className="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0">
               <Sprout className="w-4 h-4" />
             </div>
-            <span className="font-bold text-slate-900 text-sm truncate hidden sm:inline">
+            <span className="font-bold text-slate-900 text-sm truncate">
               Al-Amin Traders
             </span>
           </div>

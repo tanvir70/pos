@@ -59,7 +59,7 @@ export default function DualPrintModal({
         customer?.name || "Valued Customer",
         sale.totalAmount,
         remainingDue,
-        sale.invoiceNumber,
+        sale.invoiceNo,
       )
     }
   }
@@ -106,7 +106,7 @@ export default function DualPrintModal({
               Invoice Number:
             </span>
             <span className="text-base font-black font-mono text-emerald-950">
-              #{sale.invoiceNumber}
+              #{sale.invoiceNo}
             </span>
           </div>
 
