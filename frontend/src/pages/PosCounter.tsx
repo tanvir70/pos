@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { RefreshCw } from "lucide-react"
 import type {
   StockItem,
   Customer,
@@ -183,66 +182,6 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
 
   return (
     <div className="flex flex-col gap-3 h-full min-h-[520px]">
-      {/* Top Counter Status Bar */}
-      <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-slate-900">
-              Counter Terminal Active
-            </span>
-          </div>
-
-          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-
-          {/* Sale Mode Toggle (Retail vs Wholesale) */}
-          <div className="flex items-center bg-slate-50 p-0.5 rounded-lg border border-slate-200">
-            <button
-              type="button"
-              onClick={() => toggleSaleMode("RETAIL")}
-              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                saleMode === "RETAIL"
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              Retail
-            </button>
-            <button
-              type="button"
-              onClick={() => toggleSaleMode("WHOLESALE")}
-              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                saleMode === "WHOLESALE"
-                  ? "bg-purple-700 text-white shadow-xs"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              Wholesale
-            </button>
-          </div>
-        </div>
-
-        {/* Counter Info & Refresh */}
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 text-xs text-slate-500">
-            <span>Stock items:</span>
-            <span className="font-bold font-mono text-slate-900">
-              {stocks.length}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={loadInitialData}
-            disabled={isLoading}
-            className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-50 cursor-pointer text-xs"
-            title="Refresh stock and data"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
       {/* Main Cockpit Split: Left 60% Catalog, Right 40% Cart & Settlement */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0 overflow-hidden">
         {/* Left 60% Panel: Catalog & Search */}
@@ -254,6 +193,8 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
               addToCart(stock, getLotsForProduct(stock.productId))
             }
             saleMode={saleMode}
+            onToggleSaleMode={toggleSaleMode}
+            onRefresh={loadInitialData}
             isOwner={isOwner}
           />
         </div>
@@ -271,7 +212,7 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
 
           {/* Active Cart Ticket */}
           <div className="flex-1 min-h-[220px] transition-[height] duration-200 ease-out">
-            <CartTicket isOwner={isOwner} stocks={stocks} />
+            <CartTicket isOwner={isOwner} />
           </div>
 
           {/* Settlement Panel */}
