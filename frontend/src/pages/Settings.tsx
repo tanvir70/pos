@@ -344,10 +344,7 @@ export default function SettingsPage({ isOwner: propIsOwner }: SettingsPageProps
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3 pt-1">
-            <span className="text-[11px] text-slate-500">
-              Default system PIN is <strong className="font-mono text-slate-700">1234</strong>
-            </span>
+          <div className="flex items-center justify-end gap-3 pt-1">
             <Button
               type="submit"
               variant="primary"

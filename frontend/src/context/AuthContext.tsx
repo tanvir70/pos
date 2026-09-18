@@ -237,7 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         showSuccess("Owner Mode unlocked successfully! Purchase cost and gross profit are now visible.")
         return true
       } catch (err) {
-        setPinError("Incorrect PIN! Enter the correct 4-digit Owner PIN (default: 1234)")
+        setPinError("Incorrect PIN! Enter the correct Owner PIN.")
         showError(err, "PIN Verification Failed")
         setPinInput("")
         pinInputRef.current?.focus()
