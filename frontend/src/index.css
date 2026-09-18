@@ -2,22 +2,15 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Slate & Green design tokens (Slate & Green design system) */
-  --color-frost-bg: #f8fafc;        /* slate-50 app background */
-  --color-frost-surface: #ffffff;   /* surfaces stay white */
-  --color-frost-hover: #f1f5f9;     /* slate-100 hover */
-  --color-frost-border: #e2e8f0;    /* slate-200 borders */
-  --color-frost-muted: #64748b;     /* slate-500 secondary text */
-  --color-frost-dark: #0f172a;      /* slate-900 foreground */
-
+  /* Slate & Green design tokens */
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 body {
   font-family: var(--font-body);
-  background-color: var(--color-frost-bg);
-  color: var(--color-frost-dark);
+  background-color: #f8fafc; /* slate-50 app background */
+  color: #0f172a; /* slate-900 foreground */
   -webkit-font-smoothing: antialiased;
 }
 

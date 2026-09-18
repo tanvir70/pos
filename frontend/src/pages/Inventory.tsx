@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { Fragment, useState, useEffect, useMemo, useCallback } from "react"
 import type {
   Product,
   StockItem,
@@ -32,6 +32,23 @@ import {
   TableEmptyState,
   TableLoadingState,
 } from "../components/ui/Table"
+import {
+  Package,
+  Search,
+  Plus,
+  X,
+  Sprout,
+  AlertTriangle,
+  CheckCircle2,
+  Wallet,
+  RefreshCw,
+  Biohazard,
+  Tag,
+  Flame,
+  ChevronUp,
+  ChevronDown,
+  Check,
+} from "lucide-react"
 
 export interface InventoryProps {
   isOwner?: boolean
@@ -76,8 +93,8 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
   const [newProdNameBn, setNewProdNameBn] = useState("")
   const [newProdNameEn, setNewProdNameEn] = useState("")
   const [newProdCode, setNewProdCode] = useState("")
-  const [newProdCategory, setNewProdCategory] = useState("কীটনাশক (Insecticide)")
-  const [newProdBaseUnit, setNewProdBaseUnit] = useState("বোতল (Bottle)")
+  const [newProdCategory, setNewProdCategory] = useState("Insecticide")
+  const [newProdBaseUnit, setNewProdBaseUnit] = useState("Bottle")
   const [newProdCartonMult, setNewProdCartonMult] = useState("20")
   const [newProdRetail, setNewProdRetail] = useState("")
   const [newProdWholesale, setNewProdWholesale] = useState("")
@@ -97,7 +114,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
       setProducts(productData)
       setQuarantineItems(quarantineData)
     } catch (err) {
-      showError(err, "ইনভেন্টরি তথ্য লোড ব্যর্থ")
+      showError(err, "Failed to load inventory data")
     } finally {
       setIsLoading(false)
     }
@@ -257,7 +274,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newProdNameBn.trim() || !newProdNameEn.trim()) {
-      showWarning("পণ্যের বাংলা ও ইংরেজি নাম আবশ্যক!")
+      showWarning("Product name is required in both English and Bengali!")
       return
     }
 
@@ -287,10 +304,10 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
       setNewProdCode("")
       setNewProdRetail("")
       setNewProdWholesale("")
-      showSuccess("নতুন পণ্য সফলভাবে ক্যাটালগে যুক্ত হয়েছে!")
+      showSuccess("New product added to catalog successfully!")
       await loadData()
     } catch (err) {
-      showError(err, "পণ্য তৈরি ব্যর্থ")
+      showError(err, "Failed to create product")
     } finally {
       setIsSavingProd(false)
     }
@@ -299,7 +316,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
   // ─── Quarantine Disposal Execution ──────────────────────────────
   const handleOpenDisposalModal = (item: QuarantineStockItem) => {
     if (!isOwner) {
-      showWarning("ড্যামেজ কেমিক্যাল বিনষ্টকরণের জন্য মালিক মোড আবশ্যক!")
+      showWarning("Owner Mode is required to dispose of damaged chemicals!")
       openPinModal()
       return
     }
@@ -313,11 +330,11 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
     if (!selectedQuarantineItem) return
     const qty = parseFloat(disposalQty)
     if (isNaN(qty) || qty <= 0) {
-      showWarning("সঠিক পরিমাণ লিখুন")
+      showWarning("Enter a valid quantity")
       return
     }
     if (qty > selectedQuarantineItem.quarantineQuantity) {
-      showWarning("কোয়ারেন্টাইনে থাকা পরিমাণের চেয়ে বেশি বিনষ্ট করা যাবে না!")
+      showWarning("Cannot dispose more than the quantity in quarantine!")
       return
     }
 
@@ -332,12 +349,12 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
       setIsDisposing(true)
       await disposeQuarantineStock(payload)
       showSuccess(
-        `লট #${selectedQuarantineItem.lotNumber} থেকে ${qty} ইউনিট ড্যামেজ কেমিক্যাল সফলভাবে বিনষ্ট/ডিসপোজ করা হয়েছে!`,
+        `${qty} unit(s) of damaged chemical from lot #${selectedQuarantineItem.lotNumber} disposed of successfully!`,
       )
       setSelectedQuarantineItem(null)
       await loadData()
     } catch (err) {
-      showError(err, "ডিসপোজাল ব্যর্থ")
+      showError(err, "Disposal failed")
     } finally {
       setIsDisposing(false)
     }
@@ -346,43 +363,45 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
   return (
     <div className="space-y-4">
       {/* Top Banner & Tab Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-frost-border shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <h1 className="text-xl font-bold text-frost-dark bn-text flex items-center gap-2">
-            <span>📦</span>
-            <span>ইনভেন্টরি ও দোকান স্টক ম্যানেজমেন্ট</span>
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <Package className="w-5 h-5 text-slate-700" />
+            <span>Inventory &amp; Dokan Stock Management</span>
           </h1>
-          <p className="text-xs text-frost-muted mt-0.5 bn-text">
-            দোকানের রিয়েল-টাইম স্টক, লট চালান এন্ট্রি, বারকোড স্টিকার এবং ড্যামেজ কেমিক্যাল কোয়ারেন্টাইন
+          <p className="text-xs text-slate-500 mt-0.5">
+            Real-time dokan stock, lot/challan entry, barcode stickers and damaged chemical
+            quarantine
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* View Tab Switcher */}
-          <div className="inline-flex bg-frost-surface p-0.5 rounded-xl border border-frost-border">
+          <div className="inline-flex bg-slate-50 p-0.5 rounded-xl border border-slate-200">
             <button
               type="button"
               onClick={() => setActiveTab("catalog")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer bn-text ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "catalog"
-                  ? "bg-white text-emerald-800 shadow-xs border border-frost-border/60"
-                  : "text-frost-muted hover:text-frost-dark"
+                  ? "bg-white text-emerald-800 shadow-xs border border-slate-200/60"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
-              দোকান স্টক ({stocks.length})
+              Dokan Stock ({stocks.length})
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("quarantine")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer bn-text flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === "quarantine"
-                  ? "bg-rose-700 text-white shadow-xs"
-                  : "text-rose-700 hover:bg-rose-50"
+                  ? "bg-red-600 text-white shadow-xs"
+                  : "text-red-600 hover:bg-red-50"
               }`}
             >
-              <span>☣️ কোয়ারেন্টাইন</span>
+              <Biohazard className="w-3.5 h-3.5" />
+              <span>Quarantine</span>
               {quarantineItems.length > 0 && (
-                <span className="bg-rose-900 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+                <span className="bg-red-800 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">
                   {quarantineItems.length}
                 </span>
               )}
@@ -395,18 +414,17 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowAddProduct((p) => !p)}
-                className="bn-text"
+                leftIcon={showAddProduct ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
               >
-                {showAddProduct ? "✕ ফর্ম বন্ধ" : "+ নতুন পণ্য"}
+                {showAddProduct ? "Close Form" : "New Product"}
               </Button>
               <Button
                 variant="primary"
                 size="sm"
                 onClick={() => setIsLotEntryOpen(true)}
-                leftIcon={<span>📥</span>}
-                className="bn-text"
+                leftIcon={<Package className="w-4 h-4" />}
               >
-                নতুন চালান এন্ট্রি
+                New Lot Entry
               </Button>
             </>
           )}
@@ -415,10 +433,10 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
             type="button"
             onClick={loadData}
             disabled={isLoading}
-            className="p-2 bg-frost-surface hover:bg-frost-hover text-frost-dark rounded-xl border border-frost-border cursor-pointer transition-colors text-xs"
-            title="রিফ্রেশ"
+            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl border border-slate-200 cursor-pointer transition-colors text-xs"
+            title="Refresh"
           >
-            <span className={isLoading ? "animate-spin inline-block" : ""}>🔄</span>
+            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
@@ -429,33 +447,33 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
           {/* KPI Stat Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard
-              title="নিবন্ধিত পণ্য (SKUs)"
-              value={`${products.length} টি`}
-              icon="🌾"
-              colorTheme="emerald"
+              title="Registered Products (SKUs)"
+              value={`${products.length}`}
+              icon={<Sprout className="w-5 h-5" />}
+              color="emerald"
             />
             <StatCard
-              title="মোট দোকান স্টক"
-              value={`${totalStockUnits.toLocaleString("en-IN")} ইউনিট`}
-              icon="📦"
-              colorTheme="blue"
+              title="Total Dokan Stock"
+              value={`${totalStockUnits.toLocaleString("en-US")} units`}
+              icon={<Package className="w-5 h-5" />}
+              color="blue"
             />
             <StatCard
-              title="কম স্টক সতর্কতা"
-              value={`${lowStockCount} টি`}
-              icon="⚠️"
-              colorTheme="amber"
+              title="Low Stock Alerts"
+              value={`${lowStockCount}`}
+              icon={<AlertTriangle className="w-5 h-5" />}
+              color="amber"
               trend={
                 lowStockCount > 0
-                  ? { value: `${lowStockCount} টি সতর্কবার্তা`, isPositive: false }
+                  ? { value: `${lowStockCount} alert(s)`, isPositive: false }
                   : undefined
               }
             />
             <StatCard
-              title="ইনভেন্টরি মূল্যায়ন (কেনা দাম)"
+              title="Inventory Valuation (Cost)"
               value={formatTk(totalValuation)}
-              icon="💰"
-              colorTheme="purple"
+              icon={<Wallet className="w-5 h-5" />}
+              color="purple"
               isMasked={!isOwner}
               onUnlockClick={openPinModal}
             />
@@ -464,90 +482,90 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
           {/* New Product Inline Card */}
           {showAddProduct && (
             <div className="bg-white p-5 rounded-2xl border-2 border-emerald-500 shadow-md animate-in slide-in-from-top-2 duration-200">
-              <div className="flex items-center justify-between pb-3 border-b border-frost-border/60 mb-4">
-                <h3 className="font-bold text-base text-frost-dark bn-text flex items-center gap-2">
-                  <span>➕</span>
-                  <span>নতুন পণ্য মাস্টার ক্যাটালগে যুক্ত করুন</span>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 mb-4">
+                <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  <span>Add New Product to Master Catalog</span>
                 </h3>
                 <button
                   type="button"
                   onClick={() => setShowAddProduct(false)}
-                  className="text-frost-muted hover:text-frost-dark text-sm p-1 cursor-pointer"
+                  className="text-slate-500 hover:text-slate-900 text-sm p-1 cursor-pointer"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleCreateProduct} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Input
-                    label="পণ্যের বাংলা নাম"
+                    label="Product Name (Bengali)"
                     required
                     value={newProdNameBn}
                     onChange={(e) => setNewProdNameBn(e.target.value)}
-                    placeholder="যেমন: ভিরতাকো ৪০ ডব্লিউজি"
+                    placeholder="e.g. ভিরতাকো ৪০ ডব্লিউজি"
                   />
                   <Input
-                    label="English Name"
+                    label="Product Name (English)"
                     required
                     value={newProdNameEn}
                     onChange={(e) => setNewProdNameEn(e.target.value)}
                     placeholder="e.g. Virtako 40WG"
                   />
                   <Input
-                    label="প্রোডাক্ট কোড (ঐচ্ছিক)"
+                    label="Product Code (optional)"
                     value={newProdCode}
                     onChange={(e) => setNewProdCode(e.target.value)}
-                    placeholder="যেমন: SYN-VIRT-100"
+                    placeholder="e.g. SYN-VIRT-100"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-frost-dark bn-text mb-1">
-                      ক্যাটাগরি
+                    <label className="block text-xs font-bold text-slate-900 mb-1">
+                      Category
                     </label>
                     <select
                       value={newProdCategory}
                       onChange={(e) => setNewProdCategory(e.target.value)}
-                      className="w-full text-xs py-2 px-3 bg-white border border-frost-border rounded-xl focus:border-emerald-600 focus:outline-hidden bn-text"
+                      className="w-full text-xs py-2 px-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-600 focus:outline-hidden"
                     >
-                      <option value="কীটনাশক (Insecticide)">কীটনাশক (Insecticide)</option>
-                      <option value="ছত্রাকনাশক (Fungicide)">ছত্রাকনাশক (Fungicide)</option>
-                      <option value="আগাছানাশক (Herbicide)">আগাছানাশক (Herbicide)</option>
-                      <option value="গ্রোথ প্রমোটার (Bio-stimulant)">গ্রোথ প্রমোটার</option>
-                      <option value="বীজ (Seed)">বীজ (Seed)</option>
+                      <option value="Insecticide">Insecticide</option>
+                      <option value="Fungicide">Fungicide</option>
+                      <option value="Herbicide">Herbicide</option>
+                      <option value="Bio-stimulant">Bio-stimulant (Growth Promoter)</option>
+                      <option value="Seed">Seed</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-frost-dark bn-text mb-1">
-                      প্যাকেজিং ইউনিট
+                    <label className="block text-xs font-bold text-slate-900 mb-1">
+                      Packaging Unit
                     </label>
                     <select
                       value={newProdBaseUnit}
                       onChange={(e) => setNewProdBaseUnit(e.target.value)}
-                      className="w-full text-xs py-2 px-3 bg-white border border-frost-border rounded-xl focus:border-emerald-600 focus:outline-hidden bn-text"
+                      className="w-full text-xs py-2 px-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-600 focus:outline-hidden"
                     >
-                      <option value="বোতল (Bottle)">বোতল (Bottle)</option>
-                      <option value="প্যাকেট (Packet)">প্যাকেট (Packet)</option>
-                      <option value="কেজি (Kg)">কেজি (Kg)</option>
-                      <option value="লিটার (Liter)">লিটার (Liter)</option>
-                      <option value="পিস (Piece)">পিস (Piece)</option>
+                      <option value="Bottle">Bottle</option>
+                      <option value="Packet">Packet</option>
+                      <option value="Kg">Kg</option>
+                      <option value="Liter">Liter</option>
+                      <option value="Piece">Piece</option>
                     </select>
                   </div>
 
                   <Input
-                    label="কার্টন গুণক (Carton Mult)"
+                    label="Carton Multiplier"
                     type="number"
                     value={newProdCartonMult}
                     onChange={(e) => setNewProdCartonMult(e.target.value)}
                     placeholder="20"
-                    helperText="১ কার্টনে কয়টি ইউনিট থাকে"
+                    helperText="Units per carton"
                   />
 
                   <Input
-                    label="কম স্টক সতর্কতা সীমা"
+                    label="Low Stock Alert Threshold"
                     type="number"
                     value={newProdMinStock}
                     onChange={(e) => setNewProdMinStock(e.target.value)}
@@ -557,14 +575,14 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
 
                 <div className="grid grid-cols-2 gap-3">
                   <Input
-                    label="স্ট্যান্ডার্ড খুচরা দর (৳)"
+                    label="Standard Retail Price (৳)"
                     type="number"
                     value={newProdRetail}
                     onChange={(e) => setNewProdRetail(e.target.value)}
                     placeholder="0.00"
                   />
                   <Input
-                    label="স্ট্যান্ডার্ড পাইকারি দর (৳)"
+                    label="Standard Wholesale Price (৳)"
                     type="number"
                     value={newProdWholesale}
                     onChange={(e) => setNewProdWholesale(e.target.value)}
@@ -579,7 +597,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                     size="md"
                     onClick={() => setShowAddProduct(false)}
                   >
-                    বাতিল
+                    Cancel
                   </Button>
                   <Button
                     type="submit"
@@ -587,7 +605,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                     size="md"
                     isLoading={isSavingProd}
                   >
-                    সংরক্ষণ করুন
+                    Save
                   </Button>
                 </div>
               </form>
@@ -595,14 +613,14 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
           )}
 
           {/* Search & Category Filter Bar */}
-          <div className="bg-white p-3.5 rounded-2xl border border-frost-border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex-1 max-w-md">
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onClear={() => setSearch("")}
-                placeholder="পণ্য, কোড বা লট নম্বর দিয়ে খুঁজুন..."
-                leftAdornment={<span className="text-frost-muted">🔍</span>}
+                placeholder="Search by product, code or lot number..."
+                leftAdornment={<Search className="w-4 h-4 text-slate-400" />}
                 inputSize="sm"
               />
             </div>
@@ -611,23 +629,23 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
               <button
                 type="button"
                 onClick={() => setSelectedCategory("ALL")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer bn-text ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer ${
                   selectedCategory === "ALL"
-                    ? "bg-frost-dark text-white"
-                    : "bg-frost-surface text-frost-dark hover:bg-frost-hover border border-frost-border"
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-50 text-slate-900 hover:bg-slate-100 border border-slate-200"
                 }`}
               >
-                সব ({products.length})
+                All ({products.length})
               </button>
               {categories.map((cat) => (
                 <button
                   type="button"
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap bn-text ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap ${
                     selectedCategory === cat
                       ? "bg-emerald-700 text-white"
-                      : "bg-frost-surface text-frost-dark hover:bg-frost-hover border border-frost-border"
+                      : "bg-slate-50 text-slate-900 hover:bg-slate-100 border border-slate-200"
                   }`}
                 >
                   {cat}
@@ -637,41 +655,42 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
               <button
                 type="button"
                 onClick={() => setOnlyLowStock((prev) => !prev)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer whitespace-nowrap bn-text border ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer whitespace-nowrap border flex items-center gap-1 ${
                   onlyLowStock
                     ? "bg-amber-100 text-amber-900 border-amber-300"
-                    : "bg-white text-frost-muted border-frost-border hover:bg-frost-surface"
+                    : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
                 }`}
               >
-                ⚠️ কম স্টক
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Low Stock</span>
               </button>
             </div>
           </div>
 
           {/* Dokan Stock Inventory Table */}
-          <div className="bg-white rounded-2xl border border-frost-border shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeaderCell>পণ্য বিবরণ ও কোড</TableHeaderCell>
-                  <TableHeaderCell>ক্যাটাগরি</TableHeaderCell>
-                  <TableHeaderCell>প্যাকেজিং / কার্টন</TableHeaderCell>
-                  <TableHeaderCell align="center">দোকান মজুদ (Dokan Stock)</TableHeaderCell>
-                  <TableHeaderCell align="right">খুচরা দর</TableHeaderCell>
-                  <TableHeaderCell align="right">পাইকারি দর</TableHeaderCell>
-                  {isOwner && <TableHeaderCell align="right">কেনা দাম</TableHeaderCell>}
-                  <TableHeaderCell align="right">অ্যাকশন</TableHeaderCell>
+                  <TableHeaderCell>Product &amp; Code</TableHeaderCell>
+                  <TableHeaderCell>Category</TableHeaderCell>
+                  <TableHeaderCell>Packaging / Carton</TableHeaderCell>
+                  <TableHeaderCell align="center">Dokan Stock</TableHeaderCell>
+                  <TableHeaderCell align="right">Retail Price</TableHeaderCell>
+                  <TableHeaderCell align="right">Wholesale Price</TableHeaderCell>
+                  {isOwner && <TableHeaderCell align="right">Purchase Cost</TableHeaderCell>}
+                  <TableHeaderCell align="right">Actions</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {isLoading ? (
-                  <TableLoadingState colSpan={isOwner ? 8 : 7} text="স্টক তালিকা লোড হচ্ছে..." />
+                  <TableLoadingState colSpan={isOwner ? 8 : 7} text="Loading stock list..." />
                 ) : filteredProducts.length === 0 ? (
                   <TableEmptyState
                     colSpan={isOwner ? 8 : 7}
-                    icon="📦"
-                    message="কোনো পণ্য পাওয়া যায়নি"
-                    submessage="ফিল্টার রিসেট করুন অথবা নতুন লট এন্ট্রি করুন"
+                    icon={<Package className="w-8 h-8" />}
+                    message="No products found"
+                    submessage="Reset the filters or add a new lot entry"
                   />
                 ) : (
                   filteredProducts.map((item) => {
@@ -679,16 +698,16 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                     const isLowStock = item.totalStock <= item.minStockAlert
 
                     return (
-                      <React.Fragment key={item.productId}>
+                      <Fragment key={item.productId}>
                         <TableRow className={isLowStock ? "bg-amber-50/30" : ""}>
                           {/* Product Info */}
                           <TableCell>
                             <div>
-                              <div className="font-bold text-frost-dark bn-text text-sm">
-                                {item.nameBn}
+                              <div className="font-bold text-slate-900 text-sm">
+                                {item.nameEn}
                               </div>
-                              <div className="text-[11px] text-frost-muted flex items-center gap-2">
-                                <span>{item.nameEn}</span>
+                              <div className="text-[11px] text-slate-500 flex items-center gap-2">
+                                <span>{item.nameBn}</span>
                                 <span className="font-mono text-emerald-800 font-semibold">
                                   #{item.productCode}
                                 </span>
@@ -698,18 +717,18 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
 
                           {/* Category */}
                           <TableCell>
-                            <span className="text-xs px-2 py-0.5 rounded-lg bg-frost-surface font-semibold text-frost-dark border border-frost-border bn-text">
+                            <span className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 font-semibold text-slate-900 border border-slate-200">
                               {item.category}
                             </span>
                           </TableCell>
 
                           {/* Packaging */}
                           <TableCell>
-                            <div className="text-xs font-medium text-frost-dark bn-text">
+                            <div className="text-xs font-medium text-slate-900">
                               {item.baseUnit}
                             </div>
-                            <div className="text-[10px] text-frost-muted font-mono">
-                              ১ কার্টন = {item.cartonMultiplier} {item.baseUnit}
+                            <div className="text-[10px] text-slate-500 font-mono">
+                              1 carton = {item.cartonMultiplier} {item.baseUnit}
                             </div>
                           </TableCell>
 
@@ -733,9 +752,19 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                                 <button
                                   type="button"
                                   onClick={() => toggleExpand(item.productId)}
-                                  className="text-[10px] font-bold text-emerald-800 hover:underline mt-1 cursor-pointer bn-text"
+                                  className="text-[10px] font-bold text-emerald-800 hover:underline mt-1 cursor-pointer inline-flex items-center gap-0.5"
                                 >
-                                  {isExpanded ? "▲ লট লুকান" : `▼ ${item.lots.length} টি লট দেখুন`}
+                                  {isExpanded ? (
+                                    <>
+                                      <ChevronUp className="w-3 h-3" />
+                                      <span>Hide Lots</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronDown className="w-3 h-3" />
+                                      <span>{item.lots.length} Lot(s)</span>
+                                    </>
+                                  )}
                                 </button>
                               )}
                             </div>
@@ -771,10 +800,11 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                                     setStickerItem(item.lots[0])
                                     setIsStickerOpen(true)
                                   }}
-                                  title="বারকোড লেবেল স্টিকার প্রিন্ট করুন"
+                                  title="Print barcode label sticker"
+                                  leftIcon={<Tag className="w-3.5 h-3.5" />}
                                   className="text-xs px-2 py-1"
                                 >
-                                  🏷️ স্টিকার
+                                  Sticker
                                 </Button>
                               )}
                             </div>
@@ -786,34 +816,34 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                           <TableRow className="bg-emerald-50/20">
                             <td colSpan={isOwner ? 8 : 7} className="p-3">
                               <div className="bg-white rounded-xl border border-emerald-200 p-3 shadow-xs space-y-2">
-                                <div className="text-xs font-bold text-emerald-900 bn-text flex items-center justify-between">
-                                  <span>লট ও ব্যাচ ট্র্যাকিং তালিকা (FEFO):</span>
-                                  <span className="font-normal text-frost-muted">
-                                    মোট লট: {item.lots.length} টি
+                                <div className="text-xs font-bold text-emerald-900 flex items-center justify-between">
+                                  <span>Lot &amp; Batch Tracking (FEFO):</span>
+                                  <span className="font-normal text-slate-500">
+                                    Total Lots: {item.lots.length}
                                   </span>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                                   {item.lots.map((lot) => (
                                     <div
                                       key={lot.lotId}
-                                      className="p-2.5 bg-frost-surface/40 border border-frost-border rounded-lg text-xs space-y-1"
+                                      className="p-2.5 bg-slate-50/40 border border-slate-200 rounded-lg text-xs space-y-1"
                                     >
                                       <div className="flex items-center justify-between">
-                                        <span className="font-mono font-bold text-frost-dark">
+                                        <span className="font-mono font-bold text-slate-900">
                                           #{lot.lotNumber}
                                         </span>
                                         <Badge variant="neutral" size="sm">
                                           {lot.quantity} {item.baseUnit}
                                         </Badge>
                                       </div>
-                                      <div className="text-[11px] text-frost-muted flex justify-between">
-                                        <span>মেয়াদ:</span>
-                                        <span className="font-mono font-bold text-frost-dark">
+                                      <div className="text-[11px] text-slate-500 flex justify-between">
+                                        <span>Expiry:</span>
+                                        <span className="font-mono font-bold text-slate-900">
                                           {lot.expiryDate}
                                         </span>
                                       </div>
                                       {lot.barcode && (
-                                        <div className="text-[10px] text-frost-muted font-mono truncate">
+                                        <div className="text-[10px] text-slate-500 font-mono truncate">
                                           BC: {lot.barcode}
                                         </div>
                                       )}
@@ -824,9 +854,10 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                                             setStickerItem(lot)
                                             setIsStickerOpen(true)
                                           }}
-                                          className="text-[10px] font-bold text-emerald-800 hover:underline cursor-pointer bn-text"
+                                          className="text-[10px] font-bold text-emerald-800 hover:underline cursor-pointer inline-flex items-center gap-0.5"
                                         >
-                                          🏷️ এই লটের স্টিকার
+                                          <Tag className="w-3 h-3" />
+                                          <span>Sticker for this lot</span>
                                         </button>
                                       </div>
                                     </div>
@@ -836,7 +867,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                             </td>
                           </TableRow>
                         )}
-                      </React.Fragment>
+                      </Fragment>
                     )
                   })
                 )}
@@ -850,73 +881,74 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
       {activeTab === "quarantine" && (
         <div className="space-y-4 animate-in fade-in duration-150">
           {/* Quarantine Overview Card */}
-          <div className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start gap-3">
-              <span className="text-3xl">☣️</span>
+              <Biohazard className="w-8 h-8 text-red-700 shrink-0" />
               <div>
-                <h3 className="font-bold text-base text-rose-950 bn-text">
-                  ড্যামেজ ও কোয়ারেন্টাইন কেমিক্যাল আইসোলেশন
+                <h3 className="font-bold text-base text-red-950">
+                  Damaged &amp; Quarantined Chemical Isolation
                 </h3>
-                <p className="text-xs text-rose-800 bn-text mt-0.5">
-                  মেয়াদোত্তীর্ণ বা ক্ষতিগ্রস্ত রাসায়নিক দ্রব্যাদি আলাদাভাবে সংরক্ষিত থাকে, যা বিক্রির মূল স্টক থেকে পৃথক।
+                <p className="text-xs text-red-800 mt-0.5">
+                  Expired or damaged chemical goods are stored separately, isolated from
+                  sellable stock.
                 </p>
               </div>
             </div>
 
-            <div className="text-right shrink-0 bg-white/80 p-3 rounded-xl border border-rose-200">
-              <span className="text-xs text-rose-800 font-semibold bn-text block">
-                মোট সম্ভাব্য আর্থিক ক্ষতি:
+            <div className="text-right shrink-0 bg-white/80 p-3 rounded-xl border border-red-200">
+              <span className="text-xs text-red-800 font-semibold block">
+                Total Potential Financial Loss:
               </span>
-              <span className="text-xl font-black font-mono text-rose-700">
+              <span className="text-xl font-black font-mono text-red-700 tabular-nums">
                 {formatTk(totalQuarantineLoss)}
               </span>
             </div>
           </div>
 
           {/* Quarantine Items Table */}
-          <div className="bg-white rounded-2xl border border-frost-border shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableHeaderCell>ক্ষতিগ্রস্ত পণ্য ও লট নম্বর</TableHeaderCell>
-                  <TableHeaderCell>মেয়াদ শেষ তারিখ</TableHeaderCell>
-                  <TableHeaderCell>সরবরাহকারী (Supplier)</TableHeaderCell>
-                  <TableHeaderCell align="center">ড্যামেজ পরিমাণ</TableHeaderCell>
-                  <TableHeaderCell align="right">কেনা দাম</TableHeaderCell>
-                  <TableHeaderCell align="right">মোট ক্ষতি (Loss Value)</TableHeaderCell>
-                  <TableHeaderCell align="right">ব্যবস্থা গ্রহণ</TableHeaderCell>
+                  <TableHeaderCell>Damaged Product &amp; Lot No</TableHeaderCell>
+                  <TableHeaderCell>Expiry Date</TableHeaderCell>
+                  <TableHeaderCell>Supplier</TableHeaderCell>
+                  <TableHeaderCell align="center">Damaged Quantity</TableHeaderCell>
+                  <TableHeaderCell align="right">Purchase Cost</TableHeaderCell>
+                  <TableHeaderCell align="right">Total Loss Value</TableHeaderCell>
+                  <TableHeaderCell align="right">Action</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {isLoading ? (
-                  <TableLoadingState colSpan={7} text="কোয়ারেন্টাইন স্টক লোড হচ্ছে..." />
+                  <TableLoadingState colSpan={7} text="Loading quarantine stock..." />
                 ) : quarantineItems.length === 0 ? (
                   <TableEmptyState
                     colSpan={7}
-                    icon="✅"
-                    message="কোয়ারেন্টাইনে কোনো ক্ষতিগ্রস্ত পণ্য নেই"
-                    submessage="দোকানের সমস্ত স্টক স্বাস্থ্যকর ও বিক্রয়যোগ্য অবস্থায় রয়েছে।"
+                    icon={<CheckCircle2 className="w-8 h-8" />}
+                    message="No damaged products in quarantine"
+                    submessage="All dokan stock is healthy and sellable."
                   />
                 ) : (
                   quarantineItems.map((item) => (
                     <TableRow key={item.lotId}>
                       <TableCell>
-                        <div className="font-bold text-frost-dark bn-text text-sm">
-                          {item.productNameBn}
+                        <div className="font-bold text-slate-900 text-sm">
+                          {item.productNameEn}
                         </div>
-                        <div className="text-[11px] text-frost-muted flex items-center gap-2">
-                          <span>{item.productNameEn}</span>
-                          <span className="font-mono text-rose-700 font-bold">
-                            লট #{item.lotNumber}
+                        <div className="text-[11px] text-slate-500 flex items-center gap-2">
+                          <span>{item.productNameBn}</span>
+                          <span className="font-mono text-red-700 font-bold">
+                            Lot #{item.lotNumber}
                           </span>
                         </div>
                       </TableCell>
 
-                      <TableCell isMonospace className="text-rose-700 font-semibold">
+                      <TableCell isMonospace className="text-red-700 font-semibold">
                         {item.expiryDate}
                       </TableCell>
 
-                      <TableCell className="bn-text text-xs text-frost-muted">
+                      <TableCell className="text-xs text-slate-500">
                         {item.supplierName || "Agro Supplier"}
                       </TableCell>
 
@@ -930,7 +962,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                         {formatTk(item.purchaseCost)}
                       </TableCell>
 
-                      <TableCell align="right" isMonospace className="text-rose-700 font-black">
+                      <TableCell align="right" isMonospace className="text-red-700 font-black">
                         {formatTk(item.totalLossValue || item.quarantineQuantity * item.purchaseCost)}
                       </TableCell>
 
@@ -939,9 +971,10 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                           variant="danger"
                           size="sm"
                           onClick={() => handleOpenDisposalModal(item)}
-                          className="bn-text text-xs"
+                          leftIcon={<Flame className="w-3.5 h-3.5" />}
+                          className="text-xs"
                         >
-                          🔥 বিনষ্টকরণ (Dispose)
+                          Dispose
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -959,7 +992,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
         isOpen={isLotEntryOpen}
         onClose={() => setIsLotEntryOpen(false)}
         onSuccess={() => {
-          showSuccess("নতুন চালান ও লট সফলভাবে যুক্ত হয়েছে!")
+          showSuccess("New challan and lot added successfully!")
           loadData()
         }}
       />
@@ -981,18 +1014,19 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
         <Modal
           isOpen={!!selectedQuarantineItem}
           onClose={() => setSelectedQuarantineItem(null)}
-          title="ড্যামেজ কেমিক্যাল বিনষ্টকরণ অনুমোদন (Disposal)"
-          subtitle="মালিকের অনুমোদনক্রমে নষ্ট কেমিক্যাল স্টক থেকে স্থায়ীভাবে রাইট-অফ করুন"
-          icon="🔥"
+          title="Approve Damaged Chemical Disposal"
+          subtitle="Permanently write off damaged stock from quarantine with owner approval"
+          icon={<Flame className="w-5 h-5 text-red-600" />}
           size="md"
         >
           <div className="space-y-4">
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl space-y-1">
-              <div className="text-xs font-bold text-rose-950 bn-text">
-                পণ্য: {selectedQuarantineItem.productNameBn} (লট #{selectedQuarantineItem.lotNumber})
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl space-y-1">
+              <div className="text-xs font-bold text-red-950">
+                Product: {selectedQuarantineItem.productNameEn} (Lot #
+                {selectedQuarantineItem.lotNumber})
               </div>
-              <div className="text-xs text-rose-800 flex justify-between">
-                <span>বর্তমান কোয়ারেন্টাইন মজুদ:</span>
+              <div className="text-xs text-red-800 flex justify-between">
+                <span>Current Quarantine Stock:</span>
                 <span className="font-mono font-bold">
                   {selectedQuarantineItem.quarantineQuantity} {selectedQuarantineItem.baseUnit}
                 </span>
@@ -1001,61 +1035,62 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
 
             <div className="space-y-3">
               <Input
-                label={`বিনষ্টকরণের পরিমাণ (${selectedQuarantineItem.baseUnit})`}
+                label={`Disposal Quantity (${selectedQuarantineItem.baseUnit})`}
                 type="number"
                 step="any"
                 max={selectedQuarantineItem.quarantineQuantity}
                 value={disposalQty}
                 onChange={(e) => setDisposalQty(e.target.value)}
-                placeholder="পরিমাণ"
+                placeholder="Quantity"
                 required
               />
 
               <div>
-                <label className="block text-xs font-bold text-frost-dark bn-text mb-1">
-                  বিনষ্টকরণের ধরন / কারণ:
+                <label className="block text-xs font-bold text-slate-900 mb-1">
+                  Disposal Type / Reason:
                 </label>
                 <select
                   value={disposalType}
                   onChange={(e) => setDisposalType(e.target.value)}
-                  className="w-full text-xs py-2 px-3 bg-white border border-frost-border rounded-xl focus:border-rose-600 focus:outline-hidden bn-text"
+                  className="w-full text-xs py-2 px-3 bg-white border border-slate-200 rounded-xl focus:border-red-600 focus:outline-hidden"
                 >
-                  <option value="WRITE_OFF">স্থায়ী ক্ষতি রাইট-অফ (Damaged Write-Off)</option>
-                  <option value="SUPPLIER_CLAIM">কোম্পানিকে ফেরত / ক্লেইম (Supplier Return Claim)</option>
-                  <option value="DESTROYED">পরিবেশসম্মত বিনষ্টকরণ (Disposed / Destroyed)</option>
+                  <option value="WRITE_OFF">Permanent Write-Off (Damaged)</option>
+                  <option value="SUPPLIER_CLAIM">Return to Supplier / Claim</option>
+                  <option value="DESTROYED">Disposed / Destroyed</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-frost-dark bn-text mb-1">
-                  মন্তব্য / বিবরণ (ঐচ্ছিক):
+                <label className="block text-xs font-bold text-slate-900 mb-1">
+                  Remarks (optional):
                 </label>
                 <textarea
                   value={disposalRemarks}
                   onChange={(e) => setDisposalRemarks(e.target.value)}
                   rows={2}
-                  placeholder="যেমন: মেয়াদোত্তীর্ণ হওয়ায় বা বোতল লিক করায় বিনষ্ট করা হলো..."
-                  className="w-full text-xs py-2 px-3 bg-white border border-frost-border rounded-xl focus:border-rose-600 focus:outline-hidden bn-text"
+                  placeholder="e.g. Disposed of due to expiry or bottle leakage..."
+                  className="w-full text-xs py-2 px-3 bg-white border border-slate-200 rounded-xl focus:border-red-600 focus:outline-hidden"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-frost-border/60">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200/60">
               <Button
                 variant="ghost"
                 size="md"
                 onClick={() => setSelectedQuarantineItem(null)}
                 disabled={isDisposing}
               >
-                বাতিল
+                Cancel
               </Button>
               <Button
                 variant="danger"
                 size="md"
                 onClick={handleExecuteDisposal}
                 isLoading={isDisposing}
+                leftIcon={<Check className="w-4 h-4" />}
               >
-                নিশ্চিত বিনষ্ট করুন
+                Confirm Disposal
               </Button>
             </div>
           </div>

@@ -1,4 +1,17 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
+import {
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
+  X,
+  ClipboardEdit,
+  Receipt,
+  Banknote,
+  ScrollText,
+  User,
+  Printer,
+  Loader2,
+} from "lucide-react"
 import type {
   StockItem,
   Customer,
@@ -17,7 +30,7 @@ import {
 
 // BUSINESS DECISION: Direct chemical returns support receipt-less processing without an original invoice number
 // because rural farmers frequently misplace paper receipts over 15-30 day spraying seasons.
-// BUSINESS DECISION: When 'isDamaged' (নষ্ট / ক্ষতিগ্রস্ত) is selected, goods are flagged for quarantine and
+// BUSINESS DECISION: When 'isDamaged' is selected, goods are flagged for quarantine and
 // excluded from sellable counter stock to prevent accidental dispensing of compromised chemicals.
 // BUSINESS DECISION: Due adjustment refunds strictly require customer profile association to guarantee correct
 // credit reduction in the customer ledger.
@@ -77,7 +90,7 @@ export default function Returns({ isOwner }: ReturnsProps) {
       setCustomers(customerData)
       setRecentReturns(returnsData)
     } catch (err: any) {
-      setErrorMessage(err?.message || "ডেটা লোড করতে ব্যর্থ হয়েছে।")
+      setErrorMessage(err?.message || "Failed to load data.")
     } finally {
       setIsLoading(false)
     }
@@ -131,7 +144,7 @@ export default function Returns({ isOwner }: ReturnsProps) {
   const handleSearchInvoice = async () => {
     const trimmed = invoiceInput.trim()
     if (!trimmed) {
-      setInvoiceSearchError("অনুগ্রহ করে মেমো / ইনভয়েস নম্বর লিখুন।")
+      setInvoiceSearchError("Please enter a memo / invoice number.")
       return
     }
 
@@ -155,7 +168,7 @@ export default function Returns({ isOwner }: ReturnsProps) {
       }
     } catch (err: any) {
       setFoundSale(null)
-      setInvoiceSearchError("এই ইনভয়েস নম্বরটি পাওয়া যায়নি। আপনি বিনা রশিদে সরাসরি রিটার্ন করতে পারেন।")
+      setInvoiceSearchError("This invoice number was not found. You can still process a direct return without a receipt.")
     } finally {
       setIsSearchingInvoice(false)
     }
@@ -178,24 +191,24 @@ export default function Returns({ isOwner }: ReturnsProps) {
     e.preventDefault()
 
     if (!selectedLotId) {
-      setFormError("অনুগ্রহ করে যে পণ্যটি ফেরত নেওয়া হচ্ছে তা নির্বাচন করুন।")
+      setFormError("Please select the product being returned.")
       return
     }
 
     const qtyNum = parseFloat(quantity)
     if (isNaN(qtyNum) || qtyNum <= 0) {
-      setFormError("সঠিক ফেরত পরিমাণ লিখুন।")
+      setFormError("Enter a valid return quantity.")
       return
     }
 
     const priceNum = parseFloat(refundPrice)
     if (isNaN(priceNum) || priceNum < 0) {
-      setFormError("সঠিক ফেরত মূল্য নির্ধারণ করুন।")
+      setFormError("Enter a valid refund price.")
       return
     }
 
     if (refundType === "DUE_ADJUSTMENT" && !selectedCustomerId) {
-      setFormError("বাকি সমন্বয় করতে অবশ্যই একজন গ্রাহক নির্বাচন করতে হবে।")
+      setFormError("A customer must be selected to process a due adjustment.")
       return
     }
 
@@ -207,7 +220,7 @@ export default function Returns({ isOwner }: ReturnsProps) {
         originalSaleId: foundSale?.id ?? null,
         customerId: selectedCustomerId,
         refundType,
-        reason: reason.trim() || (isDamaged ? "নষ্ট / ক্ষতিগ্রস্ত কেমিক্যাল" : "গ্রাহক ফেরত"),
+        reason: reason.trim() || (isDamaged ? "Damaged chemical" : "Customer return"),
         items: [
           {
             lotId: selectedLotId,
@@ -220,7 +233,7 @@ export default function Returns({ isOwner }: ReturnsProps) {
 
       const res = await createReturn(payload)
       setCompletedReturn(res)
-      setSuccessMessage(`ফেরত ভাউচার নং ${res.returnNo} সফলভাবে তৈরি হয়েছে!`)
+      setSuccessMessage(`Return voucher #${res.returnNo} was created successfully!`)
 
       // Reset form
       setSelectedLotId(null)
@@ -234,7 +247,7 @@ export default function Returns({ isOwner }: ReturnsProps) {
       // Refresh list & stock
       await loadData()
     } catch (err: any) {
-      setFormError(err?.message || "পণ্য ফেরত প্রক্রিয়ায় ত্রুটি হয়েছে।")
+      setFormError(err?.message || "An error occurred while processing the return.")
     } finally {
       setIsSubmitting(false)
     }
@@ -257,75 +270,79 @@ export default function Returns({ isOwner }: ReturnsProps) {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-frost-dark bn-text flex items-center gap-2">
-            <span>🔄</span>
-            <span>পণ্য ফেরত কাউন্টার (Sales Return Counter)</span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <RefreshCw className="w-5 h-5" />
+            <span>Sales Return Counter</span>
           </h1>
-          <p className="text-xs sm:text-sm text-frost-muted bn-text mt-0.5">
-            বিনা রশিদে বা মেমো নম্বরে রাসায়নিক ফেরত গ্রহণ, ক্ষতিগ্রস্ত বোতল কোয়ারেন্টাইন ও বাকি সমন্বয়
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Accept chemical returns with or without a receipt, quarantine damaged bottles, and adjust customer dues
           </p>
         </div>
       </div>
 
       {/* Feedback Alerts */}
       {successMessage && (
-        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-800 text-xs sm:text-sm font-semibold bn-text flex items-center justify-between shadow-xs">
+        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-800 text-xs sm:text-sm font-semibold flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
-            <span>✅</span>
+            <CheckCircle2 className="w-4 h-4" />
             <span>{successMessage}</span>
           </div>
-          <button onClick={() => setSuccessMessage(null)} className="cursor-pointer text-emerald-600 hover:text-emerald-900">✕</button>
+          <button onClick={() => setSuccessMessage(null)} className="cursor-pointer text-emerald-600 hover:text-emerald-900">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs sm:text-sm font-semibold bn-text flex items-center justify-between shadow-xs">
+        <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs sm:text-sm font-semibold flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
-            <span>⚠️</span>
+            <AlertTriangle className="w-4 h-4" />
             <span>{errorMessage}</span>
           </div>
-          <button onClick={() => setErrorMessage(null)} className="cursor-pointer text-red-600 hover:text-red-900">✕</button>
+          <button onClick={() => setErrorMessage(null)} className="cursor-pointer text-red-600 hover:text-red-900">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {/* Main Grid: Left Return Form, Right Recent Returns */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Return Form (7 cols) */}
-        <div className="lg:col-span-7 bg-white border border-frost-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-frost-border">
+        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
             <div className="flex items-center gap-2">
-              <span className="text-lg">📝</span>
-              <h2 className="font-bold text-frost-dark bn-text text-base sm:text-lg">
-                নতুন পণ্য ফেরত ফরম (Direct Return)
+              <ClipboardEdit className="w-5 h-5 text-slate-500" />
+              <h2 className="font-bold text-slate-900 text-base sm:text-lg">
+                New Return Form (Direct Return)
               </h2>
             </div>
-            <span className="text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full bn-text">
-              বিনা রশিদে গ্রহণযোগ্য
+            <span className="text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">
+              Receipt not required
             </span>
           </div>
 
           {formError && (
-            <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs font-semibold bn-text flex items-center gap-2">
-              <span>⚠️</span>
+            <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
               <span>{formError}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmitReturn} className="space-y-4">
             {/* 1. Optional Invoice Search Box */}
-            <div className="bg-frost-surface/40 p-3 rounded-xl border border-frost-border">
+            <div className="bg-slate-50/40 p-3 rounded-xl border border-slate-200">
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-frost-dark bn-text flex items-center gap-1.5">
-                  <span>🧾</span>
-                  <span>মূল বিক্রয় মেমো / ইনভয়েস নং (ঐচ্ছিক)</span>
+                <label className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+                  <Receipt className="w-4 h-4" />
+                  <span>Original sale memo / invoice no. (optional)</span>
                 </label>
                 {foundSale && (
                   <button
                     type="button"
                     onClick={handleClearInvoice}
-                    className="text-[11px] text-red-600 hover:underline cursor-pointer bn-text"
+                    className="text-[11px] text-red-600 hover:underline cursor-pointer"
                   >
-                    রসিদ তথ্য মুছুন
+                    Clear receipt info
                   </button>
                 )}
               </div>
@@ -337,34 +354,34 @@ export default function Returns({ isOwner }: ReturnsProps) {
                     setInvoiceInput(e.target.value)
                     setInvoiceSearchError(null)
                   }}
-                  placeholder="যেমন: INV-20260917-1042 (রসিদ না থাকলেও ফেরত নেওয়া যাবে)"
-                  className="flex-1 px-3 py-1.5 border border-frost-border rounded-lg text-xs sm:text-sm bg-white font-mono"
+                  placeholder="e.g. INV-20260917-1042 (returns are still accepted without a receipt)"
+                  className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs sm:text-sm bg-white font-mono"
                 />
                 <button
                   type="button"
                   onClick={handleSearchInvoice}
                   disabled={isSearchingInvoice || !invoiceInput.trim()}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-frost-surface hover:bg-frost-hover border border-frost-border text-frost-dark transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bn-text whitespace-nowrap"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-900 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
                 >
-                  {isSearchingInvoice ? "খোঁজা হচ্ছে..." : "রসিদ খুঁজুন"}
+                  {isSearchingInvoice ? "Searching..." : "Find Receipt"}
                 </button>
               </div>
 
               {invoiceSearchError && (
-                <p className="text-xs text-amber-700 font-medium bn-text mt-1.5">
+                <p className="text-xs text-amber-700 font-medium mt-1.5">
                   {invoiceSearchError}
                 </p>
               )}
 
               {foundSale && (
-                <div className="mt-2.5 pt-2 border-t border-frost-border/60 text-xs bg-emerald-50/50 p-2 rounded-lg text-emerald-900 bn-text">
+                <div className="mt-2.5 pt-2 border-t border-slate-200/60 text-xs bg-emerald-50/50 p-2 rounded-lg text-emerald-900">
                   <div className="flex justify-between font-bold">
-                    <span>মেমো নং: {foundSale.invoiceNo}</span>
-                    <span>মোট বিল: {tk(foundSale.totalAmount)}</span>
+                    <span>Memo No: {foundSale.invoiceNo}</span>
+                    <span>Total Bill: {tk(foundSale.totalAmount)}</span>
                   </div>
                   <p className="text-[11px] text-emerald-800 mt-0.5">
-                    তারিখ: {new Date(foundSale.saleDate).toLocaleDateString("bn-BD")} | গ্রাহক:{" "}
-                    {foundSale.customerName || "খুচরা ক্রেতা"}
+                    Date: {new Date(foundSale.saleDate).toLocaleDateString("en-US")} | Customer:{" "}
+                    {foundSale.customerName || "Walk-in customer"}
                   </p>
                 </div>
               )}
@@ -373,16 +390,16 @@ export default function Returns({ isOwner }: ReturnsProps) {
             {/* 2. Customer Selection */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-semibold text-frost-dark bn-text">
-                  গ্রাহক নির্বাচন {refundType === "DUE_ADJUSTMENT" ? "*" : "(নগদ ফেরতের জন্য ঐচ্ছিক)"}
+                <label className="text-xs font-semibold text-slate-900">
+                  Select Customer {refundType === "DUE_ADJUSTMENT" ? "*" : "(optional for cash refund)"}
                 </label>
                 {selectedCustomerId && (
                   <button
                     type="button"
                     onClick={() => setSelectedCustomerId(null)}
-                    className="text-[11px] text-frost-muted hover:text-red-600 cursor-pointer bn-text"
+                    className="text-[11px] text-slate-500 hover:text-red-600 cursor-pointer"
                   >
-                    বাদ দিন
+                    Remove
                   </button>
                 )}
               </div>
@@ -391,26 +408,27 @@ export default function Returns({ isOwner }: ReturnsProps) {
                 onChange={(e) =>
                   setSelectedCustomerId(e.target.value ? Number(e.target.value) : null)
                 }
-                className="w-full px-3 py-2 border border-frost-border rounded-lg text-xs sm:text-sm bn-text bg-white"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm bg-white"
               >
-                <option value="">-- সাধারণ গ্রাহক / ওয়াক-ইন ক্রেতা (নগদ ফেরত) --</option>
+                <option value="">-- Walk-in / general customer (cash refund) --</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} {c.businessName ? `(${c.businessName})` : ""} - বাকি: {tk(c.currentDue)}
+                    {c.name} {c.businessName ? `(${c.businessName})` : ""} - Due: {tk(c.currentDue)}
                   </option>
                 ))}
               </select>
               {refundType === "DUE_ADJUSTMENT" && !selectedCustomerId && (
-                <p className="text-[11px] text-red-600 font-medium bn-text mt-1">
-                  ⚠️ বাকি সমন্বয় করতে গ্রাহক নির্বাচন করা বাধ্যতামূলক।
+                <p className="text-[11px] text-red-600 font-medium mt-1 flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Selecting a customer is required for a due adjustment.</span>
                 </p>
               )}
             </div>
 
             {/* 3. Product & Lot Selection */}
             <div>
-              <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                ফেরতযোগ্য কীটনাশক বা পণ্য ও লট নির্বাচন *
+              <label className="block text-xs font-semibold text-slate-900 mb-1">
+                Select returnable pesticide or product and lot *
               </label>
 
               {/* Quick search input */}
@@ -418,11 +436,11 @@ export default function Returns({ isOwner }: ReturnsProps) {
                 type="text"
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                placeholder="পণ্যের নাম, কোড বা লট নম্বর দিয়ে ফিল্টার করুন..."
-                className="w-full px-3 py-1.5 mb-2 border border-frost-border rounded-lg text-xs bg-frost-surface/30 bn-text"
+                placeholder="Filter by product name, code, or lot number..."
+                className="w-full px-3 py-1.5 mb-2 border border-slate-200 rounded-lg text-xs bg-slate-50/30"
               />
 
-              <div className="border border-frost-border rounded-xl max-h-48 overflow-y-auto divide-y divide-frost-border/60">
+              <div className="border border-slate-200 rounded-xl max-h-48 overflow-y-auto divide-y divide-slate-200/60">
                 {filteredStockOptions.map((item) => {
                   const isSelected = selectedLotId === item.lotId
                   return (
@@ -433,29 +451,29 @@ export default function Returns({ isOwner }: ReturnsProps) {
                       className={`w-full text-left p-2.5 transition-colors flex items-center justify-between cursor-pointer ${
                         isSelected
                           ? "bg-emerald-50 border-l-4 border-emerald-600"
-                          : "hover:bg-frost-surface/60"
+                          : "hover:bg-slate-50/60"
                       }`}
                     >
                       <div>
-                        <div className="font-bold text-frost-dark bn-text text-xs sm:text-sm">
+                        <div className="font-bold text-slate-900 text-xs sm:text-sm">
                           {item.nameBn || item.productNameBn} ({item.nameEn || item.productNameEn})
                         </div>
-                        <div className="text-[11px] text-frost-muted mt-0.5 flex items-center gap-2">
-                          <span className="font-mono font-semibold text-frost-dark">
-                            লট: {item.lotNumber}
+                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
+                          <span className="font-mono font-semibold text-slate-900">
+                            Lot: {item.lotNumber}
                           </span>
                           <span>•</span>
-                          <span>মেয়াদ: {item.expiryDate}</span>
+                          <span>Expiry: {item.expiryDate}</span>
                           <span>•</span>
-                          <span>একক: {item.baseUnit}</span>
+                          <span>Unit: {item.baseUnit}</span>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="text-xs font-bold text-frost-dark tabular-nums">
+                        <div className="text-xs font-bold text-slate-900 tabular-nums">
                           {tk(item.lotRetailPrice)}
                         </div>
-                        <div className="text-[10px] text-frost-muted">
-                          মজুদ: {item.totalQuantity} {item.baseUnit}
+                        <div className="text-[10px] text-slate-500">
+                          Stock: {item.totalQuantity} {item.baseUnit}
                         </div>
                       </div>
                     </button>
@@ -464,12 +482,12 @@ export default function Returns({ isOwner }: ReturnsProps) {
               </div>
 
               {selectedStockItem && (
-                <div className="mt-2 p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-lg text-xs text-emerald-900 flex justify-between items-center bn-text">
+                <div className="mt-2 p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-lg text-xs text-emerald-900 flex justify-between items-center">
                   <div>
-                    <span className="font-bold">নির্বাচিত:</span> {selectedStockItem.nameBn} (লট: {selectedStockItem.lotNumber})
+                    <span className="font-bold">Selected:</span> {selectedStockItem.nameBn} (Lot: {selectedStockItem.lotNumber})
                   </div>
                   <span className="font-semibold text-[11px]">
-                    বর্তমান মজুদ: {selectedStockItem.quantity} {selectedStockItem.baseUnit}
+                    Current stock: {selectedStockItem.quantity} {selectedStockItem.baseUnit}
                   </span>
                 </div>
               )}
@@ -478,8 +496,8 @@ export default function Returns({ isOwner }: ReturnsProps) {
             {/* 4. Quantity & Refund Price */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                  ফেরত পরিমাণ ({selectedStockItem?.baseUnit || "একক"}) *
+                <label className="block text-xs font-semibold text-slate-900 mb-1">
+                  Return quantity ({selectedStockItem?.baseUnit || "unit"}) *
                 </label>
                 <input
                   type="number"
@@ -488,14 +506,14 @@ export default function Returns({ isOwner }: ReturnsProps) {
                   required
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="১"
-                  className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm tabular-nums font-bold focus:border-emerald-600 focus:outline-hidden"
+                  placeholder="1"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm tabular-nums font-bold focus:border-emerald-600 focus:outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                  প্রতি একক ফেরত মূল্য (৳) *
+                <label className="block text-xs font-semibold text-slate-900 mb-1">
+                  Refund price per unit (৳) *
                 </label>
                 <input
                   type="number"
@@ -504,8 +522,8 @@ export default function Returns({ isOwner }: ReturnsProps) {
                   required
                   value={refundPrice}
                   onChange={(e) => setRefundPrice(e.target.value)}
-                  placeholder="০.০০"
-                  className="w-full px-3 py-2 border border-frost-border rounded-lg text-sm tabular-nums font-bold focus:border-emerald-600 focus:outline-hidden"
+                  placeholder="0.00"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm tabular-nums font-bold focus:border-emerald-600 focus:outline-hidden"
                 />
               </div>
             </div>
@@ -520,11 +538,11 @@ export default function Returns({ isOwner }: ReturnsProps) {
                   className="mt-0.5 rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
                 />
                 <div>
-                  <span className="text-xs font-bold text-amber-900 bn-text">
-                    নষ্ট / ক্ষতিগ্রস্ত কেমিক্যাল (Damaged - Quarantine)
+                  <span className="text-xs font-bold text-amber-900">
+                    Damaged Chemical (Quarantine)
                   </span>
-                  <p className="text-[11px] text-amber-800/80 bn-text mt-0.5">
-                    বোতল ফুটো, সীল খোলা বা মেয়াদোত্তীর্ণ রাসায়নিক বিক্রির স্টকে যোগ হবে না; আলাদা কোয়ারেন্টাইনে জমা থাকবে।
+                  <p className="text-[11px] text-amber-800/80 mt-0.5">
+                    Leaking, unsealed, or expired chemicals will not be added back to sellable stock; they will be placed into a separate quarantine.
                   </p>
                 </div>
               </label>
@@ -532,59 +550,59 @@ export default function Returns({ isOwner }: ReturnsProps) {
 
             {/* 6. Refund Type */}
             <div>
-              <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                ফেরত প্রদানের ধরণ *
+              <label className="block text-xs font-semibold text-slate-900 mb-1">
+                Refund Method *
               </label>
               <select
                 value={refundType}
                 onChange={(e) => setRefundType(e.target.value as RefundType)}
-                className="w-full px-3 py-2 border border-frost-border rounded-lg text-xs sm:text-sm bn-text bg-white"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm bg-white"
               >
-                <option value="CASH_REFUND">💵 নগদ ফেরত (Cash Refund from Till)</option>
-                <option value="DUE_ADJUSTMENT">📒 বাকি সমন্বয় (Customer Due Adjustment)</option>
+                <option value="CASH_REFUND">Cash Refund (from Till)</option>
+                <option value="DUE_ADJUSTMENT">Due Adjustment (Customer Due)</option>
               </select>
             </div>
 
             {/* 7. Reason */}
             <div>
-              <label className="block text-xs font-semibold text-frost-dark mb-1 bn-text">
-                ফেরতের কারণ
+              <label className="block text-xs font-semibold text-slate-900 mb-1">
+                Reason for Return
               </label>
               <input
                 type="text"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="যেমন: কীটনাশক প্রয়োগের পর বোতল অবিক্রীত / চাষীর প্রয়োজন শেষ"
-                className="w-full px-3 py-2 border border-frost-border rounded-lg text-xs sm:text-sm bn-text"
+                placeholder="e.g. Bottle unsold after spraying / farmer's need is over"
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm"
               />
             </div>
 
             {/* 8. Total Summary & Submit Button */}
-            <div className="pt-3 border-t border-frost-border flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <span className="text-xs text-frost-muted bn-text">মোট প্রদেয় ফেরত:</span>
-                <div className="text-2xl font-bold text-frost-dark tabular-nums">
+                <span className="text-xs text-slate-500">Total refund payable:</span>
+                <div className="text-2xl font-bold text-slate-900 tabular-nums">
                   {tk(calculatedTotalRefund)}
                 </div>
-                <span className="text-[11px] text-emerald-700 font-medium bn-text">
-                  {refundType === "CASH_REFUND" ? "ক্যাশ ড্রয়ার থেকে নগদ পরিশোধ হবে" : "গ্রাহকের বাকি খাতা থেকে বিয়োগ হবে"}
+                <span className="text-[11px] text-emerald-700 font-medium">
+                  {refundType === "CASH_REFUND" ? "Will be paid in cash from the till" : "Will be deducted from the customer's due balance"}
                 </span>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting || !selectedLotId}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition-all shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bn-text text-sm flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition-all shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>
-                    <span className="animate-spin">⏳</span>
-                    <span>প্রসেসিং হচ্ছে...</span>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing...</span>
                   </>
                 ) : (
                   <>
-                    <span>✅</span>
-                    <span>ফেরত সম্পন্ন করুন ও ভাউচার তৈরি করুন</span>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Complete Return & Generate Voucher</span>
                   </>
                 )}
               </button>
@@ -593,16 +611,16 @@ export default function Returns({ isOwner }: ReturnsProps) {
         </div>
 
         {/* Recent Returns History (5 cols) */}
-        <div className="lg:col-span-5 bg-white border border-frost-border rounded-2xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-frost-border">
+        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
             <div className="flex items-center gap-2">
-              <span className="text-lg">📜</span>
-              <h2 className="font-bold text-frost-dark bn-text text-base">
-                সাম্প্রতিক ফেরত তালিকা (Recent Returns)
+              <ScrollText className="w-5 h-5 text-slate-500" />
+              <h2 className="font-bold text-slate-900 text-base">
+                Recent Returns
               </h2>
             </div>
-            <span className="text-xs text-frost-muted tabular-nums">
-              {recentReturns.length} টি
+            <span className="text-xs text-slate-500 tabular-nums">
+              {recentReturns.length}
             </span>
           </div>
 
@@ -612,34 +630,41 @@ export default function Returns({ isOwner }: ReturnsProps) {
               type="text"
               value={returnsSearch}
               onChange={(e) => setReturnsSearch(e.target.value)}
-              placeholder="ভাউচার নং বা গ্রাহক নাম দিয়ে খুঁজুন..."
-              className="w-full px-3 py-1.5 border border-frost-border rounded-lg text-xs bn-text"
+              placeholder="Search by voucher no. or customer name..."
+              className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs"
             />
           </div>
 
           {isLoading ? (
-            <div className="py-12 text-center text-frost-muted bn-text">
-              <span className="text-2xl animate-spin inline-block mb-1">⏳</span>
-              <p className="text-xs">লোড হচ্ছে...</p>
+            <div className="py-12 text-center text-slate-500">
+              <Loader2 className="w-6 h-6 animate-spin inline-block mb-1" />
+              <p className="text-xs">Loading...</p>
             </div>
           ) : filteredRecentReturns.length === 0 ? (
-            <div className="py-12 text-center text-frost-muted bn-text border border-dashed border-frost-border rounded-xl">
-              <p className="text-xs font-semibold">কোনো ফেরত পাওয়া যায়নি।</p>
+            <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl">
+              <p className="text-xs font-semibold">No returns found.</p>
             </div>
           ) : (
-            <div className="divide-y divide-frost-border/60 max-h-[520px] overflow-y-auto">
+            <div className="divide-y divide-slate-200/60 max-h-[520px] overflow-y-auto">
               {filteredRecentReturns.map((ret) => (
-                <div key={ret.id} className="py-3 px-1 hover:bg-frost-surface/30 transition-colors">
+                <div key={ret.id} className="py-3 px-1 hover:bg-slate-50/30 transition-colors">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="font-mono text-xs font-bold text-frost-dark">
+                      <span className="font-mono text-xs font-bold text-slate-900">
                         {ret.returnNo}
                       </span>
-                      <p className="text-xs font-semibold text-frost-dark bn-text mt-0.5">
-                        {ret.customerName ? `👤 ${ret.customerName}` : "ওয়াক-ইন নগদ ফেরত"}
+                      <p className="text-xs font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
+                        {ret.customerName ? (
+                          <>
+                            <User className="w-3.5 h-3.5" />
+                            <span>{ret.customerName}</span>
+                          </>
+                        ) : (
+                          "Walk-in cash return"
+                        )}
                       </p>
-                      <p className="text-[11px] text-frost-muted mt-0.5">
-                        তারিখ: {new Date(ret.returnDate).toLocaleDateString("bn-BD")}
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Date: {new Date(ret.returnDate).toLocaleDateString("en-US")}
                       </p>
                     </div>
                     <div className="text-right">
@@ -647,20 +672,20 @@ export default function Returns({ isOwner }: ReturnsProps) {
                         {tk(ret.totalRefundAmount)}
                       </div>
                       <span
-                        className={`inline-block mt-0.5 px-2 py-0.2 rounded text-[10px] font-bold bn-text ${
+                        className={`inline-block mt-0.5 px-2 py-0.2 rounded text-[10px] font-bold ${
                           ret.refundType === "DUE_ADJUSTMENT"
                             ? "bg-purple-100 text-purple-800 border border-purple-200"
                             : "bg-emerald-100 text-emerald-800 border border-emerald-200"
                         }`}
                       >
-                        {ret.refundType === "DUE_ADJUSTMENT" ? "বাকি সমন্বয়" : "নগদ ফেরত"}
+                        {ret.refundType === "DUE_ADJUSTMENT" ? "Due Adjustment" : "Cash Refund"}
                       </span>
                     </div>
                   </div>
 
                   {ret.reason && (
-                    <p className="text-[11px] text-frost-muted italic bn-text mt-1.5">
-                      কারণ: {ret.reason}
+                    <p className="text-[11px] text-slate-500 italic mt-1.5">
+                      Reason: {ret.reason}
                     </p>
                   )}
 
@@ -668,9 +693,10 @@ export default function Returns({ isOwner }: ReturnsProps) {
                   <div className="mt-2 text-right">
                     <button
                       onClick={() => setViewingReturn(ret)}
-                      className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 cursor-pointer bn-text"
+                      className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 cursor-pointer inline-flex items-center gap-1"
                     >
-                      ভাউচার দেখুন ও প্রিন্ট করুন 🖨️
+                      <span>View & Print Voucher</span>
+                      <Printer className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -686,13 +712,13 @@ export default function Returns({ isOwner }: ReturnsProps) {
           {(() => {
             const voucher = completedReturn || viewingReturn!
             return (
-              <div className="bg-white rounded-2xl shadow-2xl border border-frost-border max-w-md w-full p-6 print:m-0 print:p-0 print:border-none print:shadow-none print-area">
+              <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 print:m-0 print:p-0 print:border-none print:shadow-none print-area">
                 {/* Actions Header (hidden on print) */}
-                <div className="flex items-center justify-between pb-3 border-b border-frost-border no-print">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 no-print">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xl">✅</span>
-                    <h3 className="font-bold text-frost-dark bn-text text-base">
-                      ফেরত ভাউচার (Return Voucher)
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    <h3 className="font-bold text-slate-900 text-base">
+                      Return Voucher
                     </h3>
                   </div>
                   <button
@@ -700,72 +726,72 @@ export default function Returns({ isOwner }: ReturnsProps) {
                       setCompletedReturn(null)
                       setViewingReturn(null)
                     }}
-                    className="text-frost-muted hover:text-frost-dark text-lg leading-none cursor-pointer p-1"
+                    className="text-slate-500 hover:text-slate-900 leading-none cursor-pointer p-1"
                   >
-                    ✕
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
                 {/* Printable Slip Content */}
-                <div className="py-3 text-center border-b border-dashed border-frost-border">
-                  <h2 className="text-lg font-bold text-frost-dark bn-text">
-                    আল-আমিন ট্রেডার্স
+                <div className="py-3 text-center border-b border-dashed border-slate-200">
+                  <h2 className="text-lg font-bold text-slate-900">
+                    Al-Amin Traders
                   </h2>
-                  <p className="text-xs text-frost-muted bn-text">
-                    অনুমোদিত কৃষি পরিবেশক · উত্তর বাজার, বেলাবো, নরসিংদী
+                  <p className="text-xs text-slate-500">
+                    Authorized Agro Dealer · Uttar Bazar, Belabo, Narsingdi
                   </p>
-                  <div className="inline-block mt-1 px-2.5 py-0.5 rounded bg-frost-surface border border-frost-border text-xs font-bold text-frost-dark bn-text">
-                    বিক্রয় ফেরত ভাউচার (Credit Note)
+                  <div className="inline-block mt-1 px-2.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900">
+                    Sales Return Voucher (Credit Note)
                   </div>
                 </div>
 
                 {/* Voucher Meta */}
-                <div className="py-2.5 text-xs space-y-1 border-b border-frost-border/60">
+                <div className="py-2.5 text-xs space-y-1 border-b border-slate-200/60">
                   <div className="flex justify-between">
-                    <span className="text-frost-muted bn-text">ভাউচার নম্বর:</span>
+                    <span className="text-slate-500">Voucher No:</span>
                     <span className="font-mono font-bold">{voucher.returnNo}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-frost-muted bn-text">তারিখ ও সময়:</span>
+                    <span className="text-slate-500">Date & Time:</span>
                     <span className="tabular-nums">
-                      {new Date(voucher.returnDate).toLocaleString("bn-BD")}
+                      {new Date(voucher.returnDate).toLocaleString("en-US")}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-frost-muted bn-text">গ্রাহক:</span>
-                    <span className="font-semibold bn-text">
-                      {voucher.customerName || "ওয়াক-ইন সাধারণ ক্রেতা"}
+                    <span className="text-slate-500">Customer:</span>
+                    <span className="font-semibold">
+                      {voucher.customerName || "Walk-in general customer"}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-frost-muted bn-text">ফেরত ধরণ:</span>
-                    <span className="font-bold bn-text text-emerald-800">
-                      {voucher.refundType === "DUE_ADJUSTMENT" ? "বাকি সমন্বয়" : "নগদ ফেরত"}
+                    <span className="text-slate-500">Refund Method:</span>
+                    <span className="font-bold text-emerald-800">
+                      {voucher.refundType === "DUE_ADJUSTMENT" ? "Due Adjustment" : "Cash Refund"}
                     </span>
                   </div>
                 </div>
 
                 {/* Items Summary */}
                 <div className="py-3 text-xs">
-                  <p className="font-semibold text-frost-dark bn-text mb-1.5">ফেরত পণ্য তালিকা:</p>
+                  <p className="font-semibold text-slate-900 mb-1.5">Returned Items:</p>
                   {voucher.items && voucher.items.length > 0 ? (
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="border-b border-frost-border text-frost-muted">
-                          <th className="pb-1 bn-text">পণ্য</th>
-                          <th className="pb-1 text-center bn-text">পরিমাণ</th>
-                          <th className="pb-1 text-right bn-text">দর</th>
-                          <th className="pb-1 text-right bn-text">মোট</th>
+                        <tr className="border-b border-slate-200 text-slate-500">
+                          <th className="pb-1">Product</th>
+                          <th className="pb-1 text-center">Qty</th>
+                          <th className="pb-1 text-right">Rate</th>
+                          <th className="pb-1 text-right">Total</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-frost-border/40">
+                      <tbody className="divide-y divide-slate-200/40">
                         {voucher.items.map((it, idx) => (
                           <tr key={idx}>
-                            <td className="py-1 bn-text">
-                              {it.productNameBn || it.productNameEn || `লট #${it.lotId}`}
+                            <td className="py-1">
+                              {it.productNameBn || it.productNameEn || `Lot #${it.lotId}`}
                               {it.isDamaged && (
                                 <span className="block text-[10px] text-red-600 font-bold">
-                                  [ক্ষতিগ্রস্ত/কোয়ারেন্টাইন]
+                                  [Damaged / Quarantined]
                                 </span>
                               )}
                             </td>
@@ -779,40 +805,41 @@ export default function Returns({ isOwner }: ReturnsProps) {
                       </tbody>
                     </table>
                   ) : (
-                    <p className="text-frost-muted italic bn-text">পণ্য বিবরণ সংরক্ষিত</p>
+                    <p className="text-slate-500 italic">Item details preserved</p>
                   )}
                 </div>
 
                 {/* Total */}
-                <div className="pt-2 border-t border-frost-border flex justify-between items-center text-sm font-bold text-frost-dark">
-                  <span className="bn-text">মোট ফেরত মূল্য:</span>
+                <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-bold text-slate-900">
+                  <span>Total Refund Amount:</span>
                   <span className="text-base text-emerald-800 tabular-nums">
                     {tk(voucher.totalRefundAmount)}
                   </span>
                 </div>
 
                 {voucher.reason && (
-                  <p className="text-[11px] text-frost-muted bn-text mt-2">
-                    মন্তব্য: {voucher.reason}
+                  <p className="text-[11px] text-slate-500 mt-2">
+                    Note: {voucher.reason}
                   </p>
                 )}
 
                 {/* Print Buttons (no-print) */}
-                <div className="mt-5 pt-3 border-t border-frost-border flex gap-2 no-print">
+                <div className="mt-5 pt-3 border-t border-slate-200 flex gap-2 no-print">
                   <button
                     onClick={() => window.print()}
-                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-frost-dark text-white hover:bg-black transition-all cursor-pointer shadow-xs bn-text"
+                    className="flex-1 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-black transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
                   >
-                    🖨️ ভাউচার প্রিন্ট করুন
+                    <Printer className="w-4 h-4" />
+                    <span>Print Voucher</span>
                   </button>
                   <button
                     onClick={() => {
                       setCompletedReturn(null)
                       setViewingReturn(null)
                     }}
-                    className="flex-1 py-2 rounded-xl text-xs font-semibold border border-frost-border hover:bg-frost-surface transition-all cursor-pointer bn-text text-frost-dark"
+                    className="flex-1 py-2 rounded-xl text-xs font-semibold border border-slate-200 hover:bg-slate-50 transition-all cursor-pointer text-slate-900"
                   >
-                    বন্ধ করুন
+                    Close
                   </button>
                 </div>
               </div>

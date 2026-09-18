@@ -4,6 +4,20 @@ import { downloadDatabaseBackup } from "../api/endpoints"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
 import Button from "./ui/Button"
+import {
+  Sprout,
+  ShoppingCart,
+  BarChart3,
+  Package,
+  BookOpen,
+  RotateCcw,
+  Download,
+  CheckCircle2,
+  XCircle,
+  ShieldCheck,
+  Lock,
+  type LucideIcon,
+} from "lucide-react"
 
 export interface NavbarProps {
   activeTab: NavigationTab
@@ -14,17 +28,16 @@ export interface NavbarProps {
 
 interface TabItem {
   id: NavigationTab
-  bn: string
-  en: string
-  icon: string
+  label: string
+  icon: LucideIcon
 }
 
 const NAV_TABS: TabItem[] = [
-  { id: "pos", bn: "বিক্রয় কাউন্টার", en: "POS", icon: "🛒" },
-  { id: "dashboard", bn: "ড্যাশবোর্ড", en: "Analytics", icon: "📊" },
-  { id: "inventory", bn: "পণ্য ও স্টক", en: "Catalog", icon: "📦" },
-  { id: "customers", bn: "বাকি খাতা", en: "Ledger", icon: "📒" },
-  { id: "returns", bn: "পণ্য ফেরত", en: "Returns", icon: "🔄" },
+  { id: "pos", label: "POS", icon: ShoppingCart },
+  { id: "dashboard", label: "Analytics", icon: BarChart3 },
+  { id: "inventory", label: "Inventory", icon: Package },
+  { id: "customers", label: "Customer Ledger", icon: BookOpen },
+  { id: "returns", label: "Sales Returns", icon: RotateCcw },
 ]
 
 export default function Navbar({
@@ -48,11 +61,11 @@ export default function Navbar({
       setBackupStatus("idle")
       await downloadDatabaseBackup()
       setBackupStatus("success")
-      showSuccess("ডাটাবেস ব্যাকআপ সফলভাবে ডাউনলোড হয়েছে!", "ব্যাকআপ সম্পন্ন")
+      showSuccess("Database backup downloaded successfully!", "Backup Complete")
       setTimeout(() => setBackupStatus("idle"), 3000)
     } catch (err) {
       setBackupStatus("error")
-      showError(err, "ব্যাকআপ ডাউনলোড ব্যর্থ")
+      showError(err, "Backup Download Failed")
       setTimeout(() => setBackupStatus("idle"), 4000)
     } finally {
       setIsBackupLoading(false)
@@ -71,26 +84,26 @@ export default function Navbar({
   }
 
   return (
-    <header className="bg-white border-b border-frost-border sticky top-0 z-30 shadow-xs">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
       <div className="max-w-7xl mx-auto px-3 sm:px-6">
         {/* Top Brand & Actions Bar */}
-        <div className="flex items-center justify-between h-14 border-b border-frost-border/40 gap-2">
+        <div className="flex items-center justify-between h-14 border-b border-slate-200/40 gap-2">
           {/* Brand Logo & Name */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
-              🌾
+            <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center shadow-sm shrink-0">
+              <Sprout className="w-5 h-5" />
             </div>
             <div className="truncate">
               <div className="flex items-baseline gap-1.5 flex-wrap">
-                <span className="font-bold text-frost-dark bn-text text-base sm:text-lg leading-tight tracking-tight">
-                  আল-আমিন ট্রেডার্স
+                <span className="font-bold text-slate-900 text-base sm:text-lg leading-tight tracking-tight">
+                  Al-Amin Traders
                 </span>
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 bn-text border border-emerald-200">
-                  অনুমোদিত কৃষি পরিবেশক
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  Authorized Agrochemical Dealer
                 </span>
               </div>
-              <p className="text-[11px] text-frost-muted hidden sm:block leading-none mt-0.5">
-                Al-Amin Traders (Agrochemical Dealership Cockpit)
+              <p className="text-[11px] text-slate-500 hidden sm:block leading-none mt-0.5">
+                Agrochemical Dealership Cockpit
               </p>
             </div>
           </div>
@@ -109,23 +122,23 @@ export default function Navbar({
               size="sm"
               onClick={handleBackup}
               isLoading={isBackupLoading}
-              title="সম্পূর্ণ ডেটাবেস ১-ক্লিকে এসকিউএল ফাইলে ডাউনলোড করুন"
+              title="Download the complete database as a 1-click SQL backup"
               className={backupStatus === "idle" ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100" : ""}
             >
               {backupStatus === "success" ? (
                 <>
-                  <span>✅</span>
-                  <span className="bn-text hidden sm:inline">ব্যাকআপ সম্পন্ন</span>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Backup Complete</span>
                 </>
               ) : backupStatus === "error" ? (
                 <>
-                  <span>❌</span>
-                  <span className="bn-text hidden sm:inline">ব্যর্থ হয়েছে</span>
+                  <XCircle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Backup Failed</span>
                 </>
               ) : (
                 <>
-                  <span>💾</span>
-                  <span className="bn-text">ব্যাকআপ ডাউনলোড</span>
+                  <Download className="w-4 h-4" />
+                  <span>Backup Database</span>
                 </>
               )}
             </Button>
@@ -137,17 +150,17 @@ export default function Navbar({
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border shadow-xs cursor-pointer ${
                 isOwner
                   ? "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200 ring-2 ring-amber-400/40"
-                  : "bg-frost-surface text-frost-dark border-frost-border hover:bg-frost-hover"
+                  : "bg-slate-50 text-slate-900 border-slate-200 hover:bg-slate-100"
               }`}
               title={
                 isOwner
-                  ? "মালিক মোড সক্রিয়: কেনা দাম ও মোট লাভ দৃশ্যমান। ক্লিক করলে ক্যাশিয়ার মোডে লক হবে।"
-                  : "ক্যাশিয়ার মোড: কেনা দাম ও লাভ লুকানো। ৪ ডিজিটের পিন দিয়ে আনলক করুন।"
+                  ? "Owner Mode active: purchase cost and gross profit are visible. Click to lock back to Cashier Mode."
+                  : "Cashier Mode: purchase cost and profit are hidden. Unlock with the 4-digit Owner PIN."
               }
             >
-              <span>{isOwner ? "👑" : "🔒"}</span>
-              <span className="bn-text font-bold">
-                {isOwner ? "মালিক মোড (Admin)" : "ক্যাশিয়ার মোড"}
+              {isOwner ? <ShieldCheck className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+              <span className="font-bold">
+                {isOwner ? "Owner Mode (Admin)" : "Cashier Mode"}
               </span>
             </button>
           </div>
@@ -157,6 +170,7 @@ export default function Navbar({
         <nav className="flex gap-1 py-1.5 overflow-x-auto no-scrollbar">
           {NAV_TABS.map((tab) => {
             const isActive = activeTab === tab.id
+            const Icon = tab.icon
             return (
               <button
                 type="button"
@@ -164,19 +178,12 @@ export default function Navbar({
                 onClick={() => onTabChange(tab.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? "bg-frost-dark text-white shadow-xs"
-                    : "text-frost-muted hover:bg-frost-hover hover:text-frost-dark"
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
-                <span>{tab.icon}</span>
-                <span className="bn-text font-medium">{tab.bn}</span>
-                <span
-                  className={`text-[11px] font-normal ${
-                    isActive ? "text-gray-300" : "text-frost-muted/70"
-                  }`}
-                >
-                  ({tab.en})
-                </span>
+                <Icon className="w-4 h-4" />
+                <span className="font-medium">{tab.label}</span>
               </button>
             )
           })}

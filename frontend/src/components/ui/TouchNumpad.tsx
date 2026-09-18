@@ -1,3 +1,4 @@
+import { Delete } from "lucide-react"
 import { Button } from "./Button"
 
 export interface TouchNumpadProps {
@@ -8,6 +9,8 @@ export interface TouchNumpadProps {
   quickCashOptions?: number[]
   exactPayable?: number
   className?: string
+  showDecimals?: boolean
+  showDoubleZero?: boolean
 }
 
 export function TouchNumpad({
@@ -18,8 +21,23 @@ export function TouchNumpad({
   quickCashOptions = [100, 500, 1000],
   exactPayable,
   className = "",
+  showDecimals = true,
+  showDoubleZero = true,
 }: TouchNumpadProps) {
-  const digits = ["7", "8", "9", "4", "5", "6", "1", "2", "3", "0", "00", "."]
+  const digits = [
+    "7",
+    "8",
+    "9",
+    "4",
+    "5",
+    "6",
+    "1",
+    "2",
+    "3",
+    "0",
+    ...(showDoubleZero ? ["00"] : []),
+    ...(showDecimals ? ["."] : []),
+  ]
 
   return (
     <div className={`flex flex-col gap-2.5 ${className}`.trim()}>
@@ -30,10 +48,10 @@ export function TouchNumpad({
             <button
               type="button"
               onClick={() => onQuickCash(exactPayable)}
-              className="py-2 px-1 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 text-emerald-900 font-black text-xs bn-text border border-emerald-300 shadow-xs cursor-pointer transition-colors text-center"
-              title="ঠিক সমান টাকা প্রদান"
+              className="py-2 px-1 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 text-emerald-900 font-black text-xs border border-emerald-300 shadow-xs cursor-pointer transition-colors text-center"
+              title="Pay exact amount"
             >
-              সমান টাকা
+              Exact
             </button>
           )}
 
@@ -42,7 +60,7 @@ export function TouchNumpad({
               key={amt}
               type="button"
               onClick={() => onQuickCash(amt)}
-              className="py-2 px-1 rounded-xl bg-frost-surface hover:bg-frost-hover active:bg-slate-200 text-frost-dark font-mono font-bold text-xs tabular-nums border border-frost-border shadow-xs cursor-pointer transition-colors text-center"
+              className="py-2 px-1 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-900 font-mono font-bold text-xs tabular-nums border border-slate-200 shadow-xs cursor-pointer transition-colors text-center"
             >
               +{amt}
             </button>
@@ -50,7 +68,7 @@ export function TouchNumpad({
         </div>
       )}
 
-      {/* Main 3x4 Numeric Keypad */}
+      {/* Main Numeric Keypad */}
       <div className="grid grid-cols-3 gap-2">
         {digits.map((d) => (
           <Button
@@ -73,7 +91,7 @@ export function TouchNumpad({
           onClick={onClear}
           className="text-red-700 bg-red-50 hover:bg-red-100 border-red-200 font-bold"
         >
-          <span>পরিষ্কার (Clear)</span>
+          <span>Clear</span>
         </Button>
 
         <Button
@@ -82,7 +100,8 @@ export function TouchNumpad({
           onClick={onBackspace}
           className="font-bold font-mono text-base"
         >
-          <span>⌫ ব্যাকস্পেস</span>
+          <Delete className="w-4 h-4" />
+          <span>Backspace</span>
         </Button>
       </div>
     </div>
@@ -90,4 +109,3 @@ export function TouchNumpad({
 }
 
 export default TouchNumpad
-

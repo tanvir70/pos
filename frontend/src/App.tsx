@@ -15,7 +15,7 @@ function AppShell() {
   const { isOwner, openPinModal } = useAuth()
 
   return (
-    <div className="min-h-screen bg-frost-bg flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar activeTab={tab} onTabChange={setTab} />
 
       {/* Main Content Shell */}

@@ -4,6 +4,7 @@ import type {
   ThHTMLAttributes,
   ReactNode,
 } from "react"
+import { Search, Loader2 } from "lucide-react"
 
 export interface TableProps extends HTMLAttributes<HTMLTableElement> {
   children: ReactNode
@@ -19,7 +20,7 @@ export function Table({
 }: TableProps) {
   return (
     <div
-      className={`overflow-x-auto w-full rounded-xl border border-frost-border bg-white shadow-xs ${containerClassName}`.trim()}
+      className={`overflow-x-auto w-full rounded-xl border border-slate-200 bg-white shadow-xs ${containerClassName}`.trim()}
     >
       <table className={`w-full text-left text-xs ${className}`.trim()} {...props}>
         {children}
@@ -35,7 +36,7 @@ export function TableHead({
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead
-      className={`bg-frost-surface/80 border-b border-frost-border text-frost-muted uppercase tracking-wider font-bold bn-text select-none ${className}`.trim()}
+      className={`bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold select-none ${className}`.trim()}
       {...props}
     >
       {children}
@@ -49,7 +50,7 @@ export function TableBody({
   ...props
 }: HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tbody className={`divide-y divide-frost-border/50 ${className}`.trim()} {...props}>
+    <tbody className={`divide-y divide-slate-200/50 ${className}`.trim()} {...props}>
       {children}
     </tbody>
   )
@@ -69,7 +70,7 @@ export function TableRow({
   className = "",
   ...props
 }: TableRowProps) {
-  const hoverClass = isHoverable ? "hover:bg-frost-surface/60 transition-colors" : ""
+  const hoverClass = isHoverable ? "hover:bg-slate-50/60 transition-colors" : ""
   const selectedClass = isSelected ? "bg-emerald-50/60" : ""
 
   return (
@@ -100,7 +101,7 @@ export function TableHeaderCell({
 
   return (
     <th
-      className={`px-3.5 py-3 text-xs font-bold text-frost-dark ${alignClass} ${className}`.trim()}
+      className={`px-3.5 py-3 text-xs font-bold text-slate-900 ${alignClass} ${className}`.trim()}
       {...props}
     >
       {children}
@@ -133,7 +134,7 @@ export function TableCell({
 
   return (
     <td
-      className={`px-3.5 py-3 text-xs text-frost-dark align-middle ${alignClass} ${fontClass} ${className}`.trim()}
+      className={`px-3.5 py-3 text-xs text-slate-900 align-middle ${alignClass} ${fontClass} ${className}`.trim()}
       {...props}
     >
       {children}
@@ -151,18 +152,18 @@ export interface TableEmptyStateProps {
 
 export function TableEmptyState({
   colSpan,
-  icon = "🔍",
-  message = "কোনো তথ্য পাওয়া যায়নি",
-  submessage = "অনুসন্ধান ফিল্টার পরিবর্তন করে পুনরায় চেষ্টা করুন",
+  icon = <Search className="w-7 h-7 mx-auto" />,
+  message = "No data found",
+  submessage = "Try adjusting your search filters and try again",
   action,
 }: TableEmptyStateProps) {
   return (
     <tr>
-      <td colSpan={colSpan} className="py-12 text-center text-frost-muted">
-        <span className="text-3xl inline-block">{icon}</span>
-        <p className="mt-2 text-sm font-bold text-frost-dark bn-text">{message}</p>
+      <td colSpan={colSpan} className="py-12 text-center text-slate-500">
+        <span className="inline-block text-slate-400">{icon}</span>
+        <p className="mt-2 text-sm font-bold text-slate-900">{message}</p>
         {submessage && (
-          <p className="text-xs text-frost-muted mt-0.5 bn-text">{submessage}</p>
+          <p className="text-xs text-slate-500 mt-0.5">{submessage}</p>
         )}
         {action && <div className="mt-4 flex justify-center">{action}</div>}
       </td>
@@ -172,16 +173,16 @@ export function TableEmptyState({
 
 export function TableLoadingState({
   colSpan,
-  text = "তথ্য লোড হচ্ছে...",
+  text = "Loading data...",
 }: {
   colSpan: number
   text?: string
 }) {
   return (
     <tr>
-      <td colSpan={colSpan} className="py-12 text-center text-frost-muted">
-        <span className="text-2xl animate-spin inline-block">⏳</span>
-        <p className="mt-2 text-xs font-semibold text-frost-muted bn-text">{text}</p>
+      <td colSpan={colSpan} className="py-12 text-center text-slate-500">
+        <Loader2 className="w-6 h-6 animate-spin inline-block" />
+        <p className="mt-2 text-xs font-semibold text-slate-500">{text}</p>
       </td>
     </tr>
   )

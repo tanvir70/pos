@@ -6,6 +6,7 @@ import React, {
   useRef,
   useEffect,
 } from "react"
+import { CheckCircle2, XCircle, AlertTriangle, Info, X } from "lucide-react"
 import { ApiError } from "../api/client"
 
 export type ToastType = "success" | "error" | "warning" | "info"
@@ -31,71 +32,71 @@ export interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
 
-// Bengali translations for backend error codes & common errors
+// English translations for backend error codes & common errors
 function parseErrorMessage(err: unknown): { title: string; message: string } {
   if (err instanceof ApiError) {
     if (err.errorCode) {
       switch (err.errorCode) {
         case "INVALID_PIN":
           return {
-            title: "ভুল পিন কোড",
-            message: "ভুল মালিক পিন কোড! সঠিক ৪ ডিজিটের পিন লিখুন।",
+            title: "Incorrect PIN",
+            message: "Incorrect Owner PIN! Enter the correct 4-digit PIN.",
           }
         case "NEGATIVE_STOCK_NOT_ALLOWED":
           return {
-            title: "স্টক ঘাটতি",
-            message: "স্টকে পর্যাপ্ত পণ্য নেই। স্টক চেক করে আবার চেষ্টা করুন।",
+            title: "Insufficient Stock",
+            message: "Not enough stock available. Check stock levels and try again.",
           }
         case "CUSTOMER_CREDIT_EXCEEDED":
           return {
-            title: "বাকি সীমা অতিক্রম",
-            message: "এই গ্রাহকের বাকির সর্বোচ্চ সীমা অতিক্রম করেছে!",
+            title: "Credit Limit Exceeded",
+            message: "This customer has exceeded their maximum credit limit!",
           }
         case "LOT_NOT_FOUND":
           return {
-            title: "লট পাওয়া যায়নি",
-            message: "অনুরোধকৃত ব্যাচ/লট ডেটাবেসে পাওয়া যায়নি।",
+            title: "Lot Not Found",
+            message: "The requested batch/lot was not found in the database.",
           }
         case "PRODUCT_NOT_FOUND":
           return {
-            title: "পণ্য পাওয়া যায়নি",
-            message: "নির্দিষ্ট পণ্যটি পাওয়া যায়নি।",
+            title: "Product Not Found",
+            message: "The specified product could not be found.",
           }
         case "DUPLICATE_PRODUCT_CODE":
           return {
-            title: "ডুপ্লিকেট কোড",
-            message: "এই প্রোডাক্ট কোডটি ইতিমধ্যেই ব্যবহৃত হয়েছে। নতুন কোড দিন।",
+            title: "Duplicate Code",
+            message: "This product code is already in use. Please enter a new code.",
           }
         case "VALIDATION_FAILED":
           return {
-            title: "যাচাইকরণ ত্রুটি",
-            message: err.message || "প্রদত্ত তথ্যে ভুল রয়েছে। অনুগ্রহ করে ফর্মটি চেক করুন।",
+            title: "Validation Error",
+            message: err.message || "The submitted data is invalid. Please check the form.",
           }
       }
     }
 
     if (err.status === 401) {
       return {
-        title: "অননুমোদিত সেশন",
-        message: "আপনার সেশনটি শেষ হয়েছে। অনুগ্রহ করে পুনরায় লগইন করুন।",
+        title: "Unauthorized Session",
+        message: "Your session has expired. Please log in again.",
       }
     }
     if (err.status === 403) {
       return {
-        title: "অনুমতি নেই",
-        message: "এই ক্রিয়াকলাপের জন্য মালিক মোড (Owner PIN) প্রয়োজন।",
+        title: "Permission Denied",
+        message: "This action requires Owner Mode (Owner PIN).",
       }
     }
     if (err.status >= 500) {
       return {
-        title: "সার্ভার সমস্যা",
-        message: "সার্ভারে একটি সাময়িক সমস্যা হয়েছে। অনুগ্রহ করে একটু পর চেষ্টা করুন।",
+        title: "Server Error",
+        message: "The server ran into a temporary problem. Please try again shortly.",
       }
     }
 
     return {
-      title: "ত্রুটি",
-      message: err.message || "একটি অনাকাঙ্ক্ষিত ত্রুটি ঘটেছে।",
+      title: "Error",
+      message: err.message || "An unexpected error occurred.",
     }
   }
 
@@ -105,26 +106,26 @@ function parseErrorMessage(err: unknown): { title: string; message: string } {
       err.message.includes("NetworkError")
     ) {
       return {
-        title: "নেটওয়ার্ক বিচ্ছিন্ন",
-        message: "সার্ভারের সাথে সংযোগ স্থাপন করা যায়নি। লোকাল সার্ভার চালু আছে কিনা চেক করুন।",
+        title: "Network Disconnected",
+        message: "Could not connect to the server. Check that the local server is running.",
       }
     }
     return {
-      title: "ত্রুটি",
+      title: "Error",
       message: err.message,
     }
   }
 
   if (typeof err === "string") {
     return {
-      title: "বিজ্ঞপ্তি",
+      title: "Notice",
       message: err,
     }
   }
 
   return {
-    title: "অপ্রত্যাশিত ত্রুটি",
-    message: "অনাকাঙ্ক্ষিত কিছু ঘটেছে। আবার চেষ্টা করুন।",
+    title: "Unexpected Error",
+    message: "Something unexpected happened. Please try again.",
   }
 }
 
@@ -173,7 +174,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   )
 
   const showSuccess = useCallback(
-    (message: string, title = "সফল হয়েছে") => {
+    (message: string, title = "Success") => {
       return showToast({ type: "success", title, message })
     },
     [showToast],
@@ -193,14 +194,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   )
 
   const showWarning = useCallback(
-    (message: string, title = "সতর্কতা") => {
+    (message: string, title = "Warning") => {
       return showToast({ type: "warning", title, message, duration: 5500 })
     },
     [showToast],
   )
 
   const showInfo = useCallback(
-    (message: string, title = "তথ্য") => {
+    (message: string, title = "Info") => {
       return showToast({ type: "info", title, message })
     },
     [showToast],
@@ -253,21 +254,21 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               }`}
             >
               {/* Semantic Icon */}
-              <div className="shrink-0 mt-0.5 text-lg select-none">
-                {isSuccess && "✅"}
-                {isError && "⛔"}
-                {isWarning && "⚠️"}
-                {isInfo && "ℹ️"}
+              <div className="shrink-0 mt-0.5 select-none">
+                {isSuccess && <CheckCircle2 className="w-5 h-5" />}
+                {isError && <XCircle className="w-5 h-5" />}
+                {isWarning && <AlertTriangle className="w-5 h-5" />}
+                {isInfo && <Info className="w-5 h-5" />}
               </div>
 
               {/* Message Content */}
               <div className="flex-1 min-w-0 pr-1">
                 {toast.title && (
-                  <h4 className="font-bold text-sm tracking-tight bn-text leading-tight mb-0.5">
+                  <h4 className="font-bold text-sm tracking-tight leading-tight mb-0.5">
                     {toast.title}
                   </h4>
                 )}
-                <p className="text-xs text-white/90 bn-text leading-relaxed font-normal break-words">
+                <p className="text-xs text-white/90 leading-relaxed font-normal break-words">
                   {toast.message}
                 </p>
               </div>
@@ -279,7 +280,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 className="shrink-0 text-white/70 hover:text-white rounded-md p-1 transition-colors leading-none cursor-pointer"
                 aria-label="Dismiss alert"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
           )

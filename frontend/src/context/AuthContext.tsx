@@ -18,6 +18,7 @@ import { useToast } from "./ToastContext"
 import Modal from "../components/ui/Modal"
 import Button from "../components/ui/Button"
 import TouchNumpad from "../components/ui/TouchNumpad"
+import { Crown } from "lucide-react"
 
 export type AppRole = "ROLE_CASHIER" | "ROLE_OWNER"
 
@@ -102,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(AUTH_ROLE_KEY, "ROLE_CASHIER")
     }
 
-    showInfo("🔒 ক্যাশিয়ার মোড সক্রিয়। কেনা দাম ও লাভ লুকানো হয়েছে।")
+    showInfo("Cashier Mode active. Purchase cost and profit are now hidden.")
   }, [showInfo])
 
   // ─── Inactivity Auto-Lock for Owner Mode ───────────────────────────
@@ -115,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isOwner) {
       inactivityTimerRef.current = window.setTimeout(() => {
         lockToCashier()
-        showWarning("⚠️ ৫ মিনিট কোনো কার্যকলাপ না থাকায় মালিক মোড স্বয়ংক্রিয়ভাবে লক করা হয়েছে।")
+        showWarning("Owner Mode auto-locked after 5 minutes of inactivity.")
       }, OWNER_INACTIVITY_TIMEOUT_MS)
     }
   }, [isOwner, lockToCashier, showWarning])
@@ -174,7 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (pinToVerify: string): Promise<boolean> => {
       const cleanPin = pinToVerify.trim()
       if (!cleanPin) {
-        setPinError("পিন কোড লিখুন")
+        setPinError("Please enter the PIN code")
         return false
       }
 
@@ -188,11 +189,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setStoredAuth(response.token, "ROLE_OWNER")
         setIsPinModalOpen(false)
         setPinInput("")
-        showSuccess("👑 মালিক মোড সফলভাবে আনলক করা হয়েছে! কেনা দাম ও মোট লাভ দৃশ্যমান।")
+        showSuccess("Owner Mode unlocked successfully! Purchase cost and gross profit are now visible.")
         return true
       } catch (err) {
-        setPinError("ভুল পিন কোড! সঠিক ৪ ডিজিটের মালিক পিন লিখুন (ডিফল্ট: 1234)")
-        showError(err, "পিন যাচাইকরণ ব্যর্থ")
+        setPinError("Incorrect PIN! Enter the correct 4-digit Owner PIN (default: 1234)")
+        showError(err, "PIN Verification Failed")
         setPinInput("")
         pinInputRef.current?.focus()
         return false
@@ -245,21 +246,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       <Modal
         isOpen={isPinModalOpen}
         onClose={closePinModal}
-        title="👑 মালিক মোড আনলক করুন (Owner Mode)"
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            <Crown className="w-4 h-4 text-amber-600" /> Unlock Owner Mode
+          </span>
+        }
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-xs text-frost-muted bn-text leading-relaxed">
-            পণ্য ক্রয়ের আসল খরচ (কেনা দাম) এবং দৈনিক নিট মুনাফা দেখতে ৪ ডিজিটের মালিক সিকিউরিটি পিন দিন।
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Enter the 4-digit Owner Security PIN to view the actual purchase cost and daily net profit.
           </p>
 
           <form onSubmit={handleModalFormSubmit} className="space-y-3">
             <div>
               <label
                 htmlFor="owner-pin-input"
-                className="block text-xs font-bold text-frost-dark bn-text mb-1.5"
+                className="block text-xs font-bold text-slate-900 mb-1.5"
               >
-                মালিক সিকিউরিটি পিন (৪ ডিজিট):
+                Owner Security PIN (4 digits):
               </label>
               <input
                 id="owner-pin-input"
@@ -272,21 +277,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   if (pinError) setPinError(null)
                 }}
                 placeholder="••••"
-                className="w-full text-center tracking-[0.5em] text-2xl font-black py-2.5 px-3 border-2 border-frost-border rounded-xl focus:border-emerald-600 focus:outline-hidden tabular-nums bg-frost-surface/50 text-frost-dark"
+                className="w-full text-center tracking-[0.5em] text-2xl font-black py-2.5 px-3 border-2 border-slate-200 rounded-xl focus:border-emerald-600 focus:outline-hidden tabular-nums bg-slate-50/50 text-slate-900"
                 disabled={isSubmittingPin}
               />
             </div>
 
             {pinError && (
-              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs font-semibold bn-text animate-in fade-in">
+              <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs font-semibold animate-in fade-in">
                 {pinError}
               </div>
             )}
 
             {/* Quick Touch Keypad for Touch Screen POS monitors */}
-            <div className="pt-2 border-t border-frost-border/60">
-              <div className="text-[11px] font-semibold text-frost-muted bn-text mb-2 text-center">
-                টাচস্ক্রিন পিনপ্যাড
+            <div className="pt-2 border-t border-slate-200/60">
+              <div className="text-[11px] font-semibold text-slate-500 mb-2 text-center">
+                Touchscreen Keypad
               </div>
               <TouchNumpad
                 onDigit={handleNumpadPress}
@@ -297,7 +302,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-frost-border/60">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200/60">
               <Button
                 type="button"
                 variant="ghost"
@@ -305,7 +310,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 onClick={closePinModal}
                 disabled={isSubmittingPin}
               >
-                বাতিল
+                Cancel
               </Button>
               <Button
                 type="submit"
@@ -314,7 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 isLoading={isSubmittingPin}
                 disabled={pinInput.trim().length === 0}
               >
-                আনলক করুন
+                Unlock
               </Button>
             </div>
           </form>

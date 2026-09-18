@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react"
+import { Search, Loader2, Wheat } from "lucide-react"
 import type { StockItem, SaleMode } from "../../types"
 import { formatTk } from "../../utils/currency"
 import Input from "../ui/Input"
@@ -116,9 +117,9 @@ export default function ProductCatalogGrid({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-2xl border border-frost-border shadow-xs overflow-hidden">
+    <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
       {/* Search & Filter Header */}
-      <div className="p-3.5 border-b border-frost-border/60 bg-frost-surface/30 space-y-2.5">
+      <div className="p-3.5 border-b border-slate-200/60 bg-slate-50/30 space-y-2.5">
         <div className="flex items-center gap-2">
           <div className="flex-1 relative">
             <Input
@@ -127,17 +128,17 @@ export default function ProductCatalogGrid({
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleSearchKeyDown}
               onClear={() => setSearch("")}
-              placeholder="পণ্য বা বারকোড স্ক্যান করুন... (F2 দিয়ে খুঁজুন)"
-              leftAdornment={<span className="text-frost-muted">🔍</span>}
+              placeholder="Search product or scan barcode... (Press F2)"
+              leftAdornment={<Search className="w-4 h-4 text-slate-400" />}
               inputSize="md"
               className="bg-white shadow-xs"
             />
           </div>
-          <div className="hidden sm:flex items-center gap-1.5 shrink-0 text-xs text-frost-muted font-medium bg-white px-2.5 py-2 border border-frost-border rounded-xl shadow-xs">
+          <div className="hidden sm:flex items-center gap-1.5 shrink-0 text-xs text-slate-500 font-medium bg-white px-2.5 py-2 border border-slate-200 rounded-xl shadow-xs">
             <span className="font-mono text-emerald-800 font-bold bg-emerald-50 px-1 rounded border border-emerald-200">
               F2
             </span>
-            <span className="bn-text">সার্চ</span>
+            <span>Search</span>
           </div>
         </div>
 
@@ -147,13 +148,13 @@ export default function ProductCatalogGrid({
             <button
               type="button"
               onClick={() => setSelectedCategory("ALL")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer bn-text ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 selectedCategory === "ALL"
-                  ? "bg-frost-dark text-white shadow-xs"
-                  : "bg-white text-frost-dark border border-frost-border hover:bg-frost-hover"
+                  ? "bg-slate-900 text-white shadow-xs"
+                  : "bg-white text-slate-900 border border-slate-200 hover:bg-slate-100"
               }`}
             >
-              সব ক্যাটাগরি ({stocks.length})
+              All Categories ({stocks.length})
             </button>
             {categories.map((cat) => {
               const count = stocks.filter((s) => s.category === cat).length
@@ -163,10 +164,10 @@ export default function ProductCatalogGrid({
                   type="button"
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap bn-text ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                     isSelected
                       ? "bg-emerald-700 text-white shadow-xs"
-                      : "bg-white text-frost-dark border border-frost-border hover:bg-frost-hover"
+                      : "bg-white text-slate-900 border border-slate-200 hover:bg-slate-100"
                   }`}
                 >
                   {cat} ({count})
@@ -175,32 +176,32 @@ export default function ProductCatalogGrid({
             })}
           </div>
 
-          <div className="flex items-center gap-1 shrink-0 border-l border-frost-border/60 pl-2">
+          <div className="flex items-center gap-1 shrink-0 border-l border-slate-200/60 pl-2">
             <button
               type="button"
               onClick={() =>
                 setStockFilter((prev) => (prev === "IN_STOCK" ? "ALL" : "IN_STOCK"))
               }
-              className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer bn-text ${
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                 stockFilter === "IN_STOCK"
                   ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                  : "text-frost-muted hover:bg-white"
+                  : "text-slate-500 hover:bg-white"
               }`}
             >
-              মজুদ আছে
+              In Stock
             </button>
             <button
               type="button"
               onClick={() =>
                 setStockFilter((prev) => (prev === "LOW_STOCK" ? "ALL" : "LOW_STOCK"))
               }
-              className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer bn-text ${
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
                 stockFilter === "LOW_STOCK"
                   ? "bg-amber-100 text-amber-800 border border-amber-300"
-                  : "text-frost-muted hover:bg-white"
+                  : "text-slate-500 hover:bg-white"
               }`}
             >
-              কম স্টক
+              Low Stock
             </button>
           </div>
         </div>
@@ -209,26 +210,26 @@ export default function ProductCatalogGrid({
       {/* Catalog Grid Body */}
       <div className="flex-1 p-3 overflow-y-auto">
         {isLoading ? (
-          <div className="h-64 flex flex-col items-center justify-center text-frost-muted gap-2">
-            <span className="text-3xl animate-spin">⏳</span>
-            <p className="text-xs font-semibold bn-text">পণ্য তালিকা লোড হচ্ছে...</p>
+          <div className="h-64 flex flex-col items-center justify-center text-slate-500 gap-2">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <p className="text-xs font-semibold">Loading product list...</p>
           </div>
         ) : filteredStocks.length === 0 ? (
-          <div className="h-64 flex flex-col items-center justify-center text-frost-muted gap-2 text-center p-6">
-            <span className="text-4xl">🌾</span>
-            <p className="text-sm font-bold text-frost-dark bn-text">
-              কোনো পণ্য পাওয়া যায়নি
+          <div className="h-64 flex flex-col items-center justify-center text-slate-500 gap-2 text-center p-6">
+            <Wheat className="w-10 h-10 text-slate-300" />
+            <p className="text-sm font-bold text-slate-900">
+              No products found
             </p>
-            <p className="text-xs text-frost-muted bn-text">
-              অনুসন্ধান ফিল্টার পরিবর্তন করুন অথবা নতুন পণ্য যুক্ত করুন।
+            <p className="text-xs text-slate-500">
+              Change your search filters or add a new product.
             </p>
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="mt-2 text-xs text-emerald-700 font-bold hover:underline cursor-pointer bn-text"
+                className="mt-2 text-xs text-emerald-700 font-bold hover:underline cursor-pointer"
               >
-                অনুসন্ধান মুছুন
+                Clear search
               </button>
             )}
           </div>
@@ -251,7 +252,7 @@ export default function ProductCatalogGrid({
                 <div
                   key={`${item.productId}-${(item as any).lotId ?? "def"}`}
                   onClick={() => onAddToCart(item)}
-                  className="group flex flex-col justify-between p-3 rounded-xl border border-frost-border bg-white hover:border-emerald-500 hover:shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden"
+                  className="group flex flex-col justify-between p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-500 hover:shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden"
                 >
                   {/* Category Accent Line */}
                   <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-600 group-hover:h-1.5 transition-all" />
@@ -259,52 +260,52 @@ export default function ProductCatalogGrid({
                   {/* Top Product Info */}
                   <div className="pt-1">
                     <div className="flex items-start justify-between gap-1.5 mb-1">
-                      <span className="font-mono text-[10px] font-bold text-frost-muted tracking-tight truncate">
+                      <span className="font-mono text-[10px] font-bold text-slate-500 tracking-tight truncate">
                         {item.productCode}
                       </span>
                       {item.category && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60 bn-text truncate max-w-[90px]">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60 truncate max-w-[90px]">
                           {item.category}
                         </span>
                       )}
                     </div>
 
-                    <h4 className="font-bold text-sm text-frost-dark group-hover:text-emerald-800 bn-text leading-snug line-clamp-2 transition-colors">
-                      {item.productNameBn || item.nameBn}
-                    </h4>
-                    <p className="text-[11px] text-frost-muted truncate mt-0.5">
+                    <h4 className="font-bold text-sm text-slate-900 group-hover:text-emerald-800 leading-snug line-clamp-2 transition-colors">
                       {item.productNameEn || item.nameEn}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                      {item.productNameBn || item.nameBn}
                     </p>
 
                     {/* Expiry Date (if available) */}
                     {(item as any).expiryDate && (
-                      <p className="text-[10px] text-frost-muted bn-text mt-1">
-                        মেয়াদ: <span className="font-mono">{(item as any).expiryDate}</span>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        Expiry: <span className="font-mono">{(item as any).expiryDate}</span>
                       </p>
                     )}
                   </div>
 
                   {/* Bottom Stock & Price Footer */}
-                  <div className="mt-3 pt-2.5 border-t border-frost-border/60 flex items-end justify-between gap-1">
+                  <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-end justify-between gap-1">
                     <div>
                       {isOutOfStock ? (
                         <Badge variant="danger" size="sm" dot>
-                          স্টক শূন্য ({available})
+                          Out of stock ({available})
                         </Badge>
                       ) : isLowStock ? (
                         <Badge variant="warning" size="sm" dot>
-                          কম স্টক: {available} {item.baseUnit || ""}
+                          Low stock: {available} {item.baseUnit || ""}
                         </Badge>
                       ) : (
                         <Badge variant="success" size="sm">
-                          স্টক: {available} {item.baseUnit || ""}
+                          Stock: {available} {item.baseUnit || ""}
                         </Badge>
                       )}
 
                       {/* Owner Mode: Purchase Cost Hint */}
                       {isOwner && purchaseCost > 0 && (
-                        <div className="text-[10px] text-amber-700 font-semibold bn-text mt-1">
-                          কেনা: {formatTk(purchaseCost)}
+                        <div className="text-[10px] text-amber-700 font-semibold mt-1">
+                          Cost: {formatTk(purchaseCost)}
                         </div>
                       )}
                     </div>
@@ -313,8 +314,8 @@ export default function ProductCatalogGrid({
                       <div className="text-sm font-black text-emerald-800 font-mono tabular-nums leading-tight">
                         {formatTk(activePrice)}
                       </div>
-                      <span className="text-[10px] text-frost-muted bn-text font-medium">
-                        {saleMode === "RETAIL" ? "খুচরা দর" : "পাইকারি দর"}
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        {saleMode === "RETAIL" ? "Retail price" : "Wholesale price"}
                       </span>
                     </div>
                   </div>

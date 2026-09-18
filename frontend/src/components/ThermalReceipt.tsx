@@ -1,25 +1,26 @@
+import { Printer, X } from "lucide-react"
 import type { SaleResponse } from "../types"
 
 // BUSINESS DECISION: Thermal receipt (80mm/58mm) formatted specifically for fast retail counter
-// transactions with compact item breakdown, digital payment trace, and Bengali dealership footer.
+// transactions with compact item breakdown, digital payment trace, and dealership footer.
 
 export interface ThermalReceiptProps {
   sale: SaleResponse
   onClose: () => void
 }
 
-const tk = (n: number | undefined | null) => `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+const tk = (n: number | undefined | null) => `৳${(n ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
   const formattedDate = sale.saleDate
-    ? new Date(sale.saleDate).toLocaleString("bn-BD", {
+    ? new Date(sale.saleDate).toLocaleString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
       })
-    : new Date().toLocaleString("bn-BD")
+    : new Date().toLocaleString("en-US")
 
   const isWholesale = sale.saleMode === "WHOLESALE"
   const totalPaid = (sale.cashPaid || 0) + (sale.digitalPaid || 0)
@@ -27,20 +28,20 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl border border-frost-border max-w-sm w-full overflow-hidden flex flex-col my-auto">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full overflow-hidden flex flex-col my-auto">
         {/* Screen Header Actions (no-print) */}
-        <div className="p-3 bg-frost-surface border-b border-frost-border flex items-center justify-between no-print">
+        <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between no-print">
           <div className="flex items-center gap-2">
-            <span className="text-base">🖨️</span>
-            <span className="text-xs font-bold text-frost-dark bn-text">
-              থার্মাল রশিদ প্রিভিউ (৮০ মিমি)
+            <Printer className="w-4 h-4 text-slate-600" />
+            <span className="text-xs font-bold text-slate-900">
+              Thermal Receipt Preview (80mm)
             </span>
           </div>
           <button
             onClick={onClose}
-            className="text-frost-muted hover:text-frost-dark text-base cursor-pointer p-1 rounded hover:bg-frost-hover transition-colors"
+            className="text-slate-500 hover:text-slate-900 cursor-pointer p-1 rounded hover:bg-slate-100 transition-colors"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -58,46 +59,46 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
           >
             {/* Store Letterhead */}
             <div className="text-center pb-3 mb-2 border-b border-dashed border-gray-400">
-              <h1 className="text-base font-bold bn-text leading-tight text-black">
-                মেসার্স আল-আমিন ট্রেডার্স
+              <h1 className="text-base font-bold leading-tight text-black">
+                Al-Amin Traders
               </h1>
-              <p className="text-[11px] font-semibold bn-text text-gray-800 mt-0.5">
-                অনুমোদিত কৃষি পরিবেশক
-              </p>
-              <p className="text-[10px] bn-text text-gray-700">
-                কৃষি মার্কেট, উত্তর বাজার, নরসিংদী
+              <p className="text-[11px] font-semibold text-gray-800 mt-0.5">
+                Authorized Agro Dealer
               </p>
               <p className="text-[10px] text-gray-700">
-                ফোন: ০১৭১১-২৩৪৫৬৭, ০১৯১১-১২৩৪৫৬
+                Krishi Market, Uttar Bazar, Narsingdi
               </p>
-              <div className="mt-1.5 inline-block border border-black rounded px-2 py-0.5 text-[10px] font-bold bn-text">
-                {isWholesale ? "পাইকারি বিক্রয় রশিদ" : "খুচরা বিক্রয় ক্যাশ মেমো"}
+              <p className="text-[10px] text-gray-700">
+                Phone: 01711-234567, 01911-123456
+              </p>
+              <div className="mt-1.5 inline-block border border-black rounded px-2 py-0.5 text-[10px] font-bold">
+                {isWholesale ? "Wholesale Sales Receipt" : "Retail Cash Memo"}
               </div>
             </div>
 
             {/* Invoice Metadata */}
             <div className="text-[11px] space-y-0.5 pb-2 mb-2 border-b border-dashed border-gray-400">
               <div className="flex justify-between">
-                <span className="bn-text font-medium text-gray-700">মেমো নং:</span>
+                <span className="font-medium text-gray-700">Memo No:</span>
                 <span className="font-bold">{sale.invoiceNo}</span>
               </div>
               <div className="flex justify-between">
-                <span className="bn-text font-medium text-gray-700">তারিখ:</span>
+                <span className="font-medium text-gray-700">Date:</span>
                 <span>{formattedDate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="bn-text font-medium text-gray-700">ক্যাশিয়ার:</span>
-                <span className="bn-text">{sale.cashierName || "আল-আমিন"}</span>
+                <span className="font-medium text-gray-700">Cashier:</span>
+                <span>{sale.cashierName || "Al-Amin"}</span>
               </div>
               {sale.customerName && (
                 <div className="pt-1 mt-1 border-t border-dotted border-gray-300">
                   <div className="flex justify-between">
-                    <span className="bn-text font-medium text-gray-700">ক্রেতা:</span>
-                    <span className="font-bold bn-text">{sale.customerName}</span>
+                    <span className="font-medium text-gray-700">Customer:</span>
+                    <span className="font-bold">{sale.customerName}</span>
                   </div>
                   {sale.customerPhone && (
                     <div className="flex justify-between text-[10px]">
-                      <span className="bn-text text-gray-600">মোবাইল:</span>
+                      <span className="text-gray-600">Mobile:</span>
                       <span>{sale.customerPhone}</span>
                     </div>
                   )}
@@ -109,18 +110,18 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
             <table className="w-full text-[11px] mb-2">
               <thead>
                 <tr className="border-b border-black text-black">
-                  <th className="text-left py-1 bn-text font-bold">পণ্য</th>
-                  <th className="text-center py-1 font-bold">পরিমাণ</th>
-                  <th className="text-right py-1 font-bold">দর</th>
-                  <th className="text-right py-1 font-bold">মোট</th>
+                  <th className="text-left py-1 font-bold">Item</th>
+                  <th className="text-center py-1 font-bold">Qty</th>
+                  <th className="text-right py-1 font-bold">Rate</th>
+                  <th className="text-right py-1 font-bold">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-dashed divide-gray-300">
                 {sale.items?.map((item) => (
                   <tr key={item.id || `${item.lotId}-${item.productNameBn}`}>
                     <td className="py-1.5 pr-1">
-                      <div className="font-bold bn-text text-[11px] leading-tight">
-                        {item.productNameBn || item.productNameEn}
+                      <div className="font-bold text-[11px] leading-tight">
+                        {item.productNameEn || item.productNameBn}
                       </div>
                       <div className="text-[9px] text-gray-600 font-mono">
                         #{item.lotNumber}
@@ -143,40 +144,40 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
             {/* Financial Totals */}
             <div className="border-t border-black pt-2 space-y-1 text-[11px]">
               <div className="flex justify-between text-gray-800">
-                <span className="bn-text">উপ-মোট (Subtotal):</span>
+                <span>Subtotal:</span>
                 <span className="tabular-nums font-semibold">{tk(sale.subtotal)}</span>
               </div>
 
               {sale.discount > 0 && (
                 <div className="flex justify-between text-gray-800">
-                  <span className="bn-text">বিশেষ ছাড় (Discount):</span>
+                  <span>Discount:</span>
                   <span className="tabular-nums font-semibold">-{tk(sale.discount)}</span>
                 </div>
               )}
 
               {sale.roundOff > 0 && (
                 <div className="flex justify-between text-gray-800">
-                  <span className="bn-text">রাউন্ড-অফ (Round-off):</span>
+                  <span>Round-off:</span>
                   <span className="tabular-nums font-semibold">-{tk(sale.roundOff)}</span>
                 </div>
               )}
 
               <div className="flex justify-between text-sm font-bold border-t border-dashed border-gray-400 pt-1 text-black">
-                <span className="bn-text">সর্বমোট প্রদেয়:</span>
+                <span>Total Payable:</span>
                 <span className="tabular-nums">{tk(sale.totalAmount)}</span>
               </div>
 
               {/* Payment Details */}
               <div className="border-t border-dotted border-gray-300 pt-1 space-y-0.5">
                 <div className="flex justify-between text-gray-800">
-                  <span className="bn-text">নগদ প্রদান (Cash):</span>
+                  <span>Cash:</span>
                   <span className="tabular-nums font-semibold">{tk(sale.cashPaid)}</span>
                 </div>
 
                 {sale.digitalPaid > 0 && (
                   <div className="flex justify-between text-gray-800">
-                    <span className="bn-text">
-                      ডিজিটাল ({sale.digitalMedium || "MFS"}):
+                    <span>
+                      Digital ({sale.digitalMedium || "MFS"}):
                     </span>
                     <span className="tabular-nums font-semibold">{tk(sale.digitalPaid)}</span>
                   </div>
@@ -190,14 +191,14 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
 
                 {changeAmount > 0 && (
                   <div className="flex justify-between text-gray-800 font-semibold">
-                    <span className="bn-text">ফেরত দেওয়া হয়েছে:</span>
+                    <span>Change Returned:</span>
                     <span className="tabular-nums">{tk(changeAmount)}</span>
                   </div>
                 )}
 
                 {sale.dueAmount > 0 && (
                   <div className="flex justify-between text-red-700 font-bold text-xs pt-1 border-t border-gray-400">
-                    <span className="bn-text">বকেয়া / বাকি:</span>
+                    <span>Due / Balance:</span>
                     <span className="tabular-nums">{tk(sale.dueAmount)}</span>
                   </div>
                 )}
@@ -206,11 +207,11 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
 
             {/* Footer */}
             <div className="border-t border-dashed border-gray-400 mt-4 pt-3 text-center space-y-1">
-              <p className="text-[11px] font-bold bn-text text-black">
-                ধন্যবাদ, আবার আসবেন!
+              <p className="text-[11px] font-bold text-black">
+                Thank you, please visit again!
               </p>
-              <p className="text-[10px] bn-text text-gray-700">
-                উন্নত মানের বালাইনাশক ও সার।
+              <p className="text-[10px] text-gray-700">
+                Quality pesticides & fertilizers.
               </p>
               <p className="text-[9px] text-gray-500 font-mono mt-1">
                 {sale.invoiceNo} · Powered by Al-Amin POS
@@ -220,21 +221,21 @@ export default function ThermalReceipt({ sale, onClose }: ThermalReceiptProps) {
         </div>
 
         {/* Modal Buttons (no-print) */}
-        <div className="p-3.5 bg-frost-surface border-t border-frost-border flex gap-2.5 no-print">
+        <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex gap-2.5 no-print">
           <button
             type="button"
             onClick={() => window.print()}
-            className="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm bn-text transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+            className="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
           >
-            <span>🖨️</span>
-            <span>প্রিন্ট ক্যাশ মেমো (F2)</span>
+            <Printer className="w-4 h-4" />
+            <span>Print Cash Memo (F2)</span>
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="py-3 px-4 rounded-xl border border-frost-border bg-white hover:bg-frost-surface text-frost-dark font-semibold text-sm bn-text transition-colors cursor-pointer"
+            className="py-3 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 font-semibold text-sm transition-colors cursor-pointer"
           >
-            বন্ধ করুন
+            Close
           </button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { FileText, Printer, X } from "lucide-react"
 import type { SaleResponse, Customer } from "../types"
 
 // BUSINESS DECISION: A4 Invoice & Challan prints wholesale agricultural dispatches with
@@ -10,7 +11,7 @@ export interface A4InvoicePrintProps {
 }
 
 const tk = (n: number | undefined | null) =>
-  `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  `৳${(n ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export default function A4InvoicePrint({
   sale,
@@ -18,19 +19,19 @@ export default function A4InvoicePrint({
   onClose,
 }: A4InvoicePrintProps) {
   const formattedDate = sale.saleDate
-    ? new Date(sale.saleDate).toLocaleDateString("bn-BD", {
+    ? new Date(sale.saleDate).toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
       })
-    : new Date().toLocaleDateString("bn-BD")
+    : new Date().toLocaleDateString("en-US")
 
   const formattedTime = sale.saleDate
-    ? new Date(sale.saleDate).toLocaleTimeString("bn-BD", {
+    ? new Date(sale.saleDate).toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
       })
-    : new Date().toLocaleTimeString("bn-BD")
+    : new Date().toLocaleTimeString("en-US")
 
   // Cumulative ledger calculations
   // If customer is known, previous due is their currentDue minus this sale's due (if backend already added it)
@@ -45,30 +46,30 @@ export default function A4InvoicePrint({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl border border-frost-border max-w-4xl w-full overflow-hidden flex flex-col my-auto">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full overflow-hidden flex flex-col my-auto">
         {/* Screen Top Bar (no-print) */}
-        <div className="p-3 bg-frost-surface border-b border-frost-border flex items-center justify-between no-print">
+        <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between no-print">
           <div className="flex items-center gap-2">
-            <span className="text-base">📄</span>
-            <span className="text-xs font-bold text-frost-dark bn-text">
-              পাইকারি চালান ও ইনভয়েস প্রিভিউ (A4 ফরম্যাট)
+            <FileText className="w-4 h-4 text-slate-600" />
+            <span className="text-xs font-bold text-slate-900">
+              Wholesale Invoice & Challan Preview (A4 Format)
             </span>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => window.print()}
-              className="py-1.5 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs bn-text transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="py-1.5 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <span>🖨️</span>
-              <span>প্রিন্ট করুন (A4)</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Invoice (A4)</span>
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="text-frost-muted hover:text-frost-dark text-base cursor-pointer p-1 rounded hover:bg-frost-hover transition-colors"
+              className="text-slate-500 hover:text-slate-900 cursor-pointer p-1 rounded hover:bg-slate-100 transition-colors"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -90,36 +91,36 @@ export default function A4InvoicePrint({
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black text-emerald-800 tracking-tight bn-text">
-                      মেসার্স আল-আমিন ট্রেডার্স
+                    <span className="text-2xl font-black text-emerald-800 tracking-tight">
+                      Al-Amin Traders
                     </span>
-                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 bn-text">
-                      অনুমোদিত কৃষি পরিবেশক
+                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                      Authorized Agro Dealer
                     </span>
                   </div>
-                  <p className="text-xs font-semibold text-gray-700 bn-text mt-0.5">
-                    উন্নত মানের বালাইনাশক, সার ও বীজ পরিবেশক
-                  </p>
-                  <p className="text-[11px] text-gray-600 bn-text">
-                    কৃষি মার্কেট, উত্তর বাজার, নরসিংদী সদর, নরসিংদী।
+                  <p className="text-xs font-semibold text-gray-700 mt-0.5">
+                    Agrochemical Dealership Cockpit — Pesticides, Fertilizers & Seeds
                   </p>
                   <p className="text-[11px] text-gray-600">
-                    মোবাইল: ০১৭১১-২৩৪৫৬৭, ০১৯১১-১২৩৪৫৬ | ইমেইল: alamin.traders.narsingdi@gmail.com
+                    Krishi Market, Uttar Bazar, Narsingdi Sadar, Narsingdi.
+                  </p>
+                  <p className="text-[11px] text-gray-600">
+                    Mobile: 01711-234567, 01911-123456 | Email: alamin.traders.narsingdi@gmail.com
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <div className="inline-block bg-emerald-800 text-white font-bold px-3 py-1 text-sm rounded shadow-xs bn-text">
-                    পাইকারি চালান ও ইনভয়েস
+                  <div className="inline-block bg-emerald-800 text-white font-bold px-3 py-1 text-sm rounded shadow-xs">
+                    Wholesale Invoice & Challan
                   </div>
                   <p className="text-[11px] font-mono mt-1.5 font-bold">
-                    ইনভয়েস নং: <span className="text-emerald-900">{sale.invoiceNo}</span>
+                    Invoice No: <span className="text-emerald-900">{sale.invoiceNo}</span>
                   </p>
-                  <p className="text-[11px] text-gray-600 bn-text">
-                    তারিখ: {formattedDate} ({formattedTime})
+                  <p className="text-[11px] text-gray-600">
+                    Date: {formattedDate} ({formattedTime})
                   </p>
-                  <p className="text-[11px] text-gray-600 bn-text">
-                    ক্যাশিয়ার: {sale.cashierName || "আল-আমিন"}
+                  <p className="text-[11px] text-gray-600">
+                    Cashier: {sale.cashierName || "Al-Amin"}
                   </p>
                 </div>
               </div>
@@ -128,31 +129,31 @@ export default function A4InvoicePrint({
             {/* Customer & Delivery Profile Section */}
             <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 border border-gray-200 rounded-lg mb-5 text-[11px]">
               <div>
-                <span className="text-xs font-bold text-emerald-900 bn-text block border-b border-gray-200 pb-1 mb-1.5">
-                  ক্রেতার বিবরণী (Billed To):
+                <span className="text-xs font-bold text-emerald-900 block border-b border-gray-200 pb-1 mb-1.5">
+                  Billed To:
                 </span>
                 <div className="space-y-0.5">
                   <div className="flex">
-                    <span className="w-24 text-gray-600 bn-text">প্রতিষ্ঠানের নাম:</span>
-                    <span className="font-bold text-gray-900 bn-text">
-                      {customer?.businessName || "সাধারণ পাইকারি ক্রেতা"}
+                    <span className="w-24 text-gray-600">Business Name:</span>
+                    <span className="font-bold text-gray-900">
+                      {customer?.businessName || "Walk-in Wholesale Customer"}
                     </span>
                   </div>
                   <div className="flex">
-                    <span className="w-24 text-gray-600 bn-text">স্বত্বাধিকারী:</span>
-                    <span className="font-semibold text-gray-800 bn-text">
+                    <span className="w-24 text-gray-600">Proprietor:</span>
+                    <span className="font-semibold text-gray-800">
                       {customer?.name || sale.customerName || "-"}
                     </span>
                   </div>
                   {customer?.fatherName && (
                     <div className="flex">
-                      <span className="w-24 text-gray-600 bn-text">পিতার নাম:</span>
-                      <span className="text-gray-700 bn-text">{customer.fatherName}</span>
+                      <span className="w-24 text-gray-600">Father's Name:</span>
+                      <span className="text-gray-700">{customer.fatherName}</span>
                     </div>
                   )}
                   <div className="flex">
-                    <span className="w-24 text-gray-600 bn-text">ঠিকানা / গ্রাম:</span>
-                    <span className="text-gray-700 bn-text">
+                    <span className="w-24 text-gray-600">Address / Village:</span>
+                    <span className="text-gray-700">
                       {customer?.villageAddress || "-"}
                     </span>
                   </div>
@@ -160,30 +161,30 @@ export default function A4InvoicePrint({
               </div>
 
               <div>
-                <span className="text-xs font-bold text-emerald-900 bn-text block border-b border-gray-200 pb-1 mb-1.5">
-                  যোগাযোগ ও পেমেন্ট বিবরণ:
+                <span className="text-xs font-bold text-emerald-900 block border-b border-gray-200 pb-1 mb-1.5">
+                  Contact & Payment Details:
                 </span>
                 <div className="space-y-0.5">
                   <div className="flex">
-                    <span className="w-24 text-gray-600 bn-text">মোবাইল নং:</span>
+                    <span className="w-24 text-gray-600">Mobile No:</span>
                     <span className="font-mono font-semibold text-gray-900">
                       {customer?.phone || sale.customerPhone || "-"}
                     </span>
                   </div>
                   <div className="flex">
-                    <span className="w-24 text-gray-600 bn-text">হোয়াটসঅ্যাপ:</span>
+                    <span className="w-24 text-gray-600">WhatsApp:</span>
                     <span className="font-mono text-gray-800">
                       {customer?.whatsappNumber || customer?.phone || "-"}
                     </span>
                   </div>
                   <div className="flex">
-                    <span className="w-24 text-gray-600 bn-text">সরবরাহ উৎস:</span>
-                    <span className="font-semibold text-gray-800 bn-text">
-                      দোকান ও কেন্দ্রীয় গুদাম (ডিউয়াল স্টক)
+                    <span className="w-24 text-gray-600">Supply Source:</span>
+                    <span className="font-semibold text-gray-800">
+                      Shop & Central Warehouse (Dual Stock)
                     </span>
                   </div>
                   <div className="flex">
-                    <span className="w-24 text-gray-600 bn-text">পেমেন্ট মেথড:</span>
+                    <span className="w-24 text-gray-600">Payment Method:</span>
                     <span className="font-semibold text-emerald-800">
                       {sale.paymentMethod || "CASH"}
                     </span>
@@ -197,29 +198,29 @@ export default function A4InvoicePrint({
               <table className="w-full border-collapse text-[11px]">
                 <thead>
                   <tr className="bg-emerald-900 text-white">
-                    <th className="border border-emerald-950 py-2 px-2 text-center w-10 bn-text">
-                      ক্রমিক
+                    <th className="border border-emerald-950 py-2 px-2 text-center w-10">
+                      SL
                     </th>
-                    <th className="border border-emerald-950 py-2 px-3 text-left bn-text">
-                      পণ্যের বিবরণ ও প্রস্তুতকারক
+                    <th className="border border-emerald-950 py-2 px-3 text-left">
+                      Product Description & Manufacturer
                     </th>
-                    <th className="border border-emerald-950 py-2 px-2 text-center w-24 bn-text">
-                      লট নং
+                    <th className="border border-emerald-950 py-2 px-2 text-center w-24">
+                      Lot No.
                     </th>
-                    <th className="border border-emerald-950 py-2 px-2 text-center w-20 bn-text">
-                      মেয়াদ
+                    <th className="border border-emerald-950 py-2 px-2 text-center w-20">
+                      Expiry
                     </th>
-                    <th className="border border-emerald-950 py-2 px-2 text-center w-20 bn-text">
-                      বেস ইউনিট
+                    <th className="border border-emerald-950 py-2 px-2 text-center w-20">
+                      Base Unit
                     </th>
-                    <th className="border border-emerald-950 py-2 px-2 text-center w-16 bn-text">
-                      কার্টন
+                    <th className="border border-emerald-950 py-2 px-2 text-center w-16">
+                      Carton
                     </th>
-                    <th className="border border-emerald-950 py-2 px-3 text-right w-24 bn-text">
-                      দর (৳)
+                    <th className="border border-emerald-950 py-2 px-3 text-right w-24">
+                      Rate (৳)
                     </th>
-                    <th className="border border-emerald-950 py-2 px-3 text-right w-28 bn-text">
-                      মোট মূল্য (৳)
+                    <th className="border border-emerald-950 py-2 px-3 text-right w-28">
+                      Amount (৳)
                     </th>
                   </tr>
                 </thead>
@@ -240,11 +241,11 @@ export default function A4InvoicePrint({
                           {idx + 1}
                         </td>
                         <td className="border border-gray-300 py-2 px-3">
-                          <div className="font-bold text-gray-900 bn-text">
-                            {item.productNameBn}
+                          <div className="font-bold text-gray-900">
+                            {item.productNameEn || item.productNameBn}
                           </div>
                           <div className="text-[10px] text-gray-500">
-                            {item.productNameEn}
+                            {item.productNameBn}
                           </div>
                         </td>
                         <td className="border border-gray-300 py-2 px-2 text-center font-mono text-[10px]">
@@ -276,21 +277,21 @@ export default function A4InvoicePrint({
             <div className="grid grid-cols-2 gap-6 items-start mb-6">
               {/* Notes & Terms */}
               <div className="border border-gray-300 rounded-lg p-3 text-[11px] bg-gray-50/50 space-y-1.5">
-                <span className="font-bold text-gray-800 bn-text block">
-                  চালান সংক্রান্ত শর্তাবলী:
+                <span className="font-bold text-gray-800 block">
+                  Terms & Conditions:
                 </span>
-                <p className="text-[10px] text-gray-600 bn-text leading-relaxed">
-                  ১. অক্ষত সিলযুক্ত পণ্য ক্রয়ের ১৫ দিনের মধ্যে ফেরতযোগ্য।
+                <p className="text-[10px] text-gray-600 leading-relaxed">
+                  1. Unopened, sealed products are returnable within 15 days of purchase.
                 </p>
-                <p className="text-[10px] text-gray-600 bn-text leading-relaxed">
-                  ২. বালাইনাশক ও কীটনাশক ব্যবহারের পূর্বে মোড়কের গায়ে নির্দেশিকা সতর্কতার সাথে পাঠ করুন।
+                <p className="text-[10px] text-gray-600 leading-relaxed">
+                  2. Please read the packaging instructions carefully before using any pesticide or insecticide.
                 </p>
-                <p className="text-[10px] text-gray-600 bn-text leading-relaxed">
-                  ৩. বকেয়া চালান পরবর্তী বিল বা নির্ধারিত ঋণসীমার মধ্যে পরিশোধযোগ্য।
+                <p className="text-[10px] text-gray-600 leading-relaxed">
+                  3. Outstanding dues are payable against the next invoice or within the agreed credit limit.
                 </p>
                 {sale.digitalTrxId && (
                   <p className="text-[10px] font-mono text-emerald-800 pt-1">
-                    ডিজিটাল পেমেন্ট TrxID: {sale.digitalTrxId} ({sale.digitalMedium || "MFS"})
+                    Digital Payment TrxID: {sale.digitalTrxId} ({sale.digitalMedium || "MFS"})
                   </p>
                 )}
               </div>
@@ -300,14 +301,14 @@ export default function A4InvoicePrint({
                 <table className="w-full text-[11px]">
                   <tbody>
                     <tr className="border-b border-gray-200">
-                      <td className="py-1.5 px-3 text-gray-700 bn-text">বর্তমান ইনভয়েস উপ-মোট:</td>
+                      <td className="py-1.5 px-3 text-gray-700">Current Invoice Subtotal:</td>
                       <td className="py-1.5 px-3 text-right tabular-nums font-semibold">
                         {tk(sale.subtotal)}
                       </td>
                     </tr>
                     {sale.discount > 0 && (
                       <tr className="border-b border-gray-200 text-gray-600">
-                        <td className="py-1.5 px-3 bn-text">বিশেষ ছাড় (Discount):</td>
+                        <td className="py-1.5 px-3">Discount:</td>
                         <td className="py-1.5 px-3 text-right tabular-nums">
                           -{tk(sale.discount)}
                         </td>
@@ -315,38 +316,38 @@ export default function A4InvoicePrint({
                     )}
                     {sale.roundOff > 0 && (
                       <tr className="border-b border-gray-200 text-gray-600">
-                        <td className="py-1.5 px-3 bn-text">রাউন্ড-অফ সমন্বয়:</td>
+                        <td className="py-1.5 px-3">Round-off Adjustment:</td>
                         <td className="py-1.5 px-3 text-right tabular-nums">
                           -{tk(sale.roundOff)}
                         </td>
                       </tr>
                     )}
                     <tr className="border-b border-gray-200 bg-gray-50 font-bold">
-                      <td className="py-1.5 px-3 text-gray-900 bn-text">বর্তমান চালান মোট:</td>
+                      <td className="py-1.5 px-3 text-gray-900">Current Invoice Total:</td>
                       <td className="py-1.5 px-3 text-right tabular-nums text-emerald-900">
                         {tk(sale.totalAmount)}
                       </td>
                     </tr>
                     <tr className="border-b border-gray-200">
-                      <td className="py-1.5 px-3 text-gray-600 bn-text">পূর্ববর্তী বকেয়া (Prev. Due):</td>
+                      <td className="py-1.5 px-3 text-gray-600">Previous Due:</td>
                       <td className="py-1.5 px-3 text-right tabular-nums text-gray-800 font-semibold">
                         {tk(estimatedPrevDue)}
                       </td>
                     </tr>
                     <tr className="border-b border-gray-200 bg-gray-50 font-bold">
-                      <td className="py-1.5 px-3 text-gray-900 bn-text">সর্বমোট প্রদেয় (Total Payable):</td>
+                      <td className="py-1.5 px-3 text-gray-900">Total Payable:</td>
                       <td className="py-1.5 px-3 text-right tabular-nums text-black">
                         {tk(estimatedPrevDue + sale.totalAmount)}
                       </td>
                     </tr>
                     <tr className="border-b border-gray-200 text-emerald-800">
-                      <td className="py-1.5 px-3 bn-text font-semibold">বর্তমান পরিশোধ (জমা):</td>
+                      <td className="py-1.5 px-3 font-semibold">Amount Paid Now:</td>
                       <td className="py-1.5 px-3 text-right tabular-nums font-bold">
                         {tk(totalPaid)}
                       </td>
                     </tr>
                     <tr className="bg-emerald-50 text-emerald-950 font-black text-xs">
-                      <td className="py-2 px-3 bn-text">সর্বমোট অবশিষ্ট বকেয়া (Balance Due):</td>
+                      <td className="py-2 px-3">Total Balance Due:</td>
                       <td className="py-2 px-3 text-right tabular-nums text-red-700">
                         {tk(cumulativeDue)}
                       </td>
@@ -361,22 +362,22 @@ export default function A4InvoicePrint({
               <div className="grid grid-cols-2 gap-10">
                 <div className="text-center">
                   <div className="border-t border-black w-48 mx-auto pt-1">
-                    <p className="font-bold text-xs bn-text text-black">
-                      ক্রেতার স্বাক্ষর / গ্রহণকারীর সই
+                    <p className="font-bold text-xs text-black">
+                      Customer / Received By
                     </p>
                     <p className="text-[10px] text-gray-500">
-                      Customer / Received By
+                      Customer Signature
                     </p>
                   </div>
                 </div>
 
                 <div className="text-center">
                   <div className="border-t border-black w-48 mx-auto pt-1">
-                    <p className="font-bold text-xs bn-text text-black">
-                      বিক্রেতার স্বাক্ষর
+                    <p className="font-bold text-xs text-black">
+                      Authorized Signatory
                     </p>
                     <p className="text-[10px] text-gray-500">
-                      Authorized Signatory (Al-Amin Traders)
+                      Al-Amin Traders
                     </p>
                   </div>
                 </div>
@@ -386,21 +387,21 @@ export default function A4InvoicePrint({
         </div>
 
         {/* Footer (no-print) */}
-        <div className="p-3 bg-frost-surface border-t border-frost-border flex items-center justify-end gap-2.5 no-print">
+        <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 no-print">
           <button
             type="button"
             onClick={onClose}
-            className="py-2 px-4 rounded-xl border border-frost-border bg-white hover:bg-frost-surface text-frost-dark font-semibold text-xs bn-text transition-colors cursor-pointer"
+            className="py-2 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 font-semibold text-xs transition-colors cursor-pointer"
           >
-            বন্ধ করুন
+            Close
           </button>
           <button
             type="button"
             onClick={() => window.print()}
-            className="py-2 px-5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs bn-text transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="py-2 px-5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
-            <span>🖨️</span>
-            <span>প্রিন্ট চালান (A4)</span>
+            <Printer className="w-3.5 h-3.5" />
+            <span>Print Invoice (A4)</span>
           </button>
         </div>
       </div>

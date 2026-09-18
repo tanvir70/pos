@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { Lock } from "lucide-react"
 
 export interface StatCardProps {
   title: string
@@ -48,9 +49,9 @@ const colorThemes = {
   },
   neutral: {
     bg: "bg-white",
-    border: "border-frost-border",
-    iconBg: "bg-frost-surface text-frost-dark",
-    text: "text-frost-dark",
+    border: "border-slate-200",
+    iconBg: "bg-slate-50 text-slate-900",
+    text: "text-slate-900",
   },
 }
 
@@ -73,7 +74,7 @@ export function StatCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-frost-muted bn-text truncate uppercase tracking-wider">
+          <p className="text-xs font-bold text-slate-500 truncate uppercase tracking-wider">
             {title}
           </p>
 
@@ -82,13 +83,13 @@ export function StatCard({
               <div
                 onClick={onUnlockClick}
                 className="group flex items-center gap-1.5 cursor-pointer py-1 select-none"
-                title="পিন দিয়ে আনলক করুন"
+                title="Unlock with PIN"
               >
                 <span className="font-mono text-xl sm:text-2xl font-black text-gray-400 blur-xs group-hover:blur-none transition-all">
-                  ৳••,•••.••
+                  ৳**,***.**
                 </span>
-                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-full bn-text">
-                  🔒 আনলক
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-full">
+                  <Lock className="w-3 h-3" /> Unlock
                 </span>
               </div>
             ) : (
@@ -101,7 +102,7 @@ export function StatCard({
           </div>
 
           {(subtitle || trend) && (
-            <div className="mt-1.5 flex items-center gap-2 text-xs bn-text flex-wrap">
+            <div className="mt-1.5 flex items-center gap-2 text-xs flex-wrap">
               {trend && (
                 <span
                   className={`font-bold tabular-nums px-1.5 py-0.2 rounded text-[10px] ${
@@ -113,7 +114,7 @@ export function StatCard({
                   {trend.isPositive ? "▲" : "▼"} {trend.value}
                 </span>
               )}
-              {subtitle && <span className="text-frost-muted">{subtitle}</span>}
+              {subtitle && <span className="text-slate-500">{subtitle}</span>}
             </div>
           )}
         </div>
@@ -129,4 +130,3 @@ export function StatCard({
 }
 
 export default StatCard
-
