@@ -14,6 +14,7 @@ import type { PaymentMethod } from "../../types"
 import { useCart } from "../../context/CartContext"
 import { formatTk, roundAccounting } from "../../utils/currency"
 import Button from "../ui/Button"
+import Collapse from "../ui/Collapse"
 
 export interface SettlementPanelProps {
   isOwner?: boolean
@@ -310,7 +311,7 @@ export default function SettlementPanel({
           </div>
         )}
 
-        {paymentMethod === "DUE" && (
+        <Collapse show={paymentMethod === "DUE"}>
           <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl space-y-1">
             <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
               <AlertTriangle className="w-3.5 h-3.5" />
@@ -320,11 +321,11 @@ export default function SettlementPanel({
               A total of {formatTk(finalTotalAmount)} will be added to the selected customer's due ledger.
             </p>
           </div>
-        )}
+        </Collapse>
 
         {/* Change Return / Live Due Badges */}
-        {changeToReturn > 0 && (
-          <div className="flex items-center justify-between p-2.5 bg-emerald-100 border border-emerald-300 rounded-xl animate-in fade-in">
+        <Collapse show={changeToReturn > 0}>
+          <div className="flex items-center justify-between p-2.5 bg-emerald-100 border border-emerald-300 rounded-xl">
             <span className="text-xs font-bold text-emerald-900">
               Return to Customer:
             </span>
@@ -332,10 +333,10 @@ export default function SettlementPanel({
               {formatTk(changeToReturn)}
             </span>
           </div>
-        )}
+        </Collapse>
 
-        {liveDue > 0 && paymentMethod !== "DUE" && (
-          <div className="flex items-center justify-between p-2.5 bg-rose-50 border border-rose-300 rounded-xl animate-in fade-in">
+        <Collapse show={liveDue > 0 && paymentMethod !== "DUE"}>
+          <div className="flex items-center justify-between p-2.5 bg-rose-50 border border-rose-300 rounded-xl">
             <span className="text-xs font-bold text-rose-900">
               Remaining Due:
             </span>
@@ -343,10 +344,10 @@ export default function SettlementPanel({
               {formatTk(liveDue)}
             </span>
           </div>
-        )}
+        </Collapse>
 
         {/* Owner Mode Gross Profit KPI */}
-        {isOwner && finalTotalAmount > 0 && (
+        <Collapse show={isOwner && finalTotalAmount > 0}>
           <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs space-y-1 text-amber-900">
             <div className="flex items-center justify-between">
               <span>Total Cost:</span>
@@ -359,7 +360,7 @@ export default function SettlementPanel({
               </span>
             </div>
           </div>
-        )}
+        </Collapse>
 
         {/* Complete Sale Action Button */}
         <Button

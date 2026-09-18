@@ -182,7 +182,7 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 h-[calc(100vh-5rem)] min-h-[620px]">
+    <div className="flex flex-col gap-3 h-full min-h-[520px]">
       {/* Top Counter Status Bar */}
       <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
@@ -270,7 +270,7 @@ export default function PosCounter({ isOwner }: PosCounterProps) {
           </div>
 
           {/* Active Cart Ticket */}
-          <div className="flex-1 min-h-[220px]">
+          <div className="flex-1 min-h-[220px] transition-[height] duration-200 ease-out">
             <CartTicket isOwner={isOwner} stocks={stocks} />
           </div>
 
