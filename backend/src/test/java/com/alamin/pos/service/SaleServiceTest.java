@@ -10,6 +10,7 @@ import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.StockInventory;
 import com.alamin.pos.exception.BusinessRuleViolationException;
+import com.alamin.pos.exception.InsufficientStockException;
 import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.CustomerLedgerRepository;
 import com.alamin.pos.repository.CustomerRepository;
@@ -93,8 +94,8 @@ class SaleServiceTest {
     }
 
     @Test
-    @DisplayName("2. Negative Stock: Selling from Dokan when stock is 0 allows negative inventory")
-    void testNegativeStockAllowedInDokan() {
+    @DisplayName("2. Stock protection: selling more than available DOKAN stock is blocked")
+    void testNegativeStockBlockedInDokan() {
         Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
 
         // Create a new lot with 0 stock in Dokan
@@ -131,12 +132,13 @@ class SaleServiceTest {
                 .paymentMethod("CASH")
                 .build();
 
-        SaleResponse response = saleService.processSale(request);
-        assertThat(response).isNotNull();
+        assertThatThrownBy(() -> saleService.processSale(request))
+                .isInstanceOf(InsufficientStockException.class)
+                .hasMessageContaining("exceeds available stock");
 
-        // Dokan stock should now be -5.000
+        // Dokan stock must remain zero and never go negative
         StockInventory updatedDokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-        assertThat(updatedDokan.getQuantity()).isEqualByComparingTo("-5.000");
+        assertThat(updatedDokan.getQuantity()).isEqualByComparingTo("0.000");
     }
 
     @Test

@@ -35,14 +35,10 @@ import {
 // BUSINESS DECISION: Due adjustment refunds strictly require customer profile association to guarantee correct
 // credit reduction in the customer ledger.
 
-export interface ReturnsProps {
-  isOwner: boolean
-}
-
 const tk = (n: number | undefined | null) =>
   `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-export default function Returns({ isOwner }: ReturnsProps) {
+export default function Returns() {
   // ─── Remote Data State ──────────────────────────────────────────
   const [stocks, setStocks] = useState<StockItem[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])

@@ -30,21 +30,17 @@ import { getCustomers, createCustomer, getCustomerLedger, recordPayment } from "
 
 // BUSINESS DECISION: Direct WhatsApp messaging automatically formats Bangladesh mobile numbers to +880
 // international format and generates a pre-composed polite balance reminder message.
-// BUSINESS DECISION: Money Receipt (MR No.) auto-suggests 'MR-<timestamp>' if cashier doesn't enter a manual
+// BUSINESS DECISION: Money Receipt (MR No.) auto-suggests 'MR-<timestamp>' if no manual
 // serial from the physical paper memo book, ensuring unbroken voucher traceability for rural debt collections.
 // BUSINESS DECISION: Customer credit limit tracks utilization percentage and renders an amber/red warning
 // badge when due balance reaches or exceeds the agreed ceiling to prevent uncollateralized credit defaults.
-
-export interface CustomersProps {
-  isOwner: boolean
-}
 
 type FilterType = "ALL" | "WHOLESALE" | "RETAIL" | "HAS_DUE"
 
 const tk = (n: number | undefined | null) =>
   `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-export default function Customers({ isOwner }: CustomersProps) {
+export default function Customers() {
   // ─── State ──────────────────────────────────────────────────────────
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)

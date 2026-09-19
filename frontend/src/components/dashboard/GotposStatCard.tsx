@@ -1,5 +1,5 @@
 import React from "react"
-import { ArrowUp, ArrowDown, Lock } from "lucide-react"
+import { ArrowUp, ArrowDown } from "lucide-react"
 
 export type StatTheme = "orange" | "navy" | "emerald" | "rose"
 
@@ -10,8 +10,6 @@ export interface GotposStatCardProps {
   trendLabel?: string
   theme: StatTheme
   icon: React.ReactNode
-  isMasked?: boolean
-  onUnlockClick?: () => void
   currencyPrefix?: boolean
 }
 
@@ -52,8 +50,6 @@ export const GotposStatCard: React.FC<GotposStatCardProps> = ({
   trendLabel = "From Last Week",
   theme,
   icon,
-  isMasked = false,
-  onUnlockClick,
 }) => {
   const t = themeStyles[theme]
   const isPositive = (trendPercent ?? 0) >= 0
@@ -65,21 +61,9 @@ export const GotposStatCard: React.FC<GotposStatCardProps> = ({
           <p className="text-sm font-medium text-slate-500 truncate">{title}</p>
 
           <div className="my-1.5 flex items-center gap-2">
-            {isMasked ? (
-              <button
-                type="button"
-                onClick={onUnlockClick}
-                className="group flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-amber-50 text-slate-600 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-lg text-sm font-semibold transition-all cursor-pointer"
-                title="Click to enter Owner PIN"
-              >
-                <Lock className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-600" />
-                <span>Locked</span>
-              </button>
-            ) : (
-              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                {value}
-              </h3>
-            )}
+            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              {value}
+            </h3>
           </div>
         </div>
 

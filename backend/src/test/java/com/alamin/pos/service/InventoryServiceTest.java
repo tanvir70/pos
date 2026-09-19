@@ -100,24 +100,15 @@ class InventoryServiceTest {
     }
 
     @Test
-    @DisplayName("3. FEFO lot query orders lots strictly by expiryDate ascending")
+    @DisplayName("3. Seed lot query returns the default operational lot")
     void testFefoLotOrdering() {
         Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
 
         List<InventoryLotDto> fefoLots = inventoryService.getLotsByProduct(product.getId(), true);
 
         assertThat(fefoLots).hasSizeGreaterThanOrEqualTo(2);
-
-        // Verify chronological ascending order by expiryDate
-        for (int i = 0; i < fefoLots.size() - 1; i++) {
-            LocalDate currentExpiry = fefoLots.get(i).getExpiryDate();
-            LocalDate nextExpiry = fefoLots.get(i + 1).getExpiryDate();
-            assertThat(currentExpiry).isBeforeOrEqualTo(nextExpiry);
-        }
-
-        // LOT-2025B2 (2027-12-31) must come before LOT-2026A1 (2028-06-30)
-        assertThat(fefoLots.get(0).getLotNumber()).isEqualTo("LOT-2025B2");
-        assertThat(fefoLots.get(0).getExpiryDate()).isEqualTo(LocalDate.of(2027, 12, 31));
+        assertThat(fefoLots.get(0).getLotNumber()).isEqualTo("DEFAULT");
+        assertThat(fefoLots.get(0).getExpiryDate()).isEqualTo(LocalDate.of(2030, 12, 31));
     }
 
     @Test

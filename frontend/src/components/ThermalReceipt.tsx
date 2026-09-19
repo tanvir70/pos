@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import { Printer, X } from "lucide-react"
 import type { SaleResponse } from "../types"
 
@@ -8,6 +8,7 @@ import type { SaleResponse } from "../types"
 export interface ThermalReceiptProps {
   sale: SaleResponse
   onClose: () => void
+  onAfterPrint?: () => void
   /** Open the browser print dialog as soon as the receipt renders (Enter-driven checkout). */
   autoPrint?: boolean
 }
@@ -17,14 +18,26 @@ const tk = (n: number | undefined | null) => `৳${(n ?? 0).toLocaleString("en-U
 export default function ThermalReceipt({
   sale,
   onClose,
+  onAfterPrint,
   autoPrint = false,
 }: ThermalReceiptProps) {
+  const printAndClose = useCallback(() => {
+    window.print()
+    window.setTimeout(() => {
+      if (onAfterPrint) {
+        onAfterPrint()
+      } else {
+        onClose()
+      }
+    }, 0)
+  }, [onAfterPrint, onClose])
+
   // Let the receipt paint before handing over to the (blocking) print dialog.
   useEffect(() => {
     if (!autoPrint) return
-    const timer = window.setTimeout(() => window.print(), 150)
+    const timer = window.setTimeout(printAndClose, 150)
     return () => window.clearTimeout(timer)
-  }, [autoPrint])
+  }, [autoPrint, printAndClose])
 
   const formattedDate = sale.saleDate
     ? new Date(sale.saleDate).toLocaleString("en-US", {
@@ -101,7 +114,7 @@ export default function ThermalReceipt({
                 <span>{formattedDate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium text-gray-700">Cashier:</span>
+                <span className="font-medium text-gray-700">Served by:</span>
                 <span>{sale.cashierName || "Al-Amin"}</span>
               </div>
               {sale.customerName && (
@@ -238,7 +251,7 @@ export default function ThermalReceipt({
         <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex gap-2.5 no-print">
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={printAndClose}
             className="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
           >
             <Printer className="w-4 h-4" />

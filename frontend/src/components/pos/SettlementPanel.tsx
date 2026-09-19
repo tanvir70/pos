@@ -5,13 +5,9 @@ import {
   Send,
   BookOpen,
   Landmark,
-  Zap,
   AlertTriangle,
   CheckCircle2,
-  ArrowRight,
-  ChevronLeft,
   Percent,
-  Check,
   type LucideIcon,
 } from "lucide-react"
 import type { PaymentMethod, SaleMode } from "../../types"
@@ -23,12 +19,7 @@ import Button from "../ui/Button"
 import Collapse from "../ui/Collapse"
 
 export interface SettlementPanelProps {
-  isOwner?: boolean
   isSubmitting?: boolean
-  /** Controlled by PosCounter, which also drives it from the Enter/F9 hotkey. */
-  isPaymentStep: boolean
-  onProceedToPayment: () => void
-  onBackToSummary: () => void
   onSubmitSale: () => void
   customerDue?: number
 }
@@ -42,11 +33,7 @@ const PAYMENT_METHODS: { id: PaymentMethod; label: string; icon: LucideIcon }[] 
 ]
 
 export default function SettlementPanel({
-  isOwner = false,
   isSubmitting = false,
-  isPaymentStep,
-  onProceedToPayment,
-  onBackToSummary,
   onSubmitSale,
   customerDue = 0,
 }: SettlementPanelProps) {
@@ -58,7 +45,6 @@ export default function SettlementPanel({
     discountValue,
     setDiscountValue,
     computedDiscount,
-    preRoundTotal,
     roundOff,
     setRoundOff,
     roundOffDeficit,
@@ -70,50 +56,57 @@ export default function SettlementPanel({
     setCashPaidInput,
     digitalPaidInput,
     setDigitalPaidInput,
-    digitalMedium,
     setDigitalMedium,
     digitalTrxId,
     setDigitalTrxId,
-    cashPaid,
-    digitalPaid,
-    totalPaid,
     liveDue,
     changeToReturn,
-    totalPurchaseCost,
-    totalGrossProfit,
     saleMode,
     toggleSaleMode,
   } = useCart()
 
   const { showSuccess, showInfo } = useToast()
   const [wholesaleSettings, setWholesaleSettings] = useState<WholesaleSettings>(getWholesaleSettings)
+  const [showAdjustments, setShowAdjustments] = useState(false)
 
   useEffect(() => {
     const handleSettingsUpdated = (e: Event) => {
       const custom = e as CustomEvent<WholesaleSettings>
       if (custom.detail) {
         setWholesaleSettings(custom.detail)
+        if (saleMode === "WHOLESALE") {
+          setDiscountType("percent")
+          setDiscountValue(String(custom.detail.discountPercentage))
+        }
       }
     }
     window.addEventListener("wholesale-settings-updated", handleSettingsUpdated)
     return () => window.removeEventListener("wholesale-settings-updated", handleSettingsUpdated)
-  }, [])
+  }, [
+    saleMode,
+    setDiscountType,
+    setDiscountValue,
+  ])
 
   const handleToggleWholesale = () => {
     // 1. Fetch fresh wholesale configuration settings directly from storage
     const latestSettings = getWholesaleSettings()
     setWholesaleSettings(latestSettings)
 
-    // 2. Toggle sale mode and recalculate cart item prices and subtotal
+    // 2. Toggle sale mode; wholesale is represented as a visible order adjustment.
     const nextMode: SaleMode = saleMode === "WHOLESALE" ? "RETAIL" : "WHOLESALE"
     toggleSaleMode(nextMode)
 
     if (nextMode === "WHOLESALE") {
+      setDiscountType("percent")
+      setDiscountValue(String(latestSettings.discountPercentage))
+      setShowAdjustments(true)
       showSuccess(
-        `Wholesale discount (-${latestSettings.discountPercentage}%) applied! Subtotal recalculated.`,
-        "Whole Sale Applied",
+        `Wholesale adjustment (${latestSettings.discountPercentage}%) applied.`,
+        "Wholesale Applied",
       )
     } else {
+      setDiscountValue("")
       showInfo("Reverted order back to standard Retail pricing.", "Retail Mode")
     }
   }
@@ -128,204 +121,83 @@ export default function SettlementPanel({
     setCashPaidInput(String(finalTotalAmount))
   }
 
+  const handlePaymentMethodChange = (method: PaymentMethod) => {
+    setPaymentMethod(method)
+    if (method === "BKASH") setDigitalMedium("BKASH")
+    if (method === "NAGAD") setDigitalMedium("NAGAD")
+    if (method === "BANK_TRANSFER") setDigitalMedium("BANK_TRANSFER")
+  }
+
   const isCartEmpty = cart.length === 0
+  const hasAdjustments = computedDiscount > 0 || roundOff > 0
+  const selectedPayment = PAYMENT_METHODS.find((method) => method.id === paymentMethod)
+  const paymentLabel = selectedPayment?.label || "Payment"
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      {/* Financial Summary */}
-      <div className="p-3.5 space-y-2 border-b border-slate-200/60 bg-slate-50/20 text-xs">
-        {/* Subtotal */}
-        <div className="flex items-center justify-between text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <span className="font-medium">Item Subtotal:</span>
-            {saleMode === "WHOLESALE" && (
-              <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">
-                Wholesale (-{wholesaleSettings.discountPercentage}%)
-              </span>
-            )}
-          </div>
-          <span className="font-mono font-bold text-slate-900 text-sm tabular-nums">
-            {formatTk(subtotal)}
-          </span>
-        </div>
-
-        {/* Discount Row */}
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/40">
-          <div className="flex items-center gap-1.5">
-            <span className="text-slate-500 font-medium">Discount:</span>
-            <div className="inline-flex rounded-md border border-slate-200 bg-white overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setDiscountType("flat")}
-                className={`px-1.5 py-0.5 text-[10px] font-bold cursor-pointer ${
-                  discountType === "flat"
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                ৳
-              </button>
-              <button
-                type="button"
-                onClick={() => setDiscountType("percentage")}
-                className={`px-1.5 py-0.5 text-[10px] font-bold cursor-pointer ${
-                  discountType === "percentage"
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                %
-              </button>
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs">
+      <div className="shrink-0 border-b border-slate-200 bg-slate-950 px-4 py-4 text-white">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-300">
+              Amount due
+            </span>
+            <div className="mt-1 font-mono text-3xl font-black leading-none tabular-nums">
+              {formatTk(finalTotalAmount)}
             </div>
           </div>
-
-          <div className="flex items-center gap-1">
-            <input
-              type="number"
-              min="0"
-              value={discountValue}
-              onChange={(e) => setDiscountValue(e.target.value)}
-              placeholder="0"
-              className="w-20 py-0.5 px-2 text-right font-mono font-bold text-xs bg-white border border-slate-200 rounded focus:border-emerald-600 focus:outline-hidden"
-            />
-            {computedDiscount > 0 && (
-              <span className="text-[11px] font-mono text-emerald-800 font-semibold">
-                (-{formatTk(computedDiscount)})
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Round Off Row */}
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/40">
-          <div className="flex items-center gap-1.5">
-            <span className="text-slate-500 font-medium">Round Off:</span>
-            {roundOffDeficit > 0 && (
-              <button
-                type="button"
-                onClick={applyQuickRoundOff}
-                className="text-[10px] font-bold text-emerald-800 hover:underline cursor-pointer bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200"
-              >
-                Round (-৳{roundOffDeficit})
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1">
-            <input
-              type="number"
-              min="0"
-              value={roundOff || ""}
-              onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
-              placeholder="0"
-              className="w-16 py-0.5 px-2 text-right font-mono font-bold text-xs bg-white border border-slate-200 rounded focus:border-emerald-600 focus:outline-hidden"
-            />
-          </div>
-        </div>
-
-        {/* Net Payable Highlight */}
-        <div className="flex items-baseline justify-between pt-2 border-t border-slate-200/60 bg-emerald-50/50 -mx-3.5 -mb-3.5 px-3.5 py-2.5">
-          <div>
-            <span className="text-xs font-black text-emerald-950 block leading-tight">
-              Net Payable:
-            </span>
-          </div>
-          <span className="font-mono font-black text-xl text-emerald-800 tabular-nums tracking-tight">
-            {formatTk(finalTotalAmount)}
-          </span>
-        </div>
-      </div>
-
-      {/* Step 1: Summary only — proceed when ready to take payment */}
-      {!isPaymentStep && (
-        <div className="p-3.5 space-y-2.5">
-          {/* Whole Sale Button */}
           <button
             type="button"
             onClick={handleToggleWholesale}
             title={
               saleMode === "WHOLESALE"
                 ? "Click to revert to standard Retail prices"
-                : `Click to fetch wholesale settings (-${wholesaleSettings.discountPercentage}%) and recalculate subtotal`
+                : `Click to apply wholesale pricing (-${wholesaleSettings.discountPercentage}%)`
             }
-            className={`w-full h-11 flex items-center justify-between px-3.5 rounded-xl border text-sm font-bold transition-all cursor-pointer shadow-xs ${
+            className={`shrink-0 rounded-md border px-2.5 py-1 text-[10px] font-black uppercase transition-colors cursor-pointer ${
               saleMode === "WHOLESALE"
-                ? "bg-purple-700 border-purple-800 text-white hover:bg-purple-800"
-                : "bg-purple-50/90 border-purple-200 text-purple-900 hover:bg-purple-100 hover:border-purple-300"
+                ? "border-emerald-300 bg-emerald-300 text-slate-950"
+                : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
             }`}
           >
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-6 h-6 rounded-md flex items-center justify-center ${
-                  saleMode === "WHOLESALE"
-                    ? "bg-purple-900/60 text-purple-100"
-                    : "bg-purple-200/70 text-purple-800"
-                }`}
-              >
-                {saleMode === "WHOLESALE" ? (
-                  <Check className="w-3.5 h-3.5" />
-                ) : (
-                  <Percent className="w-3.5 h-3.5" />
-                )}
-              </div>
-              <span>{saleMode === "WHOLESALE" ? "Whole Sale (Applied)" : "Whole Sale"}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span
-                className={`text-xs font-mono font-extrabold px-2 py-0.5 rounded-md ${
-                  saleMode === "WHOLESALE"
-                    ? "bg-purple-900/60 text-purple-100"
-                    : "bg-purple-200/80 text-purple-900"
-                }`}
-              >
-                -{wholesaleSettings.discountPercentage}% Off
-              </span>
-              {saleMode === "WHOLESALE" && (
-                <span className="text-[11px] font-normal text-purple-200 underline">
-                  Revert
-                </span>
-              )}
-            </div>
+            {saleMode === "WHOLESALE" ? "Wholesale" : "Retail"}
           </button>
-
-          {/* Proceed to Payment Button */}
-          <Button
-            type="button"
-            variant="primary"
-            size="lg"
-            fullWidth
-            disabled={isCartEmpty}
-            onClick={onProceedToPayment}
-            className="h-12 text-sm font-bold shadow-md cursor-pointer"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <span>Proceed to Payment</span>
-              <ArrowRight className="w-4 h-4" />
-              <span className="text-xs font-mono font-semibold bg-white/20 px-1.5 py-0.5 rounded ml-1">
-                Enter
-              </span>
-            </div>
-          </Button>
         </div>
-      )}
 
-      {/* Step 2: Payment Method Selector */}
-      {isPaymentStep && (
-      <div className="p-3.5 space-y-3">
-        <button
-          type="button"
-          onClick={onBackToSummary}
-          className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-900 cursor-pointer -mt-1 -ml-1 px-1 py-0.5"
-        >
-          <ChevronLeft className="w-3.5 h-3.5" />
-          Back to summary
-        </button>
+        <div className="mt-4 grid grid-cols-3 gap-2 text-[11px]">
+          <div className="rounded-md bg-white/[0.07] px-2 py-2">
+            <span className="block text-slate-400">Subtotal</span>
+            <span className="font-mono font-bold tabular-nums">{formatTk(subtotal)}</span>
+          </div>
+          <div className="rounded-md bg-white/[0.07] px-2 py-2">
+            <span className="block text-slate-400">Discount</span>
+            <span className="font-mono font-bold tabular-nums">
+              {computedDiscount > 0 ? `-${formatTk(computedDiscount)}` : formatTk(0)}
+            </span>
+          </div>
+          <div className="rounded-md bg-white/[0.07] px-2 py-2">
+            <span className="block text-slate-400">Round</span>
+            <span className="font-mono font-bold tabular-nums">
+              {roundOff > 0 ? `-${formatTk(roundOff)}` : formatTk(0)}
+            </span>
+          </div>
+        </div>
+      </div>
 
-        <div>
-          <label className="block text-xs font-bold text-slate-900 mb-1.5">
-            Payment Method:
-          </label>
-          <div className="grid grid-cols-5 gap-1">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 pb-3">
+        <section className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-xs font-black uppercase text-slate-500">
+              Payment
+            </label>
+            {customerDue > 0 && (
+              <span className="text-[11px] font-semibold text-slate-500">
+                Previous due:{" "}
+                <span className="font-mono text-slate-900">{formatTk(customerDue)}</span>
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-5 gap-1 rounded-lg bg-slate-100 p-1">
             {PAYMENT_METHODS.map((m) => {
               const isSelected = paymentMethod === m.id
               const Icon = m.icon
@@ -333,54 +205,54 @@ export default function SettlementPanel({
                 <button
                   type="button"
                   key={m.id}
-                  onClick={() => setPaymentMethod(m.id)}
-                  className={`flex flex-col items-center justify-center p-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  onClick={() => handlePaymentMethodChange(m.id)}
+                  className={`flex h-12 flex-col items-center justify-center rounded-md text-[10px] font-bold transition-colors cursor-pointer ${
                     isSelected
-                      ? "bg-emerald-700 text-white border-emerald-700 shadow-xs ring-2 ring-emerald-500/20"
-                      : "bg-slate-50/40 hover:bg-slate-50 text-slate-900 border-slate-200"
+                      ? "bg-white text-emerald-800 shadow-xs ring-1 ring-slate-200"
+                      : "text-slate-500 hover:bg-white/70 hover:text-slate-900"
                   }`}
                 >
-                  <Icon className="w-4 h-4 mb-1" />
-                  <span className="text-[11px] leading-tight">{m.label}</span>
+                  <Icon className="mb-0.5 h-3.5 w-3.5" />
+                  <span className="leading-none">{m.label}</span>
                 </button>
               )
             })}
           </div>
-        </div>
+        </section>
 
         {/* Payment Amount Inputs */}
         {paymentMethod === "CASH" && (
-          <div className="space-y-2">
+          <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <label className="text-xs font-bold text-slate-900">
-                Cash Received:
+              <label className="text-[11px] font-black uppercase text-slate-500">
+                Cash received
               </label>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={handleSetExactCash}
-                  className="px-2 py-0.5 text-[10px] font-bold bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded cursor-pointer"
+                  className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   Exact
                 </button>
                 <button
                   type="button"
                   onClick={() => handleQuickCashAdd(100)}
-                  className="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded cursor-pointer font-mono"
+                  className="rounded-md border border-slate-200 bg-white px-1.5 py-1 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   +100
                 </button>
                 <button
                   type="button"
                   onClick={() => handleQuickCashAdd(500)}
-                  className="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded cursor-pointer font-mono"
+                  className="rounded-md border border-slate-200 bg-white px-1.5 py-1 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   +500
                 </button>
                 <button
                   type="button"
                   onClick={() => handleQuickCashAdd(1000)}
-                  className="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded cursor-pointer font-mono"
+                  className="rounded-md border border-slate-200 bg-white px-1.5 py-1 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   +1000
                 </button>
@@ -393,26 +265,19 @@ export default function SettlementPanel({
               value={cashPaidInput}
               onChange={(e) => setCashPaidInput(e.target.value)}
               placeholder="0.00"
-              className="w-full text-right font-mono font-black text-lg py-2 px-3 bg-white border-2 border-slate-200 rounded-xl focus:border-emerald-600 focus:outline-hidden tabular-nums"
+              className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
             />
-          </div>
+          </section>
         )}
 
         {(paymentMethod === "BKASH" ||
           paymentMethod === "NAGAD" ||
           paymentMethod === "BANK_TRANSFER") && (
-          <div className="space-y-2">
+          <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <label className="text-xs font-bold text-slate-900">
-                Digital Payment:
+              <label className="text-[11px] font-black uppercase text-slate-500">
+                {paymentLabel} received
               </label>
-              <span className="text-[11px] font-bold text-emerald-800">
-                {paymentMethod === "BKASH"
-                  ? "bKash"
-                  : paymentMethod === "NAGAD"
-                    ? "Nagad"
-                    : "Bank"}
-              </span>
             </div>
 
             <input
@@ -421,7 +286,7 @@ export default function SettlementPanel({
               value={digitalPaidInput}
               onChange={(e) => setDigitalPaidInput(e.target.value)}
               placeholder="0.00"
-              className="w-full text-right font-mono font-black text-lg py-2 px-3 bg-white border-2 border-slate-200 rounded-xl focus:border-emerald-600 focus:outline-hidden tabular-nums"
+              className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
             />
 
             <input
@@ -429,16 +294,16 @@ export default function SettlementPanel({
               value={digitalTrxId}
               onChange={(e) => setDigitalTrxId(e.target.value)}
               placeholder="Transaction ID / TrxID (optional)"
-              className="w-full text-xs font-mono py-1.5 px-3 bg-white border border-slate-200 rounded-lg focus:border-emerald-600 focus:outline-hidden"
+              className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 font-mono text-xs outline-hidden focus:border-emerald-700 focus:bg-white"
             />
-          </div>
+          </section>
         )}
 
         <Collapse show={paymentMethod === "DUE"}>
-          <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl space-y-1">
-            <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
+          <div className="space-y-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
               <AlertTriangle className="w-3.5 h-3.5" />
-              <span>Full Due Sale</span>
+              <span>Due sale</span>
             </div>
             <p className="text-[11px] text-amber-800">
               A total of {formatTk(finalTotalAmount)} will be added to the selected customer's due ledger.
@@ -446,29 +311,134 @@ export default function SettlementPanel({
           </div>
         </Collapse>
 
+        <section className="rounded-lg border border-slate-200 bg-slate-50/70">
+          <button
+            type="button"
+            onClick={() => setShowAdjustments((current) => !current)}
+            className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold text-slate-700 cursor-pointer"
+          >
+            <span className="inline-flex items-center gap-2">
+              <Percent className="h-3.5 w-3.5 text-slate-500" />
+              Adjustments
+              {hasAdjustments && (
+                <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-800">
+                  Applied
+                </span>
+              )}
+            </span>
+            <span className="text-[11px] text-slate-400">
+              {showAdjustments ? "Hide" : "Edit"}
+            </span>
+          </button>
+
+          <Collapse show={showAdjustments}>
+            <div className="space-y-2 border-t border-slate-200 px-3 py-2.5">
+              <div className="grid grid-cols-[1fr_112px] items-end gap-2">
+                <label className="space-y-1">
+                  <span className="block text-[11px] font-bold text-slate-500">
+                    Discount
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(e.target.value)}
+                    placeholder="0"
+                    className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-right font-mono text-sm font-bold outline-hidden focus:border-emerald-700"
+                  />
+                </label>
+                <div className="grid h-9 grid-cols-2 overflow-hidden rounded-md border border-slate-200 bg-white">
+                  <button
+                    type="button"
+                    onClick={() => setDiscountType("flat")}
+                    className={`text-xs font-black cursor-pointer ${
+                      discountType === "flat"
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-500 hover:bg-slate-50"
+                    }`}
+                  >
+                    ৳
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDiscountType("percent")}
+                    className={`border-l border-slate-200 text-xs font-black cursor-pointer ${
+                      discountType === "percent"
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-500 hover:bg-slate-50"
+                    }`}
+                  >
+                    %
+                  </button>
+                </div>
+              </div>
+
+              {saleMode === "WHOLESALE" && (
+                <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-2.5 py-1.5">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold leading-tight text-slate-700">
+                      Wholesale percentage
+                    </p>
+                    <p className="text-[10px] leading-tight text-slate-500">
+                      Default: {wholesaleSettings.discountPercentage}%. Edit this sale directly when needed.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-[1fr_112px] items-end gap-2">
+                <label className="space-y-1">
+                  <span className="block text-[11px] font-bold text-slate-500">
+                    Round off
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={roundOff || ""}
+                    onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
+                    placeholder="0"
+                    className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-right font-mono text-sm font-bold outline-hidden focus:border-emerald-700"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={applyQuickRoundOff}
+                  disabled={roundOffDeficit <= 0}
+                  className="h-9 rounded-md border border-slate-200 bg-white px-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300 cursor-pointer"
+                >
+                  Auto round
+                </button>
+              </div>
+            </div>
+          </Collapse>
+        </section>
+
         {/* Change Return / Live Due Badges */}
         <Collapse show={changeToReturn > 0}>
-          <div className="flex items-center justify-between p-2.5 bg-emerald-100 border border-emerald-300 rounded-xl">
+          <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
             <span className="text-xs font-bold text-emerald-900">
-              Return to Customer:
+              Return to customer
             </span>
-            <span className="font-mono font-black text-lg text-emerald-800 tabular-nums">
+            <span className="font-mono text-lg font-black text-emerald-800 tabular-nums">
               {formatTk(changeToReturn)}
             </span>
           </div>
         </Collapse>
 
         <Collapse show={liveDue > 0 && paymentMethod !== "DUE"}>
-          <div className="flex items-center justify-between p-2.5 bg-rose-50 border border-rose-300 rounded-xl">
+          <div className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5">
             <span className="text-xs font-bold text-rose-900">
-              Remaining Due:
+              Remaining due
             </span>
-            <span className="font-mono font-black text-base text-rose-700 tabular-nums">
+            <span className="font-mono text-base font-black text-rose-700 tabular-nums">
               {formatTk(liveDue)}
             </span>
           </div>
         </Collapse>
 
+      </div>
+
+      <div className="shrink-0 border-t border-slate-200 bg-white p-4 shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
         {/* Complete Sale Action Button */}
         <Button
           type="button"
@@ -478,18 +448,17 @@ export default function SettlementPanel({
           disabled={isCartEmpty || isSubmitting}
           isLoading={isSubmitting}
           onClick={onSubmitSale}
-          className="h-12 text-sm font-bold shadow-md cursor-pointer"
+          className="h-[52px] rounded-lg text-sm font-black shadow-sm cursor-pointer"
         >
           <div className="flex items-center justify-center gap-2">
             <CheckCircle2 className="w-4 h-4" />
-            <span>Complete Sale</span>
-            <span className="text-xs font-mono font-semibold bg-white/20 px-1.5 py-0.5 rounded ml-1">
+            <span>Complete & Print</span>
+            <span className="ml-1 rounded bg-white/20 px-1.5 py-0.5 font-mono text-xs font-semibold">
               Enter
             </span>
           </div>
         </Button>
       </div>
-      )}
     </div>
   )
 }

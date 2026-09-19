@@ -6,6 +6,7 @@ import com.alamin.pos.dto.SaleResponse;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.entity.Product;
 import com.alamin.pos.entity.StockInventory;
+import com.alamin.pos.exception.InsufficientStockException;
 import com.alamin.pos.service.SaleService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ class SystemConcurrencyStressTest {
     private com.alamin.pos.repository.SaleItemRepository saleItemRepository;
 
     @Test
-    @DisplayName("1. High Concurrency Checkout: 10 threads compete for 10 units each; all 10 atomically succeed, zero lost updates")
+    @DisplayName("1. High Concurrency Checkout: competing checkouts cannot overdraw stock")
     void testConcurrentCheckoutStress() throws InterruptedException {
         String uniqueSuffix = UUID.randomUUID().toString().substring(0, 8);
         Product product = productRepository.save(Product.builder()
@@ -85,6 +86,7 @@ class SystemConcurrencyStressTest {
         CountDownLatch doneSignal = new CountDownLatch(threadCount);
 
         AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger insufficientStockCount = new AtomicInteger(0);
         List<SaleResponse> completedSales = new CopyOnWriteArrayList<>();
 
         try {
@@ -112,6 +114,8 @@ class SystemConcurrencyStressTest {
                         SaleResponse response = saleService.processSale(request);
                         completedSales.add(response);
                         successCount.incrementAndGet();
+                    } catch (InsufficientStockException ex) {
+                        insufficientStockCount.incrementAndGet();
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     } finally {
@@ -125,16 +129,17 @@ class SystemConcurrencyStressTest {
             executor.shutdown();
 
             assertThat(finished).isTrue();
-            assertThat(successCount.get()).isEqualTo(10);
+            assertThat(successCount.get()).isEqualTo(5);
+            assertThat(insufficientStockCount.get()).isEqualTo(5);
 
-            // Verify ending stock is exactly -50.000 (50 - 10 * 10) - zero lost updates
+            // Verify ending stock is exactly zero: no lost updates and no over-selling.
             StockInventory endingStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN")
                     .orElseThrow();
-            assertThat(endingStock.getQuantity()).isEqualByComparingTo("-50.000");
+            assertThat(endingStock.getQuantity()).isEqualByComparingTo("0.000");
 
-            // Verify all 10 successful invoices have unique sequential document numbers
+            // Verify all successful invoices have unique sequential document numbers
             List<String> invoiceNumbers = completedSales.stream().map(SaleResponse::getInvoiceNo).distinct().toList();
-            assertThat(invoiceNumbers).hasSize(10);
+            assertThat(invoiceNumbers).hasSize(5);
         } finally {
             for (SaleResponse s : completedSales) {
                 saleItemRepository.deleteAll(saleItemRepository.findBySaleId(s.getId()));

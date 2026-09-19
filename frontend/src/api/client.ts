@@ -37,7 +37,6 @@ export class ApiError extends Error {
 }
 
 export const AUTH_TOKEN_KEY = "pos_auth_token"
-export const AUTH_ROLE_KEY = "pos_auth_role"
 export const AUTH_USERNAME_KEY = "pos_auth_username"
 export const AUTH_FULLNAME_KEY = "pos_auth_fullname"
 
@@ -49,17 +48,8 @@ export function getStoredToken(): string | null {
   }
 }
 
-// In-memory override for the active request token, used for a temporary Owner PIN
-// elevation that should drive live API calls without persisting to localStorage
-// (so it never survives a refresh and doesn't replace the underlying account session).
-let activeTokenOverride: string | null = null
-
-export function setActiveTokenOverride(token: string | null): void {
-  activeTokenOverride = token
-}
-
 function resolveActiveToken(): string | null {
-  return activeTokenOverride ?? getStoredToken()
+  return getStoredToken()
 }
 
 export function getStoredUser(): { username: string | null; fullName: string | null } {
@@ -75,13 +65,12 @@ export function getStoredUser(): { username: string | null; fullName: string | n
 
 export function setStoredAuth(
   token: string,
-  role: string,
+  _role: string,
   username?: string | null,
   fullName?: string | null,
 ): void {
   try {
     localStorage.setItem(AUTH_TOKEN_KEY, token)
-    localStorage.setItem(AUTH_ROLE_KEY, role)
     if (username) {
       localStorage.setItem(AUTH_USERNAME_KEY, username)
     }
@@ -96,7 +85,6 @@ export function setStoredAuth(
 export function clearStoredAuth(): void {
   try {
     localStorage.removeItem(AUTH_TOKEN_KEY)
-    localStorage.removeItem(AUTH_ROLE_KEY)
     localStorage.removeItem(AUTH_USERNAME_KEY)
     localStorage.removeItem(AUTH_FULLNAME_KEY)
   } catch {

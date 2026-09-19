@@ -117,7 +117,7 @@ class BusinessFlowIntegrationTest {
     }
 
     @Test
-    @DisplayName("Complete dealership business lifecycle flow: arrival -> wholesale -> negative stock -> return -> repayment -> analytics -> backup")
+    @DisplayName("Complete dealership business lifecycle flow: arrival -> wholesale -> retail sale -> return -> repayment -> analytics -> backup")
     void testCompleteDealershipBusinessFlow() {
 
         DashboardSummaryDto baselineSummary = dashboardService.getSummary();
@@ -219,41 +219,40 @@ class BusinessFlowIntegrationTest {
 
 
         // =========================================================================
-        // Step 3: Counter Sale (Negative Stock)
-        // Sell 23 bottles from Dokan (currently 20).
-        // Verify Dokan becomes -3, sale succeeds.
+        // Step 3: Counter Sale
+        // Sell the remaining 20 bottles from Dokan.
+        // Verify Dokan becomes zero, sale succeeds, and stock never goes negative.
         // =========================================================================
-        log.info("--- Step 3: Counter Sale (Negative Stock) ---");
+        log.info("--- Step 3: Counter Sale ---");
         SaleItemRequest retailItem = SaleItemRequest.builder()
                 .lotId(lot.getId())
-                .totalQuantity(new BigDecimal("23.000"))
+                .totalQuantity(new BigDecimal("20.000"))
                 .unitPrice(new BigDecimal("650.00")) // Standard retail price
                 .build();
 
         SaleRequest retailSaleReq = SaleRequest.builder()
                 .saleMode("RETAIL")
                 .items(List.of(retailItem))
-                .cashPaid(new BigDecimal("14950.00")) // 23 * 650 = ৳14,950.00 in cash
+                .cashPaid(new BigDecimal("13000.00")) // 20 * 650 = ৳13,000.00 in cash
                 .paymentMethod("CASH")
                 .cashierName("Al-Amin")
                 .build();
 
-        // BUSINESS DECISION: Allow Dokan counter stock to go negative to support ringing up newly arrived goods before supplier challan entry.
         SaleResponse retailSaleResp = saleService.processSale(retailSaleReq);
 
         assertThat(retailSaleResp).isNotNull();
         assertThat(retailSaleResp.getInvoiceNo()).startsWith("INV-");
-        assertThat(retailSaleResp.getTotalAmount()).isEqualByComparingTo("14950.00");
+        assertThat(retailSaleResp.getTotalAmount()).isEqualByComparingTo("13000.00");
 
-        // Dokan stock drops from 20 to -3.000
+        // Dokan stock drops from 20 to zero and never goes negative
         StockInventory step3Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-        assertThat(step3Dokan.getQuantity()).isEqualByComparingTo("-3.000");
+        assertThat(step3Dokan.getQuantity()).isEqualByComparingTo("0.000");
 
 
         // =========================================================================
         // Step 4: Direct Return
         // Return 1 bottle to Dokan with due adjustment.
-        // Verify Dokan becomes -2, customer due credited.
+        // Verify Dokan increases from zero, customer due credited.
         // =========================================================================
         log.info("--- Step 4: Direct Return ---");
         SaleReturnItemRequest returnItem = SaleReturnItemRequest.builder()
@@ -278,9 +277,9 @@ class BusinessFlowIntegrationTest {
         assertThat(returnResp.getReturnNo()).startsWith("RET-");
         assertThat(returnResp.getTotalRefundAmount()).isEqualByComparingTo("575.00");
 
-        // Dokan stock was -3, restocked with 1 bottle -> becomes -2.000
+        // Dokan stock was zero, restocked with 1 bottle -> becomes 1.000
         StockInventory step4Dokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
-        assertThat(step4Dokan.getQuantity()).isEqualByComparingTo("-2.000");
+        assertThat(step4Dokan.getQuantity()).isEqualByComparingTo("1.000");
 
         // Customer due: was 18,390.00, credited 575.00 -> 17,815.00
         Customer customerAfterReturn = customerRepository.findById(customer.getId()).orElseThrow();
@@ -330,14 +329,14 @@ class BusinessFlowIntegrationTest {
 
         assertThat(summary).isNotNull();
 
-        // Total sales today: Step 2 wholesale (11,390.00) + Step 3 retail (14,950.00) = ৳26,340.00
-        assertThat(summary.getTotalSalesToday()).isEqualByComparingTo(baselineSales.add(new BigDecimal("26340.00")));
+        // Total sales today: Step 2 wholesale (11,390.00) + Step 3 retail (13,000.00) = ৳24,390.00
+        assertThat(summary.getTotalSalesToday()).isEqualByComparingTo(baselineSales.add(new BigDecimal("24390.00")));
 
-        // Gross profit today: Step 2 (1,390.00) + Step 3 ((650 - 500) * 23 = 3,450.00) = ৳4,840.00
-        assertThat(summary.getGrossProfitToday()).isEqualByComparingTo(baselineProfit.add(new BigDecimal("4840.00")));
+        // Gross profit today: Step 2 (1,390.00) + Step 3 ((650 - 500) * 20 = 3,000.00) = ৳4,390.00
+        assertThat(summary.getGrossProfitToday()).isEqualByComparingTo(baselineProfit.add(new BigDecimal("4390.00")));
 
-        // Cash in drawer today: sales cash (5,000.00 + 14,950.00 = 19,950.00) + repayment cash (2,000.00) - refunds cash (0.00) = ৳21,950.00
-        assertThat(summary.getCashInDrawerToday()).isEqualByComparingTo(baselineCash.add(new BigDecimal("21950.00")));
+        // Cash in drawer today: sales cash (5,000.00 + 13,000.00 = 18,000.00) + repayment cash (2,000.00) - refunds cash (0.00) = ৳20,000.00
+        assertThat(summary.getCashInDrawerToday()).isEqualByComparingTo(baselineCash.add(new BigDecimal("20000.00")));
 
         // Total market due: Rafiqul Islam outstanding balance = ৳15,815.00
         assertThat(summary.getTotalMarketDue()).isEqualByComparingTo("15815.00");

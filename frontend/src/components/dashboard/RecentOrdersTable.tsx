@@ -21,6 +21,11 @@ export interface RecentOrdersTableProps {
 const tk = (n: number | undefined | null) =>
   `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
+const formatQuantity = (n: number) =>
+  Number.isInteger(n)
+    ? n.toLocaleString("en-IN")
+    : n.toLocaleString("en-IN", { maximumFractionDigits: 3 })
+
 const formatDate = (isoString?: string) => {
   if (!isoString) return "-"
   try {
@@ -232,6 +237,8 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                 const isDue = (sale.dueAmount ?? 0) > 0
                 const isPartial = isDue && ((sale.cashPaid ?? 0) > 0 || (sale.digitalPaid ?? 0) > 0)
                 const itemsCount = sale.items?.length || 0
+                const unitsCount =
+                  sale.items?.reduce((sum, item) => sum + (item.totalQuantity || 0), 0) || 0
 
                 return (
                   <tr
@@ -273,9 +280,16 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
 
                     {/* Items & Mode */}
                     <td className="py-3.5 px-2">
-                      <span className="text-slate-700 font-medium">
-                        {itemsCount} {itemsCount === 1 ? "item" : "items"}
-                      </span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-slate-800 font-bold">
+                          {itemsCount} {itemsCount === 1 ? "item" : "items"}
+                          <span className="mx-1.5 text-slate-300">·</span>
+                          <span className="font-mono">
+                            {formatQuantity(unitsCount)}
+                          </span>{" "}
+                          {unitsCount === 1 ? "unit" : "units"}
+                        </span>
+                      </div>
                       {sale.saleMode === "WHOLESALE" && (
                         <span className="ms-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                           Wholesale

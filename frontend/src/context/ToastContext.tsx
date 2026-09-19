@@ -11,6 +11,12 @@ import { ApiError } from "../api/client"
 
 export type ToastType = "success" | "error" | "warning" | "info"
 
+export interface ToastAction {
+  label: string
+  onClick: () => void
+  intent?: "default" | "danger"
+}
+
 export interface ToastItem {
   id: string
   type: ToastType
@@ -18,6 +24,8 @@ export interface ToastItem {
   message: string
   timestamp: number
   duration?: number
+  actions?: ToastAction[]
+  presentation?: "default" | "confirmation"
 }
 
 export interface ToastContextType {
@@ -37,11 +45,6 @@ function parseErrorMessage(err: unknown): { title: string; message: string } {
   if (err instanceof ApiError) {
     if (err.errorCode) {
       switch (err.errorCode) {
-        case "INVALID_PIN":
-          return {
-            title: "Incorrect PIN",
-            message: "Incorrect Owner PIN! Enter the correct 4-digit PIN.",
-          }
         case "INVALID_CREDENTIALS":
           return {
             title: "Sign In Failed",
@@ -89,7 +92,7 @@ function parseErrorMessage(err: unknown): { title: string; message: string } {
     if (err.status === 403) {
       return {
         title: "Permission Denied",
-        message: "This action requires Owner Mode (Owner PIN).",
+        message: "You do not have permission to complete this action.",
       }
     }
     if (err.status >= 500) {
@@ -243,13 +246,28 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           const isError = toast.type === "error"
           const isWarning = toast.type === "warning"
           const isInfo = toast.type === "info"
+          const isConfirmation = toast.presentation === "confirmation"
 
           return (
-            <div
-              key={toast.id}
+            <React.Fragment key={toast.id}>
+              {isConfirmation && (
+                <button
+                  type="button"
+                  aria-label="Cancel logout"
+                  onClick={() => dismissToast(toast.id)}
+                  className="pointer-events-auto fixed inset-0 z-[1] h-screen w-screen cursor-default bg-slate-950/55 backdrop-blur-[1px]"
+                />
+              )}
+              <div
               role="alert"
-              className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-xl border shadow-xl transition-all animate-in slide-in-from-top-2 duration-200 ${
-                isSuccess
+              className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border shadow-xl ${
+                isConfirmation
+                  ? "fixed left-1/2 top-1/2 z-[2] -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm bg-white text-slate-900 border-red-200 shadow-2xl shadow-slate-950/30"
+                  : "transition-all animate-in slide-in-from-top-2 duration-200"
+              } ${
+                isConfirmation
+                  ? ""
+                  : isSuccess
                   ? "bg-emerald-900/95 text-white border-emerald-500 shadow-emerald-950/30"
                   : isError
                     ? "bg-rose-900/95 text-white border-rose-500 shadow-rose-950/30"
@@ -259,7 +277,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               }`}
             >
               {/* Semantic Icon */}
-              <div className="shrink-0 mt-0.5 select-none">
+              <div className={`shrink-0 mt-0.5 select-none ${isConfirmation ? "text-red-600" : ""}`}>
                 {isSuccess && <CheckCircle2 className="w-5 h-5" />}
                 {isError && <XCircle className="w-5 h-5" />}
                 {isWarning && <AlertTriangle className="w-5 h-5" />}
@@ -273,21 +291,50 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     {toast.title}
                   </h4>
                 )}
-                <p className="text-xs text-white/90 leading-relaxed font-normal break-words">
+                <p
+                  className={`text-xs leading-relaxed font-normal break-words ${
+                    isConfirmation ? "text-slate-600" : "text-white/90"
+                  }`}
+                >
                   {toast.message}
                 </p>
+                {toast.actions && toast.actions.length > 0 && (
+                  <div className="flex items-center justify-end gap-2 mt-3">
+                    {toast.actions.map((action) => (
+                      <button
+                        type="button"
+                        key={action.label}
+                        onClick={action.onClick}
+                        className={`px-3 py-1.5 rounded-md border text-xs font-bold cursor-pointer ${
+                          action.intent === "danger"
+                            ? "bg-rose-600 border-rose-500 text-white hover:bg-rose-500"
+                            : isConfirmation
+                              ? "bg-white border-red-300 text-red-700 hover:bg-red-50"
+                              : "bg-white/10 border-white/25 text-white hover:bg-white/20"
+                        }`}
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Dismiss Button */}
               <button
                 type="button"
                 onClick={() => dismissToast(toast.id)}
-                className="shrink-0 text-white/70 hover:text-white rounded-md p-1 transition-colors leading-none cursor-pointer"
+                className={`shrink-0 rounded-md p-1 transition-colors leading-none cursor-pointer ${
+                  isConfirmation
+                    ? "text-slate-400 hover:text-red-600 hover:bg-red-50"
+                    : "text-white/70 hover:text-white"
+                }`}
                 aria-label="Dismiss alert"
               >
                 <X className="w-4 h-4" />
               </button>
-            </div>
+              </div>
+            </React.Fragment>
           )
         })}
       </div>

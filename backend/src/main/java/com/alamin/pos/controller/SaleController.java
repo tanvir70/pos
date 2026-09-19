@@ -3,7 +3,6 @@ package com.alamin.pos.controller;
 import com.alamin.pos.dto.PagedResponse;
 import com.alamin.pos.dto.SaleRequest;
 import com.alamin.pos.dto.SaleResponse;
-import com.alamin.pos.security.SecurityUtils;
 import com.alamin.pos.service.SaleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,17 +28,17 @@ public class SaleController {
     @PostMapping
     public ResponseEntity<SaleResponse> processSale(@Valid @RequestBody SaleRequest request) {
         SaleResponse response = saleService.processSale(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(maskCostsIfNeeded(response));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<SaleResponse> getSaleById(@PathVariable Long id) {
-        return ResponseEntity.ok(maskCostsIfNeeded(saleService.getSaleById(id)));
+        return ResponseEntity.ok(saleService.getSaleById(id));
     }
 
     @GetMapping("/invoice/{invoiceNo}")
     public ResponseEntity<SaleResponse> getSaleByInvoiceNo(@PathVariable String invoiceNo) {
-        return ResponseEntity.ok(maskCostsIfNeeded(saleService.getSaleByInvoiceNo(invoiceNo)));
+        return ResponseEntity.ok(saleService.getSaleByInvoiceNo(invoiceNo));
     }
 
     @GetMapping
@@ -56,27 +55,11 @@ public class SaleController {
                     size != null ? size : 10,
                     period,
                     saleMode);
-            paged.setContent(paged.getContent().stream().map(this::maskCostsIfNeeded).toList());
             return ResponseEntity.ok(paged);
         }
 
         int maxLimit = limit != null && limit > 0 ? limit : 50;
         List<SaleResponse> sales = saleService.getRecentSales(maxLimit);
-        return ResponseEntity.ok(sales.stream().map(this::maskCostsIfNeeded).toList());
-    }
-
-    private SaleResponse maskCostsIfNeeded(SaleResponse response) {
-        if (response == null || SecurityUtils.isOwner()) {
-            return response;
-        }
-        response.setTotalProfit(null);
-        if (response.getItems() != null) {
-            response.getItems().forEach(item -> {
-                item.setUnitCost(null);
-                item.setLineProfit(null);
-            });
-        }
-        return response;
+        return ResponseEntity.ok(sales);
     }
 }
-

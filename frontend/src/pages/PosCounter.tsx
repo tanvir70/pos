@@ -2,30 +2,31 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import type {
   StockItem,
   Customer,
-  InventoryLot,
   SaleRequest,
   SaleResponse,
-  SaleMode,
 } from "../types"
-import { getStock, getCustomers, createSale } from "../api/endpoints"
+import { getStock, getCustomers, createSale, createCustomer } from "../api/endpoints"
 import { useCart } from "../context/CartContext"
 import { useToast } from "../context/ToastContext"
 import { useBarcodeScanner } from "../utils/barcode"
 import { isTypingTarget } from "../utils/keyboard"
-import ProductCatalogGrid from "../components/pos/ProductCatalogGrid"
-import CustomerSelect from "../components/pos/CustomerSelect"
+import ProductSearch from "../components/pos/ProductSearch"
 import CartTicket from "../components/pos/CartTicket"
 import SettlementPanel from "../components/pos/SettlementPanel"
 import DualPrintModal from "../components/pos/DualPrintModal"
 
 export interface PosCounterProps {
-  isOwner: boolean
   isFocusMode?: boolean
   onToggleFocusMode?: () => void
 }
 
+function normalizeBangladeshPhone(value: string) {
+  const digits = value.replace(/\D/g, "")
+  if (digits.length === 13 && digits.startsWith("88")) return digits.slice(2)
+  return digits
+}
+
 export default function PosCounter({
-  isOwner,
   isFocusMode = false,
   onToggleFocusMode,
 }: PosCounterProps) {
@@ -33,7 +34,6 @@ export default function PosCounter({
   const {
     cart,
     saleMode,
-    toggleSaleMode,
     selectedCustomerId,
     setSelectedCustomerId,
     computedDiscount,
@@ -43,6 +43,7 @@ export default function PosCounter({
     digitalPaid,
     digitalMedium,
     digitalTrxId,
+    finalTotalAmount,
     addToCart,
     clearCart,
   } = useCart()
@@ -52,17 +53,8 @@ export default function PosCounter({
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-  const [completedSale, setCompletedSale] = useState<SaleResponse | null>(null)
-
-  // ─── Checkout Step ──────────────────────────────────────────────
-  // false = order summary, true = payment method & tender entry.
-  const [isPaymentStep, setIsPaymentStep] = useState<boolean>(false)
-
-  // Drop back to the summary step whenever the cart empties out (e.g. after
-  // a completed sale), so the next customer starts from a clean screen.
-  useEffect(() => {
-    if (cart.length === 0) setIsPaymentStep(false)
-  }, [cart.length])
+  const [isPrintPromptOpen, setIsPrintPromptOpen] = useState(false)
+  const [completedCustomer, setCompletedCustomer] = useState<Customer | null>(null)
 
   // ─── Fetch Stock and Customers ──────────────────────────────────
   const loadInitialData = useCallback(async () => {
@@ -83,31 +75,7 @@ export default function PosCounter({
 
   useEffect(() => {
     loadInitialData()
-    // Re-fetch when Owner Mode toggles: purchase cost fields are stripped
-    // server-side for non-owner requests, so cached data must be refreshed.
-  }, [loadInitialData, isOwner])
-
-  // Extract all lots for a product
-  const getLotsForProduct = useCallback(
-    (productId: number): InventoryLot[] => {
-      return stocks
-        .filter((s) => s.productId === productId)
-        .map((s) => ({
-          id: (s as any).lotId,
-          productId: s.productId,
-          productCode: s.productCode,
-          productNameEn: s.productNameEn || s.nameEn,
-          lotNumber: (s as any).lotNumber || "DEF",
-          entryDate: (s as any).entryDate || new Date().toISOString(),
-          expiryDate: (s as any).expiryDate || "2099-12-31",
-          purchaseCost: (s as any).purchaseCost || 0,
-          lotRetailPrice: (s as any).lotRetailPrice || s.standardRetailPrice || 0,
-          lotWholesalePrice: (s as any).lotWholesalePrice || s.standardWholesalePrice || 0,
-          barcode: (s as any).lotBarcode || (s as any).barcode || "",
-        }))
-    },
-    [stocks],
-  )
+  }, [loadInitialData])
 
   // ─── Hardware Barcode Scanner Listener ──────────────────────────
   // Intercepts physical scanner keyboard wedges (<=35ms burst rate)
@@ -116,22 +84,33 @@ export default function PosCounter({
       const q = scannedCode.trim().toLowerCase()
       if (!q) return
 
-      const matchedStock = stocks.find(
+      const matchedLot = stocks.find(
         (s) =>
           ((s as any).lotBarcode && (s as any).lotBarcode.toLowerCase() === q) ||
-          ((s as any).barcode && (s as any).barcode.toLowerCase() === q) ||
-          (s.defaultBarcode && s.defaultBarcode.toLowerCase() === q) ||
-          (s.productCode && s.productCode.toLowerCase() === q),
+          ((s as any).barcode && (s as any).barcode.toLowerCase() === q),
       )
+      const matchedStock =
+        matchedLot ||
+        stocks
+          .filter(
+            (s) =>
+              (s.defaultBarcode && s.defaultBarcode.toLowerCase() === q) ||
+              (s.productCode && s.productCode.toLowerCase() === q),
+          )
+          .sort(
+            (a, b) =>
+              new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
+          )[0]
 
       if (matchedStock) {
-        addToCart(matchedStock, getLotsForProduct(matchedStock.productId))
+        addToCart(matchedStock)
         showSuccess(
           `Barcode scan successful: ${matchedStock.nameEn || matchedStock.productNameEn}`,
         )
       } else {
         showWarning(`Scanned barcode (${scannedCode}) was not found in the database!`)
       }
+      window.dispatchEvent(new CustomEvent("pos-barcode-scanned"))
     },
     { enabled: true },
   )
@@ -141,20 +120,52 @@ export default function PosCounter({
     return customers.find((c) => c.id === selectedCustomerId) || null
   }, [customers, selectedCustomerId])
 
-  // ─── Complete Sale Execution ────────────────────────────────────
-  const handleCompleteSale = useCallback(async () => {
+  // Open the print gate. No backend sale is created until thermal print is chosen.
+  const handleCompleteSale = useCallback(() => {
     if (cart.length === 0) {
       showWarning("Cart is empty!")
       return
     }
 
-    if (paymentMethod === "DUE" && !selectedCustomerId) {
-      showWarning("A specific customer must be selected for a due sale!")
-      return
-    }
+    setCompletedCustomer(selectedCustomer)
+    setIsPrintPromptOpen(true)
+  }, [cart.length, selectedCustomer, showWarning])
 
+  const resolveCustomerForSale = useCallback(
+    async ({ phone, name }: { phone: string; name: string }): Promise<Customer> => {
+      const normalizedPhone = normalizeBangladeshPhone(phone)
+      const existingCustomer = customers.find(
+        (customer) => normalizeBangladeshPhone(customer.phone) === normalizedPhone,
+      )
+
+      if (existingCustomer) {
+        setSelectedCustomerId(existingCustomer.id)
+        setCompletedCustomer(existingCustomer)
+        return existingCustomer
+      }
+
+      const createdCustomer = await createCustomer({
+        name: name.trim(),
+        phone: normalizedPhone,
+        customerType: saleMode,
+        creditLimit: 0,
+        currentDue: 0,
+      })
+
+      setCustomers((currentCustomers) => [createdCustomer, ...currentCustomers])
+      setSelectedCustomerId(createdCustomer.id)
+      setCompletedCustomer(createdCustomer)
+      return createdCustomer
+    },
+    [customers, saleMode, setSelectedCustomerId],
+  )
+
+  // Thermal print is the registration boundary for a POS sale.
+  const registerSaleForThermalPrint = useCallback(async (customerIdOverride?: number | null): Promise<SaleResponse> => {
+    const effectiveCustomerId =
+      customerIdOverride !== undefined ? customerIdOverride : selectedCustomerId
     const saleRequest: SaleRequest = {
-      customerId: selectedCustomerId,
+      customerId: effectiveCustomerId,
       saleMode,
       items: cart.map((item) => ({
         lotId: item.lotId,
@@ -178,20 +189,24 @@ export default function PosCounter({
           ? digitalMedium
           : null,
       digitalTrxId: digitalTrxId ? digitalTrxId.trim() : null,
-      cashierName: isOwner ? "Owner" : "Counter Cashier",
+      cashierName: "Al-Amin",
     }
 
     try {
       setIsSubmitting(true)
       const res = await createSale(saleRequest)
-      setCompletedSale(res)
       clearCart()
-      showSuccess(`Sale completed successfully! Invoice #${res.invoiceNo}`)
+      showSuccess(
+        `Invoice #${res.invoiceNo} has been completed and the counter is ready for the next order.`,
+        "Sale completed",
+      )
 
       // Refresh stock counts in background
       getStock().then(setStocks).catch(console.error)
+      return res
     } catch (err) {
       showError(err, "Could not complete the sale")
+      throw err
     } finally {
       setIsSubmitting(false)
     }
@@ -206,103 +221,104 @@ export default function PosCounter({
     digitalPaid,
     digitalMedium,
     digitalTrxId,
-    isOwner,
     clearCart,
     showSuccess,
-    showWarning,
     showError,
   ])
 
-  // ─── Enter-driven checkout: review -> payment -> complete ────────
-  // Enter advances one step at a time so the counter can be run entirely
-  // from the keyboard: Enter proceeds to payment, Enter again completes the
-  // sale on the selected method (Cash by default, pre-filled to the exact
-  // amount), and Enter on the receipt dialog prints the cash memo.
-  const advanceCheckout = useCallback(() => {
-    if (cart.length === 0 || isSubmitting) return
-    if (isPaymentStep) {
-      handleCompleteSale()
-    } else {
-      setIsPaymentStep(true)
-    }
-  }, [cart.length, isSubmitting, isPaymentStep, handleCompleteSale])
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // While the receipt dialog is up it owns Enter (print the cash memo).
-      if (completedSale) return
+      if (isPrintPromptOpen) return
       if (e.key !== "Enter" && e.key !== "F9") return
       // Enter inside a text field belongs to that field (search, cash amount…).
       if (e.key === "Enter" && isTypingTarget(e.target)) return
       if (cart.length === 0 || isSubmitting) return
 
       e.preventDefault()
-      advanceCheckout()
+      handleCompleteSale()
     }
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [advanceCheckout, completedSale, cart.length, isSubmitting])
+  }, [handleCompleteSale, isPrintPromptOpen, cart.length, isSubmitting])
 
   return (
-    <div className="flex flex-col gap-3 h-full min-h-[520px]">
-      {/* Main Cockpit Split: Left 60% Catalog, Right 40% Cart & Settlement */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0 overflow-hidden">
-        {/* Left 60% Panel: Catalog & Search */}
-        <div className="lg:col-span-7 xl:col-span-7 h-full flex flex-col min-h-0">
-          <ProductCatalogGrid
+    <div
+      className={`h-full min-h-0 overflow-y-auto ${
+        isFocusMode ? "md:overflow-hidden" : "xl:overflow-hidden"
+      }`}
+    >
+      <div
+        className={`grid min-h-full grid-cols-1 gap-3 ${
+          isFocusMode
+            ? "md:h-full md:min-h-0 md:grid-cols-[minmax(0,1fr)_340px]"
+            : "xl:h-full xl:min-h-0 xl:grid-cols-[minmax(0,1fr)_370px]"
+        }`}
+      >
+        {/* Order workspace: search command bar and the live line-item table. */}
+        <section
+          className={`relative flex min-h-[560px] flex-col rounded-lg border border-slate-200 bg-white shadow-xs ${
+            isFocusMode ? "md:min-h-0" : "xl:min-h-0"
+          }`}
+        >
+          <ProductSearch
             stocks={stocks}
             isLoading={isLoading}
-            onAddToCart={(stock) =>
-              addToCart(stock, getLotsForProduct(stock.productId))
-            }
+            onAddToCart={(stock) => addToCart(stock)}
             saleMode={saleMode}
-            onToggleSaleMode={toggleSaleMode}
             onRefresh={loadInitialData}
-            onEmptyEnter={advanceCheckout}
+            onEmptyEnter={handleCompleteSale}
             isFocusMode={isFocusMode}
             onToggleFocusMode={onToggleFocusMode}
-            isOwner={isOwner}
           />
-        </div>
+          <CartTicket />
+        </section>
 
-        {/* Right 40% Panel: Customer + Active Ticket + Settlement */}
-        <div className="lg:col-span-5 xl:col-span-5 h-full flex flex-col gap-2.5 min-h-0">
-          {/* Customer Selector */}
-          <div className="shrink-0">
-            <CustomerSelect
-              customers={customers}
-              selectedCustomerId={selectedCustomerId}
-              onSelectCustomer={setSelectedCustomerId}
-            />
+        {/* Checkout rail: all order processing stays in one predictable place. */}
+        <aside className="flex h-full min-h-0 flex-col gap-3">
+          <div className="shrink-0 flex items-center justify-between px-1 pt-1">
+            <div>
+              <h2 className="text-sm font-bold text-slate-950">Order processing</h2>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                Pricing and payment
+              </p>
+            </div>
+            <span
+              className={`rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${
+                saleMode === "WHOLESALE"
+                  ? "border-purple-200 bg-purple-50 text-purple-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
+              }`}
+            >
+              {saleMode}
+            </span>
           </div>
 
-          {/* Active Cart Ticket */}
-          <div className="flex-1 min-h-[220px] transition-[height] duration-200 ease-out">
-            <CartTicket isOwner={isOwner} />
-          </div>
-
-          {/* Settlement Panel */}
-          <div className="shrink-0">
+          <div className="min-h-0 flex-1">
             <SettlementPanel
-              isOwner={isOwner}
               isSubmitting={isSubmitting}
-              isPaymentStep={isPaymentStep}
-              onProceedToPayment={() => setIsPaymentStep(true)}
-              onBackToSummary={() => setIsPaymentStep(false)}
               onSubmitSale={handleCompleteSale}
-              customerDue={selectedCustomer?.currentDue || 0}
             />
           </div>
-        </div>
+        </aside>
       </div>
 
-      {/* Dual Print Modal on Sale Completion */}
       <DualPrintModal
-        isOpen={!!completedSale}
-        sale={completedSale}
-        customer={selectedCustomer}
-        onClose={() => setCompletedSale(null)}
+        isOpen={isPrintPromptOpen}
+        sale={null}
+        customer={completedCustomer}
+        draft={{
+          totalAmount: finalTotalAmount,
+          cashPaid,
+          digitalPaid,
+        }}
+        onRegisterForThermalPrint={registerSaleForThermalPrint}
+        customers={customers}
+        onResolveCustomerForSale={resolveCustomerForSale}
+        onClose={() => {
+          setIsPrintPromptOpen(false)
+          setCompletedCustomer(null)
+        }}
       />
     </div>
   )

@@ -98,7 +98,7 @@ public class SaleServiceImpl implements SaleService {
                                 .map(StockInventory::getQuantity)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
                         if (available.compareTo(BigDecimal.ZERO) > 0) {
-                            log.warn("REGULATORY FEFO WARNING: Product {} ({}) has older unexpired lot {} (expires {}, available: {}) but cashier selected lot {} (expires {})",
+                            log.warn("REGULATORY FEFO WARNING: Product {} ({}) has older unexpired lot {} (expires {}, available: {}) but sale selected lot {} (expires {})",
                                     lot.getProduct().getProductCode(), lot.getProduct().getNameEn(),
                                     earlierLot.getLotNumber(), earlierLot.getExpiryDate(), available,
                                     lot.getLotNumber(), lot.getExpiryDate());
@@ -113,13 +113,23 @@ public class SaleServiceImpl implements SaleService {
                 throw new ValidationException("Total quantity must be greater than zero for lot " + lot.getLotNumber());
             }
 
-            // BUSINESS DECISION: Deduct total sale quantity from active DOKAN counter stock. Dokan stock can go negative to allow ringing up arriving goods before paper challan entry.
+            // BUSINESS DECISION: Stock can never go negative. Sales must be blocked
+            // when the requested quantity exceeds available DOKAN counter stock.
             StockInventory dokanStock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), "DOKAN")
                     .orElseGet(() -> StockInventory.builder()
                             .lot(lot)
                             .location("DOKAN")
                             .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
                             .build());
+
+            BigDecimal availableQty = dokanStock.getQuantity() != null
+                    ? dokanStock.getQuantity().setScale(3, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP);
+            if (availableQty.compareTo(totalQty) < 0) {
+                String productName = lot.getProduct() != null ? lot.getProduct().getNameEn() : "selected product";
+                throw new InsufficientStockException("Requested quantity (" + totalQty + ") exceeds available stock (" + availableQty + ") for " + productName + " / lot " + lot.getLotNumber());
+            }
+
             dokanStock.setQuantity(dokanStock.getQuantity().subtract(totalQty).setScale(3, RoundingMode.HALF_UP));
             stockInventoryRepository.save(dokanStock);
 

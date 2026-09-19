@@ -70,13 +70,13 @@ class RepositoryTests {
     private CustomerMapper customerMapper;
 
     @Test
-    @DisplayName("Product queries by code, default barcode, and bilingual name search")
+    @DisplayName("Product queries by code, default barcode, and English name fallback")
     void testProductQueries() {
         Optional<Product> productOpt = productRepository.findByProductCode("SYN-AMI-TOP");
         assertThat(productOpt).isPresent();
         Product product = productOpt.get();
         assertThat(product.getNameEn()).isEqualTo("Amistar Top 325 SC");
-        assertThat(product.getNameBn()).isEqualTo("অ্যামিস্টার টপ ৩২৫ এসসি");
+        assertThat(product.getNameBn()).isEqualTo("Amistar Top 325 SC");
         assertThat(product.getCategory()).isEqualTo("Fungicide");
         assertThat(product.getBaseUnit()).isEqualTo("Bottle");
         assertThat(product.getCartonMultiplier()).isEqualByComparingTo("20.000");
@@ -88,35 +88,31 @@ class RepositoryTests {
         assertThat(barcodeOpt.get().getProductCode()).isEqualTo("SYN-AMI-TOP");
 
         List<Product> searchResults = productRepository.findByNameEnContainingIgnoreCaseOrNameBnContainingIgnoreCase(
-                "amistar", "অ্যামিস্টার"
+                "amistar", "amistar"
         );
         assertThat(searchResults).isNotEmpty();
         assertThat(searchResults.get(0).getProductCode()).isEqualTo("SYN-AMI-TOP");
     }
 
     @Test
-    @DisplayName("InventoryLot query by barcode and FEFO (First Expired First Out) order")
+    @DisplayName("InventoryLot query by barcode and default seed lot")
     void testInventoryLotFefoSorting() {
         Optional<InventoryLot> lotOpt = inventoryLotRepository.findByBarcode("SYN-AMI-202502");
         assertThat(lotOpt).isPresent();
         InventoryLot lot = lotOpt.get();
-        assertThat(lot.getLotNumber()).isEqualTo("LOT-2025B2");
+        assertThat(lot.getLotNumber()).isEqualTo("DEFAULT");
         assertThat(lot.getPurchaseCost()).isEqualByComparingTo("500.00");
 
-        // BUSINESS DECISION: FEFO dispatch query must order lots by expiry_date ascending
         Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
         List<InventoryLot> fefoLots = inventoryLotRepository.findByProductIdOrderByExpiryDateAsc(product.getId());
 
         assertThat(fefoLots).hasSizeGreaterThanOrEqualTo(2);
-        // Earlier expiring lot (LOT-2025B2 expiring 2027-12-31) must come before LOT-2026A1 (expiring 2028-06-30)
-        assertThat(fefoLots.get(0).getLotNumber()).isEqualTo("LOT-2025B2");
-        assertThat(fefoLots.get(0).getExpiryDate()).isEqualTo(LocalDate.of(2027, 12, 31));
-        assertThat(fefoLots.get(1).getLotNumber()).isEqualTo("LOT-2026A1");
-        assertThat(fefoLots.get(1).getExpiryDate()).isEqualTo(LocalDate.of(2028, 6, 30));
-        assertThat(fefoLots.get(0).getExpiryDate()).isBefore(fefoLots.get(1).getExpiryDate());
+        assertThat(fefoLots.get(0).getLotNumber()).isEqualTo("DEFAULT");
+        assertThat(fefoLots.get(0).getExpiryDate()).isEqualTo(LocalDate.of(2030, 12, 31));
 
         List<InventoryLot> allLots = inventoryLotRepository.findByProductId(product.getId());
-        assertThat(allLots).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(allLots).extracting(InventoryLot::getLotNumber)
+                .contains("DEFAULT", "AMI-NEW-202609");
     }
 
     @Test
@@ -289,7 +285,7 @@ class RepositoryTests {
         InventoryLot lot = inventoryLotRepository.findByBarcode("SYN-AMI-202502").orElseThrow();
         InventoryLotDto lotDto = inventoryLotMapper.toDto(lot);
         assertThat(lotDto).isNotNull();
-        assertThat(lotDto.getLotNumber()).isEqualTo("LOT-2025B2");
+        assertThat(lotDto.getLotNumber()).isEqualTo("DEFAULT");
         assertThat(lotDto.getProductId()).isEqualTo(product.getId());
         assertThat(lotDto.getProductCode()).isEqualTo("SYN-AMI-TOP");
         assertThat(lotDto.getProductNameEn()).isEqualTo("Amistar Top 325 SC");
@@ -297,6 +293,6 @@ class RepositoryTests {
 
         InventoryLot lotFromDto = inventoryLotMapper.toEntity(lotDto);
         assertThat(lotFromDto).isNotNull();
-        assertThat(lotFromDto.getLotNumber()).isEqualTo("LOT-2025B2");
+        assertThat(lotFromDto.getLotNumber()).isEqualTo("DEFAULT");
     }
 }

@@ -82,7 +82,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.CONFLICT.value())
                 .errorCode("OPTIMISTIC_LOCK_CONFLICT")
-                .message("The record was updated by another cashier or session. Please refresh and try again.")
+                .message("The record was updated by another session. Please refresh and try again.")
                 .path(request.getRequestURI())
                 .build();
 

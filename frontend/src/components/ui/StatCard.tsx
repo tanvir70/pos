@@ -1,5 +1,4 @@
 import type { ReactNode } from "react"
-import { Lock } from "lucide-react"
 
 export interface StatCardProps {
   title: string
@@ -11,8 +10,6 @@ export interface StatCardProps {
     isPositive?: boolean
   }
   color?: "emerald" | "blue" | "amber" | "red" | "purple" | "neutral"
-  isMasked?: boolean
-  onUnlockClick?: () => void
   className?: string
 }
 
@@ -62,8 +59,6 @@ export function StatCard({
   subtitle,
   trend,
   color = "neutral",
-  isMasked = false,
-  onUnlockClick,
   className = "",
 }: StatCardProps) {
   const theme = colorThemes[color]
@@ -79,26 +74,11 @@ export function StatCard({
           </p>
 
           <div className="mt-2 flex items-baseline gap-2">
-            {isMasked ? (
-              <div
-                onClick={onUnlockClick}
-                className="group flex items-center gap-1.5 cursor-pointer py-1 select-none"
-                title="Unlock with PIN"
-              >
-                <span className="font-mono text-xl sm:text-2xl font-black text-gray-400 blur-xs group-hover:blur-none transition-all">
-                  ৳**,***.**
-                </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-300 px-2 py-0.5 rounded-full">
-                  <Lock className="w-3 h-3" /> Unlock
-                </span>
-              </div>
-            ) : (
-              <div
-                className={`font-black text-xl sm:text-2xl tabular-nums leading-tight truncate ${theme.text}`}
-              >
-                {value}
-              </div>
-            )}
+            <div
+              className={`font-black text-xl sm:text-2xl tabular-nums leading-tight truncate ${theme.text}`}
+            >
+              {value}
+            </div>
           </div>
 
           {(subtitle || trend) && (

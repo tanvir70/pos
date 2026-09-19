@@ -101,19 +101,16 @@ console.log("Running Phase 2 Context & Logic Verification Suite...")
   console.log("  - Cart session serialization verified.")
 }
 
-// 3. ApiError Handling and Bengali Translation
+// 3. ApiError Handling
 {
   console.log("  [3/4] Verifying ApiError and Bengali error categorization...")
-  const errInvalidPin = new ApiError("Bad PIN", 400, "INVALID_PIN")
-  assert.equal(errInvalidPin.errorCode, "INVALID_PIN")
-
   const errStock = new ApiError("No stock", 400, "NEGATIVE_STOCK_NOT_ALLOWED")
   assert.equal(errStock.errorCode, "NEGATIVE_STOCK_NOT_ALLOWED")
 
   const errUnauthorized = new ApiError("Session expired", 401)
   assert.equal(errUnauthorized.status, 401)
 
-  const errForbidden = new ApiError("Owner mode required", 403)
+  const errForbidden = new ApiError("Permission denied", 403)
   assert.equal(errForbidden.status, 403)
   console.log("  - ApiError categorization verified.")
 }

@@ -106,8 +106,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-[11px] text-slate-400 mt-5">
-          Default accounts &mdash; Owner: <span className="font-mono">owner / owner123</span>
-          {" "}&middot; Cashier: <span className="font-mono">cashier / cashier123</span>
+          Default account &mdash; <span className="font-mono">owner / owner123</span>
         </p>
       </div>
     </div>

@@ -44,21 +44,13 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidCredentialsException("Invalid username or password");
         }
 
-        Role role;
-        try {
-            role = Role.valueOf(user.getRole());
-        } catch (IllegalArgumentException ex) {
-            log.error("User {} has an invalid role assigned: {}", user.getUsername(), user.getRole());
-            throw new InvalidCredentialsException("Account role is misconfigured; contact the shop owner");
-        }
-
         user.setLastLoginAt(LocalDateTime.now());
 
-        String token = jwtTokenProvider.createToken(user.getUsername(), role);
+        String token = jwtTokenProvider.createToken(user.getUsername(), Role.ROLE_OWNER);
 
         return AuthTokenResponse.builder()
                 .token(token)
-                .role(role.name())
+                .role(Role.ROLE_OWNER.name())
                 .expiresIn(jwtTokenProvider.getValiditySeconds())
                 .username(user.getUsername())
                 .fullName(user.getFullName())

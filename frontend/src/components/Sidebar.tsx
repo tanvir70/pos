@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import type { NavigationTab } from "../types"
 import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
 import {
   Sprout,
   ShoppingCart,
@@ -9,7 +10,6 @@ import {
   BookOpen,
   RotateCcw,
   Settings2,
-  KeyRound,
   LogOut,
   X,
   type LucideIcon,
@@ -36,7 +36,6 @@ interface TabTheme {
   activeBg: string
   activeText: string
   activeBorder: string
-  activeBar: string
   activeBadge: string
   inactiveBadge: string
 }
@@ -46,57 +45,43 @@ const TAB_THEMES: Record<NavigationTab, TabTheme> = {
     activeBg: "bg-emerald-50/90",
     activeText: "text-emerald-950 font-bold",
     activeBorder: "border-emerald-200/90 shadow-xs shadow-emerald-600/5",
-    activeBar: "bg-emerald-600",
-    activeBadge: "bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-700/25 scale-105",
-    inactiveBadge: "bg-emerald-50 text-emerald-700 border-emerald-200/70 group-hover:bg-emerald-100 group-hover:border-emerald-300 group-hover:scale-105",
+    activeBadge: "bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-700/25",
+    inactiveBadge: "bg-emerald-50 text-emerald-700 border-emerald-200/70 group-hover:bg-emerald-100 group-hover:border-emerald-300",
   },
   dashboard: {
     activeBg: "bg-blue-50/90",
     activeText: "text-blue-950 font-bold",
     activeBorder: "border-blue-200/90 shadow-xs shadow-blue-600/5",
-    activeBar: "bg-blue-600",
-    activeBadge: "bg-blue-600 text-white border-blue-500 shadow-sm shadow-blue-700/25 scale-105",
-    inactiveBadge: "bg-blue-50 text-blue-700 border-blue-200/70 group-hover:bg-blue-100 group-hover:border-blue-300 group-hover:scale-105",
+    activeBadge: "bg-blue-600 text-white border-blue-500 shadow-sm shadow-blue-700/25",
+    inactiveBadge: "bg-blue-50 text-blue-700 border-blue-200/70 group-hover:bg-blue-100 group-hover:border-blue-300",
   },
   inventory: {
     activeBg: "bg-amber-50/90",
     activeText: "text-amber-950 font-bold",
     activeBorder: "border-amber-200/90 shadow-xs shadow-amber-600/5",
-    activeBar: "bg-amber-600",
-    activeBadge: "bg-amber-600 text-white border-amber-500 shadow-sm shadow-amber-700/25 scale-105",
-    inactiveBadge: "bg-amber-50 text-amber-700 border-amber-200/70 group-hover:bg-amber-100 group-hover:border-amber-300 group-hover:scale-105",
+    activeBadge: "bg-amber-600 text-white border-amber-500 shadow-sm shadow-amber-700/25",
+    inactiveBadge: "bg-amber-50 text-amber-700 border-amber-200/70 group-hover:bg-amber-100 group-hover:border-amber-300",
   },
   customers: {
     activeBg: "bg-indigo-50/90",
     activeText: "text-indigo-950 font-bold",
     activeBorder: "border-indigo-200/90 shadow-xs shadow-indigo-600/5",
-    activeBar: "bg-indigo-600",
-    activeBadge: "bg-indigo-600 text-white border-indigo-500 shadow-sm shadow-indigo-700/25 scale-105",
-    inactiveBadge: "bg-indigo-50 text-indigo-700 border-indigo-200/70 group-hover:bg-indigo-100 group-hover:border-indigo-300 group-hover:scale-105",
+    activeBadge: "bg-indigo-600 text-white border-indigo-500 shadow-sm shadow-indigo-700/25",
+    inactiveBadge: "bg-indigo-50 text-indigo-700 border-indigo-200/70 group-hover:bg-indigo-100 group-hover:border-indigo-300",
   },
   returns: {
     activeBg: "bg-rose-50/90",
     activeText: "text-rose-950 font-bold",
     activeBorder: "border-rose-200/90 shadow-xs shadow-rose-600/5",
-    activeBar: "bg-rose-600",
-    activeBadge: "bg-rose-600 text-white border-rose-500 shadow-sm shadow-rose-700/25 scale-105",
-    inactiveBadge: "bg-rose-50 text-rose-700 border-rose-200/70 group-hover:bg-rose-100 group-hover:border-rose-300 group-hover:scale-105",
-  },
-  wholesale: {
-    activeBg: "bg-purple-50/90",
-    activeText: "text-purple-950 font-bold",
-    activeBorder: "border-purple-200/90 shadow-xs shadow-purple-600/5",
-    activeBar: "bg-purple-600",
-    activeBadge: "bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-700/25 scale-105",
-    inactiveBadge: "bg-purple-50 text-purple-700 border-purple-200/70 group-hover:bg-purple-100 group-hover:border-purple-300 group-hover:scale-105",
+    activeBadge: "bg-rose-600 text-white border-rose-500 shadow-sm shadow-rose-700/25",
+    inactiveBadge: "bg-rose-50 text-rose-700 border-rose-200/70 group-hover:bg-rose-100 group-hover:border-rose-300",
   },
   settings: {
     activeBg: "bg-purple-50/90",
     activeText: "text-purple-950 font-bold",
     activeBorder: "border-purple-200/90 shadow-xs shadow-purple-600/5",
-    activeBar: "bg-purple-600",
-    activeBadge: "bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-700/25 scale-105",
-    inactiveBadge: "bg-purple-50 text-purple-700 border-purple-200/70 group-hover:bg-purple-100 group-hover:border-purple-300 group-hover:scale-105",
+    activeBadge: "bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-700/25",
+    inactiveBadge: "bg-purple-50 text-purple-700 border-purple-200/70 group-hover:bg-purple-100 group-hover:border-purple-300",
   },
 }
 
@@ -106,10 +91,12 @@ const NAV_TABS: TabItem[] = [
   { id: "inventory", label: "Dokan Stock", icon: Package },
   { id: "customers", label: "Customer Ledger", icon: BookOpen },
   { id: "returns", label: "Sales Returns", icon: RotateCcw },
+  { id: "settings", label: "Settings", icon: Settings2 },
 ]
 
 export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: SidebarProps) {
   const auth = useAuth()
+  const { showToast, dismissToast } = useToast()
 
   const [wholesaleSettings, setWholesaleSettings] = useState<WholesaleSettings>(getWholesaleSettings)
 
@@ -142,6 +129,31 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
   const handleTabClick = (tab: NavigationTab) => {
     onTabChange(tab)
     if (window.innerWidth < 768) onClose()
+  }
+
+  const confirmLogout = () => {
+    let toastId = ""
+    toastId = showToast({
+      type: "warning",
+      title: "Confirm logout",
+      message: "End the current session and return to the sign-in screen?",
+      duration: 0,
+      presentation: "confirmation",
+      actions: [
+        {
+          label: "Cancel",
+          onClick: () => dismissToast(toastId),
+        },
+        {
+          label: "Logout",
+          intent: "danger",
+          onClick: () => {
+            dismissToast(toastId)
+            auth.logout()
+          },
+        },
+      ],
+    })
   }
 
   // Desktop: full width when open, a narrow icon-only rail when collapsed (never
@@ -203,11 +215,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
 
           {/* Navigation */}
           <nav className={`flex-1 overflow-y-auto p-3 space-y-1.5 ${isRail ? "md:px-2" : ""}`}>
-            {NAV_TABS.filter((tab) => {
-              // Cashier mode cannot see Analytics
-              if (tab.id === "dashboard" && !auth.isOwner) return false
-              return true
-            }).map((tab) => {
+            {NAV_TABS.map((tab) => {
               const isActive = activeTab === tab.id
               const Icon = tab.icon
               const theme = TAB_THEMES[tab.id]
@@ -217,7 +225,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                   key={tab.id}
                   onClick={() => handleTabClick(tab.id)}
                   title={isRail ? tab.label : undefined}
-                  className={`group relative w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer border ${
+                  className={`group relative w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold cursor-pointer border ${
                     isRail ? "md:justify-center md:px-0" : ""
                   } ${
                     isActive
@@ -225,20 +233,11 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                       : "border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >
-                  {/* Subtle active accent indicator bar */}
-                  {isActive && (
-                    <span
-                      className={`absolute left-0.5 top-2 bottom-2 w-1 rounded-full ${theme.activeBar} ${
-                        isRail ? "md:left-0.5" : ""
-                      }`}
-                    />
-                  )}
-
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all duration-200 ${
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                       isActive
                         ? theme.activeBadge
-                        : `${theme.inactiveBadge} shadow-2xs group-hover:scale-105`
+                        : `${theme.inactiveBadge} shadow-2xs`
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -246,99 +245,17 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                   <span className={`truncate text-left flex-1 ${isRail ? "md:hidden" : ""}`}>
                     {tab.label}
                   </span>
-
-                  {/* Active subtle pill dot indicator when open */}
-                  {isActive && !isRail && (
-                    <span className={`w-1.5 h-1.5 rounded-full ${theme.activeBar} opacity-80 shrink-0`} />
-                  )}
                 </button>
               )
             })}
           </nav>
 
-          {/* Footer: Owner sees Settings; Cashier mode sees Cashier status (Settings hidden) */}
+          {/* Footer */}
           <div className={`border-t border-slate-200/80 p-3 space-y-2 shrink-0 bg-slate-50/40 ${isRail ? "md:px-2" : ""}`}>
-            {auth.isOwner ? (
-              <button
-                type="button"
-                onClick={() => handleTabClick("settings")}
-                title={isRail ? `Settings (Wholesale: -${wholesaleSettings.discountPercentage}%)` : undefined}
-                className={`group relative w-full flex items-center gap-2.5 rounded-xl border text-sm font-semibold transition-all duration-200 cursor-pointer ${
-                  isRail ? "md:justify-center md:px-0 px-2.5 py-2" : "px-2.5 py-2"
-                } ${
-                  activeTab === "settings"
-                    ? "bg-purple-50/90 text-purple-950 border-purple-200 shadow-xs ring-1 ring-purple-500/10"
-                    : "bg-white text-slate-800 border-slate-200/80 hover:bg-purple-50/50 hover:border-purple-200 hover:shadow-2xs"
-                }`}
-              >
-                {activeTab === "settings" && (
-                  <span
-                    className={`absolute left-0.5 top-2 bottom-2 w-1 rounded-full bg-purple-600 ${
-                      isRail ? "md:left-0.5" : ""
-                    }`}
-                  />
-                )}
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-all duration-300 ${
-                    activeTab === "settings"
-                      ? "bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-600/20 scale-105"
-                      : "bg-purple-50 text-purple-700 border-purple-200/80 shadow-2xs group-hover:scale-105 group-hover:rotate-45"
-                  }`}
-                >
-                  <Settings2 className="w-4 h-4" />
-                </div>
-                <div className={`min-w-0 flex-1 text-left ${isRail ? "md:hidden" : ""}`}>
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold leading-tight truncate">
-                      Settings
-                    </span>
-                    <span
-                      className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded shrink-0 border bg-purple-100 text-purple-800 border-purple-200"
-                    >
-                      -{wholesaleSettings.discountPercentage}%
-                    </span>
-                  </div>
-                  <div
-                    className={`text-[10px] font-medium truncate mt-0.5 ${
-                      activeTab === "settings" ? "text-purple-700/80 font-semibold" : "text-slate-500 font-medium"
-                    }`}
-                  >
-                    {displayName || "Owner"} • Owner Mode
-                  </div>
-                </div>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => auth.openPinModal()}
-                title={isRail ? "Owner Access (Enter PIN)" : "Owner Access - Click to enter PIN and unlock Owner Mode"}
-                className={`group w-full flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-emerald-50/80 hover:border-emerald-300 text-slate-700 hover:text-emerald-950 transition-all duration-200 cursor-pointer shadow-2xs ${
-                  isRail ? "md:justify-center md:px-0 px-2.5 py-2" : "px-2.5 py-2"
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white flex items-center justify-center text-xs font-bold shrink-0 border border-emerald-500/30 shadow-2xs group-hover:scale-105 transition-transform">
-                  <KeyRound className="w-4 h-4" />
-                </div>
-                <div className={`min-w-0 flex-1 text-left ${isRail ? "md:hidden" : ""}`}>
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-emerald-950 truncate">
-                      Owner Access
-                    </span>
-                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded shrink-0 border bg-emerald-100 text-emerald-800 border-emerald-200">
-                      PIN
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 group-hover:text-emerald-700 font-medium truncate mt-0.5">
-                    Click to enter Owner PIN
-                  </div>
-                </div>
-              </button>
-            )}
-
             {/* Perfectly Aligned Logout Button */}
             <button
               type="button"
-              onClick={auth.logout}
+              onClick={confirmLogout}
               title={isRail ? "Logout" : undefined}
               className={`group w-full flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-rose-50/80 hover:border-rose-200/90 text-slate-700 hover:text-rose-700 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-2xs ${
                 isRail ? "md:justify-center md:px-0 px-2.5 py-2" : "px-2.5 py-2"

@@ -1,8 +1,5 @@
-export { default as ProductCatalogGrid } from "./ProductCatalogGrid"
-export * from "./ProductCatalogGrid"
-
-export { default as CustomerSelect } from "./CustomerSelect"
-export * from "./CustomerSelect"
+export { default as ProductSearch } from "./ProductSearch"
+export * from "./ProductSearch"
 
 export { default as CartTicket } from "./CartTicket"
 export * from "./CartTicket"

@@ -68,23 +68,35 @@ class FlywayMigrationTest {
     }
 
     @Test
-    @DisplayName("Verify inventory_lot data integrity and FEFO readiness")
+    @DisplayName("Verify inventory_lot seed data supports multiple priced lots per SKU")
     void testInventoryLots() {
         Integer lotCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM inventory_lot", Integer.class);
-        assertThat(lotCount).isGreaterThanOrEqualTo(6);
+        assertThat(lotCount).isGreaterThanOrEqualTo(7);
 
-        // Verify that Amistar Top has multiple lots for FEFO ordering
         List<Map<String, Object>> amistarLots = jdbcTemplate.queryForList(
-                "SELECT lot_number, expiry_date, purchase_cost FROM inventory_lot " +
+                "SELECT lot_number, expiry_date, purchase_cost, lot_retail_price, lot_wholesale_price, barcode FROM inventory_lot " +
                 "WHERE product_id = (SELECT id FROM product WHERE product_code = 'SYN-AMI-TOP') " +
                 "ORDER BY expiry_date ASC"
         );
         assertThat(amistarLots).hasSizeGreaterThanOrEqualTo(2);
-        assertThat(amistarLots.get(0).get("lot_number")).isEqualTo("LOT-2025B2");
+        assertThat(amistarLots)
+                .extracting(row -> row.get("lot_number"))
+                .contains("DEFAULT", "AMI-NEW-202609");
+        assertThat(amistarLots)
+                .extracting(row -> row.get("barcode"))
+                .contains("SYN-AMI-202502", "SYN-AMI-NEW-202609");
+
+        Map<String, Object> newPriceLot = amistarLots.stream()
+                .filter(row -> "AMI-NEW-202609".equals(row.get("lot_number")))
+                .findFirst()
+                .orElseThrow();
+        assertThat(new BigDecimal(newPriceLot.get("purchase_cost").toString())).isEqualByComparingTo("590.00");
+        assertThat(new BigDecimal(newPriceLot.get("lot_retail_price").toString())).isEqualByComparingTo("720.00");
+        assertThat(new BigDecimal(newPriceLot.get("lot_wholesale_price").toString())).isEqualByComparingTo("680.00");
     }
 
     @Test
-    @DisplayName("Verify stock_inventory has DOKAN records and zero GODOWN records after V4 migration")
+    @DisplayName("Verify stock_inventory has DOKAN records and zero GODOWN records")
     void testStockInventoryLocations() {
         Integer dokanCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM stock_inventory WHERE location = 'DOKAN'", Integer.class);
@@ -92,7 +104,7 @@ class FlywayMigrationTest {
                 "SELECT COUNT(*) FROM stock_inventory WHERE location = 'GODOWN'", Integer.class);
 
         assertThat(dokanCount).as("DOKAN stock allocations exist").isGreaterThan(0);
-        assertThat(godownCount).as("GODOWN stock allocations dropped by V4").isEqualTo(0);
+        assertThat(godownCount).as("GODOWN stock allocations are not part of the baseline").isEqualTo(0);
 
         // Verify total stock quantity is positive
         BigDecimal totalStock = jdbcTemplate.queryForObject(
@@ -102,8 +114,8 @@ class FlywayMigrationTest {
     }
 
     @Test
-    @DisplayName("Verify godown_movement table was dropped by V4 migration")
-    void testGodownMovementTableDropped() {
+    @DisplayName("Verify godown_movement table is not part of the baseline")
+    void testGodownMovementTableAbsent() {
         org.assertj.core.api.Assertions.assertThatThrownBy(() ->
                 jdbcTemplate.execute("SELECT 1 FROM godown_movement LIMIT 1")
         ).isInstanceOf(Exception.class);

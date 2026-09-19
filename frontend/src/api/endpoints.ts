@@ -20,8 +20,6 @@ import type {
   TopSellingProduct,
   PagedResponse,
   AuthTokenResponse,
-  PinVerificationRequest,
-  ChangePinRequest,
   LoginRequest,
   QuarantineStockItem,
   QuarantineDisposalRequest,
@@ -278,28 +276,3 @@ export async function login(request: LoginRequest): Promise<AuthTokenResponse> {
     body: JSON.stringify(request),
   })
 }
-
-export async function createCashierSession(): Promise<AuthTokenResponse> {
-  return apiClient<AuthTokenResponse>("/auth/cashier-session", {
-    method: "POST",
-  })
-}
-
-export async function verifyOwnerPin(
-  request: PinVerificationRequest,
-): Promise<AuthTokenResponse> {
-  return apiClient<AuthTokenResponse>("/auth/verify-pin", {
-    method: "POST",
-    body: JSON.stringify(request),
-  })
-}
-
-export async function changeOwnerPin(
-  request: ChangePinRequest,
-): Promise<{ message: string; status?: string }> {
-  return apiClient<{ message: string; status?: string }>("/auth/change-pin", {
-    method: "POST",
-    body: JSON.stringify(request),
-  })
-}
-

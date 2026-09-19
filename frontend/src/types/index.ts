@@ -15,7 +15,6 @@ export type NavigationTab =
   | "inventory"
   | "customers"
   | "returns"
-  | "wholesale"
   | "settings"
 
 // ----------------------------------------------------------------------------
@@ -411,7 +410,7 @@ export interface ErrorResponse {
 // ----------------------------------------------------------------------------
 // Security & Authentication
 // ----------------------------------------------------------------------------
-export type AppRole = "ROLE_CASHIER" | "ROLE_OWNER"
+export type AppRole = "ROLE_OWNER"
 
 export interface AuthTokenResponse {
   token: string
@@ -421,17 +420,7 @@ export interface AuthTokenResponse {
   fullName?: string
 }
 
-export interface PinVerificationRequest {
-  pin: string
-}
-
 export interface LoginRequest {
   username: string
   password: string
 }
-
-export interface ChangePinRequest {
-  currentPin: string
-  newPin: string
-}
-

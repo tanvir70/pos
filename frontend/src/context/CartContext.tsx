@@ -21,11 +21,6 @@ import {
   calcChangeReturn,
   roundAccounting,
 } from "../utils/currency"
-import {
-  calcWholesalePrice,
-  getWholesaleSettings,
-  type WholesaleSettings,
-} from "../utils/wholesaleSettings"
 
 const STORAGE_KEY = "pos_active_cart_v1"
 
@@ -89,6 +84,17 @@ export interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
+
+function availableStockLimit(item: Pick<CartItem, "availableStock">) {
+  const stock = Number(item.availableStock)
+  return Number.isFinite(stock) ? Math.max(0, stock) : 0
+}
+
+function clampToAvailable(quantity: number, item: Pick<CartItem, "availableStock">) {
+  const stock = availableStockLimit(item)
+  if (stock <= 0) return 0
+  return roundAccounting(Math.min(quantity, stock))
+}
 
 interface SavedCartState {
   cart: CartItem[]
@@ -350,10 +356,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      const defaultPrice =
-        saleMode === "RETAIL"
-          ? targetLot.lotRetailPrice
-          : calcWholesalePrice(targetLot.lotRetailPrice)
+      const defaultPrice = targetLot.lotRetailPrice
 
       setCart((prevCart) => {
         const existingIndex = prevCart.findIndex((i) => i.lotId === targetLot.id)
@@ -361,13 +364,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (existingIndex > -1) {
           return prevCart.map((item, idx) => {
             if (idx !== existingIndex) return item
-            const newQty = roundAccounting(item.quantity + 1)
+            const newQty = clampToAvailable(roundAccounting(item.quantity + 1), item)
+            if (newQty <= 0) return item
             return {
               ...item,
               quantity: newQty,
             }
           })
         }
+
+        const availableStock =
+          (stockOrLot as any).quantity ?? (stockOrLot as any).totalQuantity ?? 0
+        const initialQuantity = clampToAvailable(1, { availableStock })
+        if (initialQuantity <= 0) return prevCart
 
         const newItem: CartItem = {
           id: `cart-${targetLot.id}-${Date.now()}`,
@@ -387,9 +396,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           lotRetailPrice: targetLot.lotRetailPrice,
           lotWholesalePrice: targetLot.lotWholesalePrice,
           barcode: targetLot.barcode,
-          availableStock:
-            (stockOrLot as any).quantity ?? (stockOrLot as any).totalQuantity ?? 0,
-          quantity: 1,
+          availableStock,
+          quantity: initialQuantity,
           unitPrice: defaultPrice,
           originalUnitPrice: defaultPrice,
           availableLots: allLots.length > 0 ? allLots : undefined,
@@ -398,7 +406,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return [newItem, ...prevCart]
       })
     },
-    [saleMode],
+    [],
   )
 
   const adjustQuantity = useCallback((itemId: string, delta: number) => {
@@ -408,9 +416,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           if (item.id !== itemId) return item
           const newQty = roundAccounting(item.quantity + delta)
           if (newQty <= 0) return null
+          const clampedQty = clampToAvailable(newQty, item)
+          if (clampedQty <= 0) return null
           return {
             ...item,
-            quantity: newQty,
+            quantity: clampedQty,
           }
         })
         .filter((item): item is CartItem => item !== null),
@@ -419,10 +429,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const setQuantity = useCallback((itemId: string, val: number) => {
     if (isNaN(val) || val <= 0) return
-    const cleanQty = roundAccounting(val)
     setCart((prev) =>
       prev.map((item) => {
         if (item.id !== itemId) return item
+        const cleanQty = clampToAvailable(roundAccounting(val), item)
+        if (cleanQty <= 0) return item
         return {
           ...item,
           quantity: cleanQty,
@@ -446,10 +457,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setCart((prev) =>
         prev.map((item) => {
           if (item.id !== itemId) return item
-          const defaultPrice =
-            saleMode === "RETAIL"
-              ? newLot.lotRetailPrice
-              : calcWholesalePrice(newLot.lotRetailPrice)
+          const defaultPrice = newLot.lotRetailPrice
+          const nextAvailableStock =
+            availableStock !== undefined ? availableStock : item.availableStock
+          const nextQuantity = clampToAvailable(item.quantity, {
+            availableStock: nextAvailableStock,
+          })
+          if (nextQuantity <= 0) return item
           return {
             ...item,
             lotId: newLot.id,
@@ -461,14 +475,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             lotWholesalePrice: newLot.lotWholesalePrice,
             barcode: newLot.barcode,
             availableStock:
-              availableStock !== undefined ? availableStock : item.availableStock,
+              nextAvailableStock,
+            quantity: nextQuantity,
             unitPrice: defaultPrice,
             originalUnitPrice: defaultPrice,
           }
         }),
       )
     },
-    [saleMode],
+    [],
   )
 
   const removeItem = useCallback((itemId: string) => {
@@ -492,42 +507,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const toggleSaleMode = useCallback((newMode: SaleMode) => {
     setSaleMode(newMode)
-    const settings = getWholesaleSettings()
-    setCart((prev) =>
-      prev.map((item) => {
-        const standardPrice =
-          newMode === "RETAIL"
-            ? item.lotRetailPrice
-            : calcWholesalePrice(item.lotRetailPrice, settings)
-        return {
-          ...item,
-          unitPrice: standardPrice,
-          originalUnitPrice: standardPrice,
-        }
-      }),
-    )
   }, [])
-
-  // Auto-sync cart item prices if wholesale ratio configuration is updated
-  useEffect(() => {
-    const handleSettingsUpdated = (e: Event) => {
-      const custom = e as CustomEvent<WholesaleSettings>
-      if (custom.detail && saleMode === "WHOLESALE") {
-        setCart((prev) =>
-          prev.map((item) => {
-            const updatedPrice = calcWholesalePrice(item.lotRetailPrice, custom.detail)
-            return {
-              ...item,
-              unitPrice: updatedPrice,
-              originalUnitPrice: updatedPrice,
-            }
-          }),
-        )
-      }
-    }
-    window.addEventListener("wholesale-settings-updated", handleSettingsUpdated)
-    return () => window.removeEventListener("wholesale-settings-updated", handleSettingsUpdated)
-  }, [saleMode])
 
   return (
     <CartContext.Provider

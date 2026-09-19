@@ -13,7 +13,6 @@ import {
   getQuarantineStock,
   disposeQuarantineStock,
 } from "../api/endpoints"
-import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
 import { formatTk } from "../utils/currency"
 import BarcodeStickerModal from "../components/BarcodeStickerModal"
@@ -50,14 +49,8 @@ import {
   Check,
 } from "lucide-react"
 
-export interface InventoryProps {
-  isOwner?: boolean
-}
-
-export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
-  const { isOwner: authIsOwner, openPinModal } = useAuth()
+export default function Inventory() {
   const { showSuccess, showError, showWarning } = useToast()
-  const isOwner = propIsOwner !== undefined ? propIsOwner : authIsOwner
 
   const [activeTab, setActiveTab] = useState<"catalog" | "quarantine">("catalog")
 
@@ -83,10 +76,17 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
     nameEn: string
     baseUnit: string
     retailPrice: number
+    wholesalePrice: number
     buyingPrice: number
   } | null>(null)
   const [addStockQty, setAddStockQty] = useState("")
   const [addStockBuying, setAddStockBuying] = useState("")
+  const [addStockRetail, setAddStockRetail] = useState("")
+  const [addStockWholesale, setAddStockWholesale] = useState("")
+  const [addStockLotNumber, setAddStockLotNumber] = useState("")
+  const [addStockExpiry, setAddStockExpiry] = useState("")
+  const [addStockSupplier, setAddStockSupplier] = useState("")
+  const [addStockChallan, setAddStockChallan] = useState("")
   const [isAddingStock, setIsAddingStock] = useState(false)
 
   // Quarantine Disposal Modal State
@@ -129,9 +129,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
 
   useEffect(() => {
     loadData()
-    // Re-fetch when Owner Mode toggles: purchase cost fields are stripped
-    // server-side for non-owner requests, so cached data must be refreshed.
-  }, [loadData, isOwner])
+  }, [loadData])
 
   // Extract categories
   const categories = useMemo(() => {
@@ -157,6 +155,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
         cartonMultiplier: number
         minStockAlert: number
         retailPrice: number
+        wholesalePrice: number
         buyingPrice: number
         totalStock: number
         lots: StockItem[]
@@ -176,6 +175,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
         cartonMultiplier: prod.cartonMultiplier || 1,
         minStockAlert: prod.minStockAlert,
         retailPrice: prod.standardRetailPrice,
+        wholesalePrice: prod.standardWholesalePrice ?? prod.standardRetailPrice,
         buyingPrice: prod.buyingPrice ?? (prod.standardWholesalePrice ? Math.round(prod.standardWholesalePrice * 0.88) : 0),
         totalStock: 0,
         lots: [],
@@ -198,6 +198,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
           cartonMultiplier: stock.cartonMultiplier || 1,
           minStockAlert: 5,
           retailPrice: (stock as any).lotRetailPrice || stock.standardRetailPrice || 0,
+          wholesalePrice: (stock as any).lotWholesalePrice || stock.standardWholesalePrice || (stock as any).lotRetailPrice || stock.standardRetailPrice || 0,
           buyingPrice: (stock as any).buyingPrice || (stock as any).purchaseCost || (stock.standardWholesalePrice ? Math.round(stock.standardWholesalePrice * 0.88) : 0),
           totalStock: 0,
           lots: [],
@@ -306,7 +307,7 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
         await createLot({
           productId: created.id,
           lotNumber: `STOCK-${Date.now().toString().slice(-6)}`,
-          quantity: initialStock,
+          quantityBaseUnits: initialStock,
           purchaseCost: buying,
           lotRetailPrice: retail,
           lotWholesalePrice: retail,
@@ -345,25 +346,50 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
     try {
       setIsAddingStock(true)
       const buying = parseFloat(addStockBuying) || stockModalProduct.buyingPrice || 0
-      const retail = stockModalProduct.retailPrice || 0
+      const retail = parseFloat(addStockRetail) || stockModalProduct.retailPrice || 0
+      const wholesale = parseFloat(addStockWholesale) || stockModalProduct.wholesalePrice || retail
+
+      if (retail <= 0) {
+        showWarning("Please enter a valid retail price")
+        return
+      }
+
+      if (wholesale <= 0) {
+        showWarning("Please enter a valid wholesale price")
+        return
+      }
+
+      const lotNumber = addStockLotNumber.trim() || `LOT-${Date.now().toString().slice(-6)}`
+      const challanNo = addStockChallan.trim() || `CH-${Date.now().toString().slice(-6)}`
+      const expiryDate =
+        addStockExpiry ||
+        new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
 
       await createLot({
         productId: stockModalProduct.productId,
-        lotNumber: `STOCK-${Date.now().toString().slice(-6)}`,
-        quantity: qty,
+        lotNumber,
+        quantityBaseUnits: qty,
         purchaseCost: buying,
         lotRetailPrice: retail,
-        lotWholesalePrice: retail,
+        lotWholesalePrice: wholesale,
         entryDate: new Date().toISOString().split("T")[0],
-        expiryDate: new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        supplierName: "Agro Chemical Ltd.",
-        challanNo: `CH-${Date.now().toString().slice(-6)}`,
+        expiryDate,
+        supplierName: addStockSupplier.trim() || "Direct stock entry",
+        challanNo,
       })
 
-      showSuccess(`Added ${qty} ${stockModalProduct.baseUnit} to ${stockModalProduct.nameEn}!`)
+      showSuccess(
+        `Added ${qty} ${stockModalProduct.baseUnit} to ${stockModalProduct.nameEn} as ${lotNumber}`,
+      )
       setStockModalProduct(null)
       setAddStockQty("")
       setAddStockBuying("")
+      setAddStockRetail("")
+      setAddStockWholesale("")
+      setAddStockLotNumber("")
+      setAddStockExpiry("")
+      setAddStockSupplier("")
+      setAddStockChallan("")
       await loadData()
     } catch (err) {
       showError(err, "Failed to add stock")
@@ -374,11 +400,6 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
 
   // ─── Quarantine Disposal Execution ──────────────────────────────
   const handleOpenDisposalModal = (item: QuarantineStockItem) => {
-    if (!isOwner) {
-      showWarning("Owner Mode is required to dispose of damaged chemicals!")
-      openPinModal()
-      return
-    }
     setSelectedQuarantineItem(item)
     setDisposalQty(String(item.quarantineQuantity))
     setDisposalType("WRITE_OFF")
@@ -522,8 +543,6 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
               value={formatTk(totalValuation)}
               icon={<Wallet className="w-5 h-5" />}
               color="purple"
-              isMasked={!isOwner}
-              onUnlockClick={openPinModal}
             />
           </div>
 
@@ -778,19 +797,61 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
 
                         {/* Dokan Stock */}
                         <TableCell align="center">
-                          <Badge
-                            variant={
-                              item.totalStock <= 0
-                                ? "danger"
-                                : isLowStock
-                                  ? "warning"
-                                  : "success"
-                            }
-                            size="md"
-                            dot={isLowStock || item.totalStock <= 0}
-                          >
-                            {item.totalStock} {item.baseUnit}
-                          </Badge>
+                          <div className="flex flex-col items-center gap-2">
+                            <Badge
+                              variant={
+                                item.totalStock <= 0
+                                  ? "danger"
+                                  : isLowStock
+                                    ? "warning"
+                                    : "success"
+                              }
+                              size="md"
+                              dot={isLowStock || item.totalStock <= 0}
+                            >
+                              {item.totalStock} {item.baseUnit}
+                            </Badge>
+                            {item.lots.length > 0 && (
+                              <div className="w-full min-w-[280px] overflow-hidden rounded-lg border border-slate-200 bg-white text-left shadow-xs">
+                                <div className="grid grid-cols-[minmax(0,1.1fr)_56px_76px_72px] gap-2 border-b border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[10px] font-bold uppercase text-slate-500">
+                                  <span>Lot</span>
+                                  <span className="text-right">Qty</span>
+                                  <span className="text-right">Price</span>
+                                  <span className="text-right">Expiry</span>
+                                </div>
+                                {[...item.lots]
+                                  .sort(
+                                    (a, b) =>
+                                      new Date(a.expiryDate || 0).getTime() -
+                                      new Date(b.expiryDate || 0).getTime(),
+                                  )
+                                  .map((lot) => (
+                                    <div
+                                      key={lot.lotId}
+                                      className="grid grid-cols-[minmax(0,1.1fr)_56px_76px_72px] gap-2 border-b border-slate-100 px-2.5 py-2 last:border-b-0"
+                                    >
+                                      <div className="min-w-0">
+                                        <div className="truncate font-mono text-[11px] font-black text-slate-900">
+                                          {lot.lotNumber || "DEFAULT"}
+                                        </div>
+                                        <div className="truncate text-[10px] text-slate-500">
+                                          {lot.lotBarcode || lot.barcode || lot.defaultBarcode}
+                                        </div>
+                                      </div>
+                                      <div className="self-center text-right font-mono text-[12px] font-black text-emerald-800">
+                                        {lot.quantity ?? lot.totalQuantity ?? 0}
+                                      </div>
+                                      <div className="self-center text-right font-mono text-[11px] font-bold text-slate-900">
+                                        {formatTk(lot.lotRetailPrice ?? item.retailPrice)}
+                                      </div>
+                                      <div className="self-center text-right font-mono text-[10px] font-semibold text-slate-500">
+                                        {lot.expiryDate || "Not set"}
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
                         </TableCell>
 
                         {/* Retail Price */}
@@ -798,50 +859,53 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                           {formatTk(item.retailPrice)}
                         </TableCell>
 
-                        {/* Buying Price (Owner Mode / Masked in Cashier Mode) */}
+                        {/* Buying Price */}
                         <TableCell align="right" isMonospace>
-                          {isOwner ? (
-                            <span className="text-amber-800 font-bold">
-                              {formatTk(item.buyingPrice)}
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={openPinModal}
-                              className="text-slate-400 hover:text-slate-600 cursor-pointer text-xs font-mono inline-flex items-center gap-1"
-                              title="Click to enter Owner PIN to view purchase cost"
-                            >
-                              <span>••••</span>
-                              <span className="text-[10px]">🔒</span>
-                            </button>
-                          )}
+                          <span className="text-amber-800 font-bold">
+                            {formatTk(item.buyingPrice)}
+                          </span>
                         </TableCell>
 
                         {/* Actions */}
                         <TableCell align="right">
                           <div className="flex items-center justify-end gap-1.5">
-                            {isOwner && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setStockModalProduct({
-                                    productId: item.productId,
-                                    nameEn: item.nameEn,
-                                    baseUnit: item.baseUnit,
-                                    retailPrice: item.retailPrice,
-                                    buyingPrice: item.buyingPrice,
-                                  })
-                                  setAddStockQty("")
-                                  setAddStockBuying(String(item.buyingPrice || ""))
-                                }}
-                                title="Add stock to this product"
-                                leftIcon={<Plus className="w-3.5 h-3.5" />}
-                                className="text-xs px-2 py-1 bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
-                              >
-                                + Stock
-                              </Button>
-                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const latestLot = [...item.lots].sort(
+                                  (a, b) =>
+                                    new Date(b.entryDate || 0).getTime() -
+                                    new Date(a.entryDate || 0).getTime(),
+                                )[0]
+                                const retailPrice = latestLot?.lotRetailPrice ?? item.retailPrice
+                                const wholesalePrice =
+                                  latestLot?.lotWholesalePrice ?? item.wholesalePrice
+                                const buyingPrice = latestLot?.purchaseCost ?? item.buyingPrice
+
+                                setStockModalProduct({
+                                  productId: item.productId,
+                                  nameEn: item.nameEn,
+                                  baseUnit: item.baseUnit,
+                                  retailPrice,
+                                  wholesalePrice,
+                                  buyingPrice,
+                                })
+                                setAddStockQty("")
+                                setAddStockBuying(String(buyingPrice || ""))
+                                setAddStockRetail(String(retailPrice || ""))
+                                setAddStockWholesale(String(wholesalePrice || retailPrice || ""))
+                                setAddStockLotNumber("")
+                                setAddStockExpiry("")
+                                setAddStockSupplier((latestLot as any)?.supplierName || "")
+                                setAddStockChallan("")
+                              }}
+                              title="Add stock to this product"
+                              leftIcon={<Plus className="w-3.5 h-3.5" />}
+                              className="text-xs px-2 py-1 bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                            >
+                              + Stock
+                            </Button>
                             {item.lots.length > 0 && (
                               <Button
                                 variant="outline"
@@ -982,44 +1046,139 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
       {stockModalProduct && (
         <Modal
           isOpen={!!stockModalProduct}
-          onClose={() => setStockModalProduct(null)}
-          title={`Add Dokan Stock: ${stockModalProduct.nameEn}`}
-          subtitle="Quickly receive new stock units into inventory"
+          onClose={() => {
+            setStockModalProduct(null)
+            setAddStockQty("")
+            setAddStockBuying("")
+            setAddStockRetail("")
+            setAddStockWholesale("")
+            setAddStockLotNumber("")
+            setAddStockExpiry("")
+            setAddStockSupplier("")
+            setAddStockChallan("")
+          }}
+          title={`Receive Stock: ${stockModalProduct.nameEn}`}
+          subtitle="Create a priced lot for this stock entry"
           icon={<Package className="w-5 h-5 text-emerald-700" />}
-          size="sm"
+          size="md"
         >
           <form onSubmit={handleAddStockSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="addStockQtyInput" className="block text-xs font-bold text-slate-900 mb-1">
-                Stock Quantity to Add ({stockModalProduct.baseUnit}) *
-              </label>
-              <Input
-                id="addStockQtyInput"
-                type="number"
-                step="any"
-                min="0.01"
-                required
-                value={addStockQty}
-                onChange={(e) => setAddStockQty(e.target.value)}
-                placeholder="e.g. 50"
-                autoFocus
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="addStockQtyInput" className="block text-xs font-bold text-slate-900 mb-1">
+                  Quantity ({stockModalProduct.baseUnit}) *
+                </label>
+                <Input
+                  id="addStockQtyInput"
+                  type="number"
+                  step="any"
+                  min="0.01"
+                  required
+                  value={addStockQty}
+                  onChange={(e) => setAddStockQty(e.target.value)}
+                  placeholder="e.g. 50"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label htmlFor="addStockLotInput" className="block text-xs font-bold text-slate-900 mb-1">
+                  Lot / Batch No
+                </label>
+                <Input
+                  id="addStockLotInput"
+                  value={addStockLotNumber}
+                  onChange={(e) => setAddStockLotNumber(e.target.value)}
+                  placeholder="Auto generated"
+                />
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="addStockBuyingInput" className="block text-xs font-bold text-slate-900 mb-1">
-                Buying Price (৳ per {stockModalProduct.baseUnit})
-              </label>
-              <Input
-                id="addStockBuyingInput"
-                type="number"
-                step="0.01"
-                min="0"
-                value={addStockBuying}
-                onChange={(e) => setAddStockBuying(e.target.value)}
-                placeholder={String(stockModalProduct.buyingPrice || "0.00")}
-                helperText="Leave as is or update if purchasing price changed"
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label htmlFor="addStockBuyingInput" className="block text-xs font-bold text-slate-900 mb-1">
+                  Purchase Cost
+                </label>
+                <Input
+                  id="addStockBuyingInput"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={addStockBuying}
+                  onChange={(e) => setAddStockBuying(e.target.value)}
+                  placeholder={String(stockModalProduct.buyingPrice || "0.00")}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="addStockRetailInput" className="block text-xs font-bold text-slate-900 mb-1">
+                  Retail Price *
+                </label>
+                <Input
+                  id="addStockRetailInput"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  value={addStockRetail}
+                  onChange={(e) => setAddStockRetail(e.target.value)}
+                  placeholder={String(stockModalProduct.retailPrice || "0.00")}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="addStockWholesaleInput" className="block text-xs font-bold text-slate-900 mb-1">
+                  Wholesale Price *
+                </label>
+                <Input
+                  id="addStockWholesaleInput"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  value={addStockWholesale}
+                  onChange={(e) => setAddStockWholesale(e.target.value)}
+                  placeholder={String(stockModalProduct.wholesalePrice || stockModalProduct.retailPrice || "0.00")}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label htmlFor="addStockExpiryInput" className="block text-xs font-bold text-slate-900 mb-1">
+                  Expiry Date
+                </label>
+                <Input
+                  id="addStockExpiryInput"
+                  type="date"
+                  value={addStockExpiry}
+                  onChange={(e) => setAddStockExpiry(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="addStockSupplierInput" className="block text-xs font-bold text-slate-900 mb-1">
+                  Supplier
+                </label>
+                <Input
+                  id="addStockSupplierInput"
+                  value={addStockSupplier}
+                  onChange={(e) => setAddStockSupplier(e.target.value)}
+                  placeholder="Supplier name"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="addStockChallanInput" className="block text-xs font-bold text-slate-900 mb-1">
+                  Challan No
+                </label>
+                <Input
+                  id="addStockChallanInput"
+                  value={addStockChallan}
+                  onChange={(e) => setAddStockChallan(e.target.value)}
+                  placeholder="Auto generated"
+                />
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200">
@@ -1027,7 +1186,17 @@ export default function Inventory({ isOwner: propIsOwner }: InventoryProps) {
                 type="button"
                 variant="ghost"
                 size="md"
-                onClick={() => setStockModalProduct(null)}
+                onClick={() => {
+                  setStockModalProduct(null)
+                  setAddStockQty("")
+                  setAddStockBuying("")
+                  setAddStockRetail("")
+                  setAddStockWholesale("")
+                  setAddStockLotNumber("")
+                  setAddStockExpiry("")
+                  setAddStockSupplier("")
+                  setAddStockChallan("")
+                }}
               >
                 Cancel
               </Button>

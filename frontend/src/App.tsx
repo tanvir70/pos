@@ -7,7 +7,6 @@ import Dashboard from "./pages/Dashboard"
 import Inventory from "./pages/Inventory"
 import Customers from "./pages/Customers"
 import Returns from "./pages/Returns"
-import WholesaleSettings from "./pages/WholesaleSettings"
 import Settings from "./pages/Settings"
 import type { NavigationTab } from "./types"
 import { ToastProvider } from "./context/ToastContext"
@@ -28,7 +27,7 @@ function AppShell() {
       return true
     }
   })
-  const { isAuthenticated, isOwner, isLoading, openPinModal } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
 
   useEffect(() => {
     try {
@@ -87,13 +86,6 @@ function AppShell() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [tab, toggleFocusMode])
 
-  // Cashier mode cannot see Analytics ("dashboard") or Settings ("settings" / "wholesale")
-  useEffect(() => {
-    if (!isOwner && (tab === "dashboard" || tab === "settings" || tab === "wholesale")) {
-      setTab("pos")
-    }
-  }, [isOwner, tab])
-
   if (isLoading) {
     return <div className="min-h-screen bg-slate-50" />
   }
@@ -132,23 +124,19 @@ function AppShell() {
         >
           {tab === "pos" && (
             <PosCounter
-              isOwner={isOwner}
               isFocusMode={isFocusMode}
               onToggleFocusMode={toggleFocusMode}
             />
           )}
-          {tab === "dashboard" && isOwner && (
+          {tab === "dashboard" && (
             <Dashboard
-              isOwner={isOwner}
-              onOpenPinModal={openPinModal}
               onNavigate={setTab}
             />
           )}
-          {tab === "inventory" && <Inventory isOwner={isOwner} />}
-          {tab === "customers" && <Customers isOwner={isOwner} />}
-          {tab === "returns" && <Returns isOwner={isOwner} />}
-          {tab === "wholesale" && isOwner && <Settings isOwner={isOwner} />}
-          {tab === "settings" && isOwner && <Settings isOwner={isOwner} />}
+          {tab === "inventory" && <Inventory />}
+          {tab === "customers" && <Customers />}
+          {tab === "returns" && <Returns />}
+          {tab === "settings" && <Settings />}
         </main>
       </div>
     </div>

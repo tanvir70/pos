@@ -6,7 +6,6 @@ import com.alamin.pos.dto.StockItemResponse;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.mapper.InventoryLotMapper;
 import com.alamin.pos.service.InventoryService;
-import com.alamin.pos.security.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,9 +32,6 @@ public class InventoryController {
     public ResponseEntity<InventoryLotDto> recordLotEntry(@Valid @RequestBody LotEntryRequest request) {
         InventoryLot lot = inventoryService.recordLotEntry(request);
         InventoryLotDto dto = inventoryLotMapper.toDto(lot);
-        if (!SecurityUtils.isOwner()) {
-            dto.setPurchaseCost(null);
-        }
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
@@ -44,9 +40,6 @@ public class InventoryController {
             @RequestParam(name = "paged", defaultValue = "false") boolean paged,
             org.springframework.data.domain.Pageable pageable) {
         List<StockItemResponse> stock = inventoryService.getStockOverview();
-        if (!SecurityUtils.isOwner()) {
-            stock.forEach(item -> item.setPurchaseCost(null));
-        }
         if (paged) {
             int start = (int) pageable.getOffset();
             int end = Math.min((start + pageable.getPageSize()), stock.size());
@@ -64,32 +57,19 @@ public class InventoryController {
             @RequestParam(required = false) Long productId,
             @RequestParam(name = "fefo", defaultValue = "false") boolean fefo) {
         List<InventoryLotDto> lots = inventoryService.getLotsByProduct(productId, fefo);
-        if (!SecurityUtils.isOwner()) {
-            lots.forEach(lot -> lot.setPurchaseCost(null));
-        }
         return ResponseEntity.ok(lots);
     }
 
     @GetMapping("/quarantine")
     public ResponseEntity<List<com.alamin.pos.dto.QuarantineStockResponse>> getQuarantineOverview() {
         List<com.alamin.pos.dto.QuarantineStockResponse> list = inventoryService.getQuarantineStockOverview();
-        if (!SecurityUtils.isOwner()) {
-            list.forEach(item -> {
-                item.setPurchaseCost(null);
-                item.setTotalLossValue(null);
-            });
-        }
         return ResponseEntity.ok(list);
     }
 
     @PostMapping("/quarantine/dispose")
     public ResponseEntity<Map<String, String>> disposeQuarantineStock(
             @Valid @RequestBody com.alamin.pos.dto.QuarantineDisposalRequest request) {
-        if (!SecurityUtils.isOwner()) {
-            throw new org.springframework.security.access.AccessDeniedException("Only owners can authorize quarantine stock disposal");
-        }
         inventoryService.disposeQuarantineStock(request);
         return ResponseEntity.ok(Map.of("message", "Quarantine stock disposed successfully"));
     }
 }
-

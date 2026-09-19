@@ -1,3 +1,4 @@
+import { useCallback } from "react"
 import { FileText, Printer, X } from "lucide-react"
 import type { SaleResponse, Customer } from "../types"
 
@@ -8,6 +9,7 @@ export interface A4InvoicePrintProps {
   sale: SaleResponse
   customer?: Customer | null
   onClose: () => void
+  onAfterPrint?: () => void
 }
 
 const tk = (n: number | undefined | null) =>
@@ -17,7 +19,19 @@ export default function A4InvoicePrint({
   sale,
   customer,
   onClose,
+  onAfterPrint,
 }: A4InvoicePrintProps) {
+  const printAndClose = useCallback(() => {
+    window.print()
+    window.setTimeout(() => {
+      if (onAfterPrint) {
+        onAfterPrint()
+      } else {
+        onClose()
+      }
+    }, 0)
+  }, [onAfterPrint, onClose])
+
   const formattedDate = sale.saleDate
     ? new Date(sale.saleDate).toLocaleDateString("en-US", {
         year: "numeric",
@@ -58,7 +72,7 @@ export default function A4InvoicePrint({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={printAndClose}
               className="py-1.5 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Printer className="w-3.5 h-3.5" />
@@ -120,7 +134,7 @@ export default function A4InvoicePrint({
                     Date: {formattedDate} ({formattedTime})
                   </p>
                   <p className="text-[11px] text-gray-600">
-                    Cashier: {sale.cashierName || "Al-Amin"}
+                    Served by: {sale.cashierName || "Al-Amin"}
                   </p>
                 </div>
               </div>
@@ -397,7 +411,7 @@ export default function A4InvoicePrint({
           </button>
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={printAndClose}
             className="py-2 px-5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Printer className="w-3.5 h-3.5" />

@@ -18,25 +18,19 @@ import {
   RotateCcw,
   Banknote,
   BookOpen,
-  Crown,
   Check,
-  Lock,
   Users,
   Package,
   Hourglass,
   ArrowRight,
 } from "lucide-react"
 
-// BUSINESS DECISION: Daily Gross Profit and Monthly Profit metrics are strictly masked unless Owner Mode is
-// active (unlocked via 4-digit PIN) to prevent counter assistants from viewing wholesale dealer margins during sales.
 // BUSINESS DECISION: Expiring lots with <30 days remaining are highlighted with priority alert banners to
 // enforce First Expired, First Out (FEFO) clearance before chemical shelf-life lapses in agro-dealerships.
 // BUSINESS DECISION: Live Cash in Drawer dynamically reconciles today's counter cash: (sales cash + debt recovery
 // cash - cash refunds) for end-of-day till balancing.
 
 export interface DashboardProps {
-  isOwner: boolean
-  onOpenPinModal: () => void
   onNavigate?: (tab: NavigationTab) => void
 }
 
@@ -44,8 +38,6 @@ const tk = (n: number | undefined | null) =>
   `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export default function Dashboard({
-  isOwner,
-  onOpenPinModal,
   onNavigate,
 }: DashboardProps) {
   // ─── State ──────────────────────────────────────────────────────────
@@ -76,8 +68,7 @@ export default function Dashboard({
 
   useEffect(() => {
     loadDashboard()
-    // Re-fetch when Owner Mode toggles: this endpoint is Owner-only server-side.
-  }, [loadDashboard, isOwner])
+  }, [loadDashboard])
 
   // ─── Database Backup Action ─────────────────────────────────────────
   const handleBackup = async () => {
@@ -205,15 +196,13 @@ export default function Dashboard({
             icon={<ShoppingCart className="w-5 h-5" />}
           />
 
-          {/* Card 3: Net Profit (Owner PIN Protected) */}
+          {/* Card 3: Net Profit */}
           <GotposStatCard
             title="Net Profit"
             value={summary ? tk(summary.grossProfitToday) : "৳0.00"}
             trendPercent={summary?.profitGrowth ?? 6.8}
             theme="emerald"
             icon={<TrendingUp className="w-5 h-5" />}
-            isMasked={!isOwner}
-            onUnlockClick={onOpenPinModal}
           />
 
           {/* Card 4: Sales Return */}
