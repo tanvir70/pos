@@ -30,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +45,9 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import com.alamin.pos.entity.StockMovement;
+import com.alamin.pos.repository.StockMovementRepository;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -56,6 +60,7 @@ public class SaleServiceImpl implements SaleService {
     private final CustomerRepository customerRepository;
     private final CustomerLedgerRepository customerLedgerRepository;
     private final DocumentSequenceService documentSequenceService;
+    private final StockMovementRepository stockMovementRepository;
 
     @Override
     @Transactional
@@ -122,16 +127,33 @@ public class SaleServiceImpl implements SaleService {
                             .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
                             .build());
 
-            BigDecimal availableQty = dokanStock.getQuantity() != null
+            BigDecimal beforeStock = dokanStock.getQuantity() != null
                     ? dokanStock.getQuantity().setScale(3, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP);
-            if (availableQty.compareTo(totalQty) < 0) {
+            if (beforeStock.compareTo(totalQty) < 0) {
                 String productName = lot.getProduct() != null ? lot.getProduct().getNameEn() : "selected product";
-                throw new InsufficientStockException("Requested quantity (" + totalQty + ") exceeds available stock (" + availableQty + ") for " + productName + " / lot " + lot.getLotNumber());
+                throw new InsufficientStockException("Requested quantity (" + totalQty + ") exceeds available stock (" + beforeStock + ") for " + productName + " / lot " + lot.getLotNumber());
             }
 
-            dokanStock.setQuantity(dokanStock.getQuantity().subtract(totalQty).setScale(3, RoundingMode.HALF_UP));
+            BigDecimal afterStock = beforeStock.subtract(totalQty).setScale(3, RoundingMode.HALF_UP);
+            dokanStock.setQuantity(afterStock);
             stockInventoryRepository.save(dokanStock);
+
+            // Immutable Bin Card audit record
+            stockMovementRepository.save(StockMovement.builder()
+                    .product(lot.getProduct())
+                    .lot(lot)
+                    .movementTime(LocalDateTime.now())
+                    .movementType("SALE")
+                    .location("DOKAN")
+                    .quantityChange(totalQty.negate())
+                    .balanceBefore(beforeStock)
+                    .balanceAfter(afterStock)
+                    .unit(lot.getProduct() != null ? lot.getProduct().getBaseUnit() : "Unit")
+                    .referenceDocNo(invoiceNo)
+                    .remarks("POS Sale: " + (customer != null ? customer.getName() : "Walk-in Retail"))
+                    .performedBy(request.getCashierName() != null ? request.getCashierName() : "Cashier")
+                    .build());
 
             // BUSINESS DECISION: Freeze unit_cost = lot.purchaseCost on sale_item snapshot to permanently preserve historical gross profit margins.
             BigDecimal unitCost = lot.getPurchaseCost().setScale(2, RoundingMode.HALF_UP);
@@ -213,35 +235,28 @@ public class SaleServiceImpl implements SaleService {
         }
         List<SaleItem> savedItems = saleItemRepository.saveAll(saleItems);
 
-        // Customer due and ledger management
-        if (dueAmount.compareTo(BigDecimal.ZERO) > 0) {
-            if (customer == null) {
-                throw new BusinessRuleViolationException("Cannot have due amount for anonymous walk-in customer");
-            }
+        // Customer total purchases and due management
+        if (customer != null) {
+            BigDecimal prevPurchases = customer.getTotalPurchases() != null ? customer.getTotalPurchases() : BigDecimal.ZERO;
+            customer.setTotalPurchases(prevPurchases.add(savedSale.getTotalAmount()).setScale(2, RoundingMode.HALF_UP));
 
-            // BUSINESS DECISION: Allow sales to proceed with warning when customer credit limit is exceeded, reflecting Bangladeshi agrochemical trade where credit is extended based on personal trust and upcoming harvest seasons.
-            if (customer.getCreditLimit() != null && customer.getCreditLimit().compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal projectedDue = customer.getCurrentDue().add(dueAmount);
-                if (projectedDue.compareTo(customer.getCreditLimit()) > 0) {
-                    log.warn("Customer {} ({}) exceeded credit limit of {} with new projected due of {}",
-                            customer.getName(), customer.getPhone(), customer.getCreditLimit(), projectedDue);
-                }
+            if (dueAmount.compareTo(BigDecimal.ZERO) > 0) {
+                customer.setCurrentDue(customer.getCurrentDue().add(dueAmount).setScale(2, RoundingMode.HALF_UP));
+                CustomerLedger ledger = CustomerLedger.builder()
+                        .customer(customer)
+                        .transactionDate(LocalDateTime.now())
+                        .transactionType("INVOICE_BILL")
+                        .debit(dueAmount)
+                        .credit(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP))
+                        .balanceAfter(customer.getCurrentDue())
+                        .saleId(savedSale.getId())
+                        .notes("Invoice bill " + savedSale.getInvoiceNo() + " credit balance")
+                        .build();
+                customerLedgerRepository.save(ledger);
             }
-
-            customer.setCurrentDue(customer.getCurrentDue().add(dueAmount).setScale(2, RoundingMode.HALF_UP));
             customerRepository.save(customer);
-
-            CustomerLedger ledger = CustomerLedger.builder()
-                    .customer(customer)
-                    .transactionDate(LocalDateTime.now())
-                    .transactionType("INVOICE_BILL")
-                    .debit(dueAmount)
-                    .credit(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP))
-                    .balanceAfter(customer.getCurrentDue())
-                    .saleId(savedSale.getId())
-                    .notes("Invoice bill " + savedSale.getInvoiceNo() + " credit balance")
-                    .build();
-            customerLedgerRepository.save(ledger);
+        } else if (dueAmount.compareTo(BigDecimal.ZERO) > 0) {
+            throw new BusinessRuleViolationException("Cannot have due amount for anonymous walk-in customer");
         }
 
         BigDecimal totalProfit = savedItems.stream()
@@ -285,7 +300,7 @@ public class SaleServiceImpl implements SaleService {
     public PagedResponse<SaleResponse> getSales(int page, int size, String period, String saleMode) {
         int pageIndex = Math.max(0, page);
         int pageSize = (size > 0 && size <= 100) ? size : 10;
-        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+        Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(Sort.Direction.DESC, "saleDate"));
 
         LocalDateTime startDate = null;
         LocalDateTime endDate = LocalDateTime.now();
@@ -400,5 +415,12 @@ public class SaleServiceImpl implements SaleService {
                 .totalProfit(totalProfit)
                 .items(itemResponses)
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SaleResponse> getCustomerPurchases(Long customerId) {
+        List<Sale> sales = saleRepository.findByCustomerIdOrderBySaleDateDesc(customerId);
+        return mapSalesBatch(sales);
     }
 }

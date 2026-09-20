@@ -17,4 +17,6 @@ public interface SaleService {
     List<SaleResponse> getRecentSales(int limit);
 
     PagedResponse<SaleResponse> getSales(int page, int size, String period, String saleMode);
+
+    List<SaleResponse> getCustomerPurchases(Long customerId);
 }

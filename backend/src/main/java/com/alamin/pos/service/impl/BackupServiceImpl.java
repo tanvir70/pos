@@ -46,7 +46,7 @@ public class BackupServiceImpl implements BackupService {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             writer.write("-- ============================================================================");
             writer.newLine();
-            writer.write("-- Al-Amin POS & Agrochemical Dealership System - Database Backup");
+            writer.write("-- Rajib Enterprise POS & Agrochemical Dealership System - Database Backup");
             writer.newLine();
             writer.write("-- Generated at: " + timestamp);
             writer.newLine();

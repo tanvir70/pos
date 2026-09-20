@@ -21,6 +21,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import com.alamin.pos.dto.SaleResponse;
+import com.alamin.pos.service.DocumentSequenceService;
+import com.alamin.pos.service.SaleService;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,8 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final CustomerLedgerRepository customerLedgerRepository;
+    private final DocumentSequenceService documentSequenceService;
+    private final SaleService saleService;
 
     @Override
     @Transactional
@@ -47,10 +53,6 @@ public class CustomerServiceImpl implements CustomerService {
         String customerType = (request.getCustomerType() != null && !request.getCustomerType().isBlank())
                 ? request.getCustomerType().trim().toUpperCase()
                 : "RETAIL";
-
-        BigDecimal creditLimit = request.getCreditLimit() != null
-                ? request.getCreditLimit().setScale(2, RoundingMode.HALF_UP)
-                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
         BigDecimal initialDue = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
         if (request.getCurrentDue() != null) {
@@ -72,7 +74,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .email(request.getEmail())
                 .villageAddress(request.getVillageAddress())
                 .customerType(customerType)
-                .creditLimit(creditLimit)
+                .totalPurchases(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP))
                 .currentDue(initialDue)
                 .mfsType(request.getMfsType())
                 .mfsNumber(request.getMfsNumber())
@@ -135,9 +137,6 @@ public class CustomerServiceImpl implements CustomerService {
         }
         if (request.getCustomerType() != null && !request.getCustomerType().isBlank()) {
             customer.setCustomerType(request.getCustomerType().trim().toUpperCase());
-        }
-        if (request.getCreditLimit() != null) {
-            customer.setCreditLimit(request.getCreditLimit().setScale(2, RoundingMode.HALF_UP));
         }
         if (request.getMfsType() != null) {
             customer.setMfsType(request.getMfsType());
@@ -204,6 +203,10 @@ public class CustomerServiceImpl implements CustomerService {
             trxType = "CASH_PAYMENT";
         }
 
+        String receiptNo = (request.getMoneyReceiptNo() != null && !request.getMoneyReceiptNo().isBlank())
+                ? request.getMoneyReceiptNo().trim()
+                : documentSequenceService.generateDueReceiptNumber();
+
         CustomerLedger ledger = CustomerLedger.builder()
                 .customer(customer)
                 .transactionDate(LocalDateTime.now())
@@ -211,7 +214,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .debit(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP))
                 .credit(amount)
                 .balanceAfter(newDue)
-                .moneyReceiptNo(request.getMoneyReceiptNo())
+                .moneyReceiptNo(receiptNo)
                 .notes(request.getNotes())
                 .build();
 
@@ -245,6 +248,15 @@ public class CustomerServiceImpl implements CustomerService {
             throw new ResourceNotFoundException("Customer not found with id: " + customerId);
         }
         return customerLedgerRepository.findByCustomerIdOrderByTransactionDateDescIdDesc(customerId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SaleResponse> getCustomerPurchases(Long customerId) {
+        if (!customerRepository.existsById(customerId)) {
+            throw new ResourceNotFoundException("Customer not found with id: " + customerId);
+        }
+        return saleService.getCustomerPurchases(customerId);
     }
 }
 

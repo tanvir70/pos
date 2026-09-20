@@ -26,4 +26,6 @@ public interface CustomerService {
     List<CustomerLedger> getCustomerLedger(Long customerId);
 
     Page<CustomerLedger> getCustomerLedger(Long customerId, Pageable pageable);
+
+    List<com.alamin.pos.dto.SaleResponse> getCustomerPurchases(Long customerId);
 }

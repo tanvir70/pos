@@ -58,9 +58,9 @@ public class Customer {
     @Column(name = "customer_type", nullable = false, length = 30)
     private String customerType;
 
-    @Column(name = "credit_limit", precision = 12, scale = 2)
+    @Column(name = "total_purchases", nullable = false, precision = 12, scale = 2)
     @Builder.Default
-    private BigDecimal creditLimit = BigDecimal.ZERO;
+    private BigDecimal totalPurchases = BigDecimal.ZERO;
 
     @Column(name = "current_due", nullable = false, precision = 12, scale = 2)
     @Builder.Default
@@ -89,8 +89,8 @@ public class Customer {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
-        if (creditLimit == null) {
-            creditLimit = BigDecimal.ZERO;
+        if (totalPurchases == null) {
+            totalPurchases = BigDecimal.ZERO;
         }
         if (currentDue == null) {
             currentDue = BigDecimal.ZERO;

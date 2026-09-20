@@ -32,6 +32,21 @@ public class DocumentSequenceServiceImpl implements DocumentSequenceService {
         return String.format("RET-%s-%06d", datePart, nextVal);
     }
 
+    @Override
+    public String generateAdjustmentNumber() {
+        Long nextVal = getNextSequenceValue("adjustment_number_seq");
+        String datePart = LocalDate.now().format(DATE_FORMATTER);
+        return String.format("ADJ-%s-%06d", datePart, nextVal);
+    }
+
+    @Override
+    public String generateDueReceiptNumber() {
+        Long nextVal = getNextSequenceValue("due_invoice_number_seq");
+        long cycleVal = (nextVal == null || nextVal <= 0) ? 1 : ((nextVal - 1) % 999999) + 1;
+        String datePart = LocalDate.now().format(DATE_FORMATTER);
+        return String.format("DUE-%s-%06d", datePart, cycleVal);
+    }
+
     private Long getNextSequenceValue(String sequenceName) {
         try {
             Long val = jdbcTemplate.queryForObject("SELECT NEXTVAL('" + sequenceName + "')", Long.class);

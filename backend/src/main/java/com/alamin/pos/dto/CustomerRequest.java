@@ -32,7 +32,6 @@ public class CustomerRequest {
     // 'WHOLESALE' or 'RETAIL'
     private String customerType;
 
-    private BigDecimal creditLimit;
     private BigDecimal currentDue;
     private BigDecimal initialDue;
 

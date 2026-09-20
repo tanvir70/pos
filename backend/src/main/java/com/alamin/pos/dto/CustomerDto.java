@@ -22,7 +22,7 @@ public class CustomerDto {
     private String email;
     private String villageAddress;
     private String customerType;
-    private BigDecimal creditLimit;
+    private BigDecimal totalPurchases;
     private BigDecimal currentDue;
     private String mfsType;
     private String mfsNumber;

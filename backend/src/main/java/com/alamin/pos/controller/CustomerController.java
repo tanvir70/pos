@@ -32,6 +32,13 @@ public class CustomerController {
 
     private final CustomerService customerService;
     private final CustomerMapper customerMapper;
+    private final com.alamin.pos.service.DocumentSequenceService documentSequenceService;
+
+    @GetMapping("/next-due-invoice-no")
+    public ResponseEntity<java.util.Map<String, String>> getNextDueInvoiceNo() {
+        String dueInvoiceNo = documentSequenceService.generateDueReceiptNumber();
+        return ResponseEntity.ok(java.util.Map.of("dueInvoiceNo", dueInvoiceNo));
+    }
 
     @PostMapping
     public ResponseEntity<CustomerResponseDto> createCustomer(@Valid @RequestBody CustomerRequest request) {
@@ -63,6 +70,11 @@ public class CustomerController {
     @GetMapping("/{id}")
     public ResponseEntity<CustomerResponseDto> getCustomer(@PathVariable Long id) {
         return ResponseEntity.ok(customerMapper.toResponseDto(customerService.getCustomer(id)));
+    }
+
+    @GetMapping("/{id}/purchases")
+    public ResponseEntity<List<com.alamin.pos.dto.SaleResponse>> getCustomerPurchases(@PathVariable Long id) {
+        return ResponseEntity.ok(customerService.getCustomerPurchases(id));
     }
 
     @GetMapping("/{id}/ledger")

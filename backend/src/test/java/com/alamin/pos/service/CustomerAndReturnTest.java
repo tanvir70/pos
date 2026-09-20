@@ -62,7 +62,6 @@ class CustomerAndReturnTest {
                 .email("sarkar.agro@example.com")
                 .villageAddress("নালিতাবাড়ী বাজার, শেরপুর")
                 .customerType("WHOLESALE")
-                .creditLimit(new BigDecimal("200000.00"))
                 .initialDue(BigDecimal.ZERO)
                 .mfsType("BKASH")
                 .mfsNumber("01799887766")
@@ -77,7 +76,7 @@ class CustomerAndReturnTest {
         assertThat(created.getId()).isNotNull();
         assertThat(created.getName()).isEqualTo("মেসার্স সরকার এগ্রো");
         assertThat(created.getCustomerType()).isEqualTo("WHOLESALE");
-        assertThat(created.getCreditLimit()).isEqualByComparingTo("200000.00");
+        assertThat(created.getTotalPurchases()).isEqualByComparingTo("0.00");
         assertThat(created.getMfsType()).isEqualTo("BKASH");
 
         Customer retrieved = customerService.getCustomer(created.getId());

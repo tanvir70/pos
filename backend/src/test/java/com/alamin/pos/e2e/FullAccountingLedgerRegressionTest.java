@@ -77,7 +77,7 @@ public class FullAccountingLedgerRegressionTest {
                 .name("Lifecycle Farmer " + suffix)
                 .phone("01799" + suffix.replaceAll("[^0-9]", "1").substring(0, 6))
                 .customerType("FARMER")
-                .creditLimit(new BigDecimal("20000.00"))
+                .totalPurchases(BigDecimal.ZERO)
                 .currentDue(BigDecimal.ZERO)
                 .build());
 

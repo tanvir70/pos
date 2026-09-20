@@ -137,7 +137,7 @@ class RepositoryTests {
         assertThat(wholesale.getName()).isEqualTo("মো: রফিকুল ইসলাম");
         assertThat(wholesale.getBusinessName()).isEqualTo("মেসার্স মদিনা ট্রেডার্স");
         assertThat(wholesale.getCustomerType()).isEqualTo("WHOLESALE");
-        assertThat(wholesale.getCreditLimit()).isEqualByComparingTo("100000.00");
+        assertThat(wholesale.getTotalPurchases()).isNotNull();
         assertThat(wholesale.getCurrentDue()).isEqualByComparingTo("15000.00");
         assertThat(wholesale.getMfsType()).isEqualTo("BKASH");
 
@@ -275,7 +275,7 @@ class RepositoryTests {
         assertThat(customerDto).isNotNull();
         assertThat(customerDto.getName()).isEqualTo("মো: রফিকুল ইসলাম");
         assertThat(customerDto.getBusinessName()).isEqualTo("মেসার্স মদিনা ট্রেডার্স");
-        assertThat(customerDto.getCreditLimit()).isEqualByComparingTo("100000.00");
+        assertThat(customerDto.getTotalPurchases()).isNotNull();
 
         Customer customerFromDto = customerMapper.toEntity(customerDto);
         assertThat(customerFromDto).isNotNull();

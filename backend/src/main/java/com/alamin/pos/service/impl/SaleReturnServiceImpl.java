@@ -43,6 +43,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.alamin.pos.entity.StockMovement;
+import com.alamin.pos.repository.StockMovementRepository;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -57,6 +60,7 @@ public class SaleReturnServiceImpl implements SaleReturnService {
     private final InventoryLotRepository inventoryLotRepository;
     private final StockInventoryRepository stockInventoryRepository;
     private final DocumentSequenceService documentSequenceService;
+    private final StockMovementRepository stockMovementRepository;
 
     @Override
     @Transactional
@@ -162,8 +166,26 @@ public class SaleReturnServiceImpl implements SaleReturnService {
                             .location(location)
                             .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
                             .build());
-            stock.setQuantity(stock.getQuantity().add(qty).setScale(3, RoundingMode.HALF_UP));
+            BigDecimal beforeStock = stock.getQuantity() != null ? stock.getQuantity() : BigDecimal.ZERO;
+            BigDecimal afterStock = beforeStock.add(qty).setScale(3, RoundingMode.HALF_UP);
+            stock.setQuantity(afterStock);
             stockInventoryRepository.save(stock);
+
+            // Immutable Bin Card audit record
+            stockMovementRepository.save(StockMovement.builder()
+                    .product(lot.getProduct())
+                    .lot(lot)
+                    .movementTime(LocalDateTime.now())
+                    .movementType(isDamaged ? "RETURN_QUARANTINED" : "RETURN_RESTOCKED")
+                    .location(location)
+                    .quantityChange(qty)
+                    .balanceBefore(beforeStock)
+                    .balanceAfter(afterStock)
+                    .unit(lot.getProduct() != null ? lot.getProduct().getBaseUnit() : "Unit")
+                    .referenceDocNo(returnNo)
+                    .remarks((isDamaged ? "Damaged chemical return (Quarantined)" : "Customer return (Restocked)") + (customer != null ? " from " + customer.getName() : ""))
+                    .performedBy("Cashier")
+                    .build());
 
             if (isDamaged) {
                 log.info("Quarantined damaged return item for lot {} (quantity: {}) into QUARANTINE stock", lot.getLotNumber(), qty);
@@ -181,23 +203,26 @@ public class SaleReturnServiceImpl implements SaleReturnService {
 
         totalRefundAmount = totalRefundAmount.setScale(2, RoundingMode.HALF_UP);
 
-        if ("DUE_ADJUSTMENT".equals(refundType)) {
-            // BUSINESS DECISION: Direct returns with DUE_ADJUSTMENT credit customer ledger with RETURN_CREDIT, reducing outstanding customer debt.
-            BigDecimal newDue = customer.getCurrentDue().subtract(totalRefundAmount).setScale(2, RoundingMode.HALF_UP);
-            customer.setCurrentDue(newDue);
+        if (customer != null) {
+            BigDecimal currentTotal = customer.getTotalPurchases() != null ? customer.getTotalPurchases() : BigDecimal.ZERO;
+            customer.setTotalPurchases(currentTotal.subtract(totalRefundAmount).max(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP));
+            if ("DUE_ADJUSTMENT".equals(refundType)) {
+                // BUSINESS DECISION: Direct returns with DUE_ADJUSTMENT credit customer ledger with RETURN_CREDIT, reducing outstanding customer debt.
+                BigDecimal newDue = customer.getCurrentDue().subtract(totalRefundAmount).setScale(2, RoundingMode.HALF_UP);
+                customer.setCurrentDue(newDue);
+                CustomerLedger ledger = CustomerLedger.builder()
+                        .customer(customer)
+                        .transactionDate(LocalDateTime.now())
+                        .transactionType("RETURN_CREDIT")
+                        .debit(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP))
+                        .credit(totalRefundAmount)
+                        .balanceAfter(newDue)
+                        .saleId(originalSale != null ? originalSale.getId() : null)
+                        .notes("Return Credit: " + returnNo)
+                        .build();
+                customerLedgerRepository.save(ledger);
+            }
             customerRepository.save(customer);
-
-            CustomerLedger ledger = CustomerLedger.builder()
-                    .customer(customer)
-                    .transactionDate(LocalDateTime.now())
-                    .transactionType("RETURN_CREDIT")
-                    .debit(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP))
-                    .credit(totalRefundAmount)
-                    .balanceAfter(newDue)
-                    .saleId(originalSale != null ? originalSale.getId() : null)
-                    .notes("Return Credit: " + returnNo)
-                    .build();
-            customerLedgerRepository.save(ledger);
         }
 
         SaleReturn saleReturn = SaleReturn.builder()
