@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   AlertCircle,
+  Check,
   CheckCircle2,
   FileText,
-  MessageCircle,
-  PartyPopper,
+  Phone,
   Printer,
+  Receipt,
+  User,
   UserPlus,
   UserRound,
 } from "lucide-react"
 import type { SaleResponse, Customer } from "../../types"
 import { formatTk } from "../../utils/currency"
 import { isTypingTarget } from "../../utils/keyboard"
-import { openWhatsAppPaymentReminder } from "../../utils/whatsapp"
 import Modal from "../ui/Modal"
 import Button from "../ui/Button"
 import ThermalReceipt from "../ThermalReceipt"
@@ -62,6 +63,7 @@ export interface DualPrintModalProps {
     phone: string
     name: string
   }) => Promise<Customer>
+  onSaleCompleted?: (sale: SaleResponse, action: "thermal" | "a4" | "skipped") => void
 }
 
 export default function DualPrintModal({
@@ -73,6 +75,7 @@ export default function DualPrintModal({
   onRegisterForThermalPrint,
   customers = [],
   onResolveCustomerForSale,
+  onSaleCompleted,
 }: DualPrintModalProps) {
   const [activePrintView, setActivePrintView] = useState<"thermal" | "a4" | null>(null)
   const [autoPrint, setAutoPrint] = useState(false)
@@ -83,6 +86,8 @@ export default function DualPrintModal({
   const [customerName, setCustomerName] = useState(customer?.name || "")
   const [resolvedCustomer, setResolvedCustomer] = useState<Customer | null>(customer || null)
   const wasOpenRef = useRef(false)
+  const saleCompletedNotifiedRef = useRef(false)
+
   const effectiveSale = registeredSale || sale
   const requiresRegistration = !effectiveSale && !!onRegisterForThermalPrint
   const phoneDigits = normalizeBangladeshPhone(customerPhone)
@@ -97,6 +102,7 @@ export default function DualPrintModal({
 
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
+      saleCompletedNotifiedRef.current = false
       setCustomerPhone(customer?.phone || "")
       setCustomerName(customer?.name || "")
       setResolvedCustomer(customer || null)
@@ -111,71 +117,121 @@ export default function DualPrintModal({
       setCustomerPhone(customer?.phone || "")
       setCustomerName(customer?.name || "")
       setResolvedCustomer(customer || null)
+      saleCompletedNotifiedRef.current = false
     }
 
     wasOpenRef.current = isOpen
   }, [isOpen, customer])
 
+  const notifySaleCompleted = useCallback(
+    (completedSale: SaleResponse, action: "thermal" | "a4" | "skipped") => {
+      if (saleCompletedNotifiedRef.current) return
+      saleCompletedNotifiedRef.current = true
+      onSaleCompleted?.(completedSale, action)
+    },
+    [onSaleCompleted],
+  )
+
+  const ensureSaleRegistered = useCallback(async (): Promise<SaleResponse | null> => {
+    if (effectiveSale) return effectiveSale
+    if (!onRegisterForThermalPrint || isRegistering) return null
+
+    try {
+      setIsRegistering(true)
+      setRegistrationError(null)
+      const draftTotalAmount = effectiveSale?.totalAmount ?? draft?.totalAmount ?? 0
+      const draftCashPaid = effectiveSale?.cashPaid ?? draft?.cashPaid ?? 0
+      const draftDigitalPaid = effectiveSale?.digitalPaid ?? draft?.digitalPaid ?? 0
+      const draftRemainingDue = Math.max(0, draftTotalAmount - draftCashPaid - draftDigitalPaid)
+      let customerForSale = matchedCustomer
+      if (draftRemainingDue > 0 && !phoneDigits && !matchedCustomer) {
+        setRegistrationError("Customer phone is required when the sale has due amount.")
+        return null
+      }
+      if (phoneDigits && !matchedCustomer && onResolveCustomerForSale) {
+        if (!/^01[3-9]\d{8}$/.test(phoneDigits)) {
+          setRegistrationError("Enter a valid 11 digit Bangladesh phone number.")
+          return null
+        }
+        if (!customerName.trim()) {
+          setRegistrationError("Customer name is required for a new phone number.")
+          return null
+        }
+        customerForSale = await onResolveCustomerForSale({
+          phone: phoneDigits,
+          name: customerName.trim(),
+        })
+        setResolvedCustomer(customerForSale)
+      } else if (matchedCustomer) {
+        setResolvedCustomer(matchedCustomer)
+      }
+      const response = await onRegisterForThermalPrint(customerForSale?.id ?? null)
+      setRegisteredSale(response)
+      return response
+    } catch (error) {
+      setRegistrationError(readableErrorMessage(error))
+      return null
+    } finally {
+      setIsRegistering(false)
+    }
+  }, [
+    customerName,
+    customerPhone,
+    draft,
+    effectiveSale,
+    isRegistering,
+    matchedCustomer,
+    onRegisterForThermalPrint,
+    onResolveCustomerForSale,
+    phoneDigits,
+  ])
+
   const openThermalReceipt = useCallback(
     async (shouldAutoPrint = false) => {
+      const registered = await ensureSaleRegistered()
+      if (registered) {
+        setAutoPrint(shouldAutoPrint)
+        setActivePrintView("thermal")
+      }
+    },
+    [ensureSaleRegistered],
+  )
+
+  const openA4Invoice = useCallback(async () => {
+    const registered = await ensureSaleRegistered()
+    if (registered) {
+      setActivePrintView("a4")
+    }
+  }, [ensureSaleRegistered])
+
+  const handleSkipPrint = useCallback(async () => {
+    const registered = await ensureSaleRegistered()
+    if (registered) {
+      notifySaleCompleted(registered, "skipped")
+      onClose()
+    }
+  }, [ensureSaleRegistered, notifySaleCompleted, onClose])
+
+  const closeAfterPrint = useCallback(
+    (action: "thermal" | "a4") => {
+      setActivePrintView(null)
+      setAutoPrint(false)
       if (effectiveSale) {
-        setAutoPrint(shouldAutoPrint)
-        setActivePrintView("thermal")
-        return
+        notifySaleCompleted(effectiveSale, action)
       }
-      if (!onRegisterForThermalPrint || isRegistering) return
+      onClose()
+    },
+    [effectiveSale, notifySaleCompleted, onClose],
+  )
 
-      try {
-        setIsRegistering(true)
-        setRegistrationError(null)
-        const draftTotalAmount = effectiveSale?.totalAmount ?? draft?.totalAmount ?? 0
-        const draftCashPaid = effectiveSale?.cashPaid ?? draft?.cashPaid ?? 0
-        const draftDigitalPaid = effectiveSale?.digitalPaid ?? draft?.digitalPaid ?? 0
-        const draftRemainingDue = Math.max(0, draftTotalAmount - draftCashPaid - draftDigitalPaid)
-        let customerForSale = matchedCustomer
-        if (draftRemainingDue > 0 && !phoneDigits && !matchedCustomer) {
-          setRegistrationError("Customer phone is required when the sale has due amount.")
-          return
-        }
-        if (phoneDigits && !matchedCustomer && onResolveCustomerForSale) {
-          if (!/^01[3-9]\d{8}$/.test(phoneDigits)) {
-            setRegistrationError("Enter a valid 11 digit Bangladesh phone number.")
-            return
-          }
-          if (!customerName.trim()) {
-            setRegistrationError("Customer name is required for a new phone number.")
-            return
-          }
-          customerForSale = await onResolveCustomerForSale({
-            phone: phoneDigits,
-            name: customerName.trim(),
-          })
-          setResolvedCustomer(customerForSale)
-        } else if (matchedCustomer) {
-          setResolvedCustomer(matchedCustomer)
-        }
-        const response = await onRegisterForThermalPrint(customerForSale?.id ?? null)
-        setRegisteredSale(response)
-        setAutoPrint(shouldAutoPrint)
-        setActivePrintView("thermal")
-      } catch (error) {
-        setRegistrationError(readableErrorMessage(error))
-      } finally {
-        setIsRegistering(false)
-      }
-    }, [
-      customerName,
-      customerPhone,
-      effectiveSale,
-      isRegistering,
-      matchedCustomer,
-      onRegisterForThermalPrint,
-      onResolveCustomerForSale,
-      phoneDigits,
-      draft,
-    ])
+  const handleModalClose = useCallback(() => {
+    if (effectiveSale) {
+      notifySaleCompleted(effectiveSale, "skipped")
+    }
+    onClose()
+  }, [effectiveSale, notifySaleCompleted, onClose])
 
-  // Third Enter of the checkout chain: print the cash memo straight away.
+  // Keydown for Enter shortcut across modal
   useEffect(() => {
     if (!isOpen || activePrintView) return
 
@@ -189,15 +245,8 @@ export default function DualPrintModal({
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [isOpen, activePrintView, openThermalReceipt])
 
-  const closeAfterPrint = useCallback(() => {
-    setActivePrintView(null)
-    setAutoPrint(false)
-    onClose()
-  }, [onClose])
-
   if (!effectiveSale && !draft) return null
 
-  // If active print view is chosen, render that modal directly
   if (activePrintView === "thermal" && effectiveSale) {
     return (
       <ThermalReceipt
@@ -207,7 +256,7 @@ export default function DualPrintModal({
           setActivePrintView(null)
           setAutoPrint(false)
         }}
-        onAfterPrint={closeAfterPrint}
+        onAfterPrint={() => closeAfterPrint("thermal")}
       />
     )
   }
@@ -218,7 +267,7 @@ export default function DualPrintModal({
         sale={effectiveSale}
         customer={customerForPrint}
         onClose={() => setActivePrintView(null)}
-        onAfterPrint={closeAfterPrint}
+        onAfterPrint={() => closeAfterPrint("a4")}
       />
     )
   }
@@ -227,10 +276,8 @@ export default function DualPrintModal({
   const cashPaid = effectiveSale?.cashPaid ?? draft?.cashPaid ?? 0
   const digitalPaid = effectiveSale?.digitalPaid ?? draft?.digitalPaid ?? 0
   const totalPaid = cashPaid + digitalPaid
-  const changeToReturn =
-    totalPaid > totalAmount ? totalPaid - totalAmount : 0
-  const remainingDue =
-    totalAmount > totalPaid ? totalAmount - totalPaid : 0
+  const changeToReturn = totalPaid > totalAmount ? totalPaid - totalAmount : 0
+  const remainingDue = totalAmount > totalPaid ? totalAmount - totalPaid : 0
   const customerState = matchedCustomer
     ? "found"
     : shouldCreateCustomer
@@ -239,239 +286,333 @@ export default function DualPrintModal({
         ? "required"
         : "optional"
 
-  const handleWhatsAppClick = () => {
-    const phone = customerForPrint?.phone || (effectiveSale as any)?.customerPhone
-    if (phone) {
-      openWhatsAppPaymentReminder(
-        phone,
-        customerForPrint?.name || "Valued Customer",
-        totalAmount,
-        remainingDue,
-        effectiveSale?.invoiceNo || "Pending",
-      )
-    }
-  }
-
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
-      title={requiresRegistration ? "Register & Print Sale" : "Sale Completed Successfully!"}
-      subtitle={requiresRegistration ? undefined : "Choose your invoice and print option"}
-      icon={<PartyPopper className="w-5 h-5" />}
-      size="md"
+      onClose={handleModalClose}
+      headerVariant="light"
+      title={
+        <div className="flex items-center gap-2">
+          <span>{requiresRegistration ? "Register Sale & Print" : "Sale Completed"}</span>
+        </div>
+      }
+      icon={<Receipt className="w-5 h-5 text-emerald-600" />}
+      size="lg"
       footer={
         <div className="flex items-center justify-between w-full">
-          <Button variant="ghost" size="sm" onClick={onClose} disabled={isRegistering}>
-            {requiresRegistration ? "Cancel" : "New Sale (Esc)"}
+          <Button
+            variant="ghost"
+            size="md"
+            onClick={handleModalClose}
+            disabled={isRegistering}
+            className="text-slate-500 hover:text-slate-900 font-semibold"
+          >
+            {requiresRegistration ? "Cancel" : "Done (Esc)"}
           </Button>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={() => void handleSkipPrint()}
+              disabled={isRegistering}
+              className="text-slate-600 hover:text-slate-900 font-semibold"
+              leftIcon={<Check className="w-4 h-4 text-slate-500" />}
+            >
+              Skip Print
+            </Button>
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => void openA4Invoice()}
+              disabled={isRegistering}
+              leftIcon={<FileText className="w-4 h-4 text-slate-600" />}
+              className="border-slate-300 font-semibold hover:bg-slate-50"
+            >
+              A4 Invoice
+            </Button>
             <Button
               variant="primary"
               size="md"
               onClick={() => void openThermalReceipt(true)}
               isLoading={isRegistering}
               leftIcon={<Printer className="w-4 h-4" />}
-              className="bg-slate-950 hover:bg-slate-800"
+              className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold shadow-xs px-5 cursor-pointer"
             >
-              {requiresRegistration ? "Register & Print" : "Thermal Receipt"}
-              <span className="text-[11px] font-mono font-semibold bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded ml-1.5">
-                Enter
+              <span>{requiresRegistration ? "Register & Print" : "Thermal Receipt"}</span>
+              <span className="ml-2 inline-flex items-center rounded bg-emerald-700/60 border border-emerald-500/40 px-1.5 py-0.5 text-[10px] font-mono font-bold text-white">
+                ↵ Enter
               </span>
-            </Button>
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => setActivePrintView("a4")}
-              disabled={!effectiveSale || isRegistering}
-              leftIcon={<FileText className="w-4 h-4" />}
-              title={!effectiveSale ? "Available after thermal registration" : undefined}
-            >
-              A4 Invoice
             </Button>
           </div>
         </div>
       }
     >
       <div className="space-y-4">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
-          <div className="flex items-start justify-between gap-4 bg-slate-950 px-4 py-4 text-white">
+        {/* Settlement Summary Hero Card */}
+        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-5 text-white shadow-lg">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-500/10 blur-2xl" />
+
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-300">
-                {effectiveSale ? "Invoice ready" : "Ready to register"}
-              </span>
-              <div className="mt-1 font-mono text-lg font-black">
-                {effectiveSale ? `#${effectiveSale.invoiceNo}` : "Thermal print pending"}
-              </div>
+              {effectiveSale ? (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Invoice #{effectiveSale.invoiceNo}</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800/80 px-3 py-1 text-xs font-medium text-slate-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span>Ready to Register</span>
+                </div>
+              )}
             </div>
+
             <div className="text-right">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                Total bill
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Net Payable
               </span>
-              <div className="mt-1 font-mono text-2xl font-black tabular-nums">
+              <div className="mt-0.5 font-mono text-2xl sm:text-3xl font-black tracking-tight text-white tabular-nums">
                 {formatTk(totalAmount)}
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 divide-x divide-slate-200 bg-slate-50">
-            <div className="px-4 py-3">
-              <span className="text-[11px] font-semibold text-slate-500">Paid</span>
-              <div className="mt-0.5 font-mono text-sm font-black text-slate-950">
+          {/* Metric Pills */}
+          <div
+            className={`mt-4 grid gap-2 sm:gap-3 ${
+              remainingDue > 0 ? "grid-cols-3" : "grid-cols-2"
+            }`}
+          >
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Total Paid
+              </span>
+              <div className="mt-1 font-mono text-sm sm:text-base font-black tabular-nums text-white">
                 {formatTk(totalPaid)}
               </div>
             </div>
-            <div className="px-4 py-3">
-              <span className="text-[11px] font-semibold text-slate-500">Change</span>
-              <div className="mt-0.5 font-mono text-sm font-black text-emerald-800">
+
+            <div
+              className={`rounded-xl border p-3 transition-colors ${
+                changeToReturn > 0
+                  ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-300"
+                  : "border-white/10 bg-white/5 text-slate-300"
+              }`}
+            >
+              <span
+                className={`text-[10px] font-bold uppercase tracking-wider ${
+                  changeToReturn > 0 ? "text-emerald-300 font-extrabold" : "text-slate-400"
+                }`}
+              >
+                Change Return
+              </span>
+              <div
+                className={`mt-1 font-mono text-sm sm:text-base font-black tabular-nums ${
+                  changeToReturn > 0 ? "text-emerald-300" : "text-slate-300"
+                }`}
+              >
                 {formatTk(changeToReturn)}
               </div>
             </div>
-            <div className="px-4 py-3">
-              <span className="text-[11px] font-semibold text-slate-500">Due</span>
-              <div
-                className={`mt-0.5 font-mono text-sm font-black ${
-                  remainingDue > 0 ? "text-red-600" : "text-slate-950"
-                }`}
-              >
-                {formatTk(remainingDue)}
+
+            {remainingDue > 0 && (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/15 p-3 text-rose-300 transition-colors">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-300">
+                  Balance Due
+                </span>
+                <div className="mt-1 font-mono text-sm sm:text-base font-black tabular-nums text-rose-300">
+                  {formatTk(remainingDue)}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
+        {/* Error alert banner */}
         {registrationError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
-            {registrationError}
+          <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-800 animate-in fade-in duration-150">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+            <div className="flex-1">{registrationError}</div>
           </div>
         )}
 
+        {/* Customer Ledger Configuration Card */}
         {requiresRegistration && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-            <div className="mb-3 flex items-start justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 text-sm font-black text-slate-950">
-                  <UserRound className="h-4 w-4 text-emerald-700" />
-                  Customer ledger
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs transition-all">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  <UserRound className="h-4 w-4" />
                 </div>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  {customerState === "found"
-                    ? "Existing profile selected for this invoice."
-                    : customerState === "new"
-                      ? "Create a ledger profile with this sale."
-                      : customerState === "required"
-                        ? "Add a customer before registering due."
-                        : "Cash sales can continue without a customer."}
-                </p>
+                <div>
+                  <div className="text-sm font-bold text-slate-900">
+                    Customer Ledger
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Auto-matches existing customer or registers new account
+                  </p>
+                </div>
               </div>
+
               <span
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-black ${
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold transition-colors ${
                   customerState === "found"
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 shadow-2xs"
                     : customerState === "new"
-                      ? "border-sky-200 bg-sky-50 text-sky-800"
+                      ? "border-sky-200 bg-sky-50 text-sky-800 shadow-2xs"
                       : customerState === "required"
-                        ? "border-red-200 bg-red-50 text-red-700"
+                        ? "border-rose-200 bg-rose-50 text-rose-700 shadow-2xs animate-pulse"
                         : "border-slate-200 bg-slate-50 text-slate-600"
                 }`}
               >
                 {customerState === "found" ? (
-                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                 ) : customerState === "new" ? (
-                  <UserPlus className="h-3.5 w-3.5" />
+                  <UserPlus className="h-3.5 w-3.5 text-sky-600" />
                 ) : customerState === "required" ? (
-                  <AlertCircle className="h-3.5 w-3.5" />
+                  <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
                 ) : (
-                  <UserRound className="h-3.5 w-3.5" />
+                  <UserRound className="h-3.5 w-3.5 text-slate-500" />
                 )}
                 {customerState === "found"
-                  ? "Found"
+                  ? "Matched Customer"
                   : customerState === "new"
-                    ? "New"
+                    ? "New Ledger Profile"
                     : customerState === "required"
-                      ? "Required"
-                      : "Optional"}
+                      ? "Phone Required (Due)"
+                      : "Walk-in (Optional)"}
               </span>
             </div>
-            <div className="grid gap-2 sm:grid-cols-[1fr_1fr]">
-              <label className="space-y-1">
-                <span className="text-[11px] font-semibold text-slate-500">
-                  Phone number
-                </span>
-                <input
-                  type="tel"
-                  value={customerPhone}
-                  onChange={(event) => {
-                    setCustomerPhone(event.target.value)
-                    setResolvedCustomer(null)
-                    setRegistrationError(null)
-                  }}
-                  placeholder="017xxxxxxxx"
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 font-mono text-sm font-bold outline-hidden transition focus:border-emerald-700 focus:bg-white focus:shadow-[0_0_0_3px_rgba(16,185,129,0.12)]"
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-[11px] font-semibold text-slate-500">
-                  Customer name
-                </span>
-                <input
-                  type="text"
-                  value={matchedCustomer ? matchedCustomer.name : customerName}
-                  onChange={(event) => {
-                    setCustomerName(event.target.value)
-                    setRegistrationError(null)
-                  }}
-                  readOnly={!!matchedCustomer}
-                  placeholder={shouldCreateCustomer ? "Required for new customer" : "Auto-filled if found"}
-                  className={`h-11 w-full rounded-xl border px-3 text-sm font-bold outline-hidden transition focus:border-emerald-700 focus:shadow-[0_0_0_3px_rgba(16,185,129,0.12)] ${
-                    matchedCustomer
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-                      : "border-slate-200 bg-slate-50 focus:bg-white"
-                  }`}
-                />
-              </label>
-            </div>
-            <div
-              className={`mt-3 rounded-xl border px-3 py-2 text-xs font-semibold ${
-                customerState === "found"
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                  : customerState === "new"
-                    ? "border-sky-200 bg-sky-50 text-sky-900"
-                    : customerState === "required"
-                      ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-slate-200 bg-slate-50 text-slate-600"
-              }`}
-            >
-              {matchedCustomer
-                ? `${matchedCustomer.name} matched by phone. This invoice will be registered under their ledger.`
-                : shouldCreateCustomer
-                  ? "No matching phone found. Enter the name and the profile will be created during registration."
-                  : remainingDue > 0
-                    ? "Due sale needs a customer phone before registration."
-                    : "No customer selected. This will register as a walk-in cash sale."}
-            </div>
-          </div>
-        )}
 
-        {/* Customer Information (if available) */}
-        {customerForPrint && (
-          <div className="p-3 bg-slate-50/60 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
-            <div>
-              <span className="font-bold text-slate-900 block">
-                Customer: {customerForPrint.name}
-              </span>
-              <span className="text-slate-500 font-mono">{customerForPrint.phone}</span>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Phone Number
+                  </label>
+                  {remainingDue > 0 && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600">
+                      Required
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(event) => {
+                      setCustomerPhone(event.target.value)
+                      setResolvedCustomer(null)
+                      setRegistrationError(null)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        void openThermalReceipt(true)
+                      }
+                    }}
+                    placeholder="01XXXXXXXXX"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3 font-mono text-sm font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-3 focus:ring-emerald-500/15"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700">
+                    Customer Name
+                  </label>
+                  {shouldCreateCustomer && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-600">
+                      Required for New
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={matchedCustomer ? matchedCustomer.name : customerName}
+                    onChange={(event) => {
+                      setCustomerName(event.target.value)
+                      setRegistrationError(null)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        void openThermalReceipt(true)
+                      }
+                    }}
+                    readOnly={!!matchedCustomer}
+                    placeholder={
+                      shouldCreateCustomer
+                        ? "Enter customer name"
+                        : "Auto-filled if matched"
+                    }
+                    className={`h-11 w-full rounded-xl border pl-10 pr-9 text-sm font-bold outline-none transition ${
+                      matchedCustomer
+                        ? "border-emerald-200 bg-emerald-50/70 text-emerald-950 font-bold select-none cursor-default"
+                        : "border-slate-200 bg-slate-50/50 text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-emerald-600 focus:bg-white focus:ring-3 focus:ring-emerald-500/15"
+                    }`}
+                  />
+                  {matchedCustomer && (
+                    <CheckCircle2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                  )}
+                </div>
+              </div>
             </div>
 
-            {customerForPrint.phone && (
-              <button
-                type="button"
-                onClick={handleWhatsAppClick}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>Send via WhatsApp</span>
-              </button>
+            {/* Contextual feedback callout */}
+            {matchedCustomer ? (
+              <div className="mt-3 flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-900">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <div>
+                    <div className="font-bold text-emerald-950">
+                      {matchedCustomer.name}
+                      <span className="ml-1.5 font-mono font-normal text-emerald-700">
+                        ({matchedCustomer.phone})
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-emerald-800/90">
+                      Customer found in directory. This invoice will link to their account ledger.
+                    </p>
+                  </div>
+                </div>
+                {Number(matchedCustomer.currentDue || 0) > 0 && (
+                  <div className="shrink-0 rounded-lg border border-rose-200/80 bg-white/90 px-2.5 py-1 text-right">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-rose-600">
+                      Current Due
+                    </span>
+                    <span className="font-mono text-xs font-black text-rose-700">
+                      {formatTk(matchedCustomer.currentDue)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : shouldCreateCustomer ? (
+              <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-sky-200 bg-sky-50/80 p-3 text-xs text-sky-900">
+                <UserPlus className="h-4 w-4 shrink-0 text-sky-600" />
+                <span>
+                  New customer profile will be created and saved to your directory upon registration.
+                </span>
+              </div>
+            ) : customerState === "required" ? (
+              <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-xs text-rose-800">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                <span>
+                  Credit sale requires a customer phone to track remaining due of{" "}
+                  <strong className="font-mono">{formatTk(remainingDue)}</strong> in the ledger.
+                </span>
+              </div>
+            ) : (
+              <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 text-xs text-slate-500">
+                <UserRound className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                <span>
+                  Walk-in cash sale. You can leave phone blank, or enter a number to record points.
+                </span>
+              </div>
             )}
           </div>
         )}

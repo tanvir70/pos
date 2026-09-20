@@ -87,7 +87,7 @@ export default function ThermalReceipt({
             {/* Store Letterhead */}
             <div className="text-center pb-3 mb-2 border-b border-dashed border-gray-400">
               <h1 className="text-base font-bold leading-tight text-black">
-                Al-Amin Traders
+                Rajib Enterprise
               </h1>
               <p className="text-[11px] font-semibold text-gray-800 mt-0.5">
                 Authorized Agro Dealer
@@ -115,7 +115,7 @@ export default function ThermalReceipt({
               </div>
               <div className="flex justify-between">
                 <span className="font-medium text-gray-700">Served by:</span>
-                <span>{sale.cashierName || "Al-Amin"}</span>
+                <span>{sale.cashierName || "Rajib"}</span>
               </div>
               {sale.customerName && (
                 <div className="pt-1 mt-1 border-t border-dotted border-gray-300">
@@ -232,8 +232,28 @@ export default function ThermalReceipt({
               </div>
             </div>
 
+            {/* Dual Signature Section (Tasteful 80mm Layout) */}
+            <div className="pt-8 pb-2 grid grid-cols-2 gap-4 text-center text-[10px] leading-tight">
+              <div>
+                <div className="border-t border-dashed border-gray-600 pt-1 font-semibold text-black">
+                  Customer Signature
+                </div>
+                <div className="text-[9px] text-gray-500 mt-0.5 font-normal">
+                  Received Goods
+                </div>
+              </div>
+              <div>
+                <div className="border-t border-dashed border-gray-600 pt-1 font-semibold text-black">
+                  Seller Signature
+                </div>
+                <div className="text-[9px] text-gray-500 mt-0.5 font-normal">
+                  Rajib Enterprise
+                </div>
+              </div>
+            </div>
+
             {/* Footer */}
-            <div className="border-t border-dashed border-gray-400 mt-4 pt-3 text-center space-y-1">
+            <div className="border-t border-dashed border-gray-400 mt-3 pt-2 text-center space-y-1">
               <p className="text-[11px] font-bold text-black">
                 Thank you, please visit again!
               </p>
@@ -241,7 +261,7 @@ export default function ThermalReceipt({
                 Quality pesticides & fertilizers.
               </p>
               <p className="text-[9px] text-gray-500 font-mono mt-1">
-                {sale.invoiceNo} · Powered by Al-Amin POS
+                {sale.invoiceNo} · Powered by Rajib Enterprise POS
               </p>
             </div>
           </div>

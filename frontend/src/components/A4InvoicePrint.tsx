@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useCallback, useEffect } from "react"
 import { FileText, Printer, X } from "lucide-react"
 import type { SaleResponse, Customer } from "../types"
 
@@ -10,6 +10,7 @@ export interface A4InvoicePrintProps {
   customer?: Customer | null
   onClose: () => void
   onAfterPrint?: () => void
+  autoPrint?: boolean
 }
 
 const tk = (n: number | undefined | null) =>
@@ -20,6 +21,7 @@ export default function A4InvoicePrint({
   customer,
   onClose,
   onAfterPrint,
+  autoPrint = false,
 }: A4InvoicePrintProps) {
   const printAndClose = useCallback(() => {
     window.print()
@@ -31,6 +33,23 @@ export default function A4InvoicePrint({
       }
     }, 0)
   }, [onAfterPrint, onClose])
+
+  useEffect(() => {
+    if (!autoPrint) return
+    const timer = window.setTimeout(printAndClose, 150)
+    return () => window.clearTimeout(timer)
+  }, [autoPrint, printAndClose])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" || (e.ctrlKey && e.key.toLowerCase() === "p")) {
+        e.preventDefault()
+        printAndClose()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [printAndClose])
 
   const formattedDate = sale.saleDate
     ? new Date(sale.saleDate).toLocaleDateString("en-US", {
@@ -106,7 +125,7 @@ export default function A4InvoicePrint({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-black text-emerald-800 tracking-tight">
-                      Al-Amin Traders
+                      Rajib Enterprise
                     </span>
                     <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
                       Authorized Agro Dealer
@@ -119,7 +138,7 @@ export default function A4InvoicePrint({
                     Krishi Market, Uttar Bazar, Narsingdi Sadar, Narsingdi.
                   </p>
                   <p className="text-[11px] text-gray-600">
-                    Mobile: 01711-234567, 01911-123456 | Email: alamin.traders.narsingdi@gmail.com
+                    Mobile: 01711-234567, 01911-123456 | Email: rajib.enterprise.narsingdi@gmail.com
                   </p>
                 </div>
 
@@ -134,7 +153,7 @@ export default function A4InvoicePrint({
                     Date: {formattedDate} ({formattedTime})
                   </p>
                   <p className="text-[11px] text-gray-600">
-                    Served by: {sale.cashierName || "Al-Amin"}
+                    Served by: {sale.cashierName || "Rajib"}
                   </p>
                 </div>
               </div>
@@ -218,33 +237,23 @@ export default function A4InvoicePrint({
                     <th className="border border-emerald-950 py-2 px-3 text-left">
                       Product Description & Manufacturer
                     </th>
-                    <th className="border border-emerald-950 py-2 px-2 text-center w-24">
+                    <th className="border border-emerald-950 py-2 px-2 text-center w-28">
                       Lot No.
                     </th>
-                    <th className="border border-emerald-950 py-2 px-2 text-center w-20">
-                      Expiry
-                    </th>
-                    <th className="border border-emerald-950 py-2 px-2 text-center w-20">
-                      Base Unit
-                    </th>
-                    <th className="border border-emerald-950 py-2 px-2 text-center w-16">
-                      Carton
-                    </th>
-                    <th className="border border-emerald-950 py-2 px-3 text-right w-24">
-                      Rate (৳)
+                    <th className="border border-emerald-950 py-2 px-2 text-center w-24">
+                      Qty
                     </th>
                     <th className="border border-emerald-950 py-2 px-3 text-right w-28">
+                      Rate (৳)
+                    </th>
+                    <th className="border border-emerald-950 py-2 px-3 text-right w-32">
                       Amount (৳)
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {sale.items?.map((item, idx) => {
-                    // Carton calculation if cartonMultiplier is attached or estimate
                     const totalUnits = item.totalQuantity || 0
-                    const cartonsCount = (item as any).cartonMultiplier && (item as any).cartonMultiplier > 0
-                      ? (totalUnits / (item as any).cartonMultiplier).toFixed(1)
-                      : "-"
 
                     return (
                       <tr
@@ -265,14 +274,8 @@ export default function A4InvoicePrint({
                         <td className="border border-gray-300 py-2 px-2 text-center font-mono text-[10px]">
                           #{item.lotNumber}
                         </td>
-                        <td className="border border-gray-300 py-2 px-2 text-center text-gray-600 text-[10px]">
-                          {(item as any).expiryDate || "-"}
-                        </td>
                         <td className="border border-gray-300 py-2 px-2 text-center font-bold tabular-nums">
                           {totalUnits}
-                        </td>
-                        <td className="border border-gray-300 py-2 px-2 text-center font-mono text-gray-600">
-                          {cartonsCount}
                         </td>
                         <td className="border border-gray-300 py-2 px-3 text-right tabular-nums">
                           {tk(item.unitPrice)}
@@ -342,12 +345,14 @@ export default function A4InvoicePrint({
                         {tk(sale.totalAmount)}
                       </td>
                     </tr>
-                    <tr className="border-b border-gray-200">
-                      <td className="py-1.5 px-3 text-gray-600">Previous Due:</td>
-                      <td className="py-1.5 px-3 text-right tabular-nums text-gray-800 font-semibold">
-                        {tk(estimatedPrevDue)}
-                      </td>
-                    </tr>
+                    {estimatedPrevDue > 0 && (
+                      <tr className="border-b border-gray-200">
+                        <td className="py-1.5 px-3 text-gray-600">Previous Due:</td>
+                        <td className="py-1.5 px-3 text-right tabular-nums text-gray-800 font-semibold">
+                          {tk(estimatedPrevDue)}
+                        </td>
+                      </tr>
+                    )}
                     <tr className="border-b border-gray-200 bg-gray-50 font-bold">
                       <td className="py-1.5 px-3 text-gray-900">Total Payable:</td>
                       <td className="py-1.5 px-3 text-right tabular-nums text-black">
@@ -360,12 +365,21 @@ export default function A4InvoicePrint({
                         {tk(totalPaid)}
                       </td>
                     </tr>
-                    <tr className="bg-emerald-50 text-emerald-950 font-black text-xs">
-                      <td className="py-2 px-3">Total Balance Due:</td>
-                      <td className="py-2 px-3 text-right tabular-nums text-red-700">
-                        {tk(cumulativeDue)}
-                      </td>
-                    </tr>
+                    {cumulativeDue > 0 ? (
+                      <tr className="bg-emerald-50 text-emerald-950 font-black text-xs">
+                        <td className="py-2 px-3">Total Balance Due:</td>
+                        <td className="py-2 px-3 text-right tabular-nums text-red-700">
+                          {tk(cumulativeDue)}
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr className="bg-emerald-50 text-emerald-950 font-bold text-xs">
+                        <td className="py-2 px-3">Invoice Status:</td>
+                        <td className="py-2 px-3 text-right tabular-nums text-emerald-700">
+                          Full Paid (No Due)
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -391,7 +405,7 @@ export default function A4InvoicePrint({
                       Authorized Signatory
                     </p>
                     <p className="text-[10px] text-gray-500">
-                      Al-Amin Traders
+                      Rajib Enterprise
                     </p>
                   </div>
                 </div>

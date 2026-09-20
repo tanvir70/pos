@@ -50,7 +50,7 @@ export function Badge({
   dot = false,
   className = "",
 }: BadgeProps) {
-  const styles = variantStyles[variant]
+  const styles = variantStyles[variant] || variantStyles.neutral
   const sizeClasses =
     size === "sm"
       ? "text-[10px] px-1.5 py-0.5 rounded-md"

@@ -54,6 +54,10 @@ export default function SettlementPanel({
     setPaymentMethod,
     cashPaidInput,
     setCashPaidInput,
+    dueAmountInput,
+    setDueAmountInput,
+    dueAmount,
+    cashPaid,
     digitalPaidInput,
     setDigitalPaidInput,
     setDigitalMedium,
@@ -104,10 +108,13 @@ export default function SettlementPanel({
       showSuccess(
         `Wholesale adjustment (${latestSettings.discountPercentage}%) applied.`,
         "Wholesale Applied",
+        { closePrevious: true },
       )
     } else {
       setDiscountValue("")
-      showInfo("Reverted order back to standard Retail pricing.", "Retail Mode")
+      showInfo("Reverted order back to standard Retail pricing.", "Retail Mode", {
+        closePrevious: true,
+      })
     }
   }
 
@@ -119,6 +126,19 @@ export default function SettlementPanel({
 
   const handleSetExactCash = () => {
     setCashPaidInput(String(finalTotalAmount))
+  }
+
+  const handleSetFullDue = () => {
+    setDueAmountInput(finalTotalAmount > 0 ? String(finalTotalAmount) : "")
+  }
+
+  const handleDueAmountChange = (val: string) => {
+    const num = parseFloat(val)
+    if (!isNaN(num) && num > finalTotalAmount) {
+      setDueAmountInput(String(finalTotalAmount))
+    } else {
+      setDueAmountInput(val)
+    }
   }
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
@@ -299,17 +319,62 @@ export default function SettlementPanel({
           </section>
         )}
 
-        <Collapse show={paymentMethod === "DUE"}>
-          <div className="space-y-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>Due sale</span>
+        {paymentMethod === "DUE" && (
+          <section className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-[11px] font-black uppercase text-amber-800 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                Due amount (to ledger)
+              </label>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleSetFullDue}
+                  className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-800 hover:bg-amber-100 cursor-pointer"
+                >
+                  Full Due
+                </button>
+              </div>
             </div>
-            <p className="text-[11px] text-amber-800">
-              A total of {formatTk(finalTotalAmount)} will be added to the selected customer's due ledger.
-            </p>
-          </div>
-        </Collapse>
+
+            <input
+              type="number"
+              step="any"
+              min="0"
+              max={finalTotalAmount}
+              value={dueAmountInput}
+              onChange={(e) => handleDueAmountChange(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              placeholder={finalTotalAmount > 0 ? String(finalTotalAmount) : "0.00"}
+              className="h-12 w-full rounded-lg border border-amber-300 bg-white px-3 text-right font-mono text-2xl font-black text-amber-950 tabular-nums outline-hidden focus:border-amber-600 focus:ring-4 focus:ring-amber-500/15"
+            />
+
+            {/* Live due vs cash down payment breakdown */}
+            <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-600 font-medium">Customer Due (Ledger):</span>
+                <span className="font-mono font-bold text-amber-900 text-sm">
+                  {formatTk(dueAmount)}
+                </span>
+              </div>
+              {cashPaid > 0 ? (
+                <div className="flex items-center justify-between border-t border-amber-200/80 pt-2">
+                  <span className="text-emerald-800 font-bold flex items-center gap-1.5">
+                    <Banknote className="w-4 h-4 text-emerald-600" />
+                    Cash to collect now:
+                  </span>
+                  <span className="font-mono font-black text-emerald-700 text-base">
+                    {formatTk(cashPaid)}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-[11px] text-amber-800 border-t border-amber-200/80 pt-1.5">
+                  100% full amount will be added to the customer's credit ledger.
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         <section className="rounded-lg border border-slate-200 bg-slate-50/70">
           <button

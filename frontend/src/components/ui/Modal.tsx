@@ -13,6 +13,8 @@ export interface ModalProps {
   closeOnEsc?: boolean
   closeOnClickOutside?: boolean
   className?: string
+  headerVariant?: "dark" | "light" | "none"
+  headerClassName?: string
 }
 
 const sizeClasses = {
@@ -35,6 +37,8 @@ export function Modal({
   closeOnEsc = true,
   closeOnClickOutside = true,
   className = "",
+  headerVariant = "dark",
+  headerClassName = "",
 }: ModalProps) {
   useEffect(() => {
     if (!isOpen) return
@@ -69,18 +73,40 @@ export function Modal({
         className={`bg-white rounded-xl shadow-2xl border border-slate-200 w-full my-auto overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150 ${sizeClasses[size]} ${className}`.trim()}
       >
         {/* Modal Header */}
-        {(title || icon) && (
-          <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shrink-0">
+        {headerVariant !== "none" && (title || icon) && (
+          <div
+            className={`px-6 py-4 flex items-center justify-between shrink-0 ${
+              headerVariant === "light"
+                ? "bg-white border-b border-slate-200/80 text-slate-900"
+                : "bg-slate-900 text-white"
+            } ${headerClassName}`.trim()}
+          >
             <div className="flex items-center gap-3 min-w-0">
               {icon && (
-                <span className="text-emerald-400 shrink-0 flex items-center">{icon}</span>
+                <div
+                  className={`shrink-0 flex items-center justify-center ${
+                    headerVariant === "light"
+                      ? "h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-2xs"
+                      : "text-emerald-400"
+                  }`}
+                >
+                  {icon}
+                </div>
               )}
               <div className="min-w-0">
-                <h2 className="font-semibold text-base sm:text-lg leading-tight truncate">
+                <h2
+                  className={`font-bold text-base sm:text-lg leading-tight truncate ${
+                    headerVariant === "light" ? "text-slate-900" : "text-white"
+                  }`}
+                >
                   {title}
                 </h2>
                 {subtitle && (
-                  <p className="text-xs text-slate-300 mt-0.5 truncate">
+                  <p
+                    className={`text-xs mt-0.5 truncate ${
+                      headerVariant === "light" ? "text-slate-500 font-normal" : "text-slate-300"
+                    }`}
+                  >
                     {subtitle}
                   </p>
                 )}
@@ -90,7 +116,11 @@ export function Modal({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
+              className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+                headerVariant === "light"
+                  ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
+              }`}
               title="Close (Esc)"
             >
               <X size={18} />

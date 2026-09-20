@@ -51,7 +51,7 @@ export function generateDueReminderUrl({
   customerName,
   businessName,
   dueAmount,
-  shopName = "Al-Amin Traders",
+  shopName = "Rajib Enterprise",
 }: DueReminderParams): string {
   const normalizedPhone = normalizeBDPhone(phone)
   if (!normalizedPhone) return ""
@@ -79,7 +79,7 @@ export function openWhatsAppPaymentReminder(
   totalAmount: number,
   remainingDue: number,
   invoiceNumber?: string,
-  shopName = "Al-Amin Traders",
+  shopName = "Rajib Enterprise",
 ): void {
   const normalizedPhone = normalizeBDPhone(phone)
   if (!normalizedPhone) return

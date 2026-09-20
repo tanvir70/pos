@@ -8,6 +8,7 @@ import Inventory from "./pages/Inventory"
 import Customers from "./pages/Customers"
 import Returns from "./pages/Returns"
 import Settings from "./pages/Settings"
+import StockLedgerPage from "./pages/StockLedgerPage"
 import type { NavigationTab } from "./types"
 import { ToastProvider } from "./context/ToastContext"
 import { AuthProvider, useAuth } from "./context/AuthContext"
@@ -18,6 +19,20 @@ const SIDEBAR_OPEN_KEY = "pos_sidebar_open"
 
 function AppShell() {
   const [tab, setTab] = useState<NavigationTab>("pos")
+  const [ledgerFilter, setLedgerFilter] = useState<{ productId?: number; lotId?: number } | undefined>(undefined)
+
+  const handleNavigate = useCallback(
+    (newTab: NavigationTab, params?: { productId?: number; lotId?: number }) => {
+      if (newTab === "bin-card") {
+        setLedgerFilter(params)
+      } else {
+        setLedgerFilter(undefined)
+      }
+      setTab(newTab)
+    },
+    []
+  )
+
   const [isFocusMode, setIsFocusMode] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
     try {
@@ -101,7 +116,7 @@ function AppShell() {
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           activeTab={tab}
-          onTabChange={setTab}
+          onTabChange={(t) => handleNavigate(t)}
         />
       )}
 
@@ -130,10 +145,16 @@ function AppShell() {
           )}
           {tab === "dashboard" && (
             <Dashboard
-              onNavigate={setTab}
+              onNavigate={handleNavigate}
             />
           )}
-          {tab === "inventory" && <Inventory />}
+          {tab === "inventory" && <Inventory onNavigate={handleNavigate} />}
+          {tab === "bin-card" && (
+            <StockLedgerPage
+              initialProductId={ledgerFilter?.productId}
+              initialLotId={ledgerFilter?.lotId}
+            />
+          )}
           {tab === "customers" && <Customers />}
           {tab === "returns" && <Returns />}
           {tab === "settings" && <Settings />}

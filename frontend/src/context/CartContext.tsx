@@ -21,6 +21,7 @@ import {
   calcChangeReturn,
   roundAccounting,
 } from "../utils/currency"
+import { formatLotNumber } from "../utils/lotNumber"
 
 const STORAGE_KEY = "pos_active_cart_v1"
 
@@ -47,6 +48,8 @@ export interface CartContextType {
   setPaymentMethod: (method: PaymentMethod) => void
   cashPaidInput: string
   setCashPaidInput: (val: string) => void
+  dueAmountInput: string
+  setDueAmountInput: (val: string) => void
   digitalPaidInput: string
   setDigitalPaidInput: (val: string) => void
   digitalMedium: string
@@ -71,6 +74,7 @@ export interface CartContextType {
   computedDiscount: number
   preRoundTotal: number
   finalTotalAmount: number
+  dueAmount: number
   cashPaid: number
   digitalPaid: number
   totalPaid: number
@@ -105,6 +109,7 @@ interface SavedCartState {
   roundOff: number
   paymentMethod: PaymentMethod
   cashPaidInput: string
+  dueAmountInput: string
   digitalPaidInput: string
   digitalMedium: string
   digitalTrxId: string
@@ -124,6 +129,7 @@ function loadInitialState(): SavedCartState {
         roundOff: typeof parsed.roundOff === "number" ? parsed.roundOff : 0,
         paymentMethod: parsed.paymentMethod || "CASH",
         cashPaidInput: parsed.cashPaidInput || "",
+        dueAmountInput: parsed.dueAmountInput || "",
         digitalPaidInput: parsed.digitalPaidInput || "",
         digitalMedium: parsed.digitalMedium || "BKASH",
         digitalTrxId: parsed.digitalTrxId || "",
@@ -141,6 +147,7 @@ function loadInitialState(): SavedCartState {
     roundOff: 0,
     paymentMethod: "CASH",
     cashPaidInput: "",
+    dueAmountInput: "",
     digitalPaidInput: "",
     digitalMedium: "BKASH",
     digitalTrxId: "",
@@ -164,6 +171,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     initial.paymentMethod,
   )
   const [cashPaidInput, setCashPaidInput] = useState<string>(initial.cashPaidInput)
+  const [dueAmountInput, setDueAmountInput] = useState<string>(initial.dueAmountInput || "")
   const [digitalPaidInput, setDigitalPaidInput] = useState<string>(
     initial.digitalPaidInput,
   )
@@ -182,6 +190,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         roundOff,
         paymentMethod,
         cashPaidInput,
+        dueAmountInput,
         digitalPaidInput,
         digitalMedium,
         digitalTrxId,
@@ -199,6 +208,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     roundOff,
     paymentMethod,
     cashPaidInput,
+    dueAmountInput,
     digitalPaidInput,
     digitalMedium,
     digitalTrxId,
@@ -236,14 +246,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return Math.max(0, roundAccounting(preRoundTotal - roundOff))
   }, [preRoundTotal, roundOff])
 
-  // Auto-sync cash/digital tender when payment method or total changes.
-  // Uses useLayoutEffect (not useEffect) so this correction happens before the
-  // browser paints: otherwise the settlement panel briefly renders with a stale
-  // cashPaidInput against the new finalTotalAmount, flashing the change/due
-  // badges in and out on every cart edit or discount keystroke.
+  // Auto-sync digital tender when payment method or total changes.
+  // Note: cashPaidInput is deliberately NOT pre-filled so cashiers can type
+  // received cash denominations directly without having to delete prefilled text.
   useLayoutEffect(() => {
     if (paymentMethod === "CASH") {
-      setCashPaidInput(finalTotalAmount > 0 ? String(finalTotalAmount) : "")
       setDigitalPaidInput("")
     } else if (
       paymentMethod === "BKASH" ||
@@ -256,12 +263,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } else if (paymentMethod === "DUE") {
       setCashPaidInput("")
       setDigitalPaidInput("")
+      setDueAmountInput((prev) => {
+        if (!prev || prev.trim() === "") {
+          return finalTotalAmount > 0 ? String(finalTotalAmount) : ""
+        }
+        const num = parseFloat(prev) || 0
+        if (num > finalTotalAmount) {
+          return finalTotalAmount > 0 ? String(finalTotalAmount) : ""
+        }
+        return prev
+      })
     }
   }, [paymentMethod, finalTotalAmount])
 
+  const dueAmount = useMemo(() => {
+    if (paymentMethod !== "DUE") return 0
+    if (dueAmountInput.trim() === "") return finalTotalAmount
+    const parsed = parseFloat(dueAmountInput)
+    if (isNaN(parsed) || parsed < 0) return finalTotalAmount
+    return Math.min(finalTotalAmount, parsed)
+  }, [paymentMethod, dueAmountInput, finalTotalAmount])
+
   const cashPaid = useMemo(() => {
+    if (paymentMethod === "DUE") {
+      return roundAccounting(Math.max(0, finalTotalAmount - dueAmount))
+    }
+    if (paymentMethod === "CASH" && cashPaidInput.trim() === "") {
+      return finalTotalAmount
+    }
     return parseFloat(cashPaidInput) || 0
-  }, [cashPaidInput])
+  }, [paymentMethod, dueAmount, cashPaidInput, finalTotalAmount])
 
   const digitalPaid = useMemo(() => {
     return parseFloat(digitalPaidInput) || 0
@@ -326,7 +357,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     productId: stockOrLot.productId,
                     productCode: stockOrLot.productCode,
                     productNameEn: stockOrLot.productNameEn || stockOrLot.nameEn,
-                    lotNumber: (stockOrLot as any).lotNumber || "DEFAULT",
+                    lotNumber: formatLotNumber((stockOrLot as any).lotNumber, 0),
                     entryDate: (stockOrLot as any).entryDate || new Date().toISOString(),
                     expiryDate: (stockOrLot as any).expiryDate || "2099-12-31",
                     purchaseCost: (stockOrLot as any).purchaseCost || 0,
@@ -346,7 +377,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           productId: stockOrLot.productId,
           productCode: stockOrLot.productCode,
           productNameEn: stockOrLot.productNameEn || stockOrLot.nameEn,
-          lotNumber: (stockOrLot as any).lotNumber || "DEFAULT",
+          lotNumber: formatLotNumber((stockOrLot as any).lotNumber, 0),
           entryDate: new Date().toISOString(),
           expiryDate: "2099-12-31",
           purchaseCost: (stockOrLot as any).purchaseCost || 0,
@@ -495,6 +526,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setDiscountValue("")
     setRoundOff(0)
     setCashPaidInput("")
+    setDueAmountInput("")
     setDigitalPaidInput("")
     setDigitalTrxId("")
     setSelectedCustomerId(null)
@@ -530,6 +562,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setPaymentMethod,
         cashPaidInput,
         setCashPaidInput,
+        dueAmountInput,
+        setDueAmountInput,
         digitalPaidInput,
         setDigitalPaidInput,
         digitalMedium,
@@ -547,6 +581,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         computedDiscount,
         preRoundTotal,
         finalTotalAmount,
+        dueAmount,
         cashPaid,
         digitalPaid,
         totalPaid,

@@ -5,13 +5,14 @@ import { useToast } from "../context/ToastContext"
 import {
   Sprout,
   ShoppingCart,
-  BarChart3,
+  LayoutDashboard,
   Package,
   BookOpen,
   RotateCcw,
   Settings2,
   LogOut,
   X,
+  History,
   type LucideIcon,
 } from "lucide-react"
 import {
@@ -83,12 +84,20 @@ const TAB_THEMES: Record<NavigationTab, TabTheme> = {
     activeBadge: "bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-700/25",
     inactiveBadge: "bg-purple-50 text-purple-700 border-purple-200/70 group-hover:bg-purple-100 group-hover:border-purple-300",
   },
+  "bin-card": {
+    activeBg: "bg-teal-50/90",
+    activeText: "text-teal-950 font-bold",
+    activeBorder: "border-teal-200/90 shadow-xs shadow-teal-600/5",
+    activeBadge: "bg-teal-600 text-white border-teal-500 shadow-sm shadow-teal-700/25",
+    inactiveBadge: "bg-teal-50 text-teal-700 border-teal-200/70 group-hover:bg-teal-100 group-hover:border-teal-300",
+  },
 }
 
 const NAV_TABS: TabItem[] = [
   { id: "pos", label: "POS", icon: ShoppingCart },
-  { id: "dashboard", label: "Analytics", icon: BarChart3 },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "inventory", label: "Dokan Stock", icon: Package },
+  { id: "bin-card", label: "Stock Ledger", icon: History },
   { id: "customers", label: "Customer Ledger", icon: BookOpen },
   { id: "returns", label: "Sales Returns", icon: RotateCcw },
   { id: "settings", label: "Settings", icon: Settings2 },
@@ -194,7 +203,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
               <div className={`truncate ${isRail ? "md:hidden" : ""}`}>
                 <div className="flex items-center gap-1.5">
                   <span className="font-bold text-slate-900 text-sm leading-tight truncate">
-                    Al-Amin Traders
+                    Rajib Enterprise
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title="System Online" />
                 </div>

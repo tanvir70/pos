@@ -108,6 +108,7 @@ export default function ProductSearch({
 
     const lotsByProduct = new Map<number, StockItem[]>()
     for (const item of stocks) {
+      if (availableQuantity(item) <= 0) continue
       const lots = lotsByProduct.get(item.productId) ?? []
       lots.push(item)
       lotsByProduct.set(item.productId, lots)
@@ -116,6 +117,9 @@ export default function ProductSearch({
     const matchedLots: ProductSearchResult[] = []
 
     for (const item of stocks) {
+      // Do not show if product/lot stock is empty or zero
+      if (availableQuantity(item) <= 0) continue
+
       const itemValues = [
         item.productCode,
         productName(item),
@@ -134,8 +138,11 @@ export default function ProductSearch({
         item.defaultBarcode?.toLowerCase() === query ||
         item.lotNumber?.toLowerCase() === query
 
-      const productLots = lotsByProduct.get(item.productId) ?? [item]
+      const productLots = (lotsByProduct.get(item.productId) ?? [item]).filter(
+        (lot) => availableQuantity(lot) > 0
+      )
       const totalQuantity = productLots.reduce((sum, lot) => sum + availableQuantity(lot), 0)
+      if (totalQuantity <= 0) continue
 
       matchedLots.push({
         item,
@@ -239,9 +246,9 @@ export default function ProductSearch({
                 </div>
               ) : results.length === 0 ? (
                 <div className="px-5 py-8 text-center">
-                  <p className="text-sm font-bold text-slate-900">No matching product</p>
+                  <p className="text-sm font-bold text-slate-900">No matching in-stock product</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Check the name, code, or barcode.
+                    Check the name, code, or barcode. Products with 0 stock are hidden.
                   </p>
                 </div>
               ) : (

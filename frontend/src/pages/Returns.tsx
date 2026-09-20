@@ -11,6 +11,9 @@ import {
   User,
   Printer,
   Loader2,
+  Search,
+  FileText,
+  RotateCcw,
 } from "lucide-react"
 import type {
   StockItem,
@@ -267,12 +270,9 @@ export default function Returns() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <RefreshCw className="w-5 h-5" />
+            <RotateCcw className="w-5 h-5 text-emerald-700" />
             <span>Sales Return Counter</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Accept chemical returns with or without a receipt, quarantine damaged bottles, and adjust customer dues
-          </p>
         </div>
       </div>
 
@@ -304,17 +304,14 @@ export default function Returns() {
       {/* Main Grid: Left Return Form, Right Recent Returns */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Return Form (7 cols) */}
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <ClipboardEdit className="w-5 h-5 text-slate-500" />
+              <ClipboardEdit className="w-5 h-5 text-emerald-700" />
               <h2 className="font-bold text-slate-900 text-base sm:text-lg">
-                New Return Form (Direct Return)
+                Return Form
               </h2>
             </div>
-            <span className="text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">
-              Receipt not required
-            </span>
           </div>
 
           {formError && (
@@ -325,20 +322,20 @@ export default function Returns() {
           )}
 
           <form onSubmit={handleSubmitReturn} className="space-y-4">
-            {/* 1. Optional Invoice Search Box */}
-            <div className="bg-slate-50/40 p-3 rounded-xl border border-slate-200">
+            {/* 1. Memo / Invoice Lookup (Optional) */}
+            <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/80">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-                  <Receipt className="w-4 h-4" />
-                  <span>Original sale memo / invoice no. (optional)</span>
+                  <Receipt className="w-4 h-4 text-slate-500" />
+                  <span>Original Memo / Invoice No. (Optional)</span>
                 </label>
                 {foundSale && (
                   <button
                     type="button"
                     onClick={handleClearInvoice}
-                    className="text-[11px] text-red-600 hover:underline cursor-pointer"
+                    className="text-[11px] text-rose-600 font-semibold hover:underline cursor-pointer"
                   >
-                    Clear receipt info
+                    Clear memo
                   </button>
                 )}
               </div>
@@ -350,16 +347,22 @@ export default function Returns() {
                     setInvoiceInput(e.target.value)
                     setInvoiceSearchError(null)
                   }}
-                  placeholder="e.g. INV-20260917-1042 (returns are still accepted without a receipt)"
-                  className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs sm:text-sm bg-white font-mono"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      void handleSearchInvoice()
+                    }
+                  }}
+                  placeholder="e.g. INV-20260917-1042"
+                  className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white font-mono placeholder:font-sans focus:border-emerald-600 focus:outline-hidden"
                 />
                 <button
                   type="button"
                   onClick={handleSearchInvoice}
                   disabled={isSearchingInvoice || !invoiceInput.trim()}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-900 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 >
-                  {isSearchingInvoice ? "Searching..." : "Find Receipt"}
+                  {isSearchingInvoice ? "Searching..." : "Find Memo"}
                 </button>
               </div>
 
@@ -370,32 +373,34 @@ export default function Returns() {
               )}
 
               {foundSale && (
-                <div className="mt-2.5 pt-2 border-t border-slate-200/60 text-xs bg-emerald-50/50 p-2 rounded-lg text-emerald-900">
-                  <div className="flex justify-between font-bold">
-                    <span>Memo No: {foundSale.invoiceNo}</span>
-                    <span>Total Bill: {tk(foundSale.totalAmount)}</span>
+                <div className="mt-2.5 pt-2 border-t border-slate-200/80 text-xs bg-emerald-50/70 p-2.5 rounded-xl text-emerald-900 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold">Memo #{foundSale.invoiceNo}</div>
+                    <div className="text-[11px] text-emerald-800">
+                      Customer: {foundSale.customerName || "Walk-in Retail"} · Date: {new Date(foundSale.saleDate).toLocaleDateString("en-US")}
+                    </div>
                   </div>
-                  <p className="text-[11px] text-emerald-800 mt-0.5">
-                    Date: {new Date(foundSale.saleDate).toLocaleDateString("en-US")} | Customer:{" "}
-                    {foundSale.customerName || "Walk-in customer"}
-                  </p>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-emerald-700 block">Total Bill</span>
+                    <span className="font-mono font-black">{tk(foundSale.totalAmount)}</span>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* 2. Customer Selection */}
+            {/* 2. Customer Ledger Profile */}
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-slate-900">
-                  Select Customer {refundType === "DUE_ADJUSTMENT" ? "*" : "(optional for cash refund)"}
+                  Customer Ledger Account {refundType === "DUE_ADJUSTMENT" ? "*" : "(Optional for Cash Refund)"}
                 </label>
                 {selectedCustomerId && (
                   <button
                     type="button"
                     onClick={() => setSelectedCustomerId(null)}
-                    className="text-[11px] text-slate-500 hover:text-red-600 cursor-pointer"
+                    className="text-[11px] text-slate-500 hover:text-rose-600 cursor-pointer"
                   >
-                    Remove
+                    Clear Customer
                   </button>
                 )}
               </div>
@@ -404,39 +409,47 @@ export default function Returns() {
                 onChange={(e) =>
                   setSelectedCustomerId(e.target.value ? Number(e.target.value) : null)
                 }
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm bg-white"
+                className={`w-full px-3 py-2 border rounded-xl text-xs sm:text-sm bg-white transition-colors focus:border-emerald-600 focus:outline-hidden ${
+                  refundType === "DUE_ADJUSTMENT" && !selectedCustomerId
+                    ? "border-rose-300 bg-rose-50/30"
+                    : "border-slate-200"
+                }`}
               >
-                <option value="">-- Walk-in / general customer (cash refund) --</option>
+                <option value="">Walk-in / Cash Buyer (No Ledger Profile)</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} {c.businessName ? `(${c.businessName})` : ""} - Due: {tk(c.currentDue)}
+                    {c.name} {c.businessName ? `(${c.businessName})` : ""}
+                    {Number(c.currentDue || 0) > 0 ? ` — Due: ${tk(c.currentDue)}` : ""}
                   </option>
                 ))}
               </select>
               {refundType === "DUE_ADJUSTMENT" && !selectedCustomerId && (
-                <p className="text-[11px] text-red-600 font-medium mt-1 flex items-center gap-1">
+                <p className="text-[11px] text-rose-600 font-semibold mt-1 flex items-center gap-1">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Selecting a customer is required for a due adjustment.</span>
+                  <span>Due adjustment requires a customer ledger profile to deduct from.</span>
                 </p>
               )}
             </div>
 
             {/* 3. Product & Lot Selection */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-900 mb-1">
-                Select returnable pesticide or product and lot *
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-900">
+                Select Product & Lot to Return *
               </label>
 
               {/* Quick search input */}
-              <input
-                type="text"
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                placeholder="Filter by product name, code, or lot number..."
-                className="w-full px-3 py-1.5 mb-2 border border-slate-200 rounded-lg text-xs bg-slate-50/30"
-              />
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Filter product by name, code, or lot number..."
+                  className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/40 focus:bg-white focus:border-emerald-600 focus:outline-hidden"
+                />
+              </div>
 
-              <div className="border border-slate-200 rounded-xl max-h-48 overflow-y-auto divide-y divide-slate-200/60">
+              <div className="border border-slate-200/90 rounded-xl max-h-48 overflow-y-auto divide-y divide-slate-100 bg-white">
                 {filteredStockOptions.map((item) => {
                   const isSelected = selectedLotId === item.lotId
                   return (
@@ -444,32 +457,32 @@ export default function Returns() {
                       key={item.lotId}
                       type="button"
                       onClick={() => handleSelectLot(item.lotId)}
-                      className={`w-full text-left p-2.5 transition-colors flex items-center justify-between cursor-pointer ${
+                      className={`w-full text-left p-2.5 transition-all flex items-center justify-between cursor-pointer ${
                         isSelected
-                          ? "bg-emerald-50 border-l-4 border-emerald-600"
-                          : "hover:bg-slate-50/60"
+                          ? "bg-emerald-50/80 border-l-4 border-emerald-600"
+                          : "hover:bg-slate-50"
                       }`}
                     >
-                      <div>
-                        <div className="font-bold text-slate-900 text-xs sm:text-sm">
+                      <div className="min-w-0 pr-2">
+                        <div className="font-bold text-slate-900 text-xs truncate">
                           {item.nameBn || item.productNameBn} ({item.nameEn || item.productNameEn})
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
-                          <span className="font-mono font-semibold text-slate-900">
-                            Lot: {item.lotNumber}
+                        <div className="text-[11px] text-slate-500 mt-0.5 flex flex-wrap items-center gap-2">
+                          <span className="font-mono font-semibold text-slate-700">
+                            #{item.lotNumber}
                           </span>
-                          <span>•</span>
-                          <span>Expiry: {item.expiryDate}</span>
-                          <span>•</span>
+                          <span>·</span>
+                          <span>Exp: {item.expiryDate}</span>
+                          <span>·</span>
                           <span>Unit: {item.baseUnit}</span>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="text-xs font-bold text-slate-900 tabular-nums">
+                        <div className="text-xs font-bold text-slate-900 font-mono tabular-nums">
                           {tk(item.lotRetailPrice)}
                         </div>
-                        <div className="text-[10px] text-slate-500">
-                          Stock: {item.totalQuantity} {item.baseUnit}
+                        <div className="text-[10px] text-slate-500 font-mono">
+                          Stock: {item.totalQuantity}
                         </div>
                       </div>
                     </button>
@@ -478,22 +491,25 @@ export default function Returns() {
               </div>
 
               {selectedStockItem && (
-                <div className="mt-2 p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-lg text-xs text-emerald-900 flex justify-between items-center">
-                  <div>
-                    <span className="font-bold">Selected:</span> {selectedStockItem.nameBn} (Lot: {selectedStockItem.lotNumber})
+                <div className="p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex justify-between items-center">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      <strong>Selected:</strong> {selectedStockItem.nameBn} (Lot #{selectedStockItem.lotNumber})
+                    </span>
                   </div>
-                  <span className="font-semibold text-[11px]">
-                    Current stock: {selectedStockItem.quantity} {selectedStockItem.baseUnit}
+                  <span className="font-mono font-bold text-[11px] text-emerald-800">
+                    Stock: {selectedStockItem.quantity} {selectedStockItem.baseUnit}
                   </span>
                 </div>
               )}
             </div>
 
-            {/* 4. Quantity & Refund Price */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* 4. Return Quantity & Refund Rate */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-900 mb-1">
-                  Return quantity ({selectedStockItem?.baseUnit || "unit"}) *
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Return Quantity ({selectedStockItem?.baseUnit || "unit"}) *
                 </label>
                 <input
                   type="number"
@@ -503,13 +519,13 @@ export default function Returns() {
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   placeholder="1"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm tabular-nums font-bold focus:border-emerald-600 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold font-mono text-slate-900 tabular-nums focus:border-emerald-600 focus:outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-900 mb-1">
-                  Refund price per unit (৳) *
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Refund Rate per Unit (৳) *
                 </label>
                 <input
                   type="number"
@@ -519,76 +535,101 @@ export default function Returns() {
                   value={refundPrice}
                   onChange={(e) => setRefundPrice(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm tabular-nums font-bold focus:border-emerald-600 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-bold font-mono text-slate-900 tabular-nums focus:border-emerald-600 focus:outline-hidden"
                 />
               </div>
             </div>
 
-            {/* 5. Damaged Chemical Checkbox */}
-            <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-3">
-              <label className="flex items-start gap-2.5 cursor-pointer">
+            {/* 5. Refund Method */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Refund Method *
+              </label>
+              <div className="grid grid-cols-2 gap-2 bg-slate-100/80 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setRefundType("CASH_REFUND")}
+                  className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    refundType === "CASH_REFUND"
+                      ? "bg-white text-slate-950 shadow-xs border border-slate-200/80"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Banknote className="w-4 h-4 text-emerald-600" />
+                  <span>Cash Refund (Till)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRefundType("DUE_ADJUSTMENT")}
+                  className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    refundType === "DUE_ADJUSTMENT"
+                      ? "bg-white text-indigo-950 shadow-xs border border-slate-200/80"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <User className="w-4 h-4 text-indigo-600" />
+                  <span>Due Adjustment (Ledger)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 6. Damaged Chemical / Quarantine Toggle */}
+            <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3">
+              <label className="flex items-center justify-between cursor-pointer gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-amber-950 block">
+                      Quarantine Damaged Chemical
+                    </span>
+                    <span className="text-[11px] text-amber-800">
+                      Quarantine damaged/unsealed goods — do not restore to sellable stock
+                    </span>
+                  </div>
+                </div>
                 <input
                   type="checkbox"
                   checked={isDamaged}
                   onChange={(e) => setIsDamaged(e.target.checked)}
-                  className="mt-0.5 rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+                  className="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
                 />
-                <div>
-                  <span className="text-xs font-bold text-amber-900">
-                    Damaged Chemical (Quarantine)
-                  </span>
-                  <p className="text-[11px] text-amber-800/80 mt-0.5">
-                    Leaking, unsealed, or expired chemicals will not be added back to sellable stock; they will be placed into a separate quarantine.
-                  </p>
-                </div>
               </label>
             </div>
 
-            {/* 6. Refund Type */}
+            {/* 7. Return Reason */}
             <div>
-              <label className="block text-xs font-semibold text-slate-900 mb-1">
-                Refund Method *
-              </label>
-              <select
-                value={refundType}
-                onChange={(e) => setRefundType(e.target.value as RefundType)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm bg-white"
-              >
-                <option value="CASH_REFUND">Cash Refund (from Till)</option>
-                <option value="DUE_ADJUSTMENT">Due Adjustment (Customer Due)</option>
-              </select>
-            </div>
-
-            {/* 7. Reason */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-900 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Reason for Return
               </label>
               <input
                 type="text"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Bottle unsold after spraying / farmer's need is over"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm"
+                placeholder="e.g. Unopened leftover after spraying season"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm focus:border-emerald-600 focus:outline-hidden"
               />
             </div>
 
-            {/* 8. Total Summary & Submit Button */}
-            <div className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* 8. Total Summary & Submit Action */}
+            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <span className="text-xs text-slate-500">Total refund payable:</span>
-                <div className="text-2xl font-bold text-slate-900 tabular-nums">
+                <span className="text-xs font-semibold text-slate-500 block">Total Refund Payable</span>
+                <div className="text-2xl font-black font-mono text-slate-900 tabular-nums">
                   {tk(calculatedTotalRefund)}
                 </div>
-                <span className="text-[11px] text-emerald-700 font-medium">
-                  {refundType === "CASH_REFUND" ? "Will be paid in cash from the till" : "Will be deducted from the customer's due balance"}
+                <span className="text-[11px] font-semibold text-emerald-700">
+                  {refundType === "CASH_REFUND"
+                    ? "Cash paid directly from till"
+                    : "Credited to customer ledger due"}
                 </span>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting || !selectedLotId}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition-all shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-white bg-slate-950 hover:bg-slate-800 transition-all shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>
@@ -598,7 +639,7 @@ export default function Returns() {
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Complete Return & Generate Voucher</span>
+                    <span>Process Return & Print Voucher</span>
                   </>
                 )}
               </button>
@@ -607,80 +648,88 @@ export default function Returns() {
         </div>
 
         {/* Recent Returns History (5 cols) */}
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <ScrollText className="w-5 h-5 text-slate-500" />
+              <ScrollText className="w-5 h-5 text-emerald-700" />
               <h2 className="font-bold text-slate-900 text-base">
                 Recent Returns
               </h2>
             </div>
-            <span className="text-xs text-slate-500 tabular-nums">
-              {recentReturns.length}
+            <span className="text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full tabular-nums">
+              {recentReturns.length} records
             </span>
           </div>
 
           {/* Search Box */}
-          <div>
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={returnsSearch}
               onChange={(e) => setReturnsSearch(e.target.value)}
-              placeholder="Search by voucher no. or customer name..."
-              className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs"
+              placeholder="Search voucher # or customer name..."
+              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/40 focus:bg-white focus:border-emerald-600 focus:outline-hidden"
             />
           </div>
 
           {isLoading ? (
             <div className="py-12 text-center text-slate-500">
-              <Loader2 className="w-6 h-6 animate-spin inline-block mb-1" />
-              <p className="text-xs">Loading...</p>
+              <Loader2 className="w-6 h-6 animate-spin inline-block mb-1 text-emerald-700" />
+              <p className="text-xs">Loading returns...</p>
             </div>
           ) : filteredRecentReturns.length === 0 ? (
             <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl">
               <p className="text-xs font-semibold">No returns found.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-200/60 max-h-[520px] overflow-y-auto">
+            <div className="divide-y divide-slate-100 max-h-[520px] overflow-y-auto pr-1">
               {filteredRecentReturns.map((ret) => (
-                <div key={ret.id} className="py-3 px-1 hover:bg-slate-50/30 transition-colors">
+                <div key={ret.id} className="py-3 px-1 hover:bg-slate-50/60 rounded-lg transition-colors">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="font-mono text-xs font-bold text-slate-900">
+                      <span className="font-mono text-xs font-bold text-slate-900 flex items-center gap-1">
+                        <FileText className="w-3.5 h-3.5 text-slate-400" />
                         {ret.returnNo}
                       </span>
-                      <p className="text-xs font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
+                      <p className="text-xs font-semibold text-slate-800 mt-0.5 flex items-center gap-1">
                         {ret.customerName ? (
                           <>
-                            <User className="w-3.5 h-3.5" />
+                            <User className="w-3.5 h-3.5 text-slate-400" />
                             <span>{ret.customerName}</span>
                           </>
                         ) : (
-                          "Walk-in cash return"
+                          "Walk-in Cash Return"
                         )}
                       </p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        Date: {new Date(ret.returnDate).toLocaleDateString("en-US")}
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {new Date(ret.returnDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold tabular-nums text-emerald-800">
+                      <div className="text-sm font-bold font-mono tabular-nums text-slate-900">
                         {tk(ret.totalRefundAmount)}
                       </div>
                       <span
-                        className={`inline-block mt-0.5 px-2 py-0.2 rounded text-[10px] font-bold ${
+                        className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                           ret.refundType === "DUE_ADJUSTMENT"
-                            ? "bg-purple-100 text-purple-800 border border-purple-200"
-                            : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                            ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                            : "bg-emerald-50 text-emerald-700 border-emerald-200"
                         }`}
                       >
-                        {ret.refundType === "DUE_ADJUSTMENT" ? "Due Adjustment" : "Cash Refund"}
+                        {ret.refundType === "DUE_ADJUSTMENT" ? "Due Adjusted" : "Cash Refund"}
                       </span>
                     </div>
                   </div>
 
                   {ret.reason && (
-                    <p className="text-[11px] text-slate-500 italic mt-1.5">
+                    <p className="text-[11px] text-slate-500 italic mt-1 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
                       Reason: {ret.reason}
                     </p>
                   )}
@@ -688,11 +737,12 @@ export default function Returns() {
                   {/* View Voucher Action */}
                   <div className="mt-2 text-right">
                     <button
+                      type="button"
                       onClick={() => setViewingReturn(ret)}
-                      className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 cursor-pointer inline-flex items-center gap-1"
+                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-emerald-50 transition-colors"
                     >
-                      <span>View & Print Voucher</span>
                       <Printer className="w-3.5 h-3.5" />
+                      <span>Print Voucher</span>
                     </button>
                   </div>
                 </div>
@@ -731,7 +781,7 @@ export default function Returns() {
                 {/* Printable Slip Content */}
                 <div className="py-3 text-center border-b border-dashed border-slate-200">
                   <h2 className="text-lg font-bold text-slate-900">
-                    Al-Amin Traders
+                    Rajib Enterprise
                   </h2>
                   <p className="text-xs text-slate-500">
                     Authorized Agro Dealer · Uttar Bazar, Belabo, Narsingdi

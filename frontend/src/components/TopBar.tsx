@@ -9,11 +9,12 @@ export interface TopBarProps {
 
 const TAB_LABELS: Record<NavigationTab, string> = {
   pos: "POS",
-  dashboard: "Analytics",
+  dashboard: "Dashboard",
   inventory: "Dokan Stock",
   customers: "Customer Ledger",
   returns: "Sales Returns",
   settings: "Settings",
+  "bin-card": "Stock Ledger",
 }
 
 export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: TopBarProps) {
@@ -42,7 +43,7 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
               <Sprout className="w-4 h-4" />
             </div>
             <span className="font-bold text-slate-900 text-sm truncate">
-              Al-Amin Traders
+              Rajib Enterprise
             </span>
           </div>
         )}

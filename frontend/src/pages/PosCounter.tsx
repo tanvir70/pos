@@ -61,7 +61,7 @@ export default function PosCounter({
     try {
       setIsLoading(true)
       const [stockData, customerData] = await Promise.all([
-        getStock(),
+        getStock(true),
         getCustomers(),
       ])
       setStocks(stockData)
@@ -84,14 +84,20 @@ export default function PosCounter({
       const q = scannedCode.trim().toLowerCase()
       if (!q) return
 
-      const matchedLot = stocks.find(
+      // In-stock lots only
+      const inStockStocks = stocks.filter((s) => {
+        const qty = Number(s.quantity ?? (s as any).totalQuantity ?? 0)
+        return qty > 0
+      })
+
+      const matchedLot = inStockStocks.find(
         (s) =>
           ((s as any).lotBarcode && (s as any).lotBarcode.toLowerCase() === q) ||
           ((s as any).barcode && (s as any).barcode.toLowerCase() === q),
       )
       const matchedStock =
         matchedLot ||
-        stocks
+        inStockStocks
           .filter(
             (s) =>
               (s.defaultBarcode && s.defaultBarcode.toLowerCase() === q) ||
@@ -106,9 +112,30 @@ export default function PosCounter({
         addToCart(matchedStock)
         showSuccess(
           `Barcode scan successful: ${matchedStock.nameEn || matchedStock.productNameEn}`,
+          undefined,
+          { closePrevious: true },
         )
       } else {
-        showWarning(`Scanned barcode (${scannedCode}) was not found in the database!`)
+        const outOfStockMatch = stocks.find(
+          (s) =>
+            ((s as any).lotBarcode && (s as any).lotBarcode.toLowerCase() === q) ||
+            ((s as any).barcode && (s as any).barcode.toLowerCase() === q) ||
+            (s.defaultBarcode && s.defaultBarcode.toLowerCase() === q) ||
+            (s.productCode && s.productCode.toLowerCase() === q),
+        )
+        if (outOfStockMatch) {
+          showWarning(
+            `Product (${outOfStockMatch.nameEn || outOfStockMatch.productNameEn}) is out of stock (0 quantity)!`,
+            undefined,
+            { closePrevious: true },
+          )
+        } else {
+          showWarning(
+            `Scanned barcode (${scannedCode}) was not found in the database!`,
+            undefined,
+            { closePrevious: true },
+          )
+        }
       }
       window.dispatchEvent(new CustomEvent("pos-barcode-scanned"))
     },
@@ -148,7 +175,6 @@ export default function PosCounter({
         name: name.trim(),
         phone: normalizedPhone,
         customerType: saleMode,
-        creditLimit: 0,
         currentDue: 0,
       })
 
@@ -175,7 +201,14 @@ export default function PosCounter({
       discount: computedDiscount,
       roundOff: roundOff,
       paymentMethod,
-      cashPaid: paymentMethod === "CASH" ? cashPaid : 0,
+      cashPaid:
+        paymentMethod === "CASH" || paymentMethod === "DUE"
+          ? Math.min(cashPaid, finalTotalAmount)
+          : 0,
+      cashTendered:
+        paymentMethod === "CASH" || paymentMethod === "DUE"
+          ? Math.max(cashPaid, Math.min(cashPaid, finalTotalAmount))
+          : 0,
       digitalPaid:
         paymentMethod === "BKASH" ||
         paymentMethod === "NAGAD" ||
@@ -189,20 +222,16 @@ export default function PosCounter({
           ? digitalMedium
           : null,
       digitalTrxId: digitalTrxId ? digitalTrxId.trim() : null,
-      cashierName: "Al-Amin",
+      cashierName: "Rajib",
     }
 
     try {
       setIsSubmitting(true)
       const res = await createSale(saleRequest)
       clearCart()
-      showSuccess(
-        `Invoice #${res.invoiceNo} has been completed and the counter is ready for the next order.`,
-        "Sale completed",
-      )
 
-      // Refresh stock counts in background
-      getStock().then(setStocks).catch(console.error)
+      // Refresh stock counts in background (in-stock only for POS)
+      getStock(true).then(setStocks).catch(console.error)
       return res
     } catch (err) {
       showError(err, "Could not complete the sale")
@@ -218,13 +247,24 @@ export default function PosCounter({
     computedDiscount,
     roundOff,
     cashPaid,
+    finalTotalAmount,
     digitalPaid,
     digitalMedium,
     digitalTrxId,
     clearCart,
-    showSuccess,
     showError,
   ])
+
+  const handleSaleCompleted = useCallback(
+    (sale: SaleResponse, _action: "thermal" | "a4" | "skipped") => {
+      showSuccess(
+        `Invoice #${sale.invoiceNo} has been completed and the counter is ready for the next order.`,
+        "Sale completed",
+        { position: "top-center" },
+      )
+    },
+    [showSuccess],
+  )
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -315,6 +355,7 @@ export default function PosCounter({
         onRegisterForThermalPrint={registerSaleForThermalPrint}
         customers={customers}
         onResolveCustomerForSale={resolveCustomerForSale}
+        onSaleCompleted={handleSaleCompleted}
         onClose={() => {
           setIsPrintPromptOpen(false)
           setCompletedCustomer(null)
