@@ -12,6 +12,15 @@ import com.alamin.pos.exception.ValidationException;
 import com.alamin.pos.repository.InventoryLotRepository;
 import com.alamin.pos.repository.ProductRepository;
 import com.alamin.pos.repository.StockInventoryRepository;
+import com.alamin.pos.dto.PagedResponse;
+import com.alamin.pos.dto.StockAdjustmentRequest;
+import com.alamin.pos.dto.StockAdjustmentResponse;
+import com.alamin.pos.dto.StockMovementDto;
+import com.alamin.pos.dto.StockValuationSummaryDto;
+import com.alamin.pos.entity.StockAdjustment;
+import com.alamin.pos.entity.StockMovement;
+import com.alamin.pos.repository.StockAdjustmentRepository;
+import com.alamin.pos.repository.StockMovementRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +50,12 @@ class InventoryServiceTest {
 
     @Autowired
     private StockInventoryRepository stockInventoryRepository;
+
+    @Autowired
+    private StockMovementRepository stockMovementRepository;
+
+    @Autowired
+    private StockAdjustmentRepository stockAdjustmentRepository;
 
     @Test
     @DisplayName("1. Record lot with 2 cartons (multiplier 20) + 5 loose bottles credits 45 base units to DOKAN store stock")
@@ -97,6 +112,19 @@ class InventoryServiceTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(seededItem.getQuantity()).isEqualByComparingTo("40.000");
+    }
+
+    @Test
+    @DisplayName("2b. In-stock only query excludes zero stock items and loads active lots")
+    void testGetStockOverviewInStockOnlyFilter() {
+        List<StockItemResponse> inStockOverview = inventoryService.getStockOverview(true);
+
+        assertThat(inStockOverview).isNotEmpty();
+        for (StockItemResponse item : inStockOverview) {
+            assertThat(item.getQuantity()).isGreaterThan(java.math.BigDecimal.ZERO);
+            assertThat(item.getProductId()).isNotNull();
+            assertThat(item.getProductCode()).isNotBlank();
+        }
     }
 
     @Test
@@ -166,5 +194,86 @@ class InventoryServiceTest {
         assertThatThrownBy(() -> inventoryService.recordLotEntry(zeroLot))
                 .isInstanceOf(ValidationException.class)
                 .hasMessageContaining("Total quantity must be greater than zero");
+    }
+
+    @Test
+    @DisplayName("6. Stock adjustment with SCRAP_DISCARD reduces Dokan stock and logs immutable bin card movement")
+    void testRecordStockAdjustmentDirectScrap() {
+        Product product = productRepository.findByProductCode("SYN-AMI-TOP").orElseThrow();
+        InventoryLot lot = inventoryLotRepository.findByProductId(product.getId()).get(0);
+        StockInventory dokanStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
+        BigDecimal initialQty = dokanStock.getQuantity();
+
+        StockAdjustmentRequest request = StockAdjustmentRequest.builder()
+                .productId(product.getId())
+                .lotId(lot.getId())
+                .adjustmentType("BREAKAGE_LEAKAGE")
+                .quantity(new BigDecimal("2.000"))
+                .actionType("SCRAP_DISCARD")
+                .reason("Bottle cracked during shelf restocking")
+                .performedBy("Admin")
+                .build();
+
+        StockAdjustmentResponse response = inventoryService.recordStockAdjustment(request);
+
+        assertThat(response.getAdjustmentNo()).startsWith("ADJ-");
+        assertThat(response.getQuantity()).isEqualByComparingTo("2.000");
+        assertThat(response.getTotalLossValue()).isEqualByComparingTo(lot.getPurchaseCost().multiply(new BigDecimal("2.000")));
+
+        StockInventory updatedStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
+        assertThat(updatedStock.getQuantity()).isEqualByComparingTo(initialQty.subtract(new BigDecimal("2.000")));
+
+        // Verify Bin Card Movement
+        PagedResponse<StockMovementDto> movements = inventoryService.getStockMovements(product.getId(), lot.getId(), 0, 10);
+        assertThat(movements.getContent()).isNotEmpty();
+        StockMovementDto latest = movements.getContent().get(0);
+        assertThat(latest.getMovementType()).isEqualTo("BREAKAGE_LEAKAGE");
+        assertThat(latest.getQuantityChange()).isEqualByComparingTo("-2.000");
+        assertThat(latest.getBalanceAfter()).isEqualByComparingTo(updatedStock.getQuantity());
+        assertThat(latest.getReferenceDocNo()).isEqualTo(response.getAdjustmentNo());
+    }
+
+    @Test
+    @DisplayName("7. Stock adjustment with MOVE_TO_QUARANTINE moves stock to Quarantine and logs dual movements")
+    void testRecordStockAdjustmentMoveToQuarantine() {
+        Product product = productRepository.findByProductCode("SYN-VIR-40WG").orElseThrow();
+        InventoryLot lot = inventoryLotRepository.findByProductId(product.getId()).get(0);
+        StockInventory dokanStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
+        BigDecimal initialDokanQty = dokanStock.getQuantity();
+
+        StockAdjustmentRequest request = StockAdjustmentRequest.builder()
+                .productId(product.getId())
+                .lotId(lot.getId())
+                .adjustmentType("EXPIRED_SCRAP")
+                .quantity(new BigDecimal("3.000"))
+                .actionType("MOVE_TO_QUARANTINE")
+                .reason("Near-expiry batch moved to safe quarantine holding")
+                .performedBy("Admin")
+                .build();
+
+        StockAdjustmentResponse response = inventoryService.recordStockAdjustment(request);
+        assertThat(response.getActionType()).isEqualTo("MOVE_TO_QUARANTINE");
+
+        StockInventory updatedDokan = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "DOKAN").orElseThrow();
+        assertThat(updatedDokan.getQuantity()).isEqualByComparingTo(initialDokanQty.subtract(new BigDecimal("3.000")));
+
+        StockInventory quarantineStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), "QUARANTINE").orElseThrow();
+        assertThat(quarantineStock.getQuantity()).isGreaterThanOrEqualTo(new BigDecimal("3.000"));
+    }
+
+    @Test
+    @DisplayName("8. Stock valuation summary accurately computes total cost, retail, wholesale, and potential profit")
+    void testStockValuationSummary() {
+        StockValuationSummaryDto valuation = inventoryService.getStockValuationSummary();
+
+        assertThat(valuation).isNotNull();
+        assertThat(valuation.getTotalCostValuation()).isGreaterThan(BigDecimal.ZERO);
+        assertThat(valuation.getTotalRetailValuation()).isGreaterThan(valuation.getTotalCostValuation());
+        assertThat(valuation.getPotentialGrossProfit()).isEqualByComparingTo(
+                valuation.getTotalRetailValuation().subtract(valuation.getTotalCostValuation())
+        );
+        assertThat(valuation.getTotalActiveLots()).isGreaterThan(0L);
+        assertThat(valuation.getTotalProductsInStock()).isGreaterThan(0L);
+        assertThat(valuation.getTotalUnitsInStock()).isGreaterThan(BigDecimal.ZERO);
     }
 }

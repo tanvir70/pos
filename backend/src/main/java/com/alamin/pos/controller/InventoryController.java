@@ -2,7 +2,12 @@ package com.alamin.pos.controller;
 
 import com.alamin.pos.dto.InventoryLotDto;
 import com.alamin.pos.dto.LotEntryRequest;
+import com.alamin.pos.dto.PagedResponse;
+import com.alamin.pos.dto.StockAdjustmentRequest;
+import com.alamin.pos.dto.StockAdjustmentResponse;
 import com.alamin.pos.dto.StockItemResponse;
+import com.alamin.pos.dto.StockMovementDto;
+import com.alamin.pos.dto.StockValuationSummaryDto;
 import com.alamin.pos.entity.InventoryLot;
 import com.alamin.pos.mapper.InventoryLotMapper;
 import com.alamin.pos.service.InventoryService;
@@ -37,9 +42,10 @@ public class InventoryController {
 
     @GetMapping("/stock")
     public ResponseEntity<?> getStockOverview(
+            @RequestParam(name = "inStockOnly", defaultValue = "false") boolean inStockOnly,
             @RequestParam(name = "paged", defaultValue = "false") boolean paged,
             org.springframework.data.domain.Pageable pageable) {
-        List<StockItemResponse> stock = inventoryService.getStockOverview();
+        List<StockItemResponse> stock = inventoryService.getStockOverview(inStockOnly);
         if (paged) {
             int start = (int) pageable.getOffset();
             int end = Math.min((start + pageable.getPageSize()), stock.size());
@@ -71,5 +77,37 @@ public class InventoryController {
             @Valid @RequestBody com.alamin.pos.dto.QuarantineDisposalRequest request) {
         inventoryService.disposeQuarantineStock(request);
         return ResponseEntity.ok(Map.of("message", "Quarantine stock disposed successfully"));
+    }
+
+    @PostMapping("/adjustments")
+    public ResponseEntity<StockAdjustmentResponse> recordStockAdjustment(
+            @Valid @RequestBody StockAdjustmentRequest request) {
+        StockAdjustmentResponse response = inventoryService.recordStockAdjustment(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/adjustments")
+    public ResponseEntity<PagedResponse<StockAdjustmentResponse>> getStockAdjustments(
+            @RequestParam(required = false) Long productId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size) {
+        PagedResponse<StockAdjustmentResponse> adjustments = inventoryService.getStockAdjustments(productId, page, size);
+        return ResponseEntity.ok(adjustments);
+    }
+
+    @GetMapping("/movements")
+    public ResponseEntity<PagedResponse<StockMovementDto>> getStockMovements(
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) Long lotId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PagedResponse<StockMovementDto> movements = inventoryService.getStockMovements(productId, lotId, page, size);
+        return ResponseEntity.ok(movements);
+    }
+
+    @GetMapping("/valuation")
+    public ResponseEntity<StockValuationSummaryDto> getStockValuation() {
+        StockValuationSummaryDto valuation = inventoryService.getStockValuationSummary();
+        return ResponseEntity.ok(valuation);
     }
 }

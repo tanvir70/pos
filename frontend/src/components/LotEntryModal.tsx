@@ -2,6 +2,7 @@ import { useState, useId } from "react"
 import type { Product, LotEntryRequest } from "../types"
 import { createLot } from "../api/endpoints"
 import { calcWholesalePrice, getWholesaleSettings } from "../utils/wholesaleSettings"
+import { getNextLotNumber } from "../utils/lotNumber"
 import { Package, X, AlertTriangle, Loader2, Check } from "lucide-react"
 
 export interface LotEntryModalProps {
@@ -61,8 +62,7 @@ export default function LotEntryModal({
         setPurchaseCost(String(Math.round(prod.standardWholesalePrice * 0.88)))
       }
       if (!lotNumber) {
-        const year = new Date().getFullYear()
-        setLotNumber(`LOT-${year}-${prod.productCode.replace("SYN-", "")}`)
+        setLotNumber(getNextLotNumber((prod as any).lots || []))
       }
     }
   }
@@ -205,7 +205,7 @@ export default function LotEntryModal({
                 type="text"
                 value={lotNumber}
                 onChange={(e) => setLotNumber(e.target.value)}
-                placeholder="e.g. LOT-2026-05"
+                placeholder="e.g. LOT-01"
                 required
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
               />

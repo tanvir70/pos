@@ -31,6 +31,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.alamin.pos.dto.PagedResponse;
+import com.alamin.pos.dto.StockAdjustmentRequest;
+import com.alamin.pos.dto.StockAdjustmentResponse;
+import com.alamin.pos.dto.StockMovementDto;
+import com.alamin.pos.dto.StockValuationSummaryDto;
+import com.alamin.pos.entity.StockAdjustment;
+import com.alamin.pos.entity.StockMovement;
+import com.alamin.pos.repository.StockAdjustmentRepository;
+import com.alamin.pos.repository.StockMovementRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,6 +58,8 @@ public class InventoryServiceImpl implements InventoryService {
     private final StockInventoryRepository stockInventoryRepository;
     private final InventoryLotMapper inventoryLotMapper;
     private final DocumentSequenceService documentSequenceService;
+    private final StockMovementRepository stockMovementRepository;
+    private final StockAdjustmentRepository stockAdjustmentRepository;
 
     @Override
     @Transactional
@@ -85,9 +104,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         Optional<StockInventory> existingStock = stockInventoryRepository.findByLotIdAndLocation(lot.getId(), location);
         StockInventory stock;
+        BigDecimal beforeQty = BigDecimal.ZERO;
         if (existingStock.isPresent()) {
             stock = existingStock.get();
-            stock.setQuantity(stock.getQuantity().add(totalBaseUnits));
+            beforeQty = stock.getQuantity() != null ? stock.getQuantity() : BigDecimal.ZERO;
+            stock.setQuantity(beforeQty.add(totalBaseUnits));
         } else {
             stock = StockInventory.builder()
                     .lot(lot)
@@ -95,14 +116,61 @@ public class InventoryServiceImpl implements InventoryService {
                     .quantity(totalBaseUnits)
                     .build();
         }
-        stockInventoryRepository.save(stock);
+        stock = stockInventoryRepository.save(stock);
+
+        // Immutable Bin Card audit record
+        stockMovementRepository.save(StockMovement.builder()
+                .product(product)
+                .lot(lot)
+                .movementTime(LocalDateTime.now())
+                .movementType("LOT_ENTRY")
+                .location(location)
+                .quantityChange(totalBaseUnits)
+                .balanceBefore(beforeQty)
+                .balanceAfter(stock.getQuantity())
+                .unit(product.getBaseUnit())
+                .referenceDocNo(request.getChallanNo() != null && !request.getChallanNo().isBlank() ? request.getChallanNo() : "LOT-" + lot.getLotNumber())
+                .remarks("Inward lot entry: " + (request.getQuantityCartons() != null && request.getQuantityCartons().compareTo(BigDecimal.ZERO) > 0 ? request.getQuantityCartons() + " cartons, " : "") + totalBaseUnits + " " + product.getBaseUnit())
+                .performedBy("Store Manager")
+                .build());
 
         return lot;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<StockItemResponse> getStockOverview() {
+    public List<StockItemResponse> getStockOverview(boolean inStockOnly) {
+        if (inStockOnly) {
+            List<StockInventory> activeStocks = stockInventoryRepository.findActiveDokanStocks();
+            List<StockItemResponse> overview = new ArrayList<>(activeStocks.size());
+            for (StockInventory si : activeStocks) {
+                InventoryLot lot = si.getLot();
+                Product product = lot != null ? lot.getProduct() : null;
+                overview.add(StockItemResponse.builder()
+                        .productId(product != null ? product.getId() : null)
+                        .productCode(product != null ? product.getProductCode() : null)
+                        .productNameEn(product != null ? product.getNameEn() : null)
+                        .productNameBn(product != null ? product.getNameBn() : null)
+                        .category(product != null ? product.getCategory() : null)
+                        .baseUnit(product != null ? product.getBaseUnit() : null)
+                        .cartonMultiplier(product != null ? product.getCartonMultiplier() : null)
+                        .defaultBarcode(product != null ? product.getDefaultBarcode() : null)
+                        .buyingPrice(product != null ? product.getBuyingPrice() : null)
+                        .lotId(lot != null ? lot.getId() : null)
+                        .lotNumber(lot != null ? lot.getLotNumber() : null)
+                        .entryDate(lot != null ? lot.getEntryDate() : null)
+                        .expiryDate(lot != null ? lot.getExpiryDate() : null)
+                        .purchaseCost(lot != null ? lot.getPurchaseCost() : null)
+                        .lotRetailPrice(lot != null ? lot.getLotRetailPrice() : null)
+                        .lotWholesalePrice(lot != null ? lot.getLotWholesalePrice() : null)
+                        .barcode(lot != null ? lot.getBarcode() : null)
+                        .quantity(si.getQuantity())
+                        .quarantineQuantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
+                        .build());
+            }
+            return overview;
+        }
+
         List<InventoryLot> lots = inventoryLotRepository.findAllWithProduct();
         List<Long> lotIds = lots.stream().map(InventoryLot::getId).toList();
         java.util.Map<Long, List<StockInventory>> stocksByLot = lotIds.isEmpty()
@@ -229,9 +297,296 @@ public class InventoryServiceImpl implements InventoryService {
             throw new InsufficientStockException("Requested disposal quantity (" + disposeQty + ") exceeds available quarantine stock (" + quarantineStock.getQuantity() + ") for lot " + lot.getLotNumber());
         }
 
-        quarantineStock.setQuantity(quarantineStock.getQuantity().subtract(disposeQty).setScale(3, RoundingMode.HALF_UP));
+        BigDecimal beforeQty = quarantineStock.getQuantity();
+        BigDecimal afterQty = beforeQty.subtract(disposeQty).setScale(3, RoundingMode.HALF_UP);
+        quarantineStock.setQuantity(afterQty);
         stockInventoryRepository.save(quarantineStock);
 
+        // Immutable Bin Card audit record
+        stockMovementRepository.save(StockMovement.builder()
+                .product(lot.getProduct())
+                .lot(lot)
+                .movementTime(LocalDateTime.now())
+                .movementType("QUARANTINE_DISPOSAL")
+                .location("QUARANTINE")
+                .quantityChange(disposeQty.negate())
+                .balanceBefore(beforeQty)
+                .balanceAfter(afterQty)
+                .unit(lot.getProduct() != null ? lot.getProduct().getBaseUnit() : "Unit")
+                .referenceDocNo("DISP-" + lot.getLotNumber())
+                .remarks("Hazardous disposal: " + request.getDisposalType() + (request.getRemarks() != null ? " (" + request.getRemarks() + ")" : ""))
+                .performedBy("Store Manager")
+                .build());
+
         log.info("Disposed {} units of damaged lot {} from QUARANTINE under type {}", disposeQty, lot.getLotNumber(), request.getDisposalType());
+    }
+
+    @Override
+    @Transactional
+    public StockAdjustmentResponse recordStockAdjustment(StockAdjustmentRequest request) {
+        if (request.getQuantity() == null || request.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ValidationException("Adjustment quantity must be greater than zero");
+        }
+
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
+
+        InventoryLot lot = inventoryLotRepository.findById(request.getLotId())
+                .orElseThrow(() -> new ResourceNotFoundException("Lot not found with id: " + request.getLotId()));
+
+        if (!lot.getProduct().getId().equals(product.getId())) {
+            throw new ValidationException("Lot " + lot.getLotNumber() + " does not belong to product " + product.getNameEn());
+        }
+
+        BigDecimal adjQty = request.getQuantity().setScale(3, RoundingMode.HALF_UP);
+        StockInventory dokanStock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), "DOKAN")
+                .orElseThrow(() -> new InsufficientStockException("No active stock found in Dokan for lot " + lot.getLotNumber()));
+
+        BigDecimal beforeDokan = dokanStock.getQuantity() != null ? dokanStock.getQuantity() : BigDecimal.ZERO;
+        if (beforeDokan.compareTo(adjQty) < 0) {
+            throw new InsufficientStockException("Requested adjustment quantity (" + adjQty + ") exceeds available Dokan stock (" + beforeDokan + ")");
+        }
+
+        BigDecimal afterDokan = beforeDokan.subtract(adjQty).setScale(3, RoundingMode.HALF_UP);
+        dokanStock.setQuantity(afterDokan);
+        stockInventoryRepository.save(dokanStock);
+
+        String adjNo = documentSequenceService.generateAdjustmentNumber();
+        String actionType = request.getActionType() != null ? request.getActionType().toUpperCase() : "SCRAP_DISCARD";
+
+        if ("MOVE_TO_QUARANTINE".equals(actionType)) {
+            StockInventory quarantineStock = stockInventoryRepository.findByLotIdAndLocationForUpdate(lot.getId(), "QUARANTINE")
+                    .orElseGet(() -> StockInventory.builder()
+                            .lot(lot)
+                            .location("QUARANTINE")
+                            .quantity(BigDecimal.ZERO.setScale(3, RoundingMode.HALF_UP))
+                            .build());
+
+            BigDecimal beforeQuarantine = quarantineStock.getQuantity() != null ? quarantineStock.getQuantity() : BigDecimal.ZERO;
+            BigDecimal afterQuarantine = beforeQuarantine.add(adjQty).setScale(3, RoundingMode.HALF_UP);
+            quarantineStock.setQuantity(afterQuarantine);
+            stockInventoryRepository.save(quarantineStock);
+
+            // Movement 1: Out of Dokan
+            stockMovementRepository.save(StockMovement.builder()
+                    .product(product)
+                    .lot(lot)
+                    .movementTime(LocalDateTime.now())
+                    .movementType("DAMAGE_TO_QUARANTINE")
+                    .location("DOKAN")
+                    .quantityChange(adjQty.negate())
+                    .balanceBefore(beforeDokan)
+                    .balanceAfter(afterDokan)
+                    .unit(product.getBaseUnit())
+                    .referenceDocNo(adjNo)
+                    .remarks(request.getReason())
+                    .performedBy(request.getPerformedBy() != null ? request.getPerformedBy() : "Store Manager")
+                    .build());
+
+            // Movement 2: Into Quarantine
+            stockMovementRepository.save(StockMovement.builder()
+                    .product(product)
+                    .lot(lot)
+                    .movementTime(LocalDateTime.now())
+                    .movementType("DAMAGE_RECEIVED_QUARANTINE")
+                    .location("QUARANTINE")
+                    .quantityChange(adjQty)
+                    .balanceBefore(beforeQuarantine)
+                    .balanceAfter(afterQuarantine)
+                    .unit(product.getBaseUnit())
+                    .referenceDocNo(adjNo)
+                    .remarks("Transferred from Dokan: " + request.getReason())
+                    .performedBy(request.getPerformedBy() != null ? request.getPerformedBy() : "Store Manager")
+                    .build());
+        } else {
+            // SCRAP_DISCARD directly
+            stockMovementRepository.save(StockMovement.builder()
+                    .product(product)
+                    .lot(lot)
+                    .movementTime(LocalDateTime.now())
+                    .movementType(request.getAdjustmentType())
+                    .location("DOKAN")
+                    .quantityChange(adjQty.negate())
+                    .balanceBefore(beforeDokan)
+                    .balanceAfter(afterDokan)
+                    .unit(product.getBaseUnit())
+                    .referenceDocNo(adjNo)
+                    .remarks(request.getReason())
+                    .performedBy(request.getPerformedBy() != null ? request.getPerformedBy() : "Store Manager")
+                    .build());
+        }
+
+        BigDecimal costPrice = lot.getPurchaseCost() != null ? lot.getPurchaseCost() : BigDecimal.ZERO;
+        BigDecimal totalLossValue = costPrice.multiply(adjQty).setScale(2, RoundingMode.HALF_UP);
+
+        StockAdjustment adjustment = StockAdjustment.builder()
+                .adjustmentNo(adjNo)
+                .adjustmentDate(LocalDateTime.now())
+                .product(product)
+                .lot(lot)
+                .adjustmentType(request.getAdjustmentType())
+                .quantity(adjQty)
+                .unit(product.getBaseUnit())
+                .actionType(actionType)
+                .costPrice(costPrice)
+                .totalLossValue(totalLossValue)
+                .reason(request.getReason())
+                .performedBy(request.getPerformedBy() != null ? request.getPerformedBy() : "Store Manager")
+                .build();
+
+        adjustment = stockAdjustmentRepository.save(adjustment);
+
+        return StockAdjustmentResponse.builder()
+                .id(adjustment.getId())
+                .adjustmentNo(adjustment.getAdjustmentNo())
+                .adjustmentDate(adjustment.getAdjustmentDate())
+                .productId(product.getId())
+                .productCode(product.getProductCode())
+                .productNameEn(product.getNameEn())
+                .productNameBn(product.getNameBn())
+                .lotId(lot.getId())
+                .lotNumber(lot.getLotNumber())
+                .adjustmentType(adjustment.getAdjustmentType())
+                .quantity(adjustment.getQuantity())
+                .unit(adjustment.getUnit())
+                .actionType(adjustment.getActionType())
+                .costPrice(adjustment.getCostPrice())
+                .totalLossValue(adjustment.getTotalLossValue())
+                .reason(adjustment.getReason())
+                .performedBy(adjustment.getPerformedBy())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<StockMovementDto> getStockMovements(Long productId, Long lotId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "movementTime", "id"));
+        Page<StockMovement> pageResult = stockMovementRepository.searchMovements(productId, lotId, pageable);
+
+        List<StockMovementDto> dtoList = pageResult.getContent().stream().map(sm -> StockMovementDto.builder()
+                .id(sm.getId())
+                .productId(sm.getProduct() != null ? sm.getProduct().getId() : null)
+                .productCode(sm.getProduct() != null ? sm.getProduct().getProductCode() : null)
+                .productNameEn(sm.getProduct() != null ? sm.getProduct().getNameEn() : null)
+                .productNameBn(sm.getProduct() != null ? sm.getProduct().getNameBn() : null)
+                .lotId(sm.getLot() != null ? sm.getLot().getId() : null)
+                .lotNumber(sm.getLot() != null ? sm.getLot().getLotNumber() : null)
+                .barcode(sm.getLot() != null ? sm.getLot().getBarcode() : null)
+                .movementTime(sm.getMovementTime())
+                .movementType(sm.getMovementType())
+                .location(sm.getLocation())
+                .quantityChange(sm.getQuantityChange())
+                .balanceBefore(sm.getBalanceBefore())
+                .balanceAfter(sm.getBalanceAfter())
+                .unit(sm.getUnit())
+                .referenceDocNo(sm.getReferenceDocNo())
+                .remarks(sm.getRemarks())
+                .performedBy(sm.getPerformedBy())
+                .build()).collect(Collectors.toList());
+
+        return PagedResponse.<StockMovementDto>builder()
+                .content(dtoList)
+                .pageNumber(pageResult.getNumber())
+                .pageSize(pageResult.getSize())
+                .totalElements(pageResult.getTotalElements())
+                .totalPages(pageResult.getTotalPages())
+                .first(pageResult.isFirst())
+                .last(pageResult.isLast())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<StockAdjustmentResponse> getStockAdjustments(Long productId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "adjustmentDate", "id"));
+        Page<StockAdjustment> pageResult = productId != null
+                ? stockAdjustmentRepository.findByProductIdOrderByAdjustmentDateDescIdDesc(productId, pageable)
+                : stockAdjustmentRepository.findAllByOrderByAdjustmentDateDescIdDesc(pageable);
+
+        List<StockAdjustmentResponse> dtoList = pageResult.getContent().stream().map(sa -> StockAdjustmentResponse.builder()
+                .id(sa.getId())
+                .adjustmentNo(sa.getAdjustmentNo())
+                .adjustmentDate(sa.getAdjustmentDate())
+                .productId(sa.getProduct() != null ? sa.getProduct().getId() : null)
+                .productCode(sa.getProduct() != null ? sa.getProduct().getProductCode() : null)
+                .productNameEn(sa.getProduct() != null ? sa.getProduct().getNameEn() : null)
+                .productNameBn(sa.getProduct() != null ? sa.getProduct().getNameBn() : null)
+                .lotId(sa.getLot() != null ? sa.getLot().getId() : null)
+                .lotNumber(sa.getLot() != null ? sa.getLot().getLotNumber() : null)
+                .adjustmentType(sa.getAdjustmentType())
+                .quantity(sa.getQuantity())
+                .unit(sa.getUnit())
+                .actionType(sa.getActionType())
+                .costPrice(sa.getCostPrice())
+                .totalLossValue(sa.getTotalLossValue())
+                .reason(sa.getReason())
+                .performedBy(sa.getPerformedBy())
+                .build()).collect(Collectors.toList());
+
+        return PagedResponse.<StockAdjustmentResponse>builder()
+                .content(dtoList)
+                .pageNumber(pageResult.getNumber())
+                .pageSize(pageResult.getSize())
+                .totalElements(pageResult.getTotalElements())
+                .totalPages(pageResult.getTotalPages())
+                .first(pageResult.isFirst())
+                .last(pageResult.isLast())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StockValuationSummaryDto getStockValuationSummary() {
+        List<StockInventory> allDokanStocks = stockInventoryRepository.findActiveDokanStocks();
+        BigDecimal totalCost = BigDecimal.ZERO;
+        BigDecimal totalRetail = BigDecimal.ZERO;
+        BigDecimal totalWholesale = BigDecimal.ZERO;
+        BigDecimal totalUnits = BigDecimal.ZERO;
+        Set<Long> productIds = new HashSet<>();
+        long activeLots = 0;
+
+        for (StockInventory si : allDokanStocks) {
+            if (si.getQuantity() != null && si.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+                InventoryLot lot = si.getLot();
+                BigDecimal qty = si.getQuantity();
+                totalUnits = totalUnits.add(qty);
+                activeLots++;
+                if (lot != null) {
+                    if (lot.getProduct() != null) {
+                        productIds.add(lot.getProduct().getId());
+                    }
+                    BigDecimal cost = lot.getPurchaseCost() != null ? lot.getPurchaseCost() : BigDecimal.ZERO;
+                    BigDecimal retail = lot.getLotRetailPrice() != null ? lot.getLotRetailPrice() :
+                            (lot.getProduct() != null ? lot.getProduct().getStandardRetailPrice() : BigDecimal.ZERO);
+                    BigDecimal wholesale = lot.getLotWholesalePrice() != null ? lot.getLotWholesalePrice() :
+                            (lot.getProduct() != null && lot.getProduct().getStandardWholesalePrice() != null ?
+                                    lot.getProduct().getStandardWholesalePrice() : retail);
+
+                    totalCost = totalCost.add(cost.multiply(qty));
+                    totalRetail = totalRetail.add(retail.multiply(qty));
+                    totalWholesale = totalWholesale.add(wholesale.multiply(qty));
+                }
+            }
+        }
+
+        List<StockInventory> quarantineStocks = stockInventoryRepository.findByLocation("QUARANTINE");
+        BigDecimal quarantineLoss = BigDecimal.ZERO;
+        for (StockInventory qs : quarantineStocks) {
+            if (qs.getQuantity() != null && qs.getQuantity().compareTo(BigDecimal.ZERO) > 0 && qs.getLot() != null) {
+                BigDecimal cost = qs.getLot().getPurchaseCost() != null ? qs.getLot().getPurchaseCost() : BigDecimal.ZERO;
+                quarantineLoss = quarantineLoss.add(cost.multiply(qs.getQuantity()));
+            }
+        }
+
+        return StockValuationSummaryDto.builder()
+                .totalCostValuation(totalCost.setScale(2, RoundingMode.HALF_UP))
+                .totalRetailValuation(totalRetail.setScale(2, RoundingMode.HALF_UP))
+                .totalWholesaleValuation(totalWholesale.setScale(2, RoundingMode.HALF_UP))
+                .potentialGrossProfit(totalRetail.subtract(totalCost).setScale(2, RoundingMode.HALF_UP))
+                .totalQuarantineLoss(quarantineLoss.setScale(2, RoundingMode.HALF_UP))
+                .totalActiveLots(activeLots)
+                .totalProductsInStock((long) productIds.size())
+                .totalUnitsInStock(totalUnits.setScale(3, RoundingMode.HALF_UP))
+                .build();
     }
 }

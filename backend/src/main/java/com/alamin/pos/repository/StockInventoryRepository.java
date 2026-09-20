@@ -41,5 +41,8 @@ public interface StockInventoryRepository extends JpaRepository<StockInventory, 
     @Query("SELECT si FROM StockInventory si JOIN FETCH si.lot l JOIN FETCH l.product p WHERE si.location = 'QUARANTINE' AND si.quantity > 0")
     List<StockInventory> findActiveQuarantineStocks();
 
+    @Query("SELECT si FROM StockInventory si JOIN FETCH si.lot l JOIN FETCH l.product p WHERE si.location = 'DOKAN' AND si.quantity > 0")
+    List<StockInventory> findActiveDokanStocks();
+
     List<StockInventory> findByLocation(String location);
 }
