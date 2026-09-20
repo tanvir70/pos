@@ -24,9 +24,17 @@ import {
   Printer,
   RefreshCw,
   Loader2,
+  Package,
+  Calendar,
+  Eye,
+  ArrowUpRight,
+  Receipt,
 } from "lucide-react"
-import type { Customer, CustomerRequest, CustomerLedger, CustomerPaymentRequest, CustomerType, PaymentMethod } from "../types"
-import { getCustomers, createCustomer, getCustomerLedger, recordPayment } from "../api/endpoints"
+import type { Customer, CustomerRequest, CustomerLedger, CustomerPaymentRequest, CustomerType, PaymentMethod, SaleResponse } from "../types"
+import { getCustomers, createCustomer, getCustomerLedger, recordPayment, getCustomerPurchases, getNextDueInvoiceNo } from "../api/endpoints"
+import DueCollectionReceipt, { type DueReceiptData } from "../components/DueCollectionReceipt"
+import ThermalReceipt from "../components/ThermalReceipt"
+import GotposStatCard from "../components/dashboard/GotposStatCard"
 
 // BUSINESS DECISION: Direct WhatsApp messaging automatically formats Bangladesh mobile numbers to +880
 // international format and generates a pre-composed polite balance reminder message.
@@ -54,9 +62,18 @@ export default function Customers() {
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false)
   const [repayCustomer, setRepayCustomer] = useState<Customer | null>(null)
+  const [dueReceiptToPrint, setDueReceiptToPrint] = useState<DueReceiptData | null>(null)
   const [ledgerCustomer, setLedgerCustomer] = useState<Customer | null>(null)
   const [ledgerEntries, setLedgerEntries] = useState<CustomerLedger[]>([])
   const [isLedgerLoading, setIsLedgerLoading] = useState<boolean>(false)
+  const [statementViewMode, setStatementViewMode] = useState<"table" | "thermal">("table")
+
+  // Customer Purchases Drilldown Modal
+  const [purchasesCustomer, setPurchasesCustomer] = useState<Customer | null>(null)
+  const [purchasesList, setPurchasesList] = useState<SaleResponse[]>([])
+  const [isPurchasesLoading, setIsPurchasesLoading] = useState<boolean>(false)
+  const [purchasesSearch, setPurchasesSearch] = useState<string>("")
+  const [invoiceToPrint, setInvoiceToPrint] = useState<SaleResponse | null>(null)
 
   // Add Customer Form
   const [newCustomerForm, setNewCustomerForm] = useState<CustomerRequest>({
@@ -67,7 +84,6 @@ export default function Customers() {
     whatsappNumber: "",
     villageAddress: "",
     customerType: "RETAIL",
-    creditLimit: 20000,
     initialDue: 0,
     mfsType: "",
     mfsNumber: "",
@@ -131,6 +147,21 @@ export default function Customers() {
     })
   }, [customers, filterType, search])
 
+  const filteredPurchases = useMemo(() => {
+    if (!purchasesSearch.trim()) return purchasesList
+    const q = purchasesSearch.trim().toLowerCase()
+    return purchasesList.filter((sale) => {
+      const invoiceMatch = sale.invoiceNo?.toLowerCase().includes(q)
+      const itemMatch = sale.items?.some(
+        (it) =>
+          it.productNameEn?.toLowerCase().includes(q) ||
+          it.productNameBn?.toLowerCase().includes(q) ||
+          it.lotNumber?.toLowerCase().includes(q)
+      )
+      return invoiceMatch || itemMatch
+    })
+  }, [purchasesList, purchasesSearch])
+
   // Summary Metrics
   const totalMarketDue = useMemo(() => {
     return customers.reduce((sum, c) => sum + (Number(c.currentDue) || 0), 0)
@@ -158,15 +189,22 @@ export default function Customers() {
     } else if (!digits.startsWith("880") && digits.length === 10) {
       digits = "880" + digits
     }
-    const message = `Assalamu Alaikum ${name || "valued customer"}, this is Al-Amin Traders (authorized agrochemical dealer). Your current outstanding due balance is: ${tk(due || 0)}. Please contact the shop for details. Thank you.`
+    const message = `Assalamu Alaikum ${name || "valued customer"}, this is Rajib Enterprise (authorized agrochemical dealer). Your current outstanding due balance is: ${tk(due || 0)}. Please contact the shop for details. Thank you.`
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
   }
 
-  // Auto-generate suggested MR No
+  // Auto-generate suggested Due Invoice No starting with DUE-
   const generateSuggestedMrNo = () => {
     const d = new Date()
-    const timeCode = d.getHours().toString().padStart(2, "0") + d.getMinutes().toString().padStart(2, "0") + d.getSeconds().toString().padStart(2, "0")
-    return `MR-${timeCode}`
+    const dateCode =
+      d.getFullYear().toString() +
+      (d.getMonth() + 1).toString().padStart(2, "0") +
+      d.getDate().toString().padStart(2, "0")
+    const timeCode =
+      d.getHours().toString().padStart(2, "0") +
+      d.getMinutes().toString().padStart(2, "0") +
+      d.getSeconds().toString().padStart(2, "0")
+    return `DUE-${dateCode}-${timeCode}`
   }
 
   // ─── Add Customer Action ────────────────────────────────────────────
@@ -179,7 +217,6 @@ export default function Customers() {
       whatsappNumber: "",
       villageAddress: "",
       customerType: "RETAIL",
-      creditLimit: 20000,
       initialDue: 0,
       mfsType: "",
       mfsNumber: "",
@@ -209,7 +246,6 @@ export default function Customers() {
         ...newCustomerForm,
         name: newCustomerForm.name.trim(),
         phone: newCustomerForm.phone.trim(),
-        creditLimit: Number(newCustomerForm.creditLimit) || 0,
         initialDue: Number(newCustomerForm.initialDue) || 0,
       })
       setSuccessMessage("New customer added successfully!")
@@ -222,14 +258,35 @@ export default function Customers() {
     }
   }
 
+  // ─── Customer Purchases Drilldown Action ────────────────────────────
+  const handleOpenPurchases = async (customer: Customer) => {
+    setPurchasesCustomer(customer)
+    setIsPurchasesLoading(true)
+    setPurchasesSearch("")
+    try {
+      const data = await getCustomerPurchases(customer.id)
+      setPurchasesList(data)
+    } catch (err: any) {
+      console.error("Error loading customer purchases:", err)
+      setPurchasesList([])
+    } finally {
+      setIsPurchasesLoading(false)
+    }
+  }
+
   // ─── Repayment Action ───────────────────────────────────────────────
-  const handleOpenRepayModal = (customer: Customer) => {
+  const handleOpenRepayModal = async (customer: Customer) => {
     setRepayCustomer(customer)
     setRepayAmount("")
     setRepayMethod("CASH")
-    setRepayMrNo(generateSuggestedMrNo())
     setRepayNotes("")
     setRepayError(null)
+    try {
+      const res = await getNextDueInvoiceNo()
+      setRepayMrNo(res.dueInvoiceNo)
+    } catch {
+      setRepayMrNo(generateSuggestedMrNo())
+    }
   }
 
   const handleSaveRepayment = async (e: React.FormEvent) => {
@@ -249,15 +306,50 @@ export default function Customers() {
     try {
       setIsSavingRepayment(true)
       setRepayError(null)
+      const trimmed = repayMrNo.trim()
+      const rawReceiptNo = trimmed || generateSuggestedMrNo()
+      const finalReceiptNo = rawReceiptNo.toUpperCase().startsWith("DUE-")
+        ? rawReceiptNo
+        : rawReceiptNo.toUpperCase().startsWith("#DUE-")
+          ? rawReceiptNo.slice(1)
+          : `DUE-${rawReceiptNo}`
+
       const payload: CustomerPaymentRequest = {
         amount: amountNum,
         paymentMethod: repayMethod,
-        moneyReceiptNo: repayMrNo.trim() || generateSuggestedMrNo(),
+        moneyReceiptNo: finalReceiptNo,
         notes: repayNotes.trim() || undefined,
       }
+
+      const previousDue = repayCustomer.currentDue
+      const remainingDue = Math.max(0, previousDue - amountNum)
+
       await recordPayment(repayCustomer.id, payload)
-      setSuccessMessage(`Payment of ${tk(amountNum)} recorded successfully with Money Receipt (${payload.moneyReceiptNo})!`)
+
+      const receiptData: DueReceiptData = {
+        receiptNo: finalReceiptNo,
+        customer: {
+          id: repayCustomer.id,
+          name: repayCustomer.name,
+          phone: repayCustomer.phone,
+          fatherName: repayCustomer.fatherName,
+          businessName: repayCustomer.businessName,
+          villageAddress: repayCustomer.villageAddress,
+          address: repayCustomer.address,
+          customerType: repayCustomer.customerType,
+        },
+        amountPaid: amountNum,
+        previousDue,
+        remainingDue,
+        paymentMethod: repayMethod,
+        notes: repayNotes.trim() || undefined,
+        date: new Date().toISOString(),
+        cashierName: "Rajib",
+      }
+
+      setSuccessMessage(`Due payment of ${tk(amountNum)} recorded successfully! Receipt #${finalReceiptNo} ready.`)
       setRepayCustomer(null)
+      setDueReceiptToPrint(receiptData)
       await loadCustomers()
     } catch (err: any) {
       setRepayError(err?.message || "Failed to save payment.")
@@ -308,63 +400,61 @@ export default function Customers() {
         </button>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Total Due */}
-        <div className="bg-white border border-red-200 rounded-xl p-4 bg-red-50/30 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-red-600">Total Outstanding Due</span>
-            <AlertTriangle className="w-4 h-4 text-red-600" />
-          </div>
-          <p className="text-xl sm:text-2xl font-bold text-red-700 tabular-nums mt-1.5">
-            {tk(totalMarketDue)}
-          </p>
-          <p className="text-[11px] text-red-500/90 mt-0.5">
-            {customersWithDueCount} customers have outstanding dues
-          </p>
-        </div>
+      {/* Metrics Cards matching Dashboard Design */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Outstanding Due */}
+        <GotposStatCard
+          title="Total Outstanding Due"
+          value={tk(totalMarketDue)}
+          valueColor="text-rose-700"
+          subtitle={
+            customersWithDueCount > 0 ? (
+              <span className="text-rose-600 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                {customersWithDueCount} customer(s) with dues
+              </span>
+            ) : (
+              <span className="text-emerald-600 font-medium">Zero outstanding market due</span>
+            )
+          }
+          theme="rose"
+          icon={<span className="text-xl font-bold">৳</span>}
+          onClick={() => setFilterType("HAS_DUE")}
+          className="cursor-pointer"
+        />
 
         {/* Total Customers */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total Registered Customers</span>
-            <Users className="w-4 h-4 text-slate-500" />
-          </div>
-          <p className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums mt-1.5">
-            {customers.length}
-          </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Active customer directory
-          </p>
-        </div>
+        <GotposStatCard
+          title="Total Customers"
+          value={customers.length}
+          subtitle="Active customer directory"
+          theme="navy"
+          icon={<Users className="w-5 h-5" />}
+          onClick={() => setFilterType("ALL")}
+          className="cursor-pointer"
+        />
 
-        {/* Wholesale Count */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Wholesale Customers</span>
-            <Store className="w-4 h-4 text-slate-500" />
-          </div>
-          <p className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums mt-1.5">
-            {wholesaleCount}
-          </p>
-          <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
-            Wholesale customer accounts
-          </p>
-        </div>
+        {/* Wholesale Customers */}
+        <GotposStatCard
+          title="Wholesale Customers"
+          value={wholesaleCount}
+          subtitle="Wholesale accounts & dealers"
+          theme="emerald"
+          icon={<Store className="w-5 h-5" />}
+          onClick={() => setFilterType("WHOLESALE")}
+          className="cursor-pointer"
+        />
 
-        {/* Retail Count */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Retail Farmers</span>
-            <Sprout className="w-4 h-4 text-slate-500" />
-          </div>
-          <p className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums mt-1.5">
-            {retailCount}
-          </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Local farmers and orchard owners
-          </p>
-        </div>
+        {/* Retail Farmers */}
+        <GotposStatCard
+          title="Retail Farmers"
+          value={retailCount}
+          subtitle="Local farmers & growers"
+          theme="orange"
+          icon={<Sprout className="w-5 h-5" />}
+          onClick={() => setFilterType("RETAIL")}
+          className="cursor-pointer"
+        />
       </div>
 
       {/* Feedback Alerts */}
@@ -483,7 +573,7 @@ export default function Customers() {
                   <th className="px-3 py-3">Type</th>
                   <th className="px-3 py-3">Address / Village</th>
                   <th className="px-3 py-3">Contact & WhatsApp</th>
-                  <th className="px-4 py-3 text-right">Credit Limit</th>
+                  <th className="px-4 py-3 text-right">Total Buy</th>
                   <th className="px-4 py-3 text-right">Current Due</th>
                   <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
@@ -491,22 +581,22 @@ export default function Customers() {
               <tbody className="divide-y divide-slate-200/60">
                 {filteredCustomers.map((c) => {
                   const due = Number(c.currentDue) || 0
-                  const limit = Number(c.creditLimit) || 0
-                  const isOverLimit = limit > 0 && due > limit
-                  const duePercent = limit > 0 ? Math.min(100, Math.round((due / limit) * 100)) : 0
                   const waUrl = formatWhatsAppUrl(c.whatsappNumber || c.phone, c.name, due)
 
                   return (
                     <tr
                       key={c.id}
-                      className={`hover:bg-slate-50/40 transition-colors ${
+                      onClick={() => handleOpenPurchases(c)}
+                      className={`hover:bg-emerald-50/40 cursor-pointer transition-colors ${
                         due > 0 ? "bg-red-50/15" : ""
                       }`}
+                      title="Click row to view all invoice purchases and items"
                     >
                       {/* Name and Business */}
                       <td className="px-4 py-3">
-                        <div className="font-bold text-slate-900 text-sm sm:text-base">
-                          {c.name}
+                        <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
+                          <span>{c.name}</span>
+                          <Eye className="w-3.5 h-3.5 text-slate-400 hover:text-emerald-700" />
                         </div>
                         {c.businessName && (
                           <div className="text-xs font-semibold text-emerald-800 mt-0.5 flex items-center gap-1">
@@ -556,6 +646,7 @@ export default function Customers() {
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                             className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded cursor-pointer transition-colors"
                             title="Send a WhatsApp payment reminder for the current due"
                           >
@@ -565,25 +656,14 @@ export default function Customers() {
                         )}
                       </td>
 
-                      {/* Credit Limit */}
+                      {/* Total Buy (Lifetime Purchases) */}
                       <td className="px-4 py-3 text-right">
-                        <div className="tabular-nums font-semibold text-slate-900">
-                          {limit > 0 ? tk(limit) : "Unlimited"}
+                        <div className="tabular-nums font-bold text-slate-900 text-sm">
+                          {tk(c.totalPurchases || 0)}
                         </div>
-                        {limit > 0 && (
-                          <div className="w-24 ml-auto mt-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className={`h-full ${
-                                isOverLimit
-                                  ? "bg-red-600"
-                                  : duePercent > 75
-                                  ? "bg-amber-500"
-                                  : "bg-emerald-500"
-                              }`}
-                              style={{ width: `${duePercent}%` }}
-                            />
-                          </div>
-                        )}
+                        <div className="text-[11px] text-slate-500 mt-0.5">
+                          Lifetime Purchases
+                        </div>
                       </td>
 
                       {/* Current Due */}
@@ -595,11 +675,6 @@ export default function Customers() {
                         >
                           {tk(due)}
                         </div>
-                        {isOverLimit && (
-                          <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-bold text-red-700 bg-red-100 border border-red-200 rounded px-1.5 py-0.2">
-                            <AlertTriangle className="w-3 h-3" /> Over Limit!
-                          </span>
-                        )}
                         {due === 0 && (
                           <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-medium">
                             Settled <Check className="w-3 h-3" />
@@ -610,9 +685,28 @@ export default function Customers() {
                       {/* Actions */}
                       <td className="px-4 py-3 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
+                          {/* Invoices Drilldown Button */}
+                          <button
+                            type="button"
+                            data-testid={`btn-purchases-${c.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenPurchases(c)
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-all cursor-pointer shadow-xs"
+                            title="View all purchases, invoices, and purchased items"
+                          >
+                            <ShoppingCart className="w-3.5 h-3.5" /> Invoices
+                          </button>
+
                           {/* Payment Button */}
                           <button
-                            onClick={() => handleOpenRepayModal(c)}
+                            type="button"
+                            data-testid={`btn-collect-due-${c.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenRepayModal(c)
+                            }}
                             disabled={due <= 0}
                             className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed bg-emerald-700 hover:bg-emerald-800 text-white"
                             title="Record a due repayment with a Money Receipt (MR No.)"
@@ -622,7 +716,12 @@ export default function Customers() {
 
                           {/* Ledger Drawer Button */}
                           <button
-                            onClick={() => handleOpenLedger(c)}
+                            type="button"
+                            data-testid={`btn-ledger-${c.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOpenLedger(c)
+                            }}
                             className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-900 border border-slate-200 transition-all cursor-pointer"
                             title="View the customer's full ledger and audit statement"
                           >
@@ -651,6 +750,8 @@ export default function Customers() {
                 </h3>
               </div>
               <button
+                type="button"
+                data-testid="close-add-modal"
                 onClick={() => setIsAddModalOpen(false)}
                 className="text-slate-500 hover:text-slate-900 cursor-pointer p-1"
               >
@@ -796,26 +897,6 @@ export default function Customers() {
                   </select>
                 </div>
 
-                {/* Credit Limit */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-900 mb-1">
-                    Maximum Credit Limit (৳)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={newCustomerForm.creditLimit || ""}
-                    onChange={(e) =>
-                      setNewCustomerForm({
-                        ...newCustomerForm,
-                        creditLimit: Number(e.target.value) || 0,
-                      })
-                    }
-                    placeholder="20,000"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden tabular-nums"
-                  />
-                </div>
 
                 {/* Initial Due */}
                 <div>
@@ -974,6 +1055,8 @@ export default function Customers() {
                 </h3>
               </div>
               <button
+                type="button"
+                data-testid="close-repay-modal"
                 onClick={() => setRepayCustomer(null)}
                 className="text-slate-500 hover:text-slate-900 cursor-pointer p-1"
               >
@@ -1084,43 +1167,36 @@ export default function Customers() {
                 </select>
               </div>
 
-              {/* Money Receipt No (MR No.) */}
+              {/* Due Invoice */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-slate-900">
-                    Money Receipt No. (MR No. / Receipt Book Serial)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setRepayMrNo(generateSuggestedMrNo())}
-                    className="flex items-center gap-1 text-[11px] text-emerald-700 hover:underline cursor-pointer"
-                  >
-                    <RefreshCw className="w-3 h-3" /> Auto-generate
-                  </button>
-                </div>
+                <label className="block text-xs font-semibold text-slate-900 mb-1">
+                  Due Invoice
+                </label>
                 <input
                   type="text"
                   value={repayMrNo}
-                  onChange={(e) => setRepayMrNo(e.target.value)}
-                  placeholder="e.g. MR-1042 or receipt no."
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden font-mono"
+                  disabled
+                  readOnly
+                  placeholder="DUE-YYYYMMDD-XXXXXX"
+                  className="w-full px-3 py-2 border border-slate-200 bg-slate-100 text-slate-700 font-mono rounded-lg text-sm cursor-not-allowed select-none"
                 />
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Enter the paper Money Receipt book number so records can be reconciled later.
+                  Sequential auto-incremented due receipt voucher number.
                 </p>
               </div>
 
               {/* Notes */}
               <div>
                 <label className="block text-xs font-semibold text-slate-900 mb-1">
-                  Notes / Remarks (optional)
+                  Notes
                 </label>
-                <input
-                  type="text"
+                <textarea
+                  rows={2}
+                  maxLength={200}
                   value={repayNotes}
                   onChange={(e) => setRepayNotes(e.target.value)}
                   placeholder="e.g. Paid from paddy sale proceeds"
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden resize-none h-14 leading-tight"
                 />
               </div>
 
@@ -1155,12 +1231,308 @@ export default function Customers() {
         </div>
       )}
 
+      {/* ─── Customer Purchases Drilldown Modal ────────────────────── */}
+      {purchasesCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full p-5 sm:p-6 my-6 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-slate-200 shrink-0">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 text-emerald-800 flex items-center justify-center font-bold text-lg shrink-0">
+                  {purchasesCustomer.name.charAt(0)}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+                      {purchasesCustomer.name}
+                    </h2>
+                    {purchasesCustomer.customerType === "WHOLESALE" ? (
+                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                        Wholesale Customer
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        Retail Farmer
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap">
+                    {purchasesCustomer.businessName && (
+                      <span className="flex items-center gap-1 font-semibold text-emerald-800">
+                        <Building2 className="w-3.5 h-3.5" /> {purchasesCustomer.businessName}
+                      </span>
+                    )}
+                    {purchasesCustomer.fatherName && (
+                      <span>Father: {purchasesCustomer.fatherName}</span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <Phone className="w-3.5 h-3.5" /> {purchasesCustomer.phone}
+                    </span>
+                    {purchasesCustomer.villageAddress && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5" /> {purchasesCustomer.villageAddress}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons & Close */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const c = purchasesCustomer
+                    setPurchasesCustomer(null)
+                    handleOpenRepayModal(c)
+                  }}
+                  disabled={(purchasesCustomer.currentDue || 0) <= 0}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Banknote className="w-3.5 h-3.5" />
+                  <span>Collect Due</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const c = purchasesCustomer
+                    setPurchasesCustomer(null)
+                    handleOpenLedger(c)
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  <span>Ledger</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="close-purchases-modal"
+                  onClick={() => setPurchasesCustomer(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Quick KPI Stat Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4 shrink-0">
+              <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3">
+                <span className="text-[11px] font-semibold text-emerald-800 block">Total Buy (Lifetime)</span>
+                <span className="text-base sm:text-lg font-bold text-emerald-900 tabular-nums">
+                  {tk(purchasesCustomer.totalPurchases || 0)}
+                </span>
+              </div>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <span className="text-[11px] font-semibold text-slate-600 block">Total Invoices</span>
+                <span className="text-base sm:text-lg font-bold text-slate-900 tabular-nums">
+                  {purchasesList.length} Orders
+                </span>
+              </div>
+              <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-3">
+                <span className="text-[11px] font-semibold text-blue-800 block">Total Cash/Paid</span>
+                <span className="text-base sm:text-lg font-bold text-blue-900 tabular-nums">
+                  {tk(purchasesList.reduce((acc, s) => acc + (s.cashPaid || 0) + (s.digitalPaid || 0), 0))}
+                </span>
+              </div>
+              <div className="bg-red-50/70 border border-red-200 rounded-xl p-3">
+                <span className="text-[11px] font-semibold text-red-700 block">Outstanding Due</span>
+                <span className="text-base sm:text-lg font-bold text-red-600 tabular-nums">
+                  {tk(purchasesCustomer.currentDue || 0)}
+                </span>
+              </div>
+            </div>
+
+            {/* Search & Header */}
+            <div className="flex items-center justify-between gap-3 mb-3 shrink-0">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <ShoppingCart className="w-4 h-4 text-emerald-700" />
+                <span>All Purchase Invoices ({filteredPurchases.length})</span>
+              </h3>
+              <div className="relative w-64">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  value={purchasesSearch}
+                  onChange={(e) => setPurchasesSearch(e.target.value)}
+                  placeholder="Filter invoice or product..."
+                  className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:border-emerald-600 focus:outline-hidden"
+                />
+              </div>
+            </div>
+
+            {/* Invoices List (Scrollable) */}
+            <div className="overflow-y-auto flex-1 space-y-3 pr-1">
+              {isPurchasesLoading ? (
+                <div className="py-16 text-center text-slate-500">
+                  <Loader2 className="w-6 h-6 animate-spin inline-block mb-1" />
+                  <p className="text-xs">Loading purchase records...</p>
+                </div>
+              ) : filteredPurchases.length === 0 ? (
+                <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl">
+                  <ShoppingCart className="w-8 h-8 mx-auto text-slate-300 mb-1" />
+                  <p className="text-sm font-semibold text-slate-700">No purchase records found</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {purchasesSearch ? "No matches for this search query." : "This customer has not made any invoice purchases yet."}
+                  </p>
+                </div>
+              ) : (
+                filteredPurchases.map((sale) => {
+                  const isPaid = (sale.dueAmount || 0) <= 0
+                  const isPartial = (sale.dueAmount || 0) > 0 && ((sale.cashPaid || 0) + (sale.digitalPaid || 0) > 0)
+                  const saleDateStr = sale.saleDate
+                    ? new Date(sale.saleDate).toLocaleString("en-GB", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "—"
+
+                  return (
+                    <div
+                      key={sale.id}
+                      className="border border-slate-200 rounded-xl bg-slate-50/30 overflow-hidden transition-all hover:border-slate-300"
+                    >
+                      {/* Invoice Top Header */}
+                      <div className="p-3 bg-slate-100/70 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-slate-900 text-xs sm:text-sm">
+                            #{sale.invoiceNo}
+                          </span>
+                          {isPaid && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                              <Check className="w-3 h-3" /> PAID
+                            </span>
+                          )}
+                          {isPartial && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                              PARTIAL DUE
+                            </span>
+                          )}
+                          {!isPaid && !isPartial && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">
+                              FULL DUE
+                            </span>
+                          )}
+                          <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                            <Calendar className="w-3 h-3" /> {saleDateStr}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-slate-500 font-medium">
+                            {sale.saleMode === "WHOLESALE" ? "Wholesale" : "Retail"} • Cashier: {sale.cashierName || "Rajib"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setInvoiceToPrint(sale)}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors shadow-2xs cursor-pointer"
+                            title="Print thermal memo for this invoice"
+                          >
+                            <Printer className="w-3.5 h-3.5 text-slate-600" />
+                            <span>Print Memo</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Items Purchased Table */}
+                      <div className="p-3">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs">
+                            <thead>
+                              <tr className="text-slate-500 border-b border-slate-200/80 text-[11px]">
+                                <th className="pb-1.5 font-semibold">Product Description</th>
+                                <th className="pb-1.5 font-semibold">Lot Number</th>
+                                <th className="pb-1.5 font-semibold text-right">Quantity</th>
+                                <th className="pb-1.5 font-semibold text-right">Unit Rate</th>
+                                <th className="pb-1.5 font-semibold text-right">Subtotal</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {(sale.items || []).map((it) => (
+                                <tr key={it.id}>
+                                  <td className="py-1.5 font-medium text-slate-900">
+                                    <span>{it.productNameEn || "Product"}</span>
+                                    {it.productNameBn && (
+                                      <span className="text-slate-500 ml-1 text-[11px]">
+                                        ({it.productNameBn})
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-1.5 font-mono text-[11px] text-slate-500">
+                                    {it.lotNumber || "—"}
+                                  </td>
+                                  <td className="py-1.5 text-right font-medium tabular-nums text-slate-700">
+                                    {it.totalQuantity}
+                                  </td>
+                                  <td className="py-1.5 text-right tabular-nums text-slate-700">
+                                    {tk(it.unitPrice)}
+                                  </td>
+                                  <td className="py-1.5 text-right font-semibold tabular-nums text-slate-900">
+                                    {tk(it.subtotal)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Invoice Financial Summary Bar */}
+                        <div className="mt-3 pt-2.5 border-t border-slate-200 flex items-center justify-between flex-wrap gap-2 text-xs bg-slate-50/80 p-2.5 rounded-lg">
+                          <div className="flex items-center gap-3 text-slate-600">
+                            <span>Subtotal: <strong className="text-slate-800">{tk(sale.subtotal)}</strong></span>
+                            {(sale.discount || 0) > 0 && (
+                              <span className="text-emerald-700 font-semibold">
+                                Discount: -{tk(sale.discount)}
+                              </span>
+                            )}
+                            {(sale.roundOff || 0) !== 0 && (
+                              <span className="text-slate-500">
+                                Round off: {tk(sale.roundOff)}
+                              </span>
+                            )}
+                            <span className="text-slate-500 font-medium">
+                              Via: {sale.paymentMethod || "CASH"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-slate-900">
+                              Total: {tk(sale.totalAmount)}
+                            </span>
+                            <span className="font-semibold text-emerald-700">
+                              Paid: {tk((sale.cashPaid || 0) + (sale.digitalPaid || 0))}
+                            </span>
+                            {(sale.dueAmount || 0) > 0 ? (
+                              <span className="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                                Due: {tk(sale.dueAmount)}
+                              </span>
+                            ) : (
+                              <span className="font-medium text-emerald-700">
+                                Due: ৳0.00
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── Customer Ledger Statement Drawer / Modal ──────────────── */}
       {ledgerCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-5 sm:p-6 my-6 print:m-0 print:p-0 print:border-none print:shadow-none print-area">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto no-print">
+          {/* Main on-screen modal (no-print) */}
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-5 sm:p-6 my-6 no-print max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 no-print">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 shrink-0">
               <div className="flex items-center gap-2">
                 <ClipboardList className="w-6 h-6 text-slate-900" />
                 <div>
@@ -1173,14 +1545,39 @@ export default function Customers() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {/* View Mode Toggle */}
+                <div className="bg-slate-100 p-0.5 rounded-lg flex text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setStatementViewMode("table")}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                      statementViewMode === "table" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    Table View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatementViewMode("thermal")}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all cursor-pointer ${
+                      statementViewMode === "thermal" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    80mm Thermal Slip
+                  </button>
+                </div>
+
                 <button
+                  type="button"
                   onClick={handlePrintLedger}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white hover:bg-black transition-colors cursor-pointer shadow-xs"
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span>Print Statement</span>
+                  <span>Print 80mm</span>
                 </button>
                 <button
+                  type="button"
+                  data-testid="close-ledger-modal"
                   onClick={() => setLedgerCustomer(null)}
                   className="text-slate-500 hover:text-slate-900 cursor-pointer p-1"
                 >
@@ -1189,157 +1586,419 @@ export default function Customers() {
               </div>
             </div>
 
-            {/* Printable Shop Banner Header */}
-            <div className="text-center py-3 border-b border-dashed border-slate-200 mb-4">
-              <h2 className="text-xl font-bold text-slate-900">
-                Al-Amin Traders
-              </h2>
-              <p className="text-xs text-emerald-800 font-semibold">
-                Authorized Agrochemical Dealer
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Uttar Bazar, Belabo, Narsingdi · Mobile: 01711-123456
-              </p>
-              <div className="inline-block mt-1 bg-slate-50 px-3 py-0.5 rounded text-xs font-bold text-slate-900 border border-slate-200">
-                Customer Ledger & Due Statement
-              </div>
-            </div>
+            {statementViewMode === "table" ? (
+              <div className="overflow-y-auto flex-1 mt-4 space-y-4 pr-1">
+                {/* Printable Shop Banner Header */}
+                <div className="text-center py-3 border-b border-dashed border-slate-200">
+                  <h2 className="text-xl font-bold text-slate-900">
+                    Rajib Enterprise
+                  </h2>
+                  <p className="text-xs text-emerald-800 font-semibold">
+                    Authorized Agrochemical Dealer
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Uttar Bazar, Belabo, Narsingdi · Mobile: 01711-123456
+                  </p>
+                  <div className="inline-block mt-1 bg-slate-50 px-3 py-0.5 rounded text-xs font-bold text-slate-900 border border-slate-200">
+                    Customer Ledger & Due Statement
+                  </div>
+                </div>
 
-            {/* Customer Info Card */}
-            <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-3 sm:p-4 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div>
-                <span className="text-slate-500 block">Customer Name:</span>
-                <span className="font-bold text-slate-900 text-sm">
-                  {ledgerCustomer.name}
-                </span>
-                {ledgerCustomer.businessName && (
-                  <span className="flex items-center gap-1 font-semibold text-emerald-800 text-xs mt-0.5">
-                    <Building2 className="w-3 h-3" /> {ledgerCustomer.businessName}
-                  </span>
+                {/* Customer Info Card */}
+                <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <span className="text-slate-500 block">Customer Name:</span>
+                    <span className="font-bold text-slate-900 text-sm">
+                      {ledgerCustomer.name}
+                    </span>
+                    {ledgerCustomer.businessName && (
+                      <span className="flex items-center gap-1 font-semibold text-emerald-800 text-xs mt-0.5">
+                        <Building2 className="w-3 h-3" /> {ledgerCustomer.businessName}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Contact:</span>
+                    <span className="font-semibold text-slate-900 tabular-nums">
+                      {ledgerCustomer.phone}
+                    </span>
+                    <span className="block text-slate-500 mt-0.5">
+                      {ledgerCustomer.villageAddress || "No village listed"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Total Buy (Lifetime):</span>
+                    <span className="font-bold text-slate-900 tabular-nums">
+                      {tk(ledgerCustomer.totalPurchases || 0)}
+                    </span>
+                    <span className="block text-[11px] text-slate-500 mt-0.5">
+                      {ledgerCustomer.customerType === "WHOLESALE" ? "Wholesale Customer" : "Retail Farmer"}
+                    </span>
+                  </div>
+                  <div className="text-right sm:text-right">
+                    <span className="text-red-500 font-semibold block">Latest Due Balance:</span>
+                    <span className="text-lg font-bold text-red-600 tabular-nums">
+                      {tk(ledgerCustomer.currentDue)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Ledger Entries Table */}
+                {isLedgerLoading ? (
+                  <div className="py-16 text-center text-slate-500">
+                    <Loader2 className="w-6 h-6 animate-spin inline-block mb-1" />
+                    <p>Loading ledger audit records...</p>
+                  </div>
+                ) : ledgerEntries.length === 0 ? (
+                  <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl">
+                    <p className="text-sm font-semibold">No transaction records found.</p>
+                    <p className="text-xs mt-1">This customer has no previous invoices or payments.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-900 font-bold">
+                        <tr>
+                          <th className="px-3 py-2.5">Date</th>
+                          <th className="px-3 py-2.5">Description / Transaction Type</th>
+                          <th className="px-2 py-2.5">MR / Invoice No.</th>
+                          <th className="px-3 py-2.5 text-right text-red-600">Debit (Due ৳)</th>
+                          <th className="px-3 py-2.5 text-right text-emerald-600">Credit (Paid ৳)</th>
+                          <th className="px-3 py-2.5 text-right font-bold">Balance After (৳)</th>
+                          <th className="px-3 py-2.5">Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200/60">
+                        {ledgerEntries.map((item) => {
+                          const isPayment = item.transactionType === "CASH_PAYMENT" || item.transactionType === "MFS_PAYMENT" || item.transactionType === "BANK_TRANSFER"
+                          const isReturn = item.transactionType === "RETURN_CREDIT"
+                          const isInvoice = item.transactionType === "INVOICE_BILL"
+
+                          return (
+                            <tr key={item.id} className="hover:bg-slate-50/30">
+                              <td className="px-3 py-2 whitespace-nowrap text-slate-500 tabular-nums">
+                                {item.transactionDate
+                                  ? new Date(item.transactionDate).toLocaleDateString("en-GB")
+                                  : "—"}
+                              </td>
+                              <td className="px-3 py-2 font-semibold">
+                                {isPayment && (
+                                  <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                    <Banknote className="w-3 h-3" /> Due Payment Received
+                                  </span>
+                                )}
+                                {isReturn && (
+                                  <span className="inline-flex items-center gap-1 text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                    <RefreshCw className="w-3 h-3" /> Return Adjustment
+                                  </span>
+                                )}
+                                {isInvoice && (
+                                  <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                                    <ShoppingCart className="w-3 h-3" /> Sales Invoice
+                                  </span>
+                                )}
+                                {!isPayment && !isReturn && !isInvoice && (
+                                  <span className="text-slate-900">{item.transactionType}</span>
+                                )}
+                              </td>
+                              <td className="px-2 py-2 font-mono text-[11px] text-slate-900 whitespace-nowrap">
+                                {item.moneyReceiptNo || (item.saleId ? `INV-${item.saleId}` : "—")}
+                              </td>
+                              <td className="px-3 py-2 text-right tabular-nums text-red-600 font-semibold">
+                                {item.debit > 0 ? tk(item.debit) : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-right tabular-nums text-emerald-600 font-semibold">
+                                {item.credit > 0 ? tk(item.credit) : "—"}
+                              </td>
+                              <td className="px-3 py-2 text-right tabular-nums font-bold text-slate-900">
+                                {tk(item.balanceAfter)}
+                              </td>
+                              <td className="px-3 py-2 text-slate-500 text-[11px]">
+                                {item.notes || "—"}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
-              </div>
-              <div>
-                <span className="text-slate-500 block">Contact:</span>
-                <span className="font-semibold text-slate-900 tabular-nums">
-                  {ledgerCustomer.phone}
-                </span>
-                <span className="block text-slate-500 mt-0.5">
-                  {ledgerCustomer.villageAddress || "No village listed"}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 block">Credit Limit:</span>
-                <span className="font-bold text-slate-900 tabular-nums">
-                  {ledgerCustomer.creditLimit > 0 ? tk(ledgerCustomer.creditLimit) : "Unlimited"}
-                </span>
-                <span className="block text-[11px] text-slate-500 mt-0.5">
-                  {ledgerCustomer.customerType === "WHOLESALE" ? "Wholesale Customer" : "Retail Farmer"}
-                </span>
-              </div>
-              <div className="text-right sm:text-right">
-                <span className="text-red-500 font-semibold block">Latest Due Balance:</span>
-                <span className="text-lg font-bold text-red-600 tabular-nums">
-                  {tk(ledgerCustomer.currentDue)}
-                </span>
-              </div>
-            </div>
 
-            {/* Ledger Entries Table */}
-            {isLedgerLoading ? (
-              <div className="py-16 text-center text-slate-500">
-                <Loader2 className="w-6 h-6 animate-spin inline-block mb-1" />
-                <p>Loading ledger audit records...</p>
-              </div>
-            ) : ledgerEntries.length === 0 ? (
-              <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl">
-                <p className="text-sm font-semibold">No transaction records found.</p>
-                <p className="text-xs mt-1">This customer has no previous invoices or payments.</p>
+                {/* Printable Signatures */}
+                <div className="mt-8 pt-6 border-t border-slate-200 grid grid-cols-2 text-center text-xs">
+                  <div>
+                    <div className="border-t border-slate-900/40 w-36 mx-auto pt-1 font-semibold text-slate-500">
+                      Customer Signature
+                    </div>
+                  </div>
+                  <div>
+                    <div className="border-t border-slate-900/40 w-36 mx-auto pt-1 font-semibold text-slate-500">
+                      Rajib Enterprise
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-900 font-bold">
-                    <tr>
-                      <th className="px-3 py-2.5">Date</th>
-                      <th className="px-3 py-2.5">Description / Transaction Type</th>
-                      <th className="px-2 py-2.5">MR / Invoice No.</th>
-                      <th className="px-3 py-2.5 text-right text-red-600">Debit (Due ৳)</th>
-                      <th className="px-3 py-2.5 text-right text-emerald-600">Credit (Paid ৳)</th>
-                      <th className="px-3 py-2.5 text-right font-bold">Balance After (৳)</th>
-                      <th className="px-3 py-2.5">Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200/60">
-                    {ledgerEntries.map((item) => {
-                      const isPayment = item.transactionType === "CASH_PAYMENT"
-                      const isReturn = item.transactionType === "RETURN_CREDIT"
-                      const isInvoice = item.transactionType === "INVOICE_BILL"
+              /* On-screen 80mm Slip Preview */
+              <div className="overflow-y-auto flex-1 mt-4 p-4 bg-slate-100 flex justify-center rounded-xl">
+                <div
+                  className="bg-white p-5 border border-slate-300 rounded-lg shadow-sm text-black font-mono text-xs leading-snug"
+                  style={{ width: "80mm", maxWidth: "80mm" }}
+                >
+                  {/* Store Header */}
+                  <div className="text-center pb-2.5 mb-2 border-b border-dashed border-gray-500">
+                    <h1 className="text-base font-bold text-black uppercase tracking-wide">Rajib Enterprise</h1>
+                    <p className="text-[11px] font-semibold text-gray-800">Authorized Agro Dealer</p>
+                    <p className="text-[10px] text-gray-600">Krishi Market, Uttar Bazar, Belabo</p>
+                    <p className="text-[10px] text-gray-600">Mobile: 01711-123456</p>
+                    <div className="mt-1.5 inline-block border border-black px-2 py-0.5 text-[10px] font-bold">
+                      CUSTOMER LEDGER STATEMENT
+                    </div>
+                    <p className="text-[9px] text-gray-500 mt-1">Printed: {new Date().toLocaleString("en-GB")}</p>
+                  </div>
 
-                      return (
-                        <tr key={item.id} className="hover:bg-slate-50/30">
-                          <td className="px-3 py-2 whitespace-nowrap text-slate-500 tabular-nums">
-                            {item.transactionDate
-                              ? new Date(item.transactionDate).toLocaleDateString("en-GB")
-                              : "—"}
-                          </td>
-                          <td className="px-3 py-2 font-semibold">
-                            {isPayment && (
-                              <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                <Banknote className="w-3 h-3" /> Cash Collection
-                              </span>
-                            )}
-                            {isReturn && (
-                              <span className="inline-flex items-center gap-1 text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                                <RefreshCw className="w-3 h-3" /> Product Return Adjustment
-                              </span>
-                            )}
-                            {isInvoice && (
-                              <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                                <ShoppingCart className="w-3 h-3" /> Sales Invoice
-                              </span>
-                            )}
-                            {!isPayment && !isReturn && !isInvoice && (
-                              <span className="text-slate-900">{item.transactionType}</span>
-                            )}
-                          </td>
-                          <td className="px-2 py-2 font-mono text-[11px] text-slate-900 whitespace-nowrap">
-                            {item.moneyReceiptNo || (item.saleId ? `INV-${item.saleId}` : "—")}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums text-red-600 font-semibold">
-                            {item.debit > 0 ? tk(item.debit) : "—"}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums text-emerald-600 font-semibold">
-                            {item.credit > 0 ? tk(item.credit) : "—"}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums font-bold text-slate-900">
-                            {tk(item.balanceAfter)}
-                          </td>
-                          <td className="px-3 py-2 text-slate-500 text-[11px]">
-                            {item.notes || "—"}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                  {/* Customer Info */}
+                  <div className="text-[11px] pb-2 mb-2 border-b border-dashed border-gray-400 space-y-0.5">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-700">Customer:</span>
+                      <span className="font-bold">{ledgerCustomer.name}</span>
+                    </div>
+                    {ledgerCustomer.businessName && (
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-gray-600">Business:</span>
+                        <span>{ledgerCustomer.businessName}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-gray-600">Mobile:</span>
+                      <span>{ledgerCustomer.phone}</span>
+                    </div>
+                    {ledgerCustomer.villageAddress && (
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-gray-600">Village:</span>
+                        <span>{ledgerCustomer.villageAddress}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between pt-1 border-t border-dotted border-gray-300">
+                      <span className="font-medium text-gray-700">Total Buy (Lifetime):</span>
+                      <span className="font-bold">{tk(ledgerCustomer.totalPurchases || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-bold text-red-600">Outstanding Due:</span>
+                      <span className="font-bold text-red-600">{tk(ledgerCustomer.currentDue || 0)}</span>
+                    </div>
+                  </div>
+
+                  {/* Transactions 80mm List */}
+                  <div className="pb-2 mb-2 border-b border-dashed border-gray-500">
+                    <div className="text-[10px] font-bold uppercase pb-1 mb-1.5 border-b border-dotted border-gray-400 flex justify-between">
+                      <span>Transaction Records</span>
+                      <span>{ledgerEntries.length} Items</span>
+                    </div>
+                    <div className="space-y-2">
+                      {ledgerEntries.map((item) => (
+                        <div key={item.id} className="pb-1.5 border-b border-dotted border-gray-200">
+                          <div className="flex justify-between items-center text-[10px]">
+                            <span className="font-mono text-gray-600">
+                              {item.transactionDate ? new Date(item.transactionDate).toLocaleDateString("en-GB") : "—"}
+                            </span>
+                            <span className="font-bold">
+                              {item.transactionType === "CASH_PAYMENT" ? "Cash Received" :
+                               item.transactionType === "INVOICE_BILL" ? "Sales Invoice" :
+                               item.transactionType === "RETURN_CREDIT" ? "Return Adjustment" : item.transactionType}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] mt-0.5">
+                            <span className="font-mono text-[9px] text-gray-500">
+                              Ref: {item.moneyReceiptNo || (item.saleId ? `INV-${item.saleId}` : "—")}
+                            </span>
+                            <span className="tabular-nums font-semibold">
+                              {item.debit > 0 && <span className="text-red-700">+{tk(item.debit)}</span>}
+                              {item.credit > 0 && <span className="text-emerald-700">-{tk(item.credit)}</span>}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-[9px] text-gray-600 mt-0.5">
+                            <span>Bal: <strong className="text-black">{tk(item.balanceAfter)}</strong></span>
+                            {item.notes && <span className="truncate max-w-[120px] italic">({item.notes})</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Totals Box */}
+                  <div className="bg-gray-100 p-2 rounded border border-gray-300 text-[10px] space-y-1 mb-3">
+                    <div className="flex justify-between">
+                      <span>Total Invoiced (Debit):</span>
+                      <span className="font-bold">{tk(ledgerEntries.reduce((s, e) => s + (e.debit || 0), 0))}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Paid (Credit):</span>
+                      <span className="font-bold">{tk(ledgerEntries.reduce((s, e) => s + (e.credit || 0), 0))}</span>
+                    </div>
+                    <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-400 text-black">
+                      <span>Net Outstanding Due:</span>
+                      <span className="text-red-600 font-bold">{tk(ledgerCustomer.currentDue)}</span>
+                    </div>
+                  </div>
+
+                  {/* Signatures */}
+                  <div className="pt-6 pb-2 grid grid-cols-2 gap-4 text-center text-[9px]">
+                    <div>
+                      <div className="border-t border-dashed border-gray-600 pt-1 font-semibold">Customer Sign</div>
+                    </div>
+                    <div>
+                      <div className="border-t border-dashed border-gray-600 pt-1 font-semibold">Rajib Enterprise</div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="text-center pt-2 text-[9px] text-gray-500 space-y-0.5">
+                    <p>Thank you for clearing your ledger dues!</p>
+                    <p className="font-mono">Rajib Enterprise POS</p>
+                  </div>
+                </div>
               </div>
             )}
+          </div>
 
-            {/* Printable Signatures */}
-            <div className="mt-8 pt-6 border-t border-slate-200 grid grid-cols-2 text-center text-xs">
-              <div>
-                <div className="border-t border-slate-900/40 w-36 mx-auto pt-1 font-semibold text-slate-500">
-                  Customer Signature
+          {/* Dedicated 80mm Printable Statement (Visible ONLY in print media, hidden on screen) */}
+          <div
+            className="hidden print:block thermal-receipt-print print-area text-black font-mono text-xs leading-tight mx-auto"
+            style={{ width: "100%", maxWidth: "80mm" }}
+          >
+            {/* Store Header */}
+            <div className="text-center pb-2.5 mb-2 border-b border-dashed border-gray-600">
+              <h1 className="text-base font-bold text-black uppercase tracking-wide">Rajib Enterprise</h1>
+              <p className="text-[11px] font-semibold text-gray-800">Authorized Agro Dealer</p>
+              <p className="text-[10px] text-gray-600">Krishi Market, Uttar Bazar, Belabo</p>
+              <p className="text-[10px] text-gray-600">Mobile: 01711-123456</p>
+              <div className="mt-1.5 inline-block border border-black px-2 py-0.5 text-[10px] font-bold">
+                CUSTOMER LEDGER STATEMENT
+              </div>
+              <p className="text-[9px] text-gray-500 mt-1">Printed: {new Date().toLocaleString("en-GB")}</p>
+            </div>
+
+            {/* Customer Info */}
+            <div className="text-[11px] pb-2 mb-2 border-b border-dashed border-gray-500 space-y-0.5">
+              <div className="flex justify-between">
+                <span className="font-medium text-gray-700">Customer:</span>
+                <span className="font-bold">{ledgerCustomer.name}</span>
+              </div>
+              {ledgerCustomer.businessName && (
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-gray-600">Business:</span>
+                  <span>{ledgerCustomer.businessName}</span>
                 </div>
+              )}
+              <div className="flex justify-between text-[10px]">
+                <span className="text-gray-600">Mobile:</span>
+                <span>{ledgerCustomer.phone}</span>
+              </div>
+              {ledgerCustomer.villageAddress && (
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-gray-600">Village:</span>
+                  <span>{ledgerCustomer.villageAddress}</span>
+                </div>
+              )}
+              <div className="flex justify-between pt-1 border-t border-dotted border-gray-300">
+                <span className="font-medium text-gray-700">Total Buy (Lifetime):</span>
+                <span className="font-bold">{tk(ledgerCustomer.totalPurchases || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-bold text-red-600">Outstanding Due:</span>
+                <span className="font-bold text-red-600">{tk(ledgerCustomer.currentDue || 0)}</span>
+              </div>
+            </div>
+
+            {/* Transactions 80mm List */}
+            <div className="pb-2 mb-2 border-b border-dashed border-gray-500">
+              <div className="text-[10px] font-bold uppercase pb-1 mb-1.5 border-b border-dotted border-gray-400 flex justify-between">
+                <span>Transaction Records</span>
+                <span>{ledgerEntries.length} Items</span>
+              </div>
+              <div className="space-y-2">
+                {ledgerEntries.map((item) => (
+                  <div key={item.id} className="pb-1.5 border-b border-dotted border-gray-300">
+                    <div className="flex justify-between items-center text-[10px]">
+                      <span className="font-mono text-gray-600">
+                        {item.transactionDate ? new Date(item.transactionDate).toLocaleDateString("en-GB") : "—"}
+                      </span>
+                      <span className="font-bold">
+                        {item.transactionType === "CASH_PAYMENT" ? "Cash Received" :
+                         item.transactionType === "INVOICE_BILL" ? "Sales Invoice" :
+                         item.transactionType === "RETURN_CREDIT" ? "Return Adjustment" : item.transactionType}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] mt-0.5">
+                      <span className="font-mono text-[9px] text-gray-500">
+                        Ref: {item.moneyReceiptNo || (item.saleId ? `INV-${item.saleId}` : "—")}
+                      </span>
+                      <span className="tabular-nums font-semibold">
+                        {item.debit > 0 && <span className="text-red-700">+{tk(item.debit)}</span>}
+                        {item.credit > 0 && <span className="text-emerald-700">-{tk(item.credit)}</span>}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-[9px] text-gray-600 mt-0.5">
+                      <span>Bal: <strong className="text-black">{tk(item.balanceAfter)}</strong></span>
+                      {item.notes && <span className="truncate max-w-[120px] italic">({item.notes})</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Totals Box */}
+            <div className="bg-gray-100 p-2 rounded border border-gray-300 text-[10px] space-y-1 mb-3">
+              <div className="flex justify-between">
+                <span>Total Invoiced (Debit):</span>
+                <span className="font-bold">{tk(ledgerEntries.reduce((s, e) => s + (e.debit || 0), 0))}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total Paid (Credit):</span>
+                <span className="font-bold">{tk(ledgerEntries.reduce((s, e) => s + (e.credit || 0), 0))}</span>
+              </div>
+              <div className="flex justify-between text-xs font-bold pt-1 border-t border-gray-400 text-black">
+                <span>Net Outstanding Due:</span>
+                <span className="text-red-600 font-bold">{tk(ledgerCustomer.currentDue)}</span>
+              </div>
+            </div>
+
+            {/* Signatures */}
+            <div className="pt-6 pb-2 grid grid-cols-2 gap-4 text-center text-[9px]">
+              <div>
+                <div className="border-t border-dashed border-gray-600 pt-1 font-semibold">Customer Sign</div>
               </div>
               <div>
-                <div className="border-t border-slate-900/40 w-36 mx-auto pt-1 font-semibold text-slate-500">
-                  Al-Amin Traders
-                </div>
+                <div className="border-t border-dashed border-gray-600 pt-1 font-semibold">Rajib Enterprise</div>
               </div>
+            </div>
+
+            {/* Footer */}
+            <div className="text-center pt-2 text-[9px] text-gray-500 space-y-0.5">
+              <p>Thank you for clearing your ledger dues!</p>
+              <p className="font-mono">Rajib Enterprise POS</p>
             </div>
           </div>
         </div>
+      )}
+
+      {/* ─── Invoice Thermal Reprint Modal ─────────────────────────── */}
+      {invoiceToPrint && (
+        <ThermalReceipt
+          sale={invoiceToPrint}
+          autoPrint={false}
+          onClose={() => setInvoiceToPrint(null)}
+        />
+      )}
+
+      {/* ─── Due Collection Thermal Receipt Modal ──────────────────── */}
+      {dueReceiptToPrint && (
+        <DueCollectionReceipt
+          data={dueReceiptToPrint}
+          autoPrint={true}
+          onClose={() => setDueReceiptToPrint(null)}
+        />
       )}
     </div>
   )

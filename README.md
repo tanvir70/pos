@@ -1,5 +1,5 @@
 # Agrochemical POS & Inventory Management System
-### মেসার্স আল-আমিন ট্রেডার্স (অনুমোদিত কৃষি পরিবেশক)
+### মেসার্স রাজীব এন্টারপ্রাইজ (Rajib Enterprise) — অনুমোদিত কৃষি পরিবেশক
 
 A modern, full-stack Point of Sale (POS), Inventory, and Customer Credit Ledger system tailor-made for agrochemical dealerships in Bangladesh. Built with **Spring Boot 3 (Java 21)** and **React 19 (TypeScript + Tailwind CSS v4)**, this application is engineered around real-world rural pesticide dealership realities: carton break-bulk conversions, FEFO chemical expiry management, rush-hour split-stock deductions, negative counter stock allowances, in-line price bargaining overrides, customer debt ledgers with Money Receipt vouchers, damaged chemical quarantine routing, 4-digit Owner PIN protection, and 1-click disaster recovery backups.
 

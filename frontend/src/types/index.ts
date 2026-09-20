@@ -1,5 +1,5 @@
 // ============================================================================
-// Domain Types & DTOs for Al-Amin Traders POS & Inventory
+// Domain Types & DTOs for Rajib Enterprise POS & Inventory
 // Matches backend Spring Boot entities and REST DTOs
 // ============================================================================
 
@@ -16,6 +16,7 @@ export type NavigationTab =
   | "customers"
   | "returns"
   | "settings"
+  | "bin-card"
 
 // ----------------------------------------------------------------------------
 // Product
@@ -143,7 +144,7 @@ export interface Customer {
   villageAddress?: string | null
   address?: string | null
   customerType: CustomerType | string
-  creditLimit: number
+  totalPurchases?: number
   currentDue: number
   mfsType?: string | null
   mfsNumber?: string | null
@@ -162,7 +163,6 @@ export interface CustomerRequest {
   email?: string
   villageAddress?: string
   customerType?: CustomerType | string
-  creditLimit?: number
   currentDue?: number
   initialDue?: number
   mfsType?: string
@@ -238,6 +238,7 @@ export interface SaleRequest {
   roundOff?: number
   paymentMethod?: PaymentMethod | string
   cashPaid?: number
+  cashTendered?: number
   digitalPaid?: number
   digitalMedium?: string | null
   digitalTrxId?: string | null
@@ -424,3 +425,69 @@ export interface LoginRequest {
   username: string
   password: string
 }
+
+// ----------------------------------------------------------------------------
+// Immutable Stock Movement Ledger (Bin Card) & Adjustments
+// ----------------------------------------------------------------------------
+export interface StockMovement {
+  id: number
+  productId?: number
+  productCode?: string
+  productNameEn?: string
+  productNameBn?: string
+  lotId?: number
+  lotNumber?: string
+  barcode?: string
+  movementTime: string
+  movementType: string
+  location: string
+  quantityChange: number
+  balanceBefore: number
+  balanceAfter: number
+  unit: string
+  referenceDocNo?: string
+  remarks?: string
+  performedBy?: string
+}
+
+export interface StockAdjustmentRequest {
+  productId: number
+  lotId: number
+  adjustmentType: string
+  quantity: number
+  actionType?: "SCRAP_DISCARD" | "MOVE_TO_QUARANTINE" | string
+  reason: string
+  performedBy?: string
+}
+
+export interface StockAdjustmentResponse {
+  id: number
+  adjustmentNo: string
+  adjustmentDate: string
+  productId: number
+  productCode: string
+  productNameEn: string
+  productNameBn: string
+  lotId: number
+  lotNumber: string
+  adjustmentType: string
+  quantity: number
+  unit: string
+  actionType: string
+  costPrice: number
+  totalLossValue: number
+  reason: string
+  performedBy?: string
+}
+
+export interface StockValuationSummary {
+  totalCostValuation: number
+  totalRetailValuation: number
+  totalWholesaleValuation: number
+  potentialGrossProfit: number
+  totalQuarantineLoss: number
+  totalActiveLots: number
+  totalProductsInStock: number
+  totalUnitsInStock: number
+}
+

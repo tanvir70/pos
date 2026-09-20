@@ -1,5 +1,5 @@
 // ============================================================================
-// Typed REST Endpoints for Al-Amin Traders POS & Inventory
+// Typed REST Endpoints for Rajib Enterprise POS & Inventory
 // ============================================================================
 
 import { apiClient, downloadBlob, API_BASE_URL } from "./client"
@@ -23,6 +23,10 @@ import type {
   LoginRequest,
   QuarantineStockItem,
   QuarantineDisposalRequest,
+  StockMovement,
+  StockAdjustmentRequest,
+  StockAdjustmentResponse,
+  StockValuationSummary,
 } from "../types"
 
 // ----------------------------------------------------------------------------
@@ -50,8 +54,10 @@ export async function createProduct(
 // 2. Inventory & Lots
 // ----------------------------------------------------------------------------
 
-export async function getStock(): Promise<StockItem[]> {
-  return apiClient<StockItem[]>("/inventory/stock")
+export async function getStock(inStockOnly = false): Promise<StockItem[]> {
+  return apiClient<StockItem[]>(
+    inStockOnly ? "/inventory/stock?inStockOnly=true" : "/inventory/stock",
+  )
 }
 
 export async function getLots(
@@ -87,6 +93,45 @@ export async function disposeQuarantineStock(
     method: "POST",
     body: JSON.stringify(data),
   })
+}
+
+export async function getStockMovements(
+  productId?: number,
+  lotId?: number,
+  page = 0,
+  size = 20,
+): Promise<PagedResponse<StockMovement>> {
+  const params = new URLSearchParams()
+  if (productId != null) params.set("productId", productId.toString())
+  if (lotId != null) params.set("lotId", lotId.toString())
+  params.set("page", page.toString())
+  params.set("size", size.toString())
+  return apiClient<PagedResponse<StockMovement>>(`/inventory/movements?${params.toString()}`)
+}
+
+export async function recordStockAdjustment(
+  data: StockAdjustmentRequest,
+): Promise<StockAdjustmentResponse> {
+  return apiClient<StockAdjustmentResponse>("/inventory/adjustments", {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+}
+
+export async function getStockAdjustments(
+  productId?: number,
+  page = 0,
+  size = 15,
+): Promise<PagedResponse<StockAdjustmentResponse>> {
+  const params = new URLSearchParams()
+  if (productId != null) params.set("productId", productId.toString())
+  params.set("page", page.toString())
+  params.set("size", size.toString())
+  return apiClient<PagedResponse<StockAdjustmentResponse>>(`/inventory/adjustments?${params.toString()}`)
+}
+
+export async function getStockValuationSummary(): Promise<StockValuationSummary> {
+  return apiClient<StockValuationSummary>("/inventory/valuation")
 }
 
 
@@ -160,11 +205,35 @@ export async function getPaginatedSales(
 
 export async function getTopSellingProducts(
   period = "month",
-  limit = 5,
-): Promise<TopSellingProduct[]> {
-  return apiClient<TopSellingProduct[]>(
-    `/dashboard/top-selling?period=${encodeURIComponent(period)}&limit=${limit}`,
+  page = 0,
+  size = 10,
+): Promise<PagedResponse<TopSellingProduct>> {
+  const res = await apiClient<any>(
+    `/dashboard/top-selling?period=${encodeURIComponent(period)}&page=${page}&size=${size}&limit=${size}`,
   )
+  if (res && Array.isArray(res.content)) {
+    return res
+  }
+  if (Array.isArray(res)) {
+    return {
+      content: res.slice(page * size, (page + 1) * size),
+      pageNumber: page,
+      pageSize: size,
+      totalElements: res.length,
+      totalPages: Math.max(1, Math.ceil(res.length / size)),
+      first: page === 0,
+      last: page >= Math.ceil(res.length / size) - 1,
+    }
+  }
+  return {
+    content: [],
+    pageNumber: 0,
+    pageSize: size,
+    totalElements: 0,
+    totalPages: 0,
+    first: true,
+    last: true,
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -221,6 +290,16 @@ export async function recordPayment(
     method: "POST",
     body: JSON.stringify(payment),
   })
+}
+
+export async function getCustomerPurchases(
+  id: number,
+): Promise<SaleResponse[]> {
+  return apiClient<SaleResponse[]>(`/customers/${id}/purchases`)
+}
+
+export async function getNextDueInvoiceNo(): Promise<{ dueInvoiceNo: string }> {
+  return apiClient<{ dueInvoiceNo: string }>("/customers/next-due-invoice-no")
 }
 
 // ----------------------------------------------------------------------------
