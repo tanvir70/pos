@@ -3,7 +3,9 @@ package com.alamin.pos.service.impl;
 import com.alamin.pos.dto.DashboardSummaryDto;
 import com.alamin.pos.dto.ExpiringLotDto;
 import com.alamin.pos.dto.LowStockProductDto;
+import com.alamin.pos.dto.PagedResponse;
 import com.alamin.pos.dto.TopSellingProductDto;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import com.alamin.pos.entity.InventoryLot;
@@ -149,31 +151,45 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     @Transactional(readOnly = true)
     public List<TopSellingProductDto> getTopSellingProducts(String period, int limit) {
-        int maxResults = (limit > 0 && limit <= 50) ? limit : 5;
-        Pageable pageable = PageRequest.of(0, maxResults);
-        LocalDateTime startDate;
+        return getTopSellingProductsPaged(period, 0, limit).getContent();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedResponse<TopSellingProductDto> getTopSellingProductsPaged(String period, int page, int size) {
+        int pageNum = Math.max(0, page);
+        int pageSize = (size > 0 && size <= 100) ? size : 10;
+        Pageable pageable = PageRequest.of(pageNum, pageSize);
+
+        LocalDateTime startDate = null;
         if ("today".equalsIgnoreCase(period)) {
             startDate = LocalDate.now().atStartOfDay();
         } else if ("week".equalsIgnoreCase(period)) {
             startDate = LocalDate.now().minusDays(7).atStartOfDay();
         } else if ("year".equalsIgnoreCase(period)) {
             startDate = LocalDate.now().minusYears(1).atStartOfDay();
-        } else {
+        } else if (!"all".equalsIgnoreCase(period)) {
             // Default: month (last 30 days)
             startDate = LocalDate.now().minusDays(30).atStartOfDay();
         }
 
-        List<TopSellingProductDto> products = saleItemRepository.findTopSellingProducts(startDate, pageable);
-        if (products.isEmpty()) {
-            products = saleItemRepository.findAllTimeTopSellingProducts(pageable);
+        Page<TopSellingProductDto> productsPage;
+        if (startDate != null) {
+            productsPage = saleItemRepository.findTopSellingProducts(startDate, pageable);
+            if (productsPage.isEmpty() && pageNum == 0) {
+                productsPage = saleItemRepository.findAllTimeTopSellingProducts(pageable);
+            }
+        } else {
+            productsPage = saleItemRepository.findAllTimeTopSellingProducts(pageable);
         }
 
-        BigDecimal totalQtySum = products.stream()
+        List<TopSellingProductDto> content = productsPage.getContent();
+        BigDecimal totalQtySum = content.stream()
                 .map(TopSellingProductDto::getTotalQuantity)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (totalQtySum.compareTo(BigDecimal.ZERO) > 0) {
-            for (TopSellingProductDto p : products) {
+            for (TopSellingProductDto p : content) {
                 double pct = p.getTotalQuantity()
                         .multiply(BigDecimal.valueOf(100))
                         .divide(totalQtySum, 1, RoundingMode.HALF_UP)
@@ -182,7 +198,15 @@ public class DashboardServiceImpl implements DashboardService {
             }
         }
 
-        return products;
+        return PagedResponse.<TopSellingProductDto>builder()
+                .content(content)
+                .pageNumber(productsPage.getNumber())
+                .pageSize(productsPage.getSize())
+                .totalElements(productsPage.getTotalElements())
+                .totalPages(productsPage.getTotalPages())
+                .first(productsPage.isFirst())
+                .last(productsPage.isLast())
+                .build();
     }
 
     private BigDecimal calculateGrossProfit(LocalDateTime start, LocalDateTime end) {

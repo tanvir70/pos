@@ -4,6 +4,7 @@ import { getDashboardSummary, downloadDatabaseBackup } from "../api/endpoints"
 import GotposStatCard from "../components/dashboard/GotposStatCard"
 import TopSellingProducts from "../components/dashboard/TopSellingProducts"
 import RecentOrdersTable from "../components/dashboard/RecentOrdersTable"
+import OrderDetailsModal from "../components/dashboard/OrderDetailsModal"
 import DualPrintModal from "../components/pos/DualPrintModal"
 import {
   BarChart3,
@@ -18,11 +19,7 @@ import {
   RotateCcw,
   Banknote,
   BookOpen,
-  Check,
   Users,
-  Package,
-  Hourglass,
-  ArrowRight,
 } from "lucide-react"
 
 // BUSINESS DECISION: Expiring lots with <30 days remaining are highlighted with priority alert banners to
@@ -45,7 +42,8 @@ export default function Dashboard({
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  // Receipt Modal State
+  // Modals
+  const [selectedSaleForDetails, setSelectedSaleForDetails] = useState<SaleResponse | null>(null)
   const [selectedSaleForPrint, setSelectedSaleForPrint] = useState<SaleResponse | null>(null)
 
   // Backup State
@@ -95,7 +93,7 @@ export default function Dashboard({
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-emerald-700" />
-              <span>Main</span>
+              <span>Dashboard</span>
             </h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
               Live Data
@@ -172,11 +170,9 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* ─── 1. Reference Image Matched 4 GotPOS Stat Cards ────────── */}
-      <div>
-        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">
-          Overview
-        </h2>
+      {/* ─── 1. Reference Image Matched GotPOS Stat Cards ────────── */}
+      <div className="space-y-4">
+        {/* Row 1: Daily Sales & Returns (4 cards) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Today Sales */}
           <GotposStatCard
@@ -214,256 +210,66 @@ export default function Dashboard({
             icon={<RotateCcw className="w-5 h-5" />}
           />
         </div>
+
+        {/* Row 2: Till, Market Due & Customer Ledger (3 cards) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Card 5: Cash in Drawer */}
+          <GotposStatCard
+            title="Cash in Drawer"
+            value={summary ? tk(summary.cashInDrawerToday) : "৳0.00"}
+            subtitle="Net cash in till today"
+            theme="teal"
+            icon={<Banknote className="w-5 h-5" />}
+          />
+
+          {/* Card 6: Total Market Due */}
+          <GotposStatCard
+            title="Total Market Due"
+            value={summary ? tk(summary.totalMarketDue) : "৳0.00"}
+            subtitle="Outstanding customer debt"
+            theme="amber"
+            icon={<BookOpen className="w-5 h-5" />}
+            onClick={() => onNavigate?.("customers")}
+          />
+
+          {/* Card 7: Total Customers */}
+          <GotposStatCard
+            title="Total Customers"
+            value={summary?.totalCustomers ?? 0}
+            subtitle="Customer ledger"
+            theme="blue"
+            icon={<Users className="w-5 h-5" />}
+            onClick={() => onNavigate?.("customers")}
+          />
+        </div>
       </div>
 
       {/* ─── 2. Main 2-Column Analytics Grid ───────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left: Recent Orders (8 cols) */}
-        <div className="lg:col-span-8">
+        {/* Left: Recent Orders (7 cols) */}
+        <div className="lg:col-span-7">
           <RecentOrdersTable
-            onViewOrder={(sale) => setSelectedSaleForPrint(sale)}
+            onViewDetails={(sale) => setSelectedSaleForDetails(sale)}
+            onPrintReceipt={(sale) => setSelectedSaleForPrint(sale)}
             onNavigateToPos={() => onNavigate?.("pos")}
           />
         </div>
 
-        {/* Right: Top Selling Products & Store Summary (4 cols) */}
-        <div className="lg:col-span-4 space-y-5">
-          {/* Top Selling Products Widget */}
+        {/* Right: Top Selling Products (5 cols) */}
+        <div className="lg:col-span-5">
           <TopSellingProducts onProductClick={() => onNavigate?.("inventory")} />
-
-          {/* Store Operational Ledger & Till Summary */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                Till & Market Balance
-              </h3>
-              <span className="text-[11px] text-slate-400 font-medium">Daily Reconciliation</span>
-            </div>
-
-            <div className="space-y-3">
-              {/* Cash in Drawer */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50/40 border border-emerald-200/80">
-                <div className="flex items-center gap-2.5">
-                  <Banknote className="w-4 h-4 text-emerald-700" />
-                  <div>
-                    <p className="text-xs font-bold text-emerald-950">Cash in Drawer</p>
-                    <p className="text-[10px] text-emerald-700/80">Net cash in till today</p>
-                  </div>
-                </div>
-                <span className="text-sm font-bold tabular-nums text-emerald-800">
-                  {summary ? tk(summary.cashInDrawerToday) : "৳0.00"}
-                </span>
-              </div>
-
-              {/* Total Market Due */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-rose-50/40 border border-rose-200/80">
-                <div className="flex items-center gap-2.5">
-                  <BookOpen className="w-4 h-4 text-rose-700" />
-                  <div>
-                    <p className="text-xs font-bold text-rose-950">Total Market Due</p>
-                    <p className="text-[10px] text-rose-700/80">Outstanding customer debt</p>
-                  </div>
-                </div>
-                <span className="text-sm font-bold tabular-nums text-rose-700">
-                  {summary ? tk(summary.totalMarketDue) : "৳0.00"}
-                </span>
-              </div>
-
-              {/* Total Customers */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 border border-slate-200">
-                <div className="flex items-center gap-2.5">
-                  <Users className="w-4 h-4 text-slate-600" />
-                  <div>
-                    <p className="text-xs font-bold text-slate-900">Total Customers</p>
-                    <p className="text-[10px] text-slate-500">Registered retail & wholesale</p>
-                  </div>
-                </div>
-                <span className="text-sm font-bold tabular-nums text-slate-900">
-                  {summary?.totalCustomers ?? 0}
-                </span>
-              </div>
-            </div>
-
-            {/* Link to Customer Ledger */}
-            {onNavigate && (
-              <button
-                type="button"
-                onClick={() => onNavigate("customers")}
-                className="w-full flex items-center justify-center gap-1.5 py-2 text-center text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 rounded-xl transition-colors cursor-pointer border border-emerald-200"
-              >
-                <span>View Customer Ledger & Dues</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
-      {/* ─── 3. Alert Section 1: Expiring Soon Lots (<30 Days) ──────── */}
-      <div className="bg-white border border-red-200 rounded-2xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-red-100">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-            <div>
-              <h2 className="font-bold text-red-800 text-base">
-                Lots at Risk of Expiring (&lt; 30 days)
-              </h2>
-              <p className="text-xs text-red-600/80">
-                Per FEFO priority, these lots must be sold at the counter or returned quickly
-              </p>
-            </div>
-          </div>
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">
-            {summary?.expiringLots?.length ?? 0} lots at risk
-          </span>
-        </div>
-
-        {summary?.expiringLots && summary.expiringLots.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-red-50/50 text-red-900 border-b border-red-100 font-bold">
-                <tr>
-                  <th className="px-3 py-2.5">Product</th>
-                  <th className="px-3 py-2.5">Lot Number</th>
-                  <th className="px-3 py-2.5">Expiry Date</th>
-                  <th className="px-3 py-2.5 text-center">Days Left</th>
-                  <th className="px-3 py-2.5 text-right">Current Stock</th>
-                  <th className="px-3 py-2.5 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-red-100">
-                {summary.expiringLots.map((lot) => {
-                  const isCritical = lot.daysUntilExpiry <= 15
-                  return (
-                    <tr key={lot.lotId} className="hover:bg-red-50/30">
-                      <td className="px-3 py-2.5 font-bold text-slate-900">
-                        {lot.productNameEn || lot.productNameBn}
-                        <span className="block text-[11px] font-mono text-slate-500">
-                          {lot.productCode}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 font-mono font-semibold text-slate-900">
-                        {lot.lotNumber}
-                      </td>
-                      <td className="px-3 py-2.5 tabular-nums text-slate-900">
-                        {lot.expiryDate}
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold tabular-nums ${
-                            isCritical
-                              ? "bg-red-600 text-white animate-pulse"
-                              : "bg-amber-100 text-amber-800 border border-amber-300"
-                          }`}
-                        >
-                          {lot.daysUntilExpiry} days left
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-right font-bold tabular-nums text-slate-900">
-                        {lot.quantity}
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => onNavigate?.("pos")}
-                          className="px-2.5 py-1 rounded text-[11px] font-bold bg-red-100 hover:bg-red-200 text-red-800 border border-red-300 cursor-pointer"
-                        >
-                          Move to Counter
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>No lots are expiring within 30 days. All stock is safe.</span>
-          </div>
-        )}
-      </div>
-
-      {/* ─── 4. Alert Section 2: Low Stock Products ────────────────── */}
-      <div className="bg-white border border-amber-200 rounded-2xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-amber-100">
-          <div className="flex items-center gap-2">
-            <Package className="w-5 h-5 text-amber-700" />
-            <div>
-              <h2 className="font-bold text-amber-900 text-base">
-                Low Stock Alert
-              </h2>
-              <p className="text-xs text-amber-800/80">
-                Chemicals and products below the minimum stock threshold
-              </p>
-            </div>
-          </div>
-          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
-            {summary?.lowStockProducts?.length ?? 0} products low
-          </span>
-        </div>
-
-        {summary?.lowStockProducts && summary.lowStockProducts.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-amber-50/50 text-amber-900 border-b border-amber-100 font-bold">
-                <tr>
-                  <th className="px-3 py-2.5">Product Code</th>
-                  <th className="px-3 py-2.5">Product Name</th>
-                  <th className="px-3 py-2.5 text-right">Minimum Threshold</th>
-                  <th className="px-3 py-2.5 text-right">Current Total Stock</th>
-                  <th className="px-3 py-2.5 text-center">Shortage</th>
-                  <th className="px-3 py-2.5 text-center">Reorder Suggestion</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-amber-100">
-                {summary.lowStockProducts.map((p) => {
-                  const shortage = p.minStockAlert - p.totalStock
-                  return (
-                    <tr key={p.productId} className="hover:bg-amber-50/30">
-                      <td className="px-3 py-2.5 font-mono font-semibold text-slate-900">
-                        {p.productCode}
-                      </td>
-                      <td className="px-3 py-2.5 font-bold text-slate-900">
-                        {p.nameEn}
-                        <span className="block text-[11px] font-normal text-slate-500">
-                          {p.nameBn}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-slate-900 font-medium">
-                        {p.minStockAlert}
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums font-bold text-red-600">
-                        {p.totalStock}
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 text-red-700 border border-red-200">
-                          {shortage > 0 ? `-${shortage}` : "0"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => onNavigate?.("inventory")}
-                          className="px-2.5 py-1 rounded text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 cursor-pointer"
-                        >
-                          Create Purchase Order
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>All products have adequate stock. No shortages.</span>
-          </div>
-        )}
-      </div>
+      {/* ─── Order Details Modal ───────────────────────────────────── */}
+      {selectedSaleForDetails && (
+        <OrderDetailsModal
+          isOpen={!!selectedSaleForDetails}
+          sale={selectedSaleForDetails}
+          onClose={() => setSelectedSaleForDetails(null)}
+          onPrintReceipt={(sale) => setSelectedSaleForPrint(sale)}
+        />
+      )}
 
       {/* ─── Receipt / Invoice Dual Print Modal ────────────────────── */}
       {selectedSaleForPrint && (

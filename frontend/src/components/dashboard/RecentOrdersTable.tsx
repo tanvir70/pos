@@ -14,7 +14,9 @@ import {
 } from "lucide-react"
 
 export interface RecentOrdersTableProps {
-  onViewOrder: (sale: SaleResponse) => void
+  onViewOrder?: (sale: SaleResponse) => void
+  onViewDetails?: (sale: SaleResponse) => void
+  onPrintReceipt?: (sale: SaleResponse) => void
   onNavigateToPos?: () => void
 }
 
@@ -43,13 +45,17 @@ const formatDate = (isoString?: string) => {
 
 export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
   onViewOrder,
+  onViewDetails,
+  onPrintReceipt,
   onNavigateToPos,
 }) => {
+  const handleViewDetails = onViewDetails || onViewOrder || (() => {})
+  const handlePrintReceipt = onPrintReceipt || onViewOrder || (() => {})
   // Filter state
   const [period, setPeriod] = useState<"today" | "week" | "month" | "all">("today")
   const [saleMode, setSaleMode] = useState<"ALL" | "WHOLESALE" | "RETAIL">("ALL")
   const [page, setPage] = useState<number>(0)
-  const pageSize = 8
+  const pageSize = 10
 
   // Data state
   const [pagedData, setPagedData] = useState<PagedResponse<SaleResponse> | null>(null)
@@ -101,9 +107,6 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
               {totalElements} total
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Real-time counter and wholesale transaction log
-          </p>
         </div>
 
         {/* Filter Pills */}
@@ -172,14 +175,15 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
       </div>
 
       {/* Table Content */}
-      <div className="overflow-x-auto min-h-[340px] my-2">
+      <div className="overflow-x-auto min-h-[420px] my-2">
         <table className="w-full text-left text-xs whitespace-nowrap">
           <thead>
             <tr className="text-slate-400 border-b border-slate-100 uppercase tracking-wider text-[11px] font-semibold">
               <th className="py-3 px-2">Order ID</th>
               <th className="py-3 px-2">Date & Time</th>
               <th className="py-3 px-2">Customer</th>
-              <th className="py-3 px-2">Items</th>
+              <th className="py-3 px-2 text-center">Items</th>
+              <th className="py-3 px-2 text-center">Qty</th>
               <th className="py-3 px-2 text-right">Total Amount</th>
               <th className="py-3 px-2 text-center">Payment Status</th>
               <th className="py-3 px-2 text-center">Action</th>
@@ -199,8 +203,11 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                   <td className="py-3.5 px-2">
                     <div className="w-28 h-4 bg-slate-100 rounded" />
                   </td>
-                  <td className="py-3.5 px-2">
-                    <div className="w-12 h-4 bg-slate-100 rounded" />
+                  <td className="py-3.5 px-2 text-center">
+                    <div className="w-8 h-4 bg-slate-100 rounded mx-auto" />
+                  </td>
+                  <td className="py-3.5 px-2 text-center">
+                    <div className="w-10 h-4 bg-slate-100 rounded mx-auto" />
                   </td>
                   <td className="py-3.5 px-2 text-right">
                     <div className="w-16 h-4 bg-slate-100 rounded ml-auto" />
@@ -215,7 +222,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
               ))
             ) : sales.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-slate-400">
+                <td colSpan={8} className="py-12 text-center text-slate-400">
                   <ShoppingBag className="w-8 h-8 stroke-1 text-slate-300 mx-auto mb-2" />
                   <p className="font-medium text-slate-600">No orders found in this selection</p>
                   <p className="text-[11px] text-slate-400 mt-1">
@@ -244,14 +251,29 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                   <tr
                     key={sale.id}
                     className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
-                    onClick={() => onViewOrder(sale)}
+                    onClick={() => handleViewDetails(sale)}
                   >
-                    {/* Invoice No */}
+                    {/* Invoice No & Mode */}
                     <td className="py-3.5 px-2 font-mono font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                      <span className="flex items-center gap-1">
-                        <FileText className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600" />
-                        <span>#{sale.invoiceNo}</span>
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleViewDetails(sale)
+                          }}
+                          className="flex items-center gap-1 hover:underline cursor-pointer"
+                          title="View order details"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600" />
+                          <span>#{sale.invoiceNo}</span>
+                        </button>
+                        {sale.saleMode === "WHOLESALE" && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            Wholesale
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Date */}
@@ -278,23 +300,14 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                       </div>
                     </td>
 
-                    {/* Items & Mode */}
-                    <td className="py-3.5 px-2">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-slate-800 font-bold">
-                          {itemsCount} {itemsCount === 1 ? "item" : "items"}
-                          <span className="mx-1.5 text-slate-300">·</span>
-                          <span className="font-mono">
-                            {formatQuantity(unitsCount)}
-                          </span>{" "}
-                          {unitsCount === 1 ? "unit" : "units"}
-                        </span>
-                      </div>
-                      {sale.saleMode === "WHOLESALE" && (
-                        <span className="ms-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                          Wholesale
-                        </span>
-                      )}
+                    {/* Items count (numeric only) */}
+                    <td className="py-3.5 px-2 text-center font-mono font-bold text-slate-800 tabular-nums">
+                      {itemsCount}
+                    </td>
+
+                    {/* Total Quantity (numeric only) */}
+                    <td className="py-3.5 px-2 text-center font-mono font-bold text-slate-900 tabular-nums">
+                      {formatQuantity(unitsCount)}
                     </td>
 
                     {/* Total Price */}
@@ -327,9 +340,9 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                     <td className="py-3.5 px-2 text-center" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
-                        onClick={() => onViewOrder(sale)}
+                        onClick={() => handlePrintReceipt(sale)}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer border border-transparent hover:border-emerald-200"
-                        title="View & Print Receipt / Challan"
+                        title="Print Receipt / Challan"
                       >
                         <Printer className="w-4 h-4" />
                       </button>

@@ -128,7 +128,6 @@ class DashboardQueryPerformanceTest {
         request.setName("New Farmer");
         request.setPhone("01899999999");
         request.setCustomerType("FARMER");
-        request.setCreditLimit(new BigDecimal("10000.00"));
         request.setInitialDue(new BigDecimal("500.00"));
 
         mockMvc.perform(post("/api/customers")
@@ -137,6 +136,7 @@ class DashboardQueryPerformanceTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.name").value("New Farmer"))
+                .andExpect(jsonPath("$.totalPurchases").value(0.00))
                 .andExpect(jsonPath("$.currentDue").value(500.00));
     }
 }
