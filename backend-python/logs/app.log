@@ -1,0 +1,33 @@
+2026-09-21 20:51:51 [INFO] [app]: Starting up Al-Amin POS & Inventory System (Environment: production)...
+2026-09-21 20:51:51 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-21 20:51:51 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-21 20:51:51 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-21 20:51:51 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=1 "HTTP/1.1 200 OK"
+2026-09-21 20:51:51 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [sales]: Sale completed: invoice=INV-20260921-0000005, total=1300.00, paid=500.00, due=800.00, customer=করিম মিয়া
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: GET http://test/api/barcode/SYN-AMI-202502 "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/download "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [app]: Starting up Al-Amin POS & Inventory System (Environment: production)...
+2026-09-21 20:51:52 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: GET http://test/api/products?query=Test "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: PUT http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: DELETE http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [app]: Starting up Al-Amin POS & Inventory System (Environment: production)...
+2026-09-21 20:51:52 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-21 20:51:52 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-21 20:51:56 [INFO] [app]: Starting up Al-Amin POS & Inventory System (Environment: production)...
+2026-09-21 20:51:56 [WARNING] [auth]: Failed login attempt for unknown user 'hacker'
+2026-09-21 20:51:56 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 401 Unauthorized"
+2026-09-21 20:51:56 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-21 20:51:56 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
