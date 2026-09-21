@@ -30,3 +30,20 @@ logs/
 !**/gradle-wrapper.jar
 .idea/
 *.iml
+
+# Python
+.env*
+!.env.example
+logs/
+*.log
+venv/
+.venv/
+env/
+.deps/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.db
+*.sqlite
+*.sqlite3
