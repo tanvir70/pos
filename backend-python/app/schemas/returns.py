@@ -15,6 +15,7 @@ class SaleReturnRequest(CamelModel):
     customer_id: int | None = None
     refund_type: str = "CASH_REFUND"  # 'CASH_REFUND' or 'DUE_ADJUSTMENT'
     reason: str | None = None
+    client_trx_id: str | None = None
     items: list[SaleReturnItemRequest]
 
 class SaleReturnItemDto(CamelModel):
@@ -41,4 +42,5 @@ class SaleReturnResponse(CamelModel):
     total_refund_amount: Decimal
     refund_type: str
     reason: str | None = None
+    client_trx_id: str | None = None
     items: list[SaleReturnItemDto]

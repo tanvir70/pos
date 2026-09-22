@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Header, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -11,8 +11,9 @@ router = APIRouter(prefix="/api/sales", tags=["sales"])
 async def create_sale(
     body: SaleRequest,
     db: AsyncSession = Depends(get_db),
+    x_idempotency_key: str | None = Header(default=None, alias="X-Idempotency-Key"),
 ) -> SaleResponse:
-    return await sale_service.process_sale(db, body)
+    return await sale_service.process_sale(db, body, client_trx_id=x_idempotency_key)
 
 @router.get("/{sale_id}", response_model=SaleResponse)
 async def get_sale(

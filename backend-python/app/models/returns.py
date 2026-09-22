@@ -31,6 +31,7 @@ class SaleReturn(Base):
     total_refund_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     refund_type: Mapped[str] = mapped_column(String(30), nullable=False)  # 'CASH_REFUND' or 'DUE_ADJUSTMENT'
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    client_trx_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True, index=True)
 
     original_sale = relationship("Sale", lazy="joined")
     customer = relationship("Customer", lazy="joined")

@@ -63,6 +63,7 @@ class CustomerLedger(Base):
     balance_after: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     money_receipt_no: Mapped[str | None] = mapped_column(String(50), nullable=True)
     sale_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    client_trx_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True, index=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     customer = relationship("Customer", back_populates="ledger_entries", lazy="joined")

@@ -2,9 +2,11 @@ from datetime import datetime
 from decimal import Decimal
 from fastapi import HTTPException, status
 from sqlalchemy import desc, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core_logging import get_logger
 from app.models.customer import Customer, CustomerLedger
 from app.schemas.customer import (
     CustomerDto,
@@ -13,6 +15,8 @@ from app.schemas.customer import (
     CustomerRequest,
 )
 from app.services.sequence_service import get_next_sequence
+
+logger = get_logger("customer")
 
 def to_customer_dto(c: Customer) -> CustomerDto:
     return CustomerDto(
@@ -47,6 +51,7 @@ def to_ledger_dto(l: CustomerLedger) -> CustomerLedgerDto:
         money_receipt_no=l.money_receipt_no,
         sale_id=l.sale_id,
         notes=l.notes,
+        client_trx_id=l.client_trx_id,
     )
 
 async def create_customer(db: AsyncSession, req: CustomerRequest) -> CustomerDto:
@@ -185,8 +190,24 @@ async def get_customer_ledger(db: AsyncSession, customer_id: int) -> list[Custom
     return [to_ledger_dto(e) for e in entries]
 
 async def record_customer_payment(
-    db: AsyncSession, customer_id: int, req: CustomerPaymentRequest
+    db: AsyncSession, customer_id: int, req: CustomerPaymentRequest, client_trx_id: str | None = None
 ) -> CustomerLedgerDto:
+    effective_key = (req.client_trx_id or client_trx_id or "").strip() or None
+    if effective_key:
+        existing_stmt = select(CustomerLedger).where(
+            CustomerLedger.customer_id == customer_id,
+            CustomerLedger.client_trx_id == effective_key,
+        )
+        existing_res = await db.execute(existing_stmt)
+        existing_entry = existing_res.scalar_one_or_none()
+        if existing_entry:
+            logger.info(
+                "Idempotent replay for customer payment: key=%s, ledger_id=%s",
+                effective_key,
+                existing_entry.id,
+            )
+            return to_ledger_dto(existing_entry)
+
     c = (await db.execute(select(Customer).where(Customer.id == customer_id))).scalar_one_or_none()
     if not c:
         raise HTTPException(status_code=404, detail=f"Customer with id {customer_id} not found")
@@ -217,8 +238,28 @@ async def record_customer_payment(
         balance_after=new_due,
         money_receipt_no=receipt_no,
         notes=req.notes,
+        client_trx_id=effective_key,
     )
     db.add(ledger)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError as ex:
+        if effective_key:
+            await db.rollback()
+            logger.warning(
+                "Race collision detected on customer payment client_trx_id=%s. Replaying committed entry.",
+                effective_key,
+            )
+            existing_entry = (
+                await db.execute(
+                    select(CustomerLedger).where(
+                        CustomerLedger.customer_id == customer_id,
+                        CustomerLedger.client_trx_id == effective_key,
+                    )
+                )
+            ).scalar_one_or_none()
+            if existing_entry:
+                return to_ledger_dto(existing_entry)
+        raise
 
     return to_ledger_dto(ledger)

@@ -2,9 +2,11 @@ from datetime import datetime
 from decimal import Decimal
 from fastapi import HTTPException, status
 from sqlalchemy import desc, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core_logging import get_logger
 from app.models.customer import Customer, CustomerLedger
 from app.models.inventory import InventoryLot, StockInventory, StockMovement
 from app.models.returns import SaleReturn, SaleReturnItem
@@ -15,6 +17,8 @@ from app.schemas.returns import (
     SaleReturnResponse,
 )
 from app.services.sequence_service import get_next_sequence
+
+logger = get_logger("returns")
 
 def to_return_response(ret: SaleReturn) -> SaleReturnResponse:
     items_dto: list[SaleReturnItemDto] = []
@@ -50,10 +54,33 @@ def to_return_response(ret: SaleReturn) -> SaleReturnResponse:
         total_refund_amount=ret.total_refund_amount,
         refund_type=ret.refund_type,
         reason=ret.reason,
+        client_trx_id=ret.client_trx_id,
         items=items_dto,
     )
 
-async def process_return(db: AsyncSession, req: SaleReturnRequest) -> SaleReturnResponse:
+async def process_return(
+    db: AsyncSession, req: SaleReturnRequest, client_trx_id: str | None = None
+) -> SaleReturnResponse:
+    effective_key = (req.client_trx_id or client_trx_id or "").strip() or None
+    if effective_key:
+        existing_stmt = (
+            select(SaleReturn)
+            .where(SaleReturn.client_trx_id == effective_key)
+            .options(
+                selectinload(SaleReturn.customer),
+                selectinload(SaleReturn.items).selectinload(SaleReturnItem.lot).selectinload(InventoryLot.product),
+            )
+        )
+        existing_res = await db.execute(existing_stmt)
+        existing_return = existing_res.scalar_one_or_none()
+        if existing_return:
+            logger.info(
+                "Idempotent replay for return with client_trx_id=%s (return_no=%s)",
+                effective_key,
+                existing_return.return_no,
+            )
+            return to_return_response(existing_return)
+
     if not req.items:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Sale return must have at least one item"
@@ -181,9 +208,30 @@ async def process_return(db: AsyncSession, req: SaleReturnRequest) -> SaleReturn
         total_refund_amount=total_refund,
         refund_type=refund_type,
         reason=req.reason,
+        client_trx_id=effective_key,
     )
     db.add(sale_return)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError as ex:
+        if effective_key:
+            await db.rollback()
+            logger.warning(
+                "Race collision detected on return client_trx_id=%s. Fetching already committed return.",
+                effective_key,
+            )
+            stmt = (
+                select(SaleReturn)
+                .where(SaleReturn.client_trx_id == effective_key)
+                .options(
+                    selectinload(SaleReturn.customer),
+                    selectinload(SaleReturn.items).selectinload(SaleReturnItem.lot).selectinload(InventoryLot.product),
+                )
+            )
+            existing_return = (await db.execute(stmt)).scalar_one_or_none()
+            if existing_return:
+                return to_return_response(existing_return)
+        raise
 
     for it in return_items:
         it.sale_return_id = sale_return.id

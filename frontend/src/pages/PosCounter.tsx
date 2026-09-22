@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import type {
   StockItem,
   Customer,
@@ -55,6 +55,7 @@ export default function PosCounter({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [isPrintPromptOpen, setIsPrintPromptOpen] = useState(false)
   const [completedCustomer, setCompletedCustomer] = useState<Customer | null>(null)
+  const checkoutKeyRef = useRef<string | null>(null)
 
   // ─── Fetch Stock and Customers ──────────────────────────────────
   const loadInitialData = useCallback(async () => {
@@ -223,11 +224,13 @@ export default function PosCounter({
           : null,
       digitalTrxId: digitalTrxId ? digitalTrxId.trim() : null,
       cashierName: "Rajib",
+      clientTrxId: checkoutKeyRef.current || (checkoutKeyRef.current = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `sale-${Date.now()}`),
     }
 
     try {
       setIsSubmitting(true)
       const res = await createSale(saleRequest)
+      checkoutKeyRef.current = null
       clearCart()
 
       // Refresh stock counts in background (in-stock only for POS)

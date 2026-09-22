@@ -191,6 +191,7 @@ export interface CustomerPaymentRequest {
   paymentMethod?: PaymentMethod | string
   moneyReceiptNo?: string
   notes?: string
+  clientTrxId?: string | null
 }
 
 // ----------------------------------------------------------------------------
@@ -243,6 +244,7 @@ export interface SaleRequest {
   digitalMedium?: string | null
   digitalTrxId?: string | null
   cashierName?: string | null
+  clientTrxId?: string | null
 }
 
 export interface SaleItemResponse {
@@ -283,6 +285,7 @@ export interface SaleResponse {
   dueAmount: number
   totalProfit?: number
   cashierName?: string | null
+  clientTrxId?: string | null
   items: SaleItemResponse[]
 }
 
@@ -301,6 +304,7 @@ export interface SaleReturnRequest {
   customerId?: number | null
   refundType: RefundType | string
   reason?: string | null
+  clientTrxId?: string | null
   items: SaleReturnItemRequest[]
 }
 
@@ -329,6 +333,7 @@ export interface SaleReturnResponse {
   totalRefundAmount: number
   refundType: RefundType | string
   reason?: string | null
+  clientTrxId?: string | null
   items: SaleReturnItem[]
 }
 

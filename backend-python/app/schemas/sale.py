@@ -21,6 +21,7 @@ class SaleRequest(CamelModel):
     digital_medium: str | None = None
     digital_trx_id: str | None = None
     cashier_name: str | None = None
+    client_trx_id: str | None = None
 
 class SaleItemDetailResponse(CamelModel):
     id: int
@@ -56,5 +57,6 @@ class SaleResponse(CamelModel):
     digital_trx_id: str | None = None
     due_amount: Decimal
     cashier_name: str | None = None
+    client_trx_id: str | None = None
     total_profit: Decimal
     items: list[SaleItemDetailResponse]

@@ -41,6 +41,17 @@ async def lifespan(app: FastAPI):
     # 1. Ensure all tables exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Auto-upgrade existing database schema for client_trx_id column
+        from sqlalchemy import text
+        for table, col in [
+            ("sale", "client_trx_id VARCHAR(64)"),
+            ("customer_ledger", "client_trx_id VARCHAR(64)"),
+            ("sale_return", "client_trx_id VARCHAR(64)"),
+        ]:
+            try:
+                await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col}"))
+            except Exception:
+                pass  # column already exists
 
     # 2. Seed initial data if empty
     from app.database import async_session_maker

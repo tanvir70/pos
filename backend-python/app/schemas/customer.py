@@ -44,6 +44,7 @@ class CustomerPaymentRequest(CamelModel):
     payment_method: str = "CASH"
     money_receipt_no: str | None = None
     notes: str | None = None
+    client_trx_id: str | None = None
 
 class CustomerLedgerDto(CamelModel):
     id: int
@@ -56,3 +57,4 @@ class CustomerLedgerDto(CamelModel):
     money_receipt_no: str | None = None
     sale_id: int | None = None
     notes: str | None = None
+    client_trx_id: str | None = None

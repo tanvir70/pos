@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Header, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -70,6 +70,9 @@ async def record_payment(
     customer_id: int,
     body: CustomerPaymentRequest,
     db: AsyncSession = Depends(get_db),
+    x_idempotency_key: str | None = Header(default=None, alias="X-Idempotency-Key"),
 ) -> CustomerLedgerDto:
-    return await customer_service.record_customer_payment(db, customer_id, body)
+    return await customer_service.record_customer_payment(
+        db, customer_id, body, client_trx_id=x_idempotency_key
+    )
 

@@ -38,6 +38,7 @@ class Sale(Base):
     digital_trx_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     due_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0.00"), nullable=False)
     cashier_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    client_trx_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True, index=True)
 
     customer = relationship("Customer", lazy="joined")
     items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan", lazy="selectin")

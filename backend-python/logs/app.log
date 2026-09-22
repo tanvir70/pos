@@ -31,3 +31,1161 @@
 2026-09-21 20:51:56 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 401 Unauthorized"
 2026-09-21 20:51:56 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
 2026-09-21 20:51:56 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 17:08:20 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=1 "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000006, total=1300.00, paid=500.00, due=800.00, customer=করিম মিয়া
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: GET http://test/api/barcode/SYN-AMI-202502 "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/download "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 17:08:20 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: GET http://test/api/products?query=Test "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: PUT http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [httpx]: HTTP Request: DELETE http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 17:08:20 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 17:08:21 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 17:08:21 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 17:08:21 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 17:08:21 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 17:08:21 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:10:40 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:10:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:10:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:10:41 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:10:41 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=1 "HTTP/1.1 200 OK"
+2026-09-22 18:10:41 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:10:41 [ERROR] [app]: Unhandled 500 error processing POST /api/sales: (sqlite3.OperationalError) table sale has no column named client_trx_id
+[SQL: INSERT INTO sale (version, invoice_no, sale_date, customer_id, sale_mode, subtotal, discount, round_off, total_amount, payment_method, cash_paid, cash_tendered, change_amount, digital_paid, digital_medium, digital_trx_id, due_amount, cashier_name, client_trx_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (0, 'INV-20260922-0000007', '2026-09-22 18:10:41.231314', 2, 'RETAIL', 1300.0, 0.0, 0.0, 1300.0, 'CASH', 500.0, 500.0, 0.0, 0.0, None, None, 800.0, None, None)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: table sale has no column named client_trx_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2734, in app
+    await route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1780, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2789, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1800, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1279, in handle
+    await app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 158, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 144, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 706, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 352, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/routers/sales.py", line 16, in create_sale
+    return await sale_service.process_sale(db, body, client_trx_id=x_idempotency_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/services/sale_service.py", line 251, in process_sale
+    await db.flush()
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 787, in flush
+    await greenlet_spawn(self.sync_session.flush, objects=objects)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 203, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 122, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 465, in execute
+    rec.execute(self)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/unitofwork.py", line 641, in execute
+    util.preloaded.orm_persistence.save_obj(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 94, in save_obj
+    _emit_insert_statements(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/persistence.py", line 1234, in _emit_insert_statements
+    result = connection.execute(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1421, in execute
+    return meth(
+           ^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1643, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1848, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1988, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2365, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) table sale has no column named client_trx_id
+[SQL: INSERT INTO sale (version, invoice_no, sale_date, customer_id, sale_mode, subtotal, discount, round_off, total_amount, payment_method, cash_paid, cash_tendered, change_amount, digital_paid, digital_medium, digital_trx_id, due_amount, cashier_name, client_trx_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: (0, 'INV-20260922-0000007', '2026-09-22 18:10:41.231314', 2, 'RETAIL', 1300.0, 0.0, 0.0, 1300.0, 'CASH', 500.0, 500.0, 0.0, 0.0, None, None, 800.0, None, None)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-09-22 18:10:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:10:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:10:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:10:41 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:10:41 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:10:41 [ERROR] [app]: Unhandled 500 error processing POST /api/sales: (sqlite3.OperationalError) no such column: sale.client_trx_id
+[SQL: SELECT sale.id, sale.version, sale.invoice_no, sale.sale_date, sale.customer_id, sale.sale_mode, sale.subtotal, sale.discount, sale.round_off, sale.total_amount, sale.payment_method, sale.cash_paid, sale.cash_tendered, sale.change_amount, sale.digital_paid, sale.digital_medium, sale.digital_trx_id, sale.due_amount, sale.cashier_name, sale.client_trx_id 
+FROM sale 
+WHERE sale.client_trx_id = ?]
+[parameters: ('IDEM-TEST-HEADER-001',)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: sale.client_trx_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2734, in app
+    await route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1780, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2789, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1800, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1279, in handle
+    await app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 158, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 144, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 706, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 352, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/routers/sales.py", line 16, in create_sale
+    return await sale_service.process_sale(db, body, client_trx_id=x_idempotency_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/services/sale_service.py", line 91, in process_sale
+    existing_res = await db.execute(existing_stmt)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 449, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2373, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2271, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1421, in execute
+    return meth(
+           ^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1643, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1848, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1988, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2365, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: sale.client_trx_id
+[SQL: SELECT sale.id, sale.version, sale.invoice_no, sale.sale_date, sale.customer_id, sale.sale_mode, sale.subtotal, sale.discount, sale.round_off, sale.total_amount, sale.payment_method, sale.cash_paid, sale.cash_tendered, sale.change_amount, sale.digital_paid, sale.digital_medium, sale.digital_trx_id, sale.due_amount, sale.cashier_name, sale.client_trx_id 
+FROM sale 
+WHERE sale.client_trx_id = ?]
+[parameters: ('IDEM-TEST-HEADER-001',)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-09-22 18:10:42 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:10:42 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:10:42 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:10:42 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:10:42 [ERROR] [app]: Unhandled 500 error processing POST /api/sales: (sqlite3.OperationalError) no such column: sale.client_trx_id
+[SQL: SELECT sale.id, sale.version, sale.invoice_no, sale.sale_date, sale.customer_id, sale.sale_mode, sale.subtotal, sale.discount, sale.round_off, sale.total_amount, sale.payment_method, sale.cash_paid, sale.cash_tendered, sale.change_amount, sale.digital_paid, sale.digital_medium, sale.digital_trx_id, sale.due_amount, sale.cashier_name, sale.client_trx_id 
+FROM sale 
+WHERE sale.client_trx_id = ?]
+[parameters: ('IDEM-TEST-BODY-002',)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: sale.client_trx_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2734, in app
+    await route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1780, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2789, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1800, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1279, in handle
+    await app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 158, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 144, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 706, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 352, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/routers/sales.py", line 16, in create_sale
+    return await sale_service.process_sale(db, body, client_trx_id=x_idempotency_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/services/sale_service.py", line 91, in process_sale
+    existing_res = await db.execute(existing_stmt)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 449, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2373, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2271, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1421, in execute
+    return meth(
+           ^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1643, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1848, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1988, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2365, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: sale.client_trx_id
+[SQL: SELECT sale.id, sale.version, sale.invoice_no, sale.sale_date, sale.customer_id, sale.sale_mode, sale.subtotal, sale.discount, sale.round_off, sale.total_amount, sale.payment_method, sale.cash_paid, sale.cash_tendered, sale.change_amount, sale.digital_paid, sale.digital_medium, sale.digital_trx_id, sale.due_amount, sale.cashier_name, sale.client_trx_id 
+FROM sale 
+WHERE sale.client_trx_id = ?]
+[parameters: ('IDEM-TEST-BODY-002',)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-09-22 18:10:42 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:10:43 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:10:43 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:10:43 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:10:43 [ERROR] [app]: Unhandled 500 error processing POST /api/customers/2/payments: (sqlite3.OperationalError) no such column: customer_ledger.client_trx_id
+[SQL: SELECT customer_ledger.id, customer_ledger.customer_id, customer_ledger.transaction_date, customer_ledger.transaction_type, customer_ledger.debit, customer_ledger.credit, customer_ledger.balance_after, customer_ledger.money_receipt_no, customer_ledger.sale_id, customer_ledger.client_trx_id, customer_ledger.notes, customer_1.id AS id_1, customer_1.version, customer_1.name, customer_1.father_name, customer_1.business_name, customer_1.phone, customer_1.whatsapp_number, customer_1.email, customer_1.village_address, customer_1.customer_type, customer_1.credit_limit, customer_1.current_due, customer_1.total_purchases, customer_1.mfs_type, customer_1.mfs_number, customer_1.bank_name, customer_1.bank_branch, customer_1.bank_account_no, customer_1.created_at 
+FROM customer_ledger LEFT OUTER JOIN customer AS customer_1 ON customer_1.id = customer_ledger.customer_id 
+WHERE customer_ledger.customer_id = ? AND customer_ledger.client_trx_id = ?]
+[parameters: (2, 'IDEM-PAY-TEST-003')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: customer_ledger.client_trx_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2734, in app
+    await route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1780, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2789, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1800, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1279, in handle
+    await app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 158, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 144, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 706, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 352, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/routers/customers.py", line 75, in record_payment
+    return await customer_service.record_customer_payment(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/services/customer_service.py", line 201, in record_customer_payment
+    existing_res = await db.execute(existing_stmt)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 449, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2373, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2271, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1421, in execute
+    return meth(
+           ^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1643, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1848, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1988, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2365, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: customer_ledger.client_trx_id
+[SQL: SELECT customer_ledger.id, customer_ledger.customer_id, customer_ledger.transaction_date, customer_ledger.transaction_type, customer_ledger.debit, customer_ledger.credit, customer_ledger.balance_after, customer_ledger.money_receipt_no, customer_ledger.sale_id, customer_ledger.client_trx_id, customer_ledger.notes, customer_1.id AS id_1, customer_1.version, customer_1.name, customer_1.father_name, customer_1.business_name, customer_1.phone, customer_1.whatsapp_number, customer_1.email, customer_1.village_address, customer_1.customer_type, customer_1.credit_limit, customer_1.current_due, customer_1.total_purchases, customer_1.mfs_type, customer_1.mfs_number, customer_1.bank_name, customer_1.bank_branch, customer_1.bank_account_no, customer_1.created_at 
+FROM customer_ledger LEFT OUTER JOIN customer AS customer_1 ON customer_1.id = customer_ledger.customer_id 
+WHERE customer_ledger.customer_id = ? AND customer_ledger.client_trx_id = ?]
+[parameters: (2, 'IDEM-PAY-TEST-003')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-09-22 18:10:43 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:10:43 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:10:43 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:10:43 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:10:43 [ERROR] [app]: Unhandled 500 error processing POST /api/returns: (sqlite3.OperationalError) no such column: sale_return.client_trx_id
+[SQL: SELECT sale_return.id, sale_return.return_no, sale_return.original_sale_id, sale_return.customer_id, sale_return.return_date, sale_return.total_refund_amount, sale_return.refund_type, sale_return.reason, sale_return.client_trx_id, customer_1.id AS id_1, customer_1.version, customer_1.name, customer_1.father_name, customer_1.business_name, customer_1.phone, customer_1.whatsapp_number, customer_1.email, customer_1.village_address, customer_1.customer_type, customer_1.credit_limit, customer_1.current_due, customer_1.total_purchases, customer_1.mfs_type, customer_1.mfs_number, customer_1.bank_name, customer_1.bank_branch, customer_1.bank_account_no, customer_1.created_at, sale_1.id AS id_2, sale_1.version AS version_1, sale_1.invoice_no, sale_1.sale_date, sale_1.customer_id AS customer_id_1, sale_1.sale_mode, sale_1.subtotal, sale_1.discount, sale_1.round_off, sale_1.total_amount, sale_1.payment_method, sale_1.cash_paid, sale_1.cash_tendered, sale_1.change_amount, sale_1.digital_paid, sale_1.digital_medium, sale_1.digital_trx_id, sale_1.due_amount, sale_1.cashier_name, sale_1.client_trx_id AS client_trx_id_1 
+FROM sale_return LEFT OUTER JOIN sale AS sale_1 ON sale_1.id = sale_return.original_sale_id LEFT OUTER JOIN customer AS customer_1 ON customer_1.id = sale_1.customer_id 
+WHERE sale_return.client_trx_id = ?]
+[parameters: ('IDEM-RET-TEST-004',)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlite3.OperationalError: no such column: sale_return.client_trx_id
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/cors.py", line 88, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2734, in app
+    await route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1780, in handle
+    await self.original_router.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 2789, in handle
+    await included_router._handle_selected(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1800, in _handle_selected
+    await original_route.handle(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 1279, in handle
+    await app(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 158, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 144, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 706, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/fastapi/routing.py", line 352, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/routers/returns.py", line 16, in create_return
+    return await returns_service.process_return(db, body, client_trx_id=x_idempotency_key)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/Desktop/POS & Inventory Prototype/backend-python/app/services/returns_service.py", line 74, in process_return
+    existing_res = await db.execute(existing_stmt)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/session.py", line 449, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2373, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2271, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1421, in execute
+    return meth(
+           ^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1643, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1848, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1988, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2365, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1969, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+    cursor.execute(statement, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 213, in execute
+    self._adapt_connection._handle_exception(error)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 373, in _handle_exception
+    raise error
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py", line 195, in execute
+    self.await_(_cursor.execute(operation, parameters))
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/sqlalchemy/util/_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 40, in execute
+    await self._execute(self._cursor.execute, sql, parameters)
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/cursor.py", line 32, in _execute
+    return await self._conn._execute(fn, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 160, in _execute
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/tanvirar/.cache/uv/archive-v0/g9LSQh4rcnbi688I/lib/python3.11/site-packages/aiosqlite/core.py", line 63, in _connection_worker_thread
+    result = function()
+             ^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: sale_return.client_trx_id
+[SQL: SELECT sale_return.id, sale_return.return_no, sale_return.original_sale_id, sale_return.customer_id, sale_return.return_date, sale_return.total_refund_amount, sale_return.refund_type, sale_return.reason, sale_return.client_trx_id, customer_1.id AS id_1, customer_1.version, customer_1.name, customer_1.father_name, customer_1.business_name, customer_1.phone, customer_1.whatsapp_number, customer_1.email, customer_1.village_address, customer_1.customer_type, customer_1.credit_limit, customer_1.current_due, customer_1.total_purchases, customer_1.mfs_type, customer_1.mfs_number, customer_1.bank_name, customer_1.bank_branch, customer_1.bank_account_no, customer_1.created_at, sale_1.id AS id_2, sale_1.version AS version_1, sale_1.invoice_no, sale_1.sale_date, sale_1.customer_id AS customer_id_1, sale_1.sale_mode, sale_1.subtotal, sale_1.discount, sale_1.round_off, sale_1.total_amount, sale_1.payment_method, sale_1.cash_paid, sale_1.cash_tendered, sale_1.change_amount, sale_1.digital_paid, sale_1.digital_medium, sale_1.digital_trx_id, sale_1.due_amount, sale_1.cashier_name, sale_1.client_trx_id AS client_trx_id_1 
+FROM sale_return LEFT OUTER JOIN sale AS sale_1 ON sale_1.id = sale_return.original_sale_id LEFT OUTER JOIN customer AS customer_1 ON customer_1.id = sale_1.customer_id 
+WHERE sale_return.client_trx_id = ?]
+[parameters: ('IDEM-RET-TEST-004',)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-09-22 18:10:44 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:10:44 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: GET http://test/api/products?query=Test "HTTP/1.1 200 OK"
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: PUT http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: DELETE http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:10:44 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:10:44 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:10:44 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:11:08 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:09 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=1 "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000001, total=1300.00, paid=500.00, due=800.00, customer=করিম মিয়া
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/barcode/SYN-AMI-202502 "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/download "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:09 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000002, total=650.00, paid=650.00, due=0.00, customer=Walk-in
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-HEADER-001 (invoice=INV-20260922-0000002)
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:09 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000003, total=325.00, paid=325.00, due=0.00, customer=Walk-in
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:09 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-BODY-002 (invoice=INV-20260922-0000003)
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:09 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:09 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [customer]: Idempotent replay for customer payment: key=IDEM-PAY-TEST-003, ledger_id=5
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:11:09 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:11:09 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:10 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:11:10 [INFO] [returns]: Idempotent replay for return with client_trx_id=IDEM-RET-TEST-004 (return_no=RET-20260922-0000002)
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:11:10 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:10 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: GET http://test/api/products?query=Test "HTTP/1.1 200 OK"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: PUT http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: DELETE http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:11:10 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:10 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:11:10 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:11:40 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:40 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=1 "HTTP/1.1 200 OK"
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:11:40 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000001, total=1300.00, paid=500.00, due=800.00, customer=করিম মিয়া
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: GET http://test/api/barcode/SYN-AMI-202502 "HTTP/1.1 200 OK"
+2026-09-22 18:11:40 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/download "HTTP/1.1 200 OK"
+2026-09-22 18:11:40 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000002, total=650.00, paid=650.00, due=0.00, customer=Walk-in
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-HEADER-001 (invoice=INV-20260922-0000002)
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000003, total=325.00, paid=325.00, due=0.00, customer=Walk-in
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:41 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-BODY-002 (invoice=INV-20260922-0000003)
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [customer]: Idempotent replay for customer payment: key=IDEM-PAY-TEST-003, ledger_id=5
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:11:41 [INFO] [returns]: Idempotent replay for return with client_trx_id=IDEM-RET-TEST-004 (return_no=RET-20260922-0000002)
+2026-09-22 18:11:41 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:11:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:42 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:11:42 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000004, total=650.00, paid=650.00, due=0.00, customer=Walk-in
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:42 [WARNING] [sales]: Race collision detected on client_trx_id=IDEM-CONCURRENT-005. Fetching already committed sale.
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:42 [WARNING] [sales]: Race collision detected on client_trx_id=IDEM-CONCURRENT-005. Fetching already committed sale.
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:11:42 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:42 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: GET http://test/api/products?query=Test "HTTP/1.1 200 OK"
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: PUT http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: DELETE http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:11:42 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:11:42 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:11:42 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:24:12 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:24:13 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=1 "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000005, total=1300.00, paid=500.00, due=800.00, customer=করিম মিয়া
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/barcode/SYN-AMI-202502 "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/download "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:24:13 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-HEADER-001 (invoice=INV-20260922-0000002)
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:24:13 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-BODY-002 (invoice=INV-20260922-0000003)
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:24:13 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-BODY-002 (invoice=INV-20260922-0000003)
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:24:13 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:24:13 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [customer]: Idempotent replay for customer payment: key=IDEM-PAY-TEST-003, ledger_id=5
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:24:13 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:24:13 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:24:14 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [returns]: Idempotent replay for return with client_trx_id=IDEM-RET-TEST-004 (return_no=RET-20260922-0000002)
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:24:14 [INFO] [returns]: Idempotent replay for return with client_trx_id=IDEM-RET-TEST-004 (return_no=RET-20260922-0000002)
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:24:14 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:24:14 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-CONCURRENT-005 (invoice=INV-20260922-0000004)
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:24:14 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-CONCURRENT-005 (invoice=INV-20260922-0000004)
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:24:14 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-CONCURRENT-005 (invoice=INV-20260922-0000004)
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:24:14 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:24:14 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: GET http://test/api/products?query=Test "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: PUT http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: DELETE http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:24:14 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:24:14 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:25:14 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:15 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=1 "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000006, total=1300.00, paid=500.00, due=800.00, customer=করিম মিয়া
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/barcode/SYN-AMI-202502 "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/download "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:15 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000007, total=650.00, paid=650.00, due=0.00, customer=Walk-in
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-HEADER-3314a85c-a105-4efc-87f3-69fb86febe70 (invoice=INV-20260922-0000007)
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:15 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000008, total=325.00, paid=325.00, due=0.00, customer=Walk-in
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:15 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-BODY-add0e6e0-ac90-4595-a96a-cb4c392132cd (invoice=INV-20260922-0000008)
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:15 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:15 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [customer]: Idempotent replay for customer payment: key=IDEM-PAY-TEST-0fedb7f0-4994-4ade-86ff-847623e4b0ab, ledger_id=12
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:25:15 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:25:15 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:16 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:25:16 [INFO] [returns]: Idempotent replay for return with client_trx_id=IDEM-RET-TEST-6d82643f-d000-4628-ac83-b322a36d71e4 (return_no=RET-20260922-0000005)
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:25:16 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:16 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000009, total=650.00, paid=650.00, due=0.00, customer=Walk-in
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:16 [WARNING] [sales]: Race collision detected on client_trx_id=IDEM-CONCURRENT-3009418e-1a5c-4fdc-80f2-b43aa2fd32cf. Fetching already committed sale.
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:16 [WARNING] [sales]: Race collision detected on client_trx_id=IDEM-CONCURRENT-3009418e-1a5c-4fdc-80f2-b43aa2fd32cf. Fetching already committed sale.
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:16 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:16 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: GET http://test/api/products?query=Test "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: PUT http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: DELETE http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:16 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:25:16 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:25:26 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:26 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=1 "HTTP/1.1 200 OK"
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:25:26 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000010, total=1300.00, paid=500.00, due=800.00, customer=করিম মিয়া
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: GET http://test/api/barcode/SYN-AMI-202502 "HTTP/1.1 200 OK"
+2026-09-22 18:25:26 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/download "HTTP/1.1 200 OK"
+2026-09-22 18:25:26 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:27 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000011, total=650.00, paid=650.00, due=0.00, customer=Walk-in
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-HEADER-300940c5-ce51-4ee4-9613-0ea4ec5031c0 (invoice=INV-20260922-0000011)
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:27 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000012, total=325.00, paid=325.00, due=0.00, customer=Walk-in
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:27 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-BODY-6c7b727d-11c3-4425-a702-ee4cb576aa20 (invoice=INV-20260922-0000012)
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:27 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:27 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [customer]: Idempotent replay for customer payment: key=IDEM-PAY-TEST-bdfb1774-7322-4f9e-9d89-dd33fa8af490, ledger_id=16
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:27 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:25:27 [INFO] [returns]: Idempotent replay for return with client_trx_id=IDEM-RET-TEST-97812752-56b6-4a73-8e57-0f171762050d (return_no=RET-20260922-0000007)
+2026-09-22 18:25:27 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-09-22 18:25:27 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:28 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:28 [INFO] [sales]: Sale completed: invoice=INV-20260922-0000013, total=650.00, paid=650.00, due=0.00, customer=Walk-in
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:28 [WARNING] [sales]: Race collision detected on client_trx_id=IDEM-CONCURRENT-ae8bfa8a-dc8c-4a4f-bd32-9c68b3124363. Fetching already committed sale.
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:28 [WARNING] [sales]: Race collision detected on client_trx_id=IDEM-CONCURRENT-ae8bfa8a-dc8c-4a4f-bd32-9c68b3124363. Fetching already committed sale.
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-09-22 18:25:28 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:28 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: GET http://test/api/products?query=Test "HTTP/1.1 200 OK"
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: PUT http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: DELETE http://test/api/products/7 "HTTP/1.1 200 OK"
+2026-09-22 18:25:28 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
+2026-09-22 18:25:28 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-09-22 18:25:28 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"

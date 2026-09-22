@@ -2,6 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from fastapi import HTTPException, status
 from sqlalchemy import desc, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -69,11 +70,34 @@ def to_sale_response(sale: Sale) -> SaleResponse:
         digital_trx_id=sale.digital_trx_id,
         due_amount=sale.due_amount,
         cashier_name=sale.cashier_name,
+        client_trx_id=sale.client_trx_id,
         total_profit=total_profit,
         items=item_responses,
     )
 
-async def process_sale(db: AsyncSession, req: SaleRequest) -> SaleResponse:
+async def process_sale(
+    db: AsyncSession, req: SaleRequest, client_trx_id: str | None = None
+) -> SaleResponse:
+    effective_key = (req.client_trx_id or client_trx_id or "").strip() or None
+    if effective_key:
+        existing_stmt = (
+            select(Sale)
+            .where(Sale.client_trx_id == effective_key)
+            .options(
+                selectinload(Sale.customer),
+                selectinload(Sale.items).selectinload(SaleItem.lot).selectinload(InventoryLot.product),
+            )
+        )
+        existing_res = await db.execute(existing_stmt)
+        existing_sale = existing_res.scalar_one_or_none()
+        if existing_sale:
+            logger.info(
+                "Idempotent replay for sale with client_trx_id=%s (invoice=%s)",
+                effective_key,
+                existing_sale.invoice_no,
+            )
+            return to_sale_response(existing_sale)
+
     if not req.items:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Sale must have at least one item"
@@ -220,9 +244,30 @@ async def process_sale(db: AsyncSession, req: SaleRequest) -> SaleResponse:
         digital_trx_id=req.digital_trx_id,
         due_amount=due_amount,
         cashier_name=req.cashier_name,
+        client_trx_id=effective_key,
     )
     db.add(sale)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError as ex:
+        if effective_key:
+            await db.rollback()
+            logger.warning(
+                "Race collision detected on client_trx_id=%s. Fetching already committed sale.",
+                effective_key,
+            )
+            stmt = (
+                select(Sale)
+                .where(Sale.client_trx_id == effective_key)
+                .options(
+                    selectinload(Sale.customer),
+                    selectinload(Sale.items).selectinload(SaleItem.lot).selectinload(InventoryLot.product),
+                )
+            )
+            existing_sale = (await db.execute(stmt)).scalar_one_or_none()
+            if existing_sale:
+                return to_sale_response(existing_sale)
+        raise
 
     for it in sale_items:
         it.sale_id = sale.id
