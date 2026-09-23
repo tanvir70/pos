@@ -13,6 +13,7 @@ import type { NavigationTab } from "./types"
 import { ToastProvider } from "./context/ToastContext"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { CartProvider } from "./context/CartContext"
+import { SplashScreen } from "./components/ui"
 import { isTypingTarget } from "./utils/keyboard"
 
 const SIDEBAR_OPEN_KEY = "pos_sidebar_open"
@@ -102,7 +103,7 @@ function AppShell() {
   }, [tab, toggleFocusMode])
 
   if (isLoading) {
-    return <div className="min-h-screen bg-slate-50" />
+    return <SplashScreen />
   }
 
   if (!isAuthenticated) {

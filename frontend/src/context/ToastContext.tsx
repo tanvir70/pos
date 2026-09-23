@@ -112,6 +112,14 @@ function parseErrorMessage(err: unknown): { title: string; message: string } {
         message: "You do not have permission to complete this action.",
       }
     }
+    if (err.status === 408 || err.errorCode === "REQUEST_TIMEOUT") {
+      return {
+        title: "Connection Timeout",
+        message:
+          "The server took too long to respond. If you were recording a sale, your cart is safely preserved. Please verify connection and retry.",
+      }
+    }
+
     if (err.status >= 500) {
       return {
         title: "Server Error",
@@ -133,6 +141,17 @@ function parseErrorMessage(err: unknown): { title: string; message: string } {
       return {
         title: "Network Disconnected",
         message: "Could not connect to the server. Check that the local server is running.",
+      }
+    }
+    if (
+      err.name === "TimeoutError" ||
+      err.message.toLowerCase().includes("timed out") ||
+      err.message.toLowerCase().includes("timeout")
+    ) {
+      return {
+        title: "Connection Timeout",
+        message:
+          "The server took too long to respond. If you were recording a sale, your cart is safely preserved. Please verify connection and retry.",
       }
     }
     return {

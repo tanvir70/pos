@@ -99,6 +99,35 @@ function generateIdempotencyKey(): string {
   return `idemp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }
 
+export const DEFAULT_REQUEST_TIMEOUT_MS = 12000
+export const DEFAULT_DOWNLOAD_TIMEOUT_MS = 30000
+
+function createTimeoutSignal(timeoutMs: number, customSignal?: AbortSignal | null) {
+  const controller = new AbortController()
+  let isTimedOut = false
+
+  const timeoutId = setTimeout(() => {
+    isTimedOut = true
+    controller.abort(new DOMException(`Request timed out after ${Math.round(timeoutMs / 1000)} seconds`, "TimeoutError"))
+  }, timeoutMs)
+
+  if (customSignal) {
+    if (customSignal.aborted) {
+      controller.abort(customSignal.reason)
+    } else {
+      customSignal.addEventListener("abort", () => {
+        controller.abort(customSignal.reason)
+      })
+    }
+  }
+
+  const cleanup = () => {
+    clearTimeout(timeoutId)
+  }
+
+  return { signal: controller.signal, isTimedOut: () => isTimedOut, cleanup }
+}
+
 /**
  * Lean native fetch wrapper for typed JSON requests.
  */
@@ -134,10 +163,33 @@ export async function apiClient<T>(
     headers.set("X-Idempotency-Key", generateIdempotencyKey())
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  })
+  const { signal, isTimedOut, cleanup } = createTimeoutSignal(
+    DEFAULT_REQUEST_TIMEOUT_MS,
+    options?.signal,
+  )
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+      signal,
+    })
+  } catch (err: unknown) {
+    if (isTimedOut() || (err instanceof DOMException && err.name === "TimeoutError")) {
+      throw new ApiError(
+        "Request timed out. The server may be busy or connection was interrupted.",
+        408,
+        "REQUEST_TIMEOUT",
+      )
+    }
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new ApiError("Request was cancelled.", 499, "CLIENT_ABORTED")
+    }
+    throw err
+  } finally {
+    cleanup()
+  }
 
   if (!response.ok) {
     let errorDetail = response.statusText
@@ -204,7 +256,26 @@ export async function downloadBlob(
     headers.set("Authorization", `Bearer ${token}`)
   }
 
-  const response = await fetch(url, { ...options, headers })
+  const { signal, isTimedOut, cleanup } = createTimeoutSignal(
+    DEFAULT_DOWNLOAD_TIMEOUT_MS,
+    options?.signal,
+  )
+
+  let response: Response
+  try {
+    response = await fetch(url, { ...options, headers, signal })
+  } catch (err: unknown) {
+    if (isTimedOut() || (err instanceof DOMException && err.name === "TimeoutError")) {
+      throw new ApiError(
+        "Download timed out after 30 seconds. Please try again.",
+        408,
+        "REQUEST_TIMEOUT",
+      )
+    }
+    throw err
+  } finally {
+    cleanup()
+  }
 
   if (!response.ok) {
     let message = `Failed to download file (${response.status} ${response.statusText})`
@@ -250,7 +321,27 @@ export async function fetchBlob(
     ? endpoint
     : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`
 
-  const response = await fetch(url, options)
+  const { signal, isTimedOut, cleanup } = createTimeoutSignal(
+    DEFAULT_REQUEST_TIMEOUT_MS,
+    options?.signal,
+  )
+
+  let response: Response
+  try {
+    response = await fetch(url, { ...options, signal })
+  } catch (err: unknown) {
+    if (isTimedOut() || (err instanceof DOMException && err.name === "TimeoutError")) {
+      throw new ApiError(
+        "Failed to fetch image: Request timed out.",
+        408,
+        "REQUEST_TIMEOUT",
+      )
+    }
+    throw err
+  } finally {
+    cleanup()
+  }
+
   if (!response.ok) {
     throw new ApiError(
       `Failed to fetch blob (${response.status})`,

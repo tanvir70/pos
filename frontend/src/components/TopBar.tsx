@@ -1,5 +1,6 @@
 import { PanelLeftClose, PanelLeftOpen, Sprout } from "lucide-react"
 import type { NavigationTab } from "../types"
+import NetworkStatusBadge from "./NetworkStatusBadge"
 
 export interface TopBarProps {
   isSidebarOpen: boolean
@@ -54,8 +55,12 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
           {TAB_LABELS[activeTab]}
         </span>
       </div>
-      <div className="text-[11px] font-semibold text-slate-500 shrink-0">
-        Full access
+      <div className="flex items-center gap-3 shrink-0">
+        <NetworkStatusBadge />
+        <div className="h-4 w-px bg-slate-200" />
+        <div className="text-[11px] font-semibold text-slate-500 shrink-0">
+          Full access
+        </div>
       </div>
     </header>
   )
