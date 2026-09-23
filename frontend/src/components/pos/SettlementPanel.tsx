@@ -17,6 +17,8 @@ import { formatTk, roundAccounting } from "../../utils/currency"
 import { getWholesaleSettings, type WholesaleSettings } from "../../utils/wholesaleSettings"
 import Button from "../ui/Button"
 import Collapse from "../ui/Collapse"
+import Badge from "../ui/Badge"
+import { Separator } from "../ui/separator"
 
 export interface SettlementPanelProps {
   isSubmitting?: boolean
@@ -175,7 +177,7 @@ export default function SettlementPanel({
             }
             className={`shrink-0 rounded-md border px-2.5 py-1 text-[10px] font-black uppercase transition-colors cursor-pointer ${
               saleMode === "WHOLESALE"
-                ? "border-emerald-300 bg-emerald-300 text-slate-950"
+                ? "border-emerald-300 bg-emerald-300 text-slate-950 shadow-xs"
                 : "border-white/15 bg-white/5 text-slate-200 hover:bg-white/10"
             }`}
           >
@@ -248,34 +250,42 @@ export default function SettlementPanel({
                 Cash received
               </label>
               <div className="flex items-center gap-1">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={handleSetExactCash}
-                  className="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="h-6 px-2 text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   Exact
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleQuickCashAdd(100)}
-                  className="rounded-md border border-slate-200 bg-white px-1.5 py-1 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="h-6 px-1.5 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   +100
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleQuickCashAdd(500)}
-                  className="rounded-md border border-slate-200 bg-white px-1.5 py-1 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="h-6 px-1.5 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   +500
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleQuickCashAdd(1000)}
-                  className="rounded-md border border-slate-200 bg-white px-1.5 py-1 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="h-6 px-1.5 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   +1000
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -327,13 +337,15 @@ export default function SettlementPanel({
                 Due amount (to ledger)
               </label>
               <div className="flex items-center gap-1">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={handleSetFullDue}
-                  className="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-800 hover:bg-amber-100 cursor-pointer"
+                  className="h-6 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 text-[10px] font-bold cursor-pointer px-2"
                 >
                   Full Due
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -386,9 +398,9 @@ export default function SettlementPanel({
               <Percent className="h-3.5 w-3.5 text-slate-500" />
               Adjustments
               {hasAdjustments && (
-                <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] text-emerald-800">
+                <Badge variant="success" className="text-[10px] py-0 px-1.5">
                   Applied
-                </span>
+                </Badge>
               )}
             </span>
             <span className="text-[11px] text-slate-400">

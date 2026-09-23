@@ -2,6 +2,17 @@ import React, { useState, useEffect } from "react"
 import type { TopSellingProduct, PagedResponse } from "../../types"
 import { getTopSellingProducts } from "../../api/endpoints"
 import { Package, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "../ui/Card"
+import Badge from "../ui/Badge"
+import Button from "../ui/Button"
+import { Separator } from "../ui/separator"
 
 export interface TopSellingProductsProps {
   onProductClick?: (productId: number) => void
@@ -48,61 +59,48 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({ onProduc
   const products = pagedData?.content || []
 
   return (
-    <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex flex-col justify-between h-full">
+    <Card className="rounded-2xl border-slate-200/90 shadow-xs flex flex-col justify-between h-full overflow-hidden">
       {/* Card Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-            <TrendingUp className="w-4 h-4" />
+      <CardHeader className="p-5 pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <div>
+              <CardTitle className="text-sm sm:text-base font-bold text-slate-900">
+                Top Selling Products
+              </CardTitle>
+              <CardDescription className="text-[11px] text-slate-400">
+                High-velocity items by volume
+              </CardDescription>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-              Top Selling Products
-            </h3>
-            <p className="text-[11px] text-slate-400">High-velocity items by volume</p>
-          </div>
-        </div>
 
-        {/* Period Selector Tabs */}
-        <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-xs font-semibold text-slate-600">
-          <button
-            type="button"
-            onClick={() => handlePeriodChange("week")}
-            className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
-              period === "week"
-                ? "bg-white text-slate-900 shadow-xs font-bold"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            Week
-          </button>
-          <button
-            type="button"
-            onClick={() => handlePeriodChange("month")}
-            className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
-              period === "month"
-                ? "bg-white text-slate-900 shadow-xs font-bold"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            Month
-          </button>
-          <button
-            type="button"
-            onClick={() => handlePeriodChange("all")}
-            className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
-              period === "all"
-                ? "bg-white text-slate-900 shadow-xs font-bold"
-                : "text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            All
-          </button>
+          {/* Period Selector Tabs */}
+          <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-xs font-semibold text-slate-600">
+            {(["week", "month", "all"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => handlePeriodChange(t)}
+                className={`px-2 py-1 rounded-md transition-all cursor-pointer capitalize text-xs ${
+                  period === t
+                    ? "bg-white text-slate-900 shadow-xs font-bold"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                {t === "week" ? "Week" : t === "month" ? "Month" : "All"}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </CardHeader>
+
+      <Separator />
 
       {/* Product List Content */}
-      <div className="flex-1 min-h-[320px]">
+      <CardContent className="p-5 flex-1 min-h-[320px]">
         {isLoading ? (
           <div className="space-y-3 py-2">
             {[...Array(6)].map((_, i) => (
@@ -112,7 +110,7 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({ onProduc
                   <div className="w-3/4 h-3 bg-slate-100 rounded" />
                   <div className="w-1/2 h-2.5 bg-slate-50 rounded" />
                 </div>
-                <div className="w-14 h-4 bg-slate-100 rounded" />
+                <div className="w-14 h-4 bg-slate-100 rounded ml-auto" />
               </div>
             ))}
           </div>
@@ -143,9 +141,13 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({ onProduc
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
                       <span className="font-mono text-slate-500">{item.productCode}</span>
                       <span>•</span>
-                      <span className="text-emerald-600 font-semibold">
-                        {item.percentageShare ? `${item.percentageShare}% share` : item.unit}
-                      </span>
+                      {item.percentageShare ? (
+                        <Badge variant="emerald" className="text-[10px] px-1.5 py-0">
+                          {item.percentageShare}% share
+                        </Badge>
+                      ) : (
+                        <span className="text-slate-500">{item.unit}</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -163,44 +165,51 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({ onProduc
             ))}
           </div>
         )}
-      </div>
+      </CardContent>
 
       {/* Pagination Footer */}
       {pagedData && pagedData.totalElements > 0 && (
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span className="text-[11px] text-slate-500">
-            Showing <span className="font-semibold text-slate-900">{products.length}</span> of{" "}
-            <span className="font-semibold text-slate-900">{pagedData.totalElements}</span> items
-          </span>
-
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={page === 0 || isLoading}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer font-semibold text-xs"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span>Prev</span>
-            </button>
-
-            <span className="px-2 text-slate-600 font-medium text-xs">
-              {page + 1} / {pagedData.totalPages || 1}
+        <>
+          <Separator />
+          <CardFooter className="p-4 py-3 flex items-center justify-between text-xs text-slate-500">
+            <span className="text-[11px] text-slate-500">
+              Showing <span className="font-semibold text-slate-900">{products.length}</span> of{" "}
+              <span className="font-semibold text-slate-900">{pagedData.totalElements}</span> items
             </span>
 
-            <button
-              type="button"
-              disabled={page >= (pagedData.totalPages || 1) - 1 || isLoading}
-              onClick={() => setPage((p) => p + 1)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer font-semibold text-xs"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page === 0 || isLoading}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                leftIcon={<ChevronLeft className="w-3.5 h-3.5" />}
+                className="h-7 text-xs font-semibold cursor-pointer"
+              >
+                Prev
+              </Button>
+
+              <span className="px-2 text-slate-600 font-medium text-xs tabular-nums">
+                {page + 1} / {pagedData.totalPages || 1}
+              </span>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= (pagedData.totalPages || 1) - 1 || isLoading}
+                onClick={() => setPage((p) => p + 1)}
+                rightIcon={<ChevronRight className="w-3.5 h-3.5" />}
+                className="h-7 text-xs font-semibold cursor-pointer"
+              >
+                Next
+              </Button>
+            </div>
+          </CardFooter>
+        </>
       )}
-    </div>
+    </Card>
   )
 }
 

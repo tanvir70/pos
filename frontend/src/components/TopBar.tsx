@@ -1,6 +1,9 @@
 import { PanelLeftClose, PanelLeftOpen, Sprout } from "lucide-react"
 import type { NavigationTab } from "../types"
 import NetworkStatusBadge from "./NetworkStatusBadge"
+import Button from "./ui/Button"
+import Badge from "./ui/Badge"
+import { Separator } from "./ui/separator"
 
 export interface TopBarProps {
   isSidebarOpen: boolean
@@ -22,10 +25,12 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
   return (
     <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between gap-3 px-3 sm:px-4 shadow-xs">
       <div className="flex items-center gap-3 min-w-0">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={onToggleSidebar}
-          className="p-2 -ml-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer shrink-0 transition-colors"
+          className="h-9 w-9 -ml-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer shrink-0"
           aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
           title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
@@ -34,7 +39,7 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
           ) : (
             <PanelLeftOpen className="w-5 h-5" />
           )}
-        </button>
+        </Button>
 
         {/* Brand — only needed on mobile when the sidebar is fully hidden off-screen;
             on desktop the collapsed sidebar stays visible as an icon rail with its own brand mark. */}
@@ -49,7 +54,7 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
           </div>
         )}
 
-        <div className="h-5 w-px bg-slate-200 shrink-0" />
+        <Separator orientation="vertical" className="h-5" />
 
         <span className="text-sm font-bold text-slate-900 truncate">
           {TAB_LABELS[activeTab]}
@@ -57,10 +62,10 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
       </div>
       <div className="flex items-center gap-3 shrink-0">
         <NetworkStatusBadge />
-        <div className="h-4 w-px bg-slate-200" />
-        <div className="text-[11px] font-semibold text-slate-500 shrink-0">
+        <Separator orientation="vertical" className="h-4" />
+        <Badge variant="outline" className="text-[11px] font-semibold text-slate-600 bg-slate-50">
           Full access
-        </div>
+        </Badge>
       </div>
     </header>
   )

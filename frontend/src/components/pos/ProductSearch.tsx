@@ -13,6 +13,8 @@ import {
 import type { SaleMode, StockItem } from "../../types"
 import { formatTk } from "../../utils/currency"
 import Input from "../ui/Input"
+import Button from "../ui/Button"
+import Badge from "../ui/Badge"
 
 export interface ProductSearchProps {
   stocks: StockItem[]
@@ -356,22 +358,26 @@ export default function ProductSearch({
         </div>
 
         {onRefresh && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             onClick={onRefresh}
             disabled={isLoading}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 cursor-pointer"
+            className="h-11 w-11 shrink-0 rounded-lg text-slate-500 hover:text-slate-900 cursor-pointer"
             title="Refresh stock"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          </button>
+          </Button>
         )}
 
         {onToggleFocusMode && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             onClick={onToggleFocusMode}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 cursor-pointer"
+            className="h-11 w-11 shrink-0 rounded-lg text-slate-500 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 cursor-pointer"
             title={isFocusMode ? "Exit full page mode (F8)" : "Full page mode (F8)"}
           >
             {isFocusMode ? (
@@ -379,7 +385,7 @@ export default function ProductSearch({
             ) : (
               <Maximize2 className="h-4 w-4" />
             )}
-          </button>
+          </Button>
         )}
       </div>
     </div>

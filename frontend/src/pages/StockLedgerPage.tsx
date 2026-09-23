@@ -5,10 +5,10 @@ import GotposStatCard from "../components/dashboard/GotposStatCard"
 import Button from "../components/ui/Button"
 import {
   Table,
-  TableHead,
+  TableHeader,
   TableBody,
   TableRow,
-  TableHeaderCell,
+  TableHead,
   TableCell,
   TableEmptyState,
   TableLoadingState,
@@ -532,19 +532,19 @@ export default function StockLedgerPage({
       {/* ─── High-Density Full-Width Bin Card Table ───────────────── */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <Table>
-          <TableHead>
+          <TableHeader>
             <TableRow>
-              <TableHeaderCell>Date &amp; Time</TableHeaderCell>
-              <TableHeaderCell>Type</TableHeaderCell>
-              <TableHeaderCell>Product &amp; Code</TableHeaderCell>
-              <TableHeaderCell>Batch / Lot</TableHeaderCell>
-              <TableHeaderCell>Document Reference</TableHeaderCell>
-              <TableHeaderCell align="right">Qty Change</TableHeaderCell>
-              <TableHeaderCell align="center">Running Balance</TableHeaderCell>
-              <TableHeaderCell>Location</TableHeaderCell>
-              <TableHeaderCell>Remarks / User</TableHeaderCell>
+              <TableHead>Date &amp; Time</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Product &amp; Code</TableHead>
+              <TableHead>Batch / Lot</TableHead>
+              <TableHead>Document Reference</TableHead>
+              <TableHead align="right">Qty Change</TableHead>
+              <TableHead align="center">Running Balance</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Remarks / User</TableHead>
             </TableRow>
-          </TableHead>
+          </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableLoadingState colSpan={9} text="Loading audit records..." />

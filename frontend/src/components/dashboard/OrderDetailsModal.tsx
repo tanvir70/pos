@@ -13,6 +13,8 @@ import type { SaleResponse } from "../../types"
 import { formatTk } from "../../utils/currency"
 import Modal from "../ui/Modal"
 import Button from "../ui/Button"
+import Badge from "../ui/Badge"
+import { Separator } from "../ui/separator"
 
 export interface OrderDetailsModalProps {
   isOpen: boolean
@@ -59,15 +61,12 @@ export default function OrderDetailsModal({
       title={
         <div className="flex items-center gap-2">
           <span>Order #{sale.invoiceNo}</span>
-          <span
-            className={`text-xs px-2 py-0.5 rounded-full font-bold border ${
-              isWholesale
-                ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                : "bg-emerald-50 text-emerald-700 border-emerald-200"
-            }`}
+          <Badge
+            variant={isWholesale ? "purple" : "emerald"}
+            className="text-xs"
           >
             {isWholesale ? "Wholesale Dispatch" : "Retail Sale"}
-          </span>
+          </Badge>
         </div>
       }
       subtitle={`Recorded on ${formattedDate} · Served by ${sale.cashierName || "Rajib"}`}

@@ -1,98 +1,99 @@
-import type {
-  HTMLAttributes,
-  TdHTMLAttributes,
-  ThHTMLAttributes,
-  ReactNode,
-} from "react"
+import * as React from "react"
 import { Search, Loader2 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-export interface TableProps extends HTMLAttributes<HTMLTableElement> {
-  children: ReactNode
-  className?: string
+export interface TableProps extends React.ComponentProps<"table"> {
   containerClassName?: string
 }
 
-export function Table({
-  children,
-  className = "",
-  containerClassName = "",
-  ...props
-}: TableProps) {
+function Table({ className, containerClassName, ...props }: TableProps) {
   return (
     <div
-      className={`overflow-x-auto w-full rounded-xl border border-slate-200 bg-white shadow-xs ${containerClassName}`.trim()}
+      data-slot="table-container"
+      className={cn(
+        "relative w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs",
+        containerClassName
+      )}
     >
-      <table className={`w-full text-left text-xs ${className}`.trim()} {...props}>
-        {children}
-      </table>
+      <table
+        data-slot="table"
+        className={cn("w-full caption-bottom text-xs", className)}
+        {...props}
+      />
     </div>
   )
 }
 
-export function TableHead({
-  children,
-  className = "",
-  ...props
-}: HTMLAttributes<HTMLTableSectionElement>) {
+function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
-      className={`bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold select-none ${className}`.trim()}
+      data-slot="table-header"
+      className={cn(
+        "bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold select-none [&_tr]:border-b",
+        className
+      )}
       {...props}
-    >
-      {children}
-    </thead>
+    />
   )
 }
 
-export function TableBody({
-  children,
-  className = "",
-  ...props
-}: HTMLAttributes<HTMLTableSectionElement>) {
+function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
-    <tbody className={`divide-y divide-slate-200/50 ${className}`.trim()} {...props}>
-      {children}
-    </tbody>
+    <tbody
+      data-slot="table-body"
+      className={cn("divide-y divide-slate-200/50 [&_tr:last-child]:border-0", className)}
+      {...props}
+    />
   )
 }
 
-export interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
-  children: ReactNode
+function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
+  return (
+    <tfoot
+      data-slot="table-footer"
+      className={cn(
+        "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export interface TableRowProps extends React.ComponentProps<"tr"> {
   isHoverable?: boolean
   isSelected?: boolean
-  className?: string
 }
 
-export function TableRow({
-  children,
+function TableRow({
+  className,
   isHoverable = true,
   isSelected = false,
-  className = "",
   ...props
 }: TableRowProps) {
-  const hoverClass = isHoverable ? "hover:bg-slate-50/60 transition-colors" : ""
-  const selectedClass = isSelected ? "bg-emerald-50/60" : ""
-
   return (
-    <tr className={`${hoverClass} ${selectedClass} ${className}`.trim()} {...props}>
-      {children}
-    </tr>
+    <tr
+      data-slot="table-row"
+      className={cn(
+        "border-b transition-colors data-[state=selected]:bg-muted",
+        isHoverable && "hover:bg-slate-50/60",
+        isSelected && "bg-emerald-50/60",
+        className
+      )}
+      {...props}
+    />
   )
 }
 
-export interface TableHeaderCellProps
-  extends ThHTMLAttributes<HTMLTableCellElement> {
-  children: ReactNode
+export interface TableHeadProps extends React.ComponentProps<"th"> {
   align?: "left" | "center" | "right"
-  className?: string
 }
 
-export function TableHeaderCell({
-  children,
+function TableHead({
+  className,
   align = "left",
-  className = "",
   ...props
-}: TableHeaderCellProps) {
+}: TableHeadProps) {
   const alignClass = {
     left: "text-left",
     center: "text-center",
@@ -101,27 +102,26 @@ export function TableHeaderCell({
 
   return (
     <th
-      className={`px-3.5 py-3 text-xs font-bold text-slate-900 ${alignClass} ${className}`.trim()}
+      data-slot="table-head"
+      className={cn(
+        "h-10 px-3.5 py-3 text-xs font-bold text-slate-900 whitespace-nowrap align-middle text-foreground [&:has([role=checkbox])]:pr-0",
+        alignClass,
+        className
+      )}
       {...props}
-    >
-      {children}
-    </th>
+    />
   )
 }
 
-export interface TableCellProps
-  extends TdHTMLAttributes<HTMLTableCellElement> {
-  children: ReactNode
+export interface TableCellProps extends React.ComponentProps<"td"> {
   align?: "left" | "center" | "right"
   isMonospace?: boolean
-  className?: string
 }
 
-export function TableCell({
-  children,
+function TableCell({
+  className,
   align = "left",
   isMonospace = false,
-  className = "",
   ...props
 }: TableCellProps) {
   const alignClass = {
@@ -130,24 +130,42 @@ export function TableCell({
     right: "text-right",
   }[align]
 
-  const fontClass = isMonospace ? "font-mono tabular-nums font-semibold" : ""
-
   return (
     <td
-      className={`px-3.5 py-3 text-xs text-slate-900 align-middle ${alignClass} ${fontClass} ${className}`.trim()}
+      data-slot="table-cell"
+      className={cn(
+        "px-3.5 py-3 text-xs text-slate-900 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        alignClass,
+        isMonospace && "font-mono tabular-nums font-semibold",
+        className
+      )}
       {...props}
-    >
-      {children}
-    </td>
+    />
   )
 }
 
+function TableCaption({
+  className,
+  ...props
+}: React.ComponentProps<"caption">) {
+  return (
+    <caption
+      data-slot="table-caption"
+      className={cn("mt-4 text-xs text-muted-foreground", className)}
+      {...props}
+    />
+  )
+}
+
+// Backward-compatible alias
+export const TableHeaderCell = TableHead
+
 export interface TableEmptyStateProps {
   colSpan: number
-  icon?: ReactNode
+  icon?: React.ReactNode
   message?: string
   submessage?: string
-  action?: ReactNode
+  action?: React.ReactNode
 }
 
 export function TableEmptyState({
@@ -181,12 +199,22 @@ export function TableLoadingState({
   return (
     <tr>
       <td colSpan={colSpan} className="py-12 text-center text-slate-500">
-        <Loader2 className="w-6 h-6 animate-spin inline-block" />
+        <Loader2 className="w-6 h-6 animate-spin inline-block text-emerald-600" />
         <p className="mt-2 text-xs font-semibold text-slate-500">{text}</p>
       </td>
     </tr>
   )
 }
 
-export default Table
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+}
 
+export default Table

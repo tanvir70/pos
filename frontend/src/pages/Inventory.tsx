@@ -29,10 +29,10 @@ import GotposStatCard from "../components/dashboard/GotposStatCard"
 import Modal from "../components/ui/Modal"
 import {
   Table,
-  TableHead,
+  TableHeader,
   TableBody,
   TableRow,
-  TableHeaderCell,
+  TableHead,
   TableCell,
   TableEmptyState,
   TableLoadingState,
@@ -1064,17 +1064,17 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
           {/* Dokan Stock Inventory Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <Table>
-              <TableHead>
+              <TableHeader>
                 <TableRow>
-                  <TableHeaderCell>Product &amp; Code</TableHeaderCell>
-                  <TableHeaderCell>Category</TableHeaderCell>
-                  <TableHeaderCell>Packaging Unit</TableHeaderCell>
-                  <TableHeaderCell align="center">Dokan Stock</TableHeaderCell>
-                  <TableHeaderCell align="right">Retail Price</TableHeaderCell>
-                  <TableHeaderCell align="right">Buying Price</TableHeaderCell>
-                  <TableHeaderCell align="right">Actions</TableHeaderCell>
+                  <TableHead>Product &amp; Code</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Packaging Unit</TableHead>
+                  <TableHead align="center">Dokan Stock</TableHead>
+                  <TableHead align="right">Retail Price</TableHead>
+                  <TableHead align="right">Buying Price</TableHead>
+                  <TableHead align="right">Actions</TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableLoadingState colSpan={7} text="Loading stock list..." />
@@ -1557,17 +1557,17 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
           {/* Quarantine Items Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <Table>
-              <TableHead>
+              <TableHeader>
                 <TableRow>
-                  <TableHeaderCell>Damaged Product &amp; Lot No</TableHeaderCell>
-                  <TableHeaderCell>Expiry Date</TableHeaderCell>
-                  <TableHeaderCell>Supplier</TableHeaderCell>
-                  <TableHeaderCell align="center">Damaged Quantity</TableHeaderCell>
-                  <TableHeaderCell align="right">Purchase Cost</TableHeaderCell>
-                  <TableHeaderCell align="right">Total Loss Value</TableHeaderCell>
-                  <TableHeaderCell align="right">Action</TableHeaderCell>
+                  <TableHead>Damaged Product &amp; Lot No</TableHead>
+                  <TableHead>Expiry Date</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead align="center">Damaged Quantity</TableHead>
+                  <TableHead align="right">Purchase Cost</TableHead>
+                  <TableHead align="right">Total Loss Value</TableHead>
+                  <TableHead align="right">Action</TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableLoadingState colSpan={7} text="Loading quarantine stock..." />
