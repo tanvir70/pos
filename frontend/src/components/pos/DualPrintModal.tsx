@@ -138,10 +138,9 @@ export default function DualPrintModal({
 
     try {
       setIsRegistering(true)
-      setRegistrationError(null)
-      const draftTotalAmount = effectiveSale?.totalAmount ?? draft?.totalAmount ?? 0
-      const draftCashPaid = effectiveSale?.cashPaid ?? draft?.cashPaid ?? 0
-      const draftDigitalPaid = effectiveSale?.digitalPaid ?? draft?.digitalPaid ?? 0
+      const draftTotalAmount = draft?.totalAmount ?? 0
+      const draftCashPaid = draft?.cashPaid ?? 0
+      const draftDigitalPaid = draft?.digitalPaid ?? 0
       const draftRemainingDue = Math.max(0, draftTotalAmount - draftCashPaid - draftDigitalPaid)
       let customerForSale = matchedCustomer
       if (draftRemainingDue > 0 && !phoneDigits && !matchedCustomer) {

@@ -32,6 +32,7 @@ import {
 export interface StockLedgerPageProps {
   initialProductId?: number
   initialLotId?: number
+  onNavigateBack?: () => void
 }
 
 const formatDate = (isoString?: string) => {

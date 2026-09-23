@@ -18,6 +18,7 @@ export const badgeVariants = cva(
         danger: "border-rose-200 bg-rose-50 text-rose-800",
         info: "border-blue-200 bg-blue-50 text-blue-800",
         purple: "border-purple-200 bg-purple-50 text-purple-800",
+        emerald: "border-emerald-200 bg-emerald-50 text-emerald-800",
         neutral: "border-slate-200 bg-slate-50 text-slate-700",
       },
       size: {
@@ -40,6 +41,7 @@ const dotStyles: Record<string, string> = {
   destructive: "bg-destructive",
   info: "bg-blue-600",
   purple: "bg-purple-600",
+  emerald: "bg-emerald-600",
   neutral: "bg-slate-500",
 }
 

@@ -165,23 +165,30 @@ export interface TableEmptyStateProps {
   icon?: React.ReactNode
   message?: string
   submessage?: string
+  title?: string
+  description?: string
   action?: React.ReactNode
 }
 
 export function TableEmptyState({
   colSpan,
   icon = <Search className="w-7 h-7 mx-auto" />,
-  message = "No data found",
-  submessage = "Try adjusting your search filters and try again",
+  message,
+  submessage,
+  title,
+  description,
   action,
 }: TableEmptyStateProps) {
+  const displayTitle = title || message || "No data found"
+  const displaySubtitle = description !== undefined ? description : (submessage || "Try adjusting your search filters and try again")
+
   return (
     <tr>
       <td colSpan={colSpan} className="py-12 text-center text-slate-500">
         <span className="inline-block text-slate-400">{icon}</span>
-        <p className="mt-2 text-sm font-bold text-slate-900">{message}</p>
-        {submessage && (
-          <p className="text-xs text-slate-500 mt-0.5">{submessage}</p>
+        <p className="mt-2 text-sm font-bold text-slate-900">{displayTitle}</p>
+        {displaySubtitle && (
+          <p className="text-xs text-slate-500 mt-0.5">{displaySubtitle}</p>
         )}
         {action && <div className="mt-4 flex justify-center">{action}</div>}
       </td>

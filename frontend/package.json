@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types src/tests/network-resilience.test.ts && node --experimental-strip-types src/tests/phase2-contexts.test.ts",
     "preview": "vite preview",
     "format": "oxfmt"
   },
