@@ -294,6 +294,7 @@ export default function SettlementPanel({
               step="any"
               value={cashPaidInput}
               onChange={(e) => setCashPaidInput(e.target.value)}
+              onFocus={(e) => e.target.select()}
               placeholder="0.00"
               className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
             />
@@ -315,6 +316,7 @@ export default function SettlementPanel({
               step="any"
               value={digitalPaidInput}
               onChange={(e) => setDigitalPaidInput(e.target.value)}
+              onFocus={(e) => e.target.select()}
               placeholder="0.00"
               className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
             />
@@ -323,6 +325,7 @@ export default function SettlementPanel({
               type="text"
               value={digitalTrxId}
               onChange={(e) => setDigitalTrxId(e.target.value)}
+              onFocus={(e) => e.target.select()}
               placeholder="Transaction ID / TrxID (optional)"
               className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 font-mono text-xs outline-hidden focus:border-emerald-700 focus:bg-white"
             />
@@ -420,6 +423,7 @@ export default function SettlementPanel({
                     min="0"
                     value={discountValue}
                     onChange={(e) => setDiscountValue(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="0"
                     className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-right font-mono text-sm font-bold outline-hidden focus:border-emerald-700"
                   />
@@ -473,6 +477,7 @@ export default function SettlementPanel({
                     min="0"
                     value={roundOff || ""}
                     onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="0"
                     className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-right font-mono text-sm font-bold outline-hidden focus:border-emerald-700"
                   />

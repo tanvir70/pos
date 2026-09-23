@@ -9,6 +9,8 @@ import {
 import { useCart } from "../../context/CartContext"
 import { useToast } from "../../context/ToastContext"
 import { calcLineTotal, formatTk } from "../../utils/currency"
+import Badge from "../ui/Badge"
+import Button from "../ui/Button"
 
 function hasBusinessLot(lotNumber?: string) {
   return !!lotNumber
@@ -36,9 +38,9 @@ export default function CartTicket() {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="truncate text-sm font-bold text-slate-950">Current order</h2>
-              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-800">
+              <Badge variant="emerald" className="px-1.5 py-0 text-[10px] font-bold uppercase">
                 Live
-              </span>
+              </Badge>
             </div>
             <p className="mt-0.5 text-xs text-slate-500">
               <span className="font-mono font-bold text-slate-700">{totalItemsCount}</span>{" "}
@@ -50,15 +52,17 @@ export default function CartTicket() {
         </div>
 
         {cart.length > 0 && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={clearCart}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold text-slate-500 hover:bg-red-50 hover:text-red-700 cursor-pointer"
+            leftIcon={<Trash2 className="h-3.5 w-3.5 text-slate-400 group-hover:text-red-600" />}
+            className="text-xs font-bold text-slate-500 hover:bg-red-50 hover:text-red-700 cursor-pointer h-8 px-2.5"
             title="Clear the current order"
           >
-            <Trash2 className="h-4 w-4" />
             <span className="hidden sm:inline">Clear order</span>
-          </button>
+          </Button>
         )}
       </header>
 
@@ -143,8 +147,13 @@ export default function CartTicket() {
                         type="text"
                         inputMode="decimal"
                         value={item.quantity}
+                        onFocus={(e) => e.target.select()}
                         onChange={(event) => {
-                          const value = Number.parseFloat(event.target.value)
+                          const valStr = event.target.value.trim()
+                          if (valStr === "") {
+                            return
+                          }
+                          const value = Number.parseFloat(valStr)
                           if (Number.isFinite(value) && value > 0) {
                             if (value > availableStock) {
                               showWarning(stockLimitMessage, "Stock limit reached")
@@ -152,7 +161,7 @@ export default function CartTicket() {
                             setQuantity(item.id, value)
                           }
                         }}
-                        className="min-w-0 border-x border-slate-200 bg-white text-center font-mono text-xs font-bold text-slate-950 outline-hidden tabular-nums"
+                        className="min-w-0 border-x border-slate-200 bg-white text-center font-mono text-xs font-bold text-slate-950 outline-hidden tabular-nums focus:bg-emerald-50/50"
                         aria-label={`${item.nameEn || item.nameBn} quantity`}
                       />
                       <button

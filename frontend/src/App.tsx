@@ -1,14 +1,15 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, lazy, Suspense } from "react"
 import Sidebar from "./components/Sidebar"
 import TopBar from "./components/TopBar"
 import LoginPage from "./pages/LoginPage"
 import PosCounter from "./pages/PosCounter"
-import Dashboard from "./pages/Dashboard"
-import Inventory from "./pages/Inventory"
-import Customers from "./pages/Customers"
-import Returns from "./pages/Returns"
-import Settings from "./pages/Settings"
-import StockLedgerPage from "./pages/StockLedgerPage"
+
+const Dashboard = lazy(() => import("./pages/Dashboard"))
+const Inventory = lazy(() => import("./pages/Inventory"))
+const Customers = lazy(() => import("./pages/Customers"))
+const Returns = lazy(() => import("./pages/Returns"))
+const Settings = lazy(() => import("./pages/Settings"))
+const StockLedgerPage = lazy(() => import("./pages/StockLedgerPage"))
 import type { NavigationTab } from "./types"
 import { ToastProvider } from "./context/ToastContext"
 import { AuthProvider, useAuth } from "./context/AuthContext"
@@ -144,21 +145,25 @@ function AppShell() {
               onToggleFocusMode={toggleFocusMode}
             />
           )}
-          {tab === "dashboard" && (
-            <Dashboard
-              onNavigate={handleNavigate}
-            />
-          )}
-          {tab === "inventory" && <Inventory onNavigate={handleNavigate} />}
-          {tab === "bin-card" && (
-            <StockLedgerPage
-              initialProductId={ledgerFilter?.productId}
-              initialLotId={ledgerFilter?.lotId}
-            />
-          )}
-          {tab === "customers" && <Customers />}
-          {tab === "returns" && <Returns />}
-          {tab === "settings" && <Settings />}
+          <Suspense
+            fallback={
+              <div className="flex h-64 items-center justify-center">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+              </div>
+            }
+          >
+            {tab === "dashboard" && <Dashboard onNavigate={handleNavigate} />}
+            {tab === "inventory" && <Inventory onNavigate={handleNavigate} />}
+            {tab === "bin-card" && (
+              <StockLedgerPage
+                initialProductId={ledgerFilter?.productId}
+                initialLotId={ledgerFilter?.lotId}
+              />
+            )}
+            {tab === "customers" && <Customers />}
+            {tab === "returns" && <Returns />}
+            {tab === "settings" && <Settings />}
+          </Suspense>
         </main>
       </div>
     </div>

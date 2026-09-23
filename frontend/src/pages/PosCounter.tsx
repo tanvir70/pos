@@ -14,6 +14,7 @@ import ProductSearch from "../components/pos/ProductSearch"
 import CartTicket from "../components/pos/CartTicket"
 import SettlementPanel from "../components/pos/SettlementPanel"
 import DualPrintModal from "../components/pos/DualPrintModal"
+import Badge from "../components/ui/Badge"
 
 export interface PosCounterProps {
   isFocusMode?: boolean
@@ -315,6 +316,29 @@ export default function PosCounter({
             onToggleFocusMode={onToggleFocusMode}
           />
           <CartTicket />
+
+          {/* Ambient keyboard shortcut indicator bar */}
+          <div className="shrink-0 flex items-center justify-between px-4 py-2 border-t border-slate-100 bg-slate-50/80 text-[11px] text-slate-500 rounded-b-lg">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5">
+                <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 shadow-2xs">F2</kbd>
+                <span>Search</span>
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 shadow-2xs">F8</kbd>
+                <span>Full Counter</span>
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 shadow-2xs">Enter / F9</kbd>
+                <span>Settle &amp; Print</span>
+              </span>
+            </div>
+            <span className="hidden sm:inline-block text-[10px] font-mono text-slate-400">
+              Auto scanner ready
+            </span>
+          </div>
         </section>
 
         {/* Checkout rail: all order processing stays in one predictable place. */}
@@ -326,15 +350,12 @@ export default function PosCounter({
                 Pricing and payment
               </p>
             </div>
-            <span
-              className={`rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${
-                saleMode === "WHOLESALE"
-                  ? "border-purple-200 bg-purple-50 text-purple-800"
-                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
-              }`}
+            <Badge
+              variant={saleMode === "WHOLESALE" ? "purple" : "emerald"}
+              className="px-2 py-0.5 text-[10px] font-bold uppercase"
             >
               {saleMode}
-            </span>
+            </Badge>
           </div>
 
           <div className="min-h-0 flex-1">
