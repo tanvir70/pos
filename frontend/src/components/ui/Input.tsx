@@ -1,23 +1,20 @@
-import {
-  forwardRef,
-  useId,
-  type InputHTMLAttributes,
-  type ReactNode,
-} from "react"
+import * as React from "react"
+import { useId } from "react"
+import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string | null
   helperText?: string
-  leftAdornment?: ReactNode
-  rightAdornment?: ReactNode
+  leftAdornment?: React.ReactNode
+  rightAdornment?: React.ReactNode
   onClear?: () => void
   isMonospace?: boolean
   inputSize?: "sm" | "md" | "lg"
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
     {
       label,
@@ -32,6 +29,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       className = "",
       disabled,
       value,
+      type = "text",
       ...props
     },
     ref,
@@ -40,22 +38,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || generatedId
 
     const sizeClasses = {
-      sm: "py-1.5 px-3 text-xs min-h-[34px]",
-      md: "py-2 px-3.5 text-sm min-h-[40px]",
-      lg: "py-2.5 px-4 text-base min-h-[46px]",
+      sm: "h-8 px-2.5 py-1 text-xs",
+      md: "h-9 px-3 py-1.5 text-sm",
+      lg: "h-11 px-3.5 py-2 text-base",
     }[inputSize]
 
-    const fontClass = isMonospace ? "tabular-nums font-mono font-medium" : ""
-    const borderClass = error
-      ? "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-50/30 text-red-900"
-      : "border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 bg-white text-slate-900"
+    const hasValue = value !== undefined && value !== null && value !== ""
 
     return (
       <div className="w-full text-left">
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-medium text-slate-700 mb-1.5"
+            className="block text-xs font-semibold text-slate-700 mb-1.5"
           >
             {label}
           </label>
@@ -63,7 +58,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative flex items-center">
           {leftAdornment && (
-            <div className="absolute left-3 flex items-center pointer-events-none text-slate-400 text-sm">
+            <div className="absolute left-3 flex items-center pointer-events-none text-slate-400">
               {leftAdornment}
             </div>
           )}
@@ -71,41 +66,48 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            type={type}
             value={value}
             disabled={disabled}
-            className={`w-full rounded-lg border transition-colors outline-hidden ${borderClass} ${sizeClasses} ${fontClass} ${
-              leftAdornment ? "pl-9" : ""
-            } ${rightAdornment || onClear ? "pr-9" : ""} ${
-              disabled ? "bg-slate-100 text-slate-400 cursor-not-allowed" : ""
-            } ${className}`.trim()}
+            data-slot="input"
+            aria-invalid={!!error}
+            className={cn(
+              "w-full rounded-lg border bg-white transition-all outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:bg-slate-100 disabled:opacity-50",
+              sizeClasses,
+              isMonospace && "tabular-nums font-mono font-medium",
+              error
+                ? "border-destructive text-destructive focus-visible:ring-destructive/20 bg-rose-50/30"
+                : "border-input text-slate-900 focus-visible:border-ring",
+              leftAdornment ? "pl-9" : "",
+              rightAdornment || onClear ? "pr-9" : "",
+              className,
+            )}
             {...props}
           />
 
-          {onClear && value && !disabled && (
+          {onClear && hasValue && !disabled && (
             <button
               type="button"
               onClick={onClear}
-              className="absolute right-3 p-0.5 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 cursor-pointer"
-              title="Clear"
+              className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Clear input"
             >
-              <X size={14} />
+              <X className="size-3.5" />
             </button>
           )}
 
-          {!onClear && rightAdornment && (
-            <div className="absolute right-3 flex items-center pointer-events-none text-slate-400 text-sm">
+          {rightAdornment && (!onClear || !hasValue) && (
+            <div className="absolute right-3 flex items-center pointer-events-none text-slate-400">
               {rightAdornment}
             </div>
           )}
         </div>
 
         {error && (
-          <p className="mt-1 text-xs text-red-600 font-medium flex items-center gap-1 animate-in fade-in duration-150">
-            <span>{error}</span>
-          </p>
+          <p className="mt-1 text-xs font-medium text-destructive">{error}</p>
         )}
 
-        {!error && helperText && (
+        {helperText && !error && (
           <p className="mt-1 text-xs text-slate-500">{helperText}</p>
         )}
       </div>

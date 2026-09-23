@@ -1,5 +1,12 @@
-import { useEffect, type ReactNode } from "react"
+import type { ReactNode } from "react"
 import { X } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "./dialog"
+import { cn } from "@/lib/utils"
 
 export interface ModalProps {
   isOpen: boolean
@@ -18,11 +25,11 @@ export interface ModalProps {
 }
 
 const sizeClasses = {
-  sm: "max-w-md",
-  md: "max-w-xl",
-  lg: "max-w-2xl",
-  xl: "max-w-4xl",
-  full: "max-w-[95vw] min-h-[85vh]",
+  sm: "sm:max-w-md",
+  md: "sm:max-w-xl",
+  lg: "sm:max-w-2xl",
+  xl: "sm:max-w-4xl",
+  full: "sm:max-w-[95vw] min-h-[85vh]",
 }
 
 export function Modal({
@@ -40,72 +47,74 @@ export function Modal({
   headerVariant = "dark",
   headerClassName = "",
 }: ModalProps) {
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && closeOnEsc) {
-        e.preventDefault()
-        onClose()
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [isOpen, closeOnEsc, onClose])
-
-  if (!isOpen) return null
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-150"
-      onClick={(e) => {
-        if (closeOnClickOutside && e.target === e.currentTarget) {
-          onClose()
-        }
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
       }}
     >
-      <div
-        className={`bg-white rounded-xl shadow-2xl border border-slate-200 w-full my-auto overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-150 ${sizeClasses[size]} ${className}`.trim()}
+      <DialogContent
+        showCloseButton={false}
+        className={cn(
+          "w-full max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden rounded-xl border border-border bg-white shadow-2xl duration-150 sm:max-w-none",
+          sizeClasses[size],
+          className,
+        )}
+        onEscapeKeyDown={(e) => {
+          if (!closeOnEsc) e.preventDefault()
+        }}
+        onPointerDownOutside={(e) => {
+          if (!closeOnClickOutside) e.preventDefault()
+        }}
       >
+        {/* Accessible hidden DialogTitle if title is not rendered in standard header */}
+        <DialogTitle className="sr-only">
+          {typeof title === "string" ? title : "Modal Dialog"}
+        </DialogTitle>
+        {subtitle && typeof subtitle === "string" && (
+          <DialogDescription className="sr-only">{subtitle}</DialogDescription>
+        )}
+
         {/* Modal Header */}
         {headerVariant !== "none" && (title || icon) && (
           <div
-            className={`px-6 py-4 flex items-center justify-between shrink-0 ${
+            className={cn(
+              "px-6 py-4 flex items-center justify-between shrink-0",
               headerVariant === "light"
-                ? "bg-white border-b border-slate-200/80 text-slate-900"
-                : "bg-slate-900 text-white"
-            } ${headerClassName}`.trim()}
+                ? "bg-white border-b border-border text-slate-900"
+                : "bg-slate-900 text-white",
+              headerClassName,
+            )}
           >
             <div className="flex items-center gap-3 min-w-0">
               {icon && (
                 <div
-                  className={`shrink-0 flex items-center justify-center ${
+                  className={cn(
+                    "shrink-0 flex items-center justify-center",
                     headerVariant === "light"
-                      ? "h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-2xs"
-                      : "text-emerald-400"
-                  }`}
+                      ? "size-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-2xs"
+                      : "text-emerald-400",
+                  )}
                 >
                   {icon}
                 </div>
               )}
               <div className="min-w-0">
                 <h2
-                  className={`font-bold text-base sm:text-lg leading-tight truncate ${
-                    headerVariant === "light" ? "text-slate-900" : "text-white"
-                  }`}
+                  className={cn(
+                    "font-bold text-base sm:text-lg leading-tight truncate",
+                    headerVariant === "light" ? "text-slate-900" : "text-white",
+                  )}
                 >
                   {title}
                 </h2>
                 {subtitle && (
                   <p
-                    className={`text-xs mt-0.5 truncate ${
-                      headerVariant === "light" ? "text-slate-500 font-normal" : "text-slate-300"
-                    }`}
+                    className={cn(
+                      "text-xs mt-0.5 truncate",
+                      headerVariant === "light" ? "text-slate-500 font-normal" : "text-slate-300",
+                    )}
                   >
                     {subtitle}
                   </p>
@@ -116,11 +125,12 @@ export function Modal({
             <button
               type="button"
               onClick={onClose}
-              className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+              className={cn(
+                "p-1.5 rounded-lg cursor-pointer transition-colors",
                 headerVariant === "light"
                   ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                  : "text-slate-300 hover:text-white hover:bg-white/10"
-              }`}
+                  : "text-slate-300 hover:text-white hover:bg-white/10",
+              )}
               title="Close (Esc)"
             >
               <X size={18} />
@@ -133,12 +143,12 @@ export function Modal({
 
         {/* Modal Footer */}
         {footer && (
-          <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
+          <div className="px-6 py-3.5 bg-slate-50 border-t border-border flex items-center justify-end gap-2.5 shrink-0">
             {footer}
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

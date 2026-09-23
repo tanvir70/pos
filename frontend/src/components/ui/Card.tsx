@@ -1,53 +1,64 @@
-import type { HTMLAttributes, ReactNode } from "react"
+import * as React from "react"
+import { cn } from "@/lib/utils"
 
-export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode
-  className?: string
+export interface CardProps extends React.ComponentProps<"div"> {
+  size?: "default" | "sm"
 }
 
-export function Card({ children, className = "", ...props }: CardProps) {
+export function Card({ className, size = "default", ...props }: CardProps) {
   return (
     <div
-      className={`bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden ${className}`.trim()}
+      data-slot="card"
+      data-size={size}
+      className={cn(
+        "group/card flex flex-col overflow-hidden rounded-xl border border-border bg-card text-sm text-card-foreground shadow-xs",
+        className,
+      )}
       {...props}
-    >
-      {children}
-    </div>
+    />
   )
 }
 
-export interface CardHeaderProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
-  title?: ReactNode
-  subtitle?: ReactNode
-  action?: ReactNode
-  icon?: ReactNode
-  className?: string
-  children?: ReactNode
+export interface CardHeaderProps extends Omit<React.ComponentProps<"div">, "title"> {
+  title?: React.ReactNode
+  subtitle?: React.ReactNode
+  action?: React.ReactNode
+  icon?: React.ReactNode
 }
 
 export function CardHeader({
+  className,
   title,
   subtitle,
   action,
   icon,
-  className = "",
   children,
   ...props
 }: CardHeaderProps) {
-  const headerClass =
-    "px-5 py-3.5 border-b border-slate-200 bg-slate-50/60 flex items-center justify-between"
-
   if (children) {
     return (
-      <div className={`${headerClass} ${className}`.trim()} {...props}>
+      <div
+        data-slot="card-header"
+        className={cn(
+          "flex flex-col gap-1.5 p-5 border-b border-border bg-slate-50/50",
+          className,
+        )}
+        {...props}
+      >
         {children}
       </div>
     )
   }
 
   return (
-    <div className={`${headerClass} gap-3 ${className}`.trim()} {...props}>
+    <div
+      data-slot="card-header"
+      className={cn(
+        "flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border bg-slate-50/60",
+        className,
+      )}
+      {...props}
+    >
       <div className="flex items-center gap-2.5 min-w-0">
         {icon && <span className="text-slate-500 shrink-0 flex items-center">{icon}</span>}
         <div className="min-w-0">
@@ -68,32 +79,49 @@ export function CardHeader({
   )
 }
 
-export interface CardBodyProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode
-  className?: string
-}
-
-export function CardBody({ children, className = "", ...props }: CardBodyProps) {
+export function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div className={`p-5 ${className}`.trim()} {...props}>
-      {children}
-    </div>
+    <div
+      data-slot="card-title"
+      className={cn("text-base font-semibold text-slate-900 leading-snug", className)}
+      {...props}
+    />
   )
 }
 
-export interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode
-  className?: string
-}
-
-export function CardFooter({ children, className = "", ...props }: CardFooterProps) {
+export function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={`px-5 py-3.5 border-t border-slate-200 bg-slate-50/40 flex items-center justify-between gap-3 ${className}`.trim()}
+      data-slot="card-description"
+      className={cn("text-xs text-slate-500", className)}
       {...props}
-    >
-      {children}
-    </div>
+    />
+  )
+}
+
+export function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("p-5", className)}
+      {...props}
+    />
+  )
+}
+
+// Backward-compatible alias for legacy calls
+export const CardBody = CardContent
+
+export function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn(
+        "flex items-center justify-between gap-3 border-t border-border bg-slate-50/40 px-5 py-3.5",
+        className,
+      )}
+      {...props}
+    />
   )
 }
 
