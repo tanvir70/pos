@@ -383,24 +383,17 @@ export default function StockLedgerPage({
     <div className="space-y-4">
       {/* ─── Top Header Toolbar ────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <History className="w-5 h-5 text-teal-700" />
-                <span>Stock Ledger</span>
-              </h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200 uppercase tracking-wider">
-                Immutable Audit Log
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Complete chronological store inventory transaction log, running balances, and document audit trails
-            </p>
-          </div>
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <History className="w-5 h-5 text-slate-700" />
+            <span>Stock Ledger & Bin Card</span>
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Complete chronological store inventory transaction log, running balances, and document audit trails
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
             size="sm"

@@ -299,12 +299,27 @@ export default function Returns() {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <RotateCcw className="w-5 h-5 text-emerald-700" />
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <RotateCcw className="w-5 h-5 text-slate-700" />
             <span>Sales Return Counter</span>
           </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Process customer returns, instant lot restocking, and invoice refunds or due credit adjustments
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={loadData}
+            disabled={isLoading}
+            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 cursor-pointer transition-colors text-xs"
+            title="Refresh returns data"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+          </button>
         </div>
       </div>
 

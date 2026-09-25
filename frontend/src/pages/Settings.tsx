@@ -100,20 +100,20 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 py-2">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 pb-4 border-b border-slate-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
-            <SettingsIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Settings</h1>
-            <p className="text-xs text-slate-500">Store and wholesale configuration</p>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <SettingsIcon className="w-5 h-5 text-slate-700" />
+            <span>System & Store Settings</span>
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Store configuration, wholesale discount ratios, and counter business preferences
+          </p>
         </div>
 
-        <div className="text-right">
-          <span className="text-[11px] text-slate-500 block">Active Wholesale Ratio</span>
-          <span className="text-lg font-black font-mono text-purple-700">
+        <div className="text-left sm:text-right">
+          <span className="text-[11px] font-semibold text-slate-400 block">Active Wholesale Discount</span>
+          <span className="text-base font-bold font-mono text-purple-700">
             {settings.discountPercentage}% Off
           </span>
         </div>

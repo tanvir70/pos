@@ -90,17 +90,15 @@ export default function Dashboard({
   return (
     <div className="space-y-6 pb-12">
       {/* ─── Top Header & Refresh / Actions ───────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-emerald-700" />
-              <span>Dashboard</span>
-            </h1>
-            <Badge variant="emerald" className="font-bold text-[11px]">
-              Live Data
-            </Badge>
-          </div>
+          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-slate-700" />
+            <span>Executive Business Dashboard</span>
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Real-time daily sales performance, gross profit, inventory valuation, and customer receivables
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
