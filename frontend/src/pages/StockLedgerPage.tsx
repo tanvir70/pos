@@ -5,6 +5,13 @@ import GotposStatCard from "../components/dashboard/GotposStatCard"
 import Button from "../components/ui/Button"
 import Pagination from "../components/ui/Pagination"
 import DateRangeFilter, { type DateRange, defaultDateRange } from "../components/ui/DateRangeFilter"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../components/ui/select"
 import { formatLotNumber } from "../utils/lotNumber"
 import {
   Table,
@@ -523,50 +530,62 @@ export default function StockLedgerPage({
               )}
             </div>
 
-            {/* Product Selector */}
-            <div className="relative lg:w-56 shrink-0">
-              <Package className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <select
-                value={selectedProductId || ""}
-                onChange={(e) => {
-                  const val = Number(e.target.value) || undefined
-                  setSelectedProductId(val)
+            {/* Product Selector (shadcn Select) */}
+            <div className="lg:w-60 shrink-0">
+              <Select
+                value={selectedProductId ? String(selectedProductId) : "ALL"}
+                onValueChange={(val) => {
+                  setSelectedProductId(val === "ALL" ? undefined : Number(val))
                   setSelectedLotId(undefined)
                   setPage(0)
                 }}
-                className="w-full text-xs font-semibold pl-8 pr-7 py-2 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden cursor-pointer appearance-none transition-all truncate"
               >
-                <option value="">All Products ({products.length})</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nameEn} ({p.productCode})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <SelectTrigger className="w-full">
+                  <div className="flex items-center gap-2 truncate text-slate-800">
+                    <Package className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <SelectValue placeholder="All Products" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">
+                    All Products ({products.length})
+                  </SelectItem>
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.nameEn} ({p.productCode})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Batch / Lot Selector */}
-            <div className="relative lg:w-48 shrink-0">
-              <Layers className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <select
-                value={selectedLotId || ""}
-                onChange={(e) => {
-                  const val = Number(e.target.value) || undefined
-                  setSelectedLotId(val)
+            {/* Batch / Lot Selector (shadcn Select) */}
+            <div className="lg:w-52 shrink-0">
+              <Select
+                value={selectedLotId ? String(selectedLotId) : "ALL"}
+                onValueChange={(val) => {
+                  setSelectedLotId(val === "ALL" ? undefined : Number(val))
                   setPage(0)
                 }}
                 disabled={availableLots.length === 0}
-                className="w-full text-xs font-semibold pl-8 pr-7 py-2 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden cursor-pointer appearance-none transition-all font-mono truncate disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="">All Batches / Lots</option>
-                {availableLots.map((l) => (
-                  <option key={l.lotId} value={l.lotId}>
-                    {formatLotNumber(l.lotNumber)} ({l.nameEn})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <SelectTrigger className="w-full font-mono">
+                  <div className="flex items-center gap-2 truncate text-slate-800">
+                    <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <SelectValue placeholder="All Batches / Lots" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL" className="font-sans">
+                    All Batches / Lots
+                  </SelectItem>
+                  {availableLots.map((l) => (
+                    <SelectItem key={l.lotId} value={String(l.lotId)} className="font-mono">
+                      {formatLotNumber(l.lotNumber)} ({l.nameEn})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Date Range Filter */}
