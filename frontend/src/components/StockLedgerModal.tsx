@@ -330,7 +330,6 @@ export default function StockLedgerModal({
                     <th className="pb-3 px-2">Lot / Batch</th>
                     <th className="pb-3 px-2">Reference</th>
                     <th className="pb-3 px-2 text-right">Quantity Change</th>
-                    <th className="pb-3 px-2 text-right">Balance</th>
                     <th className="pb-3 px-2">Remarks</th>
                     <th className="pb-3 px-2">User</th>
                   </tr>
@@ -371,12 +370,6 @@ export default function StockLedgerModal({
                           <span className={isPositive ? "text-emerald-700" : "text-rose-600"}>
                             {isPositive ? `+${m.quantityChange}` : m.quantityChange} {m.unit}
                           </span>
-                        </td>
-                        <td className="py-3 px-2 text-right font-mono tabular-nums">
-                          <div className="text-[11px] text-slate-400">
-                            {m.balanceBefore} →{" "}
-                            <span className="font-bold text-slate-900">{m.balanceAfter}</span>
-                          </div>
                         </td>
                         <td className="py-3 px-2 text-slate-600 max-w-[200px] truncate" title={m.remarks}>
                           {m.remarks || "-"}

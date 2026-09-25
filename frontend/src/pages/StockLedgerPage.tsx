@@ -396,7 +396,7 @@ export default function StockLedgerPage({
             <span>Stock Ledger & Bin Card</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Complete chronological store inventory transaction log, running balances, and document audit trails
+            Complete chronological store inventory transaction log and document audit trails
           </p>
         </div>
 
@@ -710,17 +710,15 @@ export default function StockLedgerPage({
               <TableHead>Batch / Lot</TableHead>
               <TableHead>Document Reference</TableHead>
               <TableHead align="right">Qty Change</TableHead>
-              <TableHead align="center">Running Balance</TableHead>
-              <TableHead>Location</TableHead>
               <TableHead>Remarks / User</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableLoadingState colSpan={9} text="Loading audit records..." />
+              <TableLoadingState colSpan={7} text="Loading audit records..." />
             ) : filteredMovements.length === 0 ? (
               <TableEmptyState
-                colSpan={9}
+                colSpan={7}
                 title="No stock movements found"
                 description={
                   selectedProductId || selectedType !== "ALL" || searchQuery
@@ -798,31 +796,7 @@ export default function StockLedgerPage({
                       </span>
                     </td>
 
-                    {/* 7. Running Balance (Before -> After) */}
-                    <td className="py-3 px-4 text-center whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1.5 font-mono text-xs">
-                        <span className="text-slate-400">{m.balanceBefore}</span>
-                        <span className="text-slate-300 font-bold">→</span>
-                        <span className="font-bold text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                          {m.balanceAfter}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* 8. Location */}
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          m.location === "QUARANTINE"
-                            ? "bg-rose-100 text-rose-800"
-                            : "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        {m.location === "QUARANTINE" ? "Quarantine" : "Dokan Shelf"}
-                      </span>
-                    </td>
-
-                    {/* 9. Remarks & Operator */}
+                    {/* Remarks & Operator */}
                     <td className="py-3 px-4 text-slate-600 max-w-xs">
                       <div className="text-xs truncate font-medium" title={m.remarks || ""}>
                         {m.remarks || "—"}
