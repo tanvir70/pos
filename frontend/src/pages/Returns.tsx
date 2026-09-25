@@ -484,7 +484,7 @@ export default function Returns() {
                 />
               </div>
 
-              {selectedStockItem ? (
+              {selectedStockItem && (
                 <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -513,11 +513,6 @@ export default function Returns() {
                       Current Stock: {selectedStockItem.quantity ?? (selectedStockItem as any).totalQuantity ?? 0} {selectedStockItem.baseUnit}
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="p-2.5 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-xs text-slate-500 flex items-center gap-2">
-                  <Search className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>Use search box above to select return item (out-of-stock items permitted for return).</span>
                 </div>
               )}
             </div>
