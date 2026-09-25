@@ -174,21 +174,21 @@ export interface Customer {
 
 export interface CustomerRequest {
   name: string
-  fatherName?: string
-  businessName?: string
+  fatherName?: string | null
+  businessName?: string | null
   phone: string
-  whatsappNumber?: string
-  email?: string
-  villageAddress?: string
-  landArea?: string
+  whatsappNumber?: string | null
+  email?: string | null
+  villageAddress?: string | null
+  landArea?: string | null
   customerType?: CustomerType | string
-  currentDue?: number
-  initialDue?: number
-  mfsType?: string
-  mfsNumber?: string
-  bankName?: string
-  bankBranch?: string
-  bankAccountNo?: string
+  currentDue?: number | null
+  initialDue?: number | null
+  mfsType?: string | null
+  mfsNumber?: string | null
+  bankName?: string | null
+  bankBranch?: string | null
+  bankAccountNo?: string | null
 }
 
 export interface CustomerLedger {

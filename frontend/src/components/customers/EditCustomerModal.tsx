@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import type { Customer, CustomerRequest, CustomerType } from "../../types"
 import { updateCustomer } from "../../api/endpoints"
 import {
@@ -30,11 +30,6 @@ export default function EditCustomerModal({
     villageAddress: "",
     landArea: "",
     customerType: "RETAIL",
-    mfsType: "",
-    mfsNumber: "",
-    bankName: "",
-    bankBranch: "",
-    bankAccountNo: "",
   })
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState<boolean>(false)
@@ -49,20 +44,47 @@ export default function EditCustomerModal({
         villageAddress: customer.villageAddress || customer.address || "",
         landArea: customer.landArea || "",
         customerType: customer.customerType || "RETAIL",
-        mfsType: customer.mfsType || "",
-        mfsNumber: customer.mfsNumber || "",
-        bankName: customer.bankName || "",
-        bankBranch: customer.bankBranch || "",
-        bankAccountNo: customer.bankAccountNo || "",
       })
       setFormError(null)
     }
   }, [customer])
 
+  // Check if any fields were modified
+  const isChanged = useMemo(() => {
+    if (!customer) return false
+    const initialName = (customer.name || "").trim()
+    const initialPhone = (customer.phone || "").trim()
+    const initialLand = (customer.landArea || "").trim()
+    const initialFather = (customer.fatherName || "").trim()
+    const initialBusiness = (customer.businessName || "").trim()
+    const initialAddress = (customer.villageAddress || customer.address || "").trim()
+    const initialType = (customer.customerType || "RETAIL").toUpperCase()
+
+    const currentName = (form.name || "").trim()
+    const currentPhone = (form.phone || "").trim()
+    const currentLand = (form.landArea || "").trim()
+    const currentFather = (form.fatherName || "").trim()
+    const currentBusiness = (form.businessName || "").trim()
+    const currentAddress = (form.villageAddress || "").trim()
+    const currentType = (form.customerType || "RETAIL").toUpperCase()
+
+    return (
+      currentName !== initialName ||
+      currentPhone !== initialPhone ||
+      currentLand !== initialLand ||
+      currentFather !== initialFather ||
+      currentBusiness !== initialBusiness ||
+      currentAddress !== initialAddress ||
+      currentType !== initialType
+    )
+  }, [customer, form])
+
   if (!isOpen || !customer) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isChanged) return
+
     if (!form.name.trim()) {
       setFormError("Customer name is required.")
       return
@@ -76,13 +98,13 @@ export default function EditCustomerModal({
       setIsSaving(true)
       setFormError(null)
       const updated = await updateCustomer(customer.id, {
-        ...form,
         name: form.name.trim(),
         phone: form.phone.trim(),
-        fatherName: form.fatherName ? form.fatherName.trim() : undefined,
-        businessName: form.businessName ? form.businessName.trim() : undefined,
-        villageAddress: form.villageAddress ? form.villageAddress.trim() : undefined,
-        landArea: form.landArea ? form.landArea.trim() : undefined,
+        fatherName: form.fatherName?.trim() ? form.fatherName.trim() : null,
+        businessName: form.businessName?.trim() ? form.businessName.trim() : null,
+        villageAddress: form.villageAddress?.trim() ? form.villageAddress.trim() : null,
+        landArea: form.landArea?.trim() ? form.landArea.trim() : null,
+        customerType: form.customerType,
       })
       onSuccess(updated)
       onClose()
@@ -240,8 +262,8 @@ export default function EditCustomerModal({
             </button>
             <button
               type="submit"
-              disabled={isSaving}
-              className="px-4 py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 rounded-md transition-colors"
+              disabled={isSaving || !isChanged}
+              className="px-4 py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-md transition-colors"
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </button>
