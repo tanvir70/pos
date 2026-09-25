@@ -49,7 +49,6 @@ export default function ThermalReceipt({
       })
     : new Date().toLocaleString("en-US")
 
-  const isWholesale = sale.saleMode === "WHOLESALE"
   const totalPaid = (sale.cashPaid || 0) + (sale.digitalPaid || 0)
   const changeAmount = totalPaid > sale.totalAmount ? totalPaid - sale.totalAmount : 0
 
@@ -99,7 +98,7 @@ export default function ThermalReceipt({
                 Phone: 01711-234567, 01911-123456
               </p>
               <div className="mt-1.5 inline-block border border-black rounded px-2 py-0.5 text-[10px] font-bold">
-                {isWholesale ? "Wholesale Sales Receipt" : "Retail Cash Memo"}
+                Cash Memo
               </div>
             </div>
 
@@ -261,7 +260,7 @@ export default function ThermalReceipt({
                 Quality pesticides & fertilizers.
               </p>
               <p className="text-[9px] text-gray-500 font-mono mt-1">
-                {sale.invoiceNo} · Powered by Rajib Enterprise POS
+                Powered by Rajib Enterprise POS
               </p>
             </div>
           </div>
