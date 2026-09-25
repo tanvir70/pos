@@ -765,9 +765,12 @@ export default function StockLedgerPage({
                         } else {
                           focusPrimarySearch()
                         }
+                      } else if (e.key === "ArrowLeft") {
+                        e.preventDefault()
+                        focusSidebarMenu()
                       }
                     }}
-                    className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 text-xs focus:outline-hidden focus:bg-teal-50/70 focus:ring-1 focus:ring-teal-500 cursor-default"
+                      className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 text-xs focus:outline-none focus:bg-teal-50 focus:ring-2 focus:ring-teal-600 cursor-default"
                   >
                     {/* 1. Date & Time */}
                     <td className="py-3 px-4 whitespace-nowrap font-mono text-[11px] text-slate-600">

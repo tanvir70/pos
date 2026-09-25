@@ -15,7 +15,7 @@ import { ToastProvider } from "./context/ToastContext"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { CartProvider } from "./context/CartContext"
 import { SplashScreen } from "./components/ui"
-import { isTypingTarget, focusPrimarySearch, focusSidebarMenu } from "./utils/keyboard"
+import { isTypingTarget, focusPrimarySearch, focusSidebarMenu, focusFirstTableRow } from "./utils/keyboard"
 
 const SIDEBAR_OPEN_KEY = "pos_sidebar_open"
 
@@ -103,11 +103,29 @@ function AppShell() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [tab, toggleFocusMode])
 
+  // Auto-focus primary search box whenever tab changes or app loads
+  useEffect(() => {
+    const t1 = setTimeout(() => focusPrimarySearch(), 60)
+    const t2 = setTimeout(() => focusPrimarySearch(), 250)
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+    }
+  }, [tab])
+
   // Global Keyboard Navigation Shortcuts:
+  // - ArrowLeft: Jump to sidebar menu when not typing
+  // - ArrowRight: Jump to primary search box when not typing
+  // - ArrowDown / ArrowUp on body: Jump to search or first table row
   // - '/' or 'F2': Jump to primary search box
   // - 'F1' or 'Alt+M': Jump to sidebar navigation menu
   useEffect(() => {
     const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      // If typing in an input or textarea, let the input handle it
+      if (isTypingTarget(e.target)) {
+        return
+      }
+
       // 1. Focus Sidebar Menu (F1 or Alt+M)
       if (e.key === "F1" || (e.altKey && (e.key === "m" || e.key === "M"))) {
         e.preventDefault()
@@ -117,16 +135,47 @@ function AppShell() {
       }
 
       // 2. Focus Primary Search Box (F2 anywhere, or '/' when not typing)
-      if (e.key === "F2") {
+      if (e.key === "F2" || e.key === "/") {
         e.preventDefault()
         focusPrimarySearch()
         return
       }
 
-      if (e.key === "/" && !isTypingTarget(e.target)) {
-        e.preventDefault()
-        focusPrimarySearch()
-        return
+      // 3. ArrowLeft from outside the sidebar -> jump to sidebar menu
+      if (e.key === "ArrowLeft") {
+        const isSidebar = (e.target as HTMLElement | null)?.closest?.('[data-sidebar-tab="true"]')
+        if (!isSidebar) {
+          e.preventDefault()
+          setIsSidebarOpen(true)
+          focusSidebarMenu(tab)
+          return
+        }
+      }
+
+      // 4. ArrowRight from outside search -> jump to primary search box
+      if (e.key === "ArrowRight") {
+        const isSearch = (e.target as HTMLElement | null)?.getAttribute?.("data-primary-search") === "true"
+        if (!isSearch) {
+          e.preventDefault()
+          focusPrimarySearch()
+          return
+        }
+      }
+
+      // 5. ArrowDown / ArrowUp when focus is on document.body or page container
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        const active = document.activeElement
+        const isSidebar = active?.closest?.('[data-sidebar-tab="true"]')
+        const isTableRow = active?.closest?.('[data-nav-row="true"]')
+        const isSearch = active?.getAttribute?.("data-primary-search") === "true"
+
+        if (!isSidebar && !isTableRow && !isSearch) {
+          e.preventDefault()
+          if (!focusPrimarySearch()) {
+            focusFirstTableRow()
+          }
+          return
+        }
       }
     }
 

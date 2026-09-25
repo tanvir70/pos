@@ -54,6 +54,13 @@ export default function ReturnSuperSearch({
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      inputRef.current?.focus()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
   // Close dropdown on outside click
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {

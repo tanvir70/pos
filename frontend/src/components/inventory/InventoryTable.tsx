@@ -283,6 +283,9 @@ export default function InventoryTable({
                           } else {
                             focusPrimarySearch()
                           }
+                        } else if (e.key === "ArrowLeft") {
+                          e.preventDefault()
+                          focusSidebarMenu()
                         } else if (e.key === "Enter" || e.key === " ") {
                           if (activeLots.length > 1) {
                             e.preventDefault()
@@ -290,7 +293,7 @@ export default function InventoryTable({
                           }
                         }
                       }}
-                      className={`focus:outline-hidden focus:bg-emerald-50/70 focus:ring-1 focus:ring-emerald-500 cursor-default ${
+                      className={`focus:outline-none focus:bg-emerald-50 focus:ring-2 focus:ring-emerald-600 cursor-default ${
                         isLowStock ? "bg-amber-50/30" : ""
                       }`}
                     >

@@ -246,24 +246,32 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                     if (e.key === "ArrowDown") {
                       e.preventDefault()
                       const nextIndex = (index + 1) % NAV_TABS.length
-                      tabRefs.current[nextIndex]?.focus()
+                      const nextTab = NAV_TABS[nextIndex]
+                      handleTabClick(nextTab.id)
+                      setTimeout(() => tabRefs.current[nextIndex]?.focus(), 15)
                     } else if (e.key === "ArrowUp") {
                       e.preventDefault()
                       const prevIndex = (index - 1 + NAV_TABS.length) % NAV_TABS.length
-                      tabRefs.current[prevIndex]?.focus()
+                      const prevTab = NAV_TABS[prevIndex]
+                      handleTabClick(prevTab.id)
+                      setTimeout(() => tabRefs.current[prevIndex]?.focus(), 15)
                     } else if (e.key === "Home") {
                       e.preventDefault()
-                      tabRefs.current[0]?.focus()
+                      const firstTab = NAV_TABS[0]
+                      handleTabClick(firstTab.id)
+                      setTimeout(() => tabRefs.current[0]?.focus(), 15)
                     } else if (e.key === "End") {
                       e.preventDefault()
-                      tabRefs.current[NAV_TABS.length - 1]?.focus()
+                      const lastTab = NAV_TABS[NAV_TABS.length - 1]
+                      handleTabClick(lastTab.id)
+                      setTimeout(() => tabRefs.current[NAV_TABS.length - 1]?.focus(), 15)
                     } else if (e.key === "ArrowRight") {
                       e.preventDefault()
                       focusPrimarySearch()
                     }
                   }}
                   title={isRail ? tab.label : undefined}
-                  className={`group relative w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold cursor-pointer border focus:outline-hidden focus:ring-2 focus:ring-emerald-500/50 ${
+                  className={`group relative w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold cursor-pointer border focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-slate-100 ${
                     isRail ? "md:justify-center md:px-0" : ""
                   } ${
                     isActive

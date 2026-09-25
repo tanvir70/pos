@@ -371,12 +371,15 @@ export default function CustomerDirectoryTable({
                             } else {
                               focusPrimarySearch()
                             }
+                          } else if (e.key === "ArrowLeft") {
+                            e.preventDefault()
+                            focusSidebarMenu()
                           } else if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault()
                             onOpenPurchases(c)
                           }
                         }}
-                        className={`hover:bg-emerald-50/40 cursor-pointer transition-colors focus:outline-hidden focus:bg-emerald-50/80 focus:ring-1 focus:ring-emerald-500 ${
+                        className={`hover:bg-emerald-50/40 cursor-pointer transition-colors focus:outline-none focus:bg-emerald-50 focus:ring-2 focus:ring-emerald-600 ${
                           due > 0 ? "bg-red-50/15" : ""
                         }`}
                         title="Click row to view all invoice purchases and items"

@@ -81,6 +81,13 @@ export default function ProductSearch({
   const searchRootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      searchInputRef.current?.focus()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "F2") return
       event.preventDefault()
