@@ -13,6 +13,7 @@ import {
   SelectItem,
 } from "../components/ui/select"
 import { formatLotNumber } from "../utils/lotNumber"
+import { focusSidebarMenu, focusFirstTableRow, focusPrimarySearch } from "../utils/keyboard"
 import {
   Table,
   TableHeader,
@@ -512,9 +513,23 @@ export default function StockLedgerPage({
             <div className="relative flex-1 min-w-[200px]">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
+                data-primary-search="true"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault()
+                    focusFirstTableRow()
+                  } else if (
+                    e.key === "ArrowLeft" &&
+                    e.currentTarget.selectionStart === 0 &&
+                    e.currentTarget.selectionEnd === 0
+                  ) {
+                    e.preventDefault()
+                    focusSidebarMenu()
+                  }
+                }}
                 placeholder="Search reference #INV, #ADJ, batch, or notes..."
                 className="w-full text-xs pl-9 pr-8 py-2 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden transition-all placeholder:text-slate-400"
               />
@@ -733,7 +748,27 @@ export default function StockLedgerPage({
                 const isDeduction = m.quantityChange < 0
 
                 return (
-                  <tr key={m.id} className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 text-xs">
+                  <tr
+                    key={m.id}
+                    tabIndex={0}
+                    data-nav-row="true"
+                    onKeyDown={(e) => {
+                      const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-nav-row="true"]'))
+                      const currentIndex = rows.indexOf(e.currentTarget)
+                      if (e.key === "ArrowDown" && currentIndex < rows.length - 1) {
+                        e.preventDefault()
+                        rows[currentIndex + 1]?.focus()
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault()
+                        if (currentIndex > 0) {
+                          rows[currentIndex - 1]?.focus()
+                        } else {
+                          focusPrimarySearch()
+                        }
+                      }
+                    }}
+                    className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 text-xs focus:outline-hidden focus:bg-teal-50/70 focus:ring-1 focus:ring-teal-500 cursor-default"
+                  >
                     {/* 1. Date & Time */}
                     <td className="py-3 px-4 whitespace-nowrap font-mono text-[11px] text-slate-600">
                       {formatDate(m.movementTime)}

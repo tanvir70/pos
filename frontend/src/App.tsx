@@ -15,7 +15,7 @@ import { ToastProvider } from "./context/ToastContext"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { CartProvider } from "./context/CartContext"
 import { SplashScreen } from "./components/ui"
-import { isTypingTarget } from "./utils/keyboard"
+import { isTypingTarget, focusPrimarySearch, focusSidebarMenu } from "./utils/keyboard"
 
 const SIDEBAR_OPEN_KEY = "pos_sidebar_open"
 
@@ -102,6 +102,37 @@ function AppShell() {
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [tab, toggleFocusMode])
+
+  // Global Keyboard Navigation Shortcuts:
+  // - '/' or 'F2': Jump to primary search box
+  // - 'F1' or 'Alt+M': Jump to sidebar navigation menu
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      // 1. Focus Sidebar Menu (F1 or Alt+M)
+      if (e.key === "F1" || (e.altKey && (e.key === "m" || e.key === "M"))) {
+        e.preventDefault()
+        setIsSidebarOpen(true)
+        setTimeout(() => focusSidebarMenu(tab), 50)
+        return
+      }
+
+      // 2. Focus Primary Search Box (F2 anywhere, or '/' when not typing)
+      if (e.key === "F2") {
+        e.preventDefault()
+        focusPrimarySearch()
+        return
+      }
+
+      if (e.key === "/" && !isTypingTarget(e.target)) {
+        e.preventDefault()
+        focusPrimarySearch()
+        return
+      }
+    }
+
+    window.addEventListener("keydown", handleGlobalShortcuts)
+    return () => window.removeEventListener("keydown", handleGlobalShortcuts)
+  }, [tab])
 
   if (isLoading) {
     return <SplashScreen />

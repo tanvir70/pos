@@ -16,6 +16,7 @@ import {
 import type { Product, StockItem, GroupedProduct } from "../../types"
 import { formatTk } from "../../utils/currency"
 import { formatLotNumber } from "../../utils/lotNumber"
+import { focusSidebarMenu, focusFirstTableRow, focusPrimarySearch } from "../../utils/keyboard"
 import Button from "../ui/Button"
 import Input from "../ui/Input"
 import Pagination from "../ui/Pagination"
@@ -92,8 +93,22 @@ export default function InventoryTable({
       <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex-1 max-w-md">
           <Input
+            data-primary-search="true"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowDown") {
+                e.preventDefault()
+                focusFirstTableRow()
+              } else if (
+                e.key === "ArrowLeft" &&
+                e.currentTarget.selectionStart === 0 &&
+                e.currentTarget.selectionEnd === 0
+              ) {
+                e.preventDefault()
+                focusSidebarMenu()
+              }
+            }}
             onClear={() => onSearchChange("")}
             placeholder="Search by product name or code..."
             leftAdornment={<Search className="w-4 h-4 text-slate-400" />}
@@ -252,7 +267,33 @@ export default function InventoryTable({
 
                 return (
                   <Fragment key={item.productId}>
-                    <TableRow className={isLowStock ? "bg-amber-50/30" : ""}>
+                    <TableRow
+                      tabIndex={0}
+                      data-nav-row="true"
+                      onKeyDown={(e) => {
+                        const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-nav-row="true"]'))
+                        const currentIndex = rows.indexOf(e.currentTarget)
+                        if (e.key === "ArrowDown" && currentIndex < rows.length - 1) {
+                          e.preventDefault()
+                          rows[currentIndex + 1]?.focus()
+                        } else if (e.key === "ArrowUp") {
+                          e.preventDefault()
+                          if (currentIndex > 0) {
+                            rows[currentIndex - 1]?.focus()
+                          } else {
+                            focusPrimarySearch()
+                          }
+                        } else if (e.key === "Enter" || e.key === " ") {
+                          if (activeLots.length > 1) {
+                            e.preventDefault()
+                            toggleLotsExpanded(item.productId)
+                          }
+                        }
+                      }}
+                      className={`focus:outline-hidden focus:bg-emerald-50/70 focus:ring-1 focus:ring-emerald-500 cursor-default ${
+                        isLowStock ? "bg-amber-50/30" : ""
+                      }`}
+                    >
                       {/* Product Info */}
                       <TableCell>
                         <div>

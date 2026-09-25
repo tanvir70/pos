@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import type { StockItem, SaleResponse, SaleItemResponse } from "../../types"
 import { formatLotNumber } from "../../utils/lotNumber"
+import { focusSidebarMenu } from "../../utils/keyboard"
 
 export interface ReturnSuperSearchProps {
   stocks: StockItem[]
@@ -113,6 +114,16 @@ export default function ReturnSuperSearch({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.key === "ArrowLeft" &&
+      e.currentTarget.selectionStart === 0 &&
+      e.currentTarget.selectionEnd === 0
+    ) {
+      e.preventDefault()
+      focusSidebarMenu()
+      return
+    }
+
     if (e.key === "Enter") {
       e.preventDefault()
       if (isOpen && matchingStocks.length > 0 && activeIndex < matchingStocks.length) {
@@ -184,6 +195,7 @@ export default function ReturnSuperSearch({
 
           <input
             ref={inputRef}
+            data-primary-search="true"
             type="text"
             value={query}
             onChange={(e) => {

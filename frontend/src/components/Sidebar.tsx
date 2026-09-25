@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import type { NavigationTab } from "../types"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
+import { focusPrimarySearch } from "../utils/keyboard"
 import {
   Sprout,
   ShoppingCart,
@@ -106,6 +107,7 @@ const NAV_TABS: TabItem[] = [
 export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: SidebarProps) {
   const auth = useAuth()
   const { showToast, dismissToast } = useToast()
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
 
   const [wholesaleSettings, setWholesaleSettings] = useState<WholesaleSettings>(getWholesaleSettings)
 
@@ -224,17 +226,44 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
 
           {/* Navigation */}
           <nav className={`flex-1 overflow-y-auto p-3 space-y-1.5 ${isRail ? "md:px-2" : ""}`}>
-            {NAV_TABS.map((tab) => {
+            {NAV_TABS.map((tab, index) => {
               const isActive = activeTab === tab.id
               const Icon = tab.icon
               const theme = TAB_THEMES[tab.id]
               return (
                 <button
+                  ref={(el) => {
+                    tabRefs.current[index] = el
+                  }}
                   type="button"
                   key={tab.id}
+                  data-sidebar-tab="true"
+                  data-tab-id={tab.id}
+                  data-active={isActive ? "true" : "false"}
+                  tabIndex={isActive ? 0 : -1}
                   onClick={() => handleTabClick(tab.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault()
+                      const nextIndex = (index + 1) % NAV_TABS.length
+                      tabRefs.current[nextIndex]?.focus()
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault()
+                      const prevIndex = (index - 1 + NAV_TABS.length) % NAV_TABS.length
+                      tabRefs.current[prevIndex]?.focus()
+                    } else if (e.key === "Home") {
+                      e.preventDefault()
+                      tabRefs.current[0]?.focus()
+                    } else if (e.key === "End") {
+                      e.preventDefault()
+                      tabRefs.current[NAV_TABS.length - 1]?.focus()
+                    } else if (e.key === "ArrowRight") {
+                      e.preventDefault()
+                      focusPrimarySearch()
+                    }
+                  }}
                   title={isRail ? tab.label : undefined}
-                  className={`group relative w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold cursor-pointer border ${
+                  className={`group relative w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold cursor-pointer border focus:outline-hidden focus:ring-2 focus:ring-emerald-500/50 ${
                     isRail ? "md:justify-center md:px-0" : ""
                   } ${
                     isActive

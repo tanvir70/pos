@@ -24,6 +24,7 @@ import {
 import type { Customer } from "../../types"
 import GotposStatCard from "../dashboard/GotposStatCard"
 import Pagination from "../ui/Pagination"
+import { focusSidebarMenu, focusFirstTableRow, focusPrimarySearch } from "../../utils/keyboard"
 
 export type FilterType = "ALL" | "WHOLESALE" | "RETAIL" | "HAS_DUE"
 
@@ -243,9 +244,23 @@ export default function CustomerDirectoryTable({
             <Search className="w-4 h-4" />
           </span>
           <input
+            data-primary-search="true"
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowDown") {
+                e.preventDefault()
+                focusFirstTableRow()
+              } else if (
+                e.key === "ArrowLeft" &&
+                e.currentTarget.selectionStart === 0 &&
+                e.currentTarget.selectionEnd === 0
+              ) {
+                e.preventDefault()
+                focusSidebarMenu()
+              }
+            }}
             placeholder="Search by name, business, phone, or village..."
             className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bg-white"
           />
@@ -340,8 +355,28 @@ export default function CustomerDirectoryTable({
                     return (
                       <tr
                         key={c.id}
+                        tabIndex={0}
+                        data-nav-row="true"
                         onClick={() => onOpenPurchases(c)}
-                        className={`hover:bg-emerald-50/40 cursor-pointer transition-colors ${
+                        onKeyDown={(e) => {
+                          const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-nav-row="true"]'))
+                          const currentIndex = rows.indexOf(e.currentTarget)
+                          if (e.key === "ArrowDown" && currentIndex < rows.length - 1) {
+                            e.preventDefault()
+                            rows[currentIndex + 1]?.focus()
+                          } else if (e.key === "ArrowUp") {
+                            e.preventDefault()
+                            if (currentIndex > 0) {
+                              rows[currentIndex - 1]?.focus()
+                            } else {
+                              focusPrimarySearch()
+                            }
+                          } else if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            onOpenPurchases(c)
+                          }
+                        }}
+                        className={`hover:bg-emerald-50/40 cursor-pointer transition-colors focus:outline-hidden focus:bg-emerald-50/80 focus:ring-1 focus:ring-emerald-500 ${
                           due > 0 ? "bg-red-50/15" : ""
                         }`}
                         title="Click row to view all invoice purchases and items"

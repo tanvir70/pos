@@ -13,6 +13,7 @@ import {
 import type { SaleMode, StockItem } from "../../types"
 import { formatTk } from "../../utils/currency"
 import { formatLotNumber } from "../../utils/lotNumber"
+import { focusSidebarMenu } from "../../utils/keyboard"
 import Input from "../ui/Input"
 import Button from "../ui/Button"
 import Badge from "../ui/Badge"
@@ -194,6 +195,16 @@ export default function ProductSearch({
   }
 
   const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      event.key === "ArrowLeft" &&
+      event.currentTarget.selectionStart === 0 &&
+      event.currentTarget.selectionEnd === 0
+    ) {
+      event.preventDefault()
+      focusSidebarMenu()
+      return
+    }
+
     if (event.key === "ArrowDown" && results.length > 0) {
       event.preventDefault()
       setIsOpen(true)
@@ -234,6 +245,7 @@ export default function ProductSearch({
         <div className="relative min-w-0 flex-1">
           <Input
             ref={searchInputRef}
+            data-primary-search="true"
             value={search}
             onChange={(event) => {
               setSearch(event.target.value)
