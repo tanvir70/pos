@@ -23,14 +23,31 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   RefreshCw,
   Search,
   Package,
+  Layers,
   Flame,
   Printer,
   FileText,
   X,
+  ShoppingCart,
+  RotateCcw,
+  ClipboardCheck,
+  BookOpen,
 } from "lucide-react"
+
+const MOVEMENT_CATEGORIES = [
+  { id: "ALL", label: "All Logs", icon: History },
+  { id: "SALE", label: "POS Sales", icon: ShoppingCart },
+  { id: "LOT_ENTRY", label: "Lot Inwards", icon: ArrowUpRight, color: "text-emerald-600" },
+  { id: "DAMAGE_ALL", label: "Damage Write-Offs", icon: Flame, color: "text-rose-600" },
+  { id: "RETURN_ALL", label: "Customer Returns", icon: RotateCcw, color: "text-purple-600" },
+  { id: "PHYSICAL_AUDIT_VARIANCE", label: "Audit Variances", icon: ClipboardCheck, color: "text-amber-600" },
+  { id: "PROMOTIONAL_SAMPLE", label: "Farmer Demos", icon: Package, color: "text-teal-600" },
+  { id: "OPENING_BALANCE", label: "Opening Balances", icon: BookOpen, color: "text-slate-600" },
+]
 
 export interface StockLedgerPageProps {
   initialProductId?: number
@@ -244,6 +261,28 @@ export default function StockLedgerPage({
     return stocks.filter((s) => s.productId === selectedProductId)
   }, [stocks, selectedProductId])
 
+  const selectedLot = useMemo(
+    () => availableLots.find((l) => l.lotId === selectedLotId),
+    [availableLots, selectedLotId]
+  )
+
+  const hasActiveFilters = Boolean(
+    selectedProductId ||
+    selectedLotId ||
+    selectedType !== "ALL" ||
+    searchQuery.trim() ||
+    dateRange.preset !== "ALL"
+  )
+
+  const handleResetFilters = useCallback(() => {
+    setSelectedProductId(undefined)
+    setSelectedLotId(undefined)
+    setSelectedType("ALL")
+    setSearchQuery("")
+    setDateRange(defaultDateRange)
+    setPage(0)
+  }, [])
+
   // Client-side filtering on current page content (type filter & search query)
   const rawMovements = pagedMovements?.content || []
   const filteredMovements = useMemo(() => {
@@ -428,173 +467,225 @@ export default function StockLedgerPage({
       </div>
 
       {/* ─── Filter & Scope Toolbar ───────────────────────────────── */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {/* 1. Product Scope Selector */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Filter by Product
-            </label>
-            <select
-              value={selectedProductId || ""}
-              onChange={(e) => {
-                const val = Number(e.target.value) || undefined
-                setSelectedProductId(val)
-                setSelectedLotId(undefined)
-                setPage(0)
-              }}
-              className="w-full text-xs font-semibold px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden cursor-pointer"
-            >
-              <option value="">All Catalog Products ({products.length})</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nameEn} ({p.productCode})
-                </option>
-              ))}
-            </select>
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        {/* 1. Category Segmented Navigation Strip */}
+        <div className="px-3.5 py-2 bg-slate-50/70 border-b border-slate-200/80 flex items-center justify-between gap-2 overflow-x-auto">
+          <div className="flex items-center gap-1 shrink-0">
+            {MOVEMENT_CATEGORIES.map((cat) => {
+              const isSelected = selectedType === cat.id
+              const IconComponent = cat.icon
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedType(cat.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
+                    isSelected
+                      ? "bg-teal-700 text-white shadow-xs font-bold"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                  }`}
+                >
+                  <IconComponent className={`w-3.5 h-3.5 ${isSelected ? "text-white" : cat.color || "text-slate-400"}`} />
+                  <span>{cat.label}</span>
+                </button>
+              )
+            })}
           </div>
 
-          {/* 2. Lot / Batch Selector */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Filter by Batch / Lot
-            </label>
-            <select
-              value={selectedLotId || ""}
-              onChange={(e) => {
-                const val = Number(e.target.value) || undefined
-                setSelectedLotId(val)
-                setPage(0)
-              }}
-              disabled={availableLots.length === 0}
-              className="w-full text-xs font-semibold px-3 py-2 bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden cursor-pointer font-mono"
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="text-xs font-bold text-rose-600 hover:text-rose-800 hover:underline cursor-pointer flex items-center gap-1 shrink-0 ml-auto pl-2"
+              title="Reset all filters"
             >
-              <option value="">All Batches / Lots</option>
-              {availableLots.map((l) => (
-                <option key={l.lotId} value={l.lotId}>
-                  {formatLotNumber(l.lotNumber)} ({l.nameEn} • Exp: {l.expiryDate || "N/A"})
-                </option>
-              ))}
-            </select>
-          </div>
+              <X className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+          )}
+        </div>
 
-          {/* 3. Search Query Input */}
-          <div className="md:col-span-2">
-            <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Search Reference / Notes / Barcode
-            </label>
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        {/* 2. Secondary Filter Bar: Search + Product + Batch + Date Range */}
+        <div className="p-3.5 space-y-2.5">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by invoice #INV-, #ADJ-, batch, or operator notes..."
-                className="w-full text-xs pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden"
+                placeholder="Search reference #INV, #ADJ, batch, or notes..."
+                className="w-full text-xs pl-9 pr-8 py-2 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden transition-all placeholder:text-slate-400"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                  title="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Date Range Filter */}
-        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-          <DateRangeFilter
-            value={dateRange}
-            onChange={(newRange) => {
-              setDateRange(newRange)
-              setPage(0)
-            }}
-          />
-        </div>
-
-        {/* Movement Type Filter Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 border-t border-slate-100">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">
-            Movement Type:
-          </span>
-          {[
-            { id: "ALL", label: "All Logs" },
-            { id: "SALE", label: "POS Sales" },
-            { id: "LOT_ENTRY", label: "Lot Inwards" },
-            { id: "DAMAGE_ALL", label: "Damage Write-Offs" },
-            { id: "RETURN_ALL", label: "Customer Returns" },
-            { id: "PHYSICAL_AUDIT_VARIANCE", label: "Audit Variances" },
-            { id: "PROMOTIONAL_SAMPLE", label: "Farmer Demos" },
-            { id: "OPENING_BALANCE", label: "Opening Balances" },
-          ].map((typeItem) => {
-            const isSelected = selectedType === typeItem.id
-            return (
-              <button
-                key={typeItem.id}
-                type="button"
-                onClick={() => setSelectedType(typeItem.id)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer transition-all border ${
-                  isSelected
-                    ? "bg-teal-700 text-white border-teal-800 shadow-xs"
-                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                }`}
+            {/* Product Selector */}
+            <div className="relative lg:w-56 shrink-0">
+              <Package className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={selectedProductId || ""}
+                onChange={(e) => {
+                  const val = Number(e.target.value) || undefined
+                  setSelectedProductId(val)
+                  setSelectedLotId(undefined)
+                  setPage(0)
+                }}
+                className="w-full text-xs font-semibold pl-8 pr-7 py-2 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden cursor-pointer appearance-none transition-all truncate"
               >
-                {typeItem.label}
-              </button>
-            )
-          })}
+                <option value="">All Products ({products.length})</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nameEn} ({p.productCode})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
 
-          {(selectedProductId || selectedLotId || selectedType !== "ALL" || searchQuery || dateRange.preset !== "ALL") && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedProductId(undefined)
-                setSelectedLotId(undefined)
-                setSelectedType("ALL")
-                setSearchQuery("")
-                setDateRange(defaultDateRange)
-                setPage(0)
-              }}
-              className="ml-auto text-xs font-semibold text-rose-600 hover:text-rose-800 cursor-pointer flex items-center gap-1 shrink-0 pl-2"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span>Reset Filters</span>
-            </button>
+            {/* Batch / Lot Selector */}
+            <div className="relative lg:w-48 shrink-0">
+              <Layers className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={selectedLotId || ""}
+                onChange={(e) => {
+                  const val = Number(e.target.value) || undefined
+                  setSelectedLotId(val)
+                  setPage(0)
+                }}
+                disabled={availableLots.length === 0}
+                className="w-full text-xs font-semibold pl-8 pr-7 py-2 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden cursor-pointer appearance-none transition-all font-mono truncate disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="">All Batches / Lots</option>
+                {availableLots.map((l) => (
+                  <option key={l.lotId} value={l.lotId}>
+                    {formatLotNumber(l.lotNumber)} ({l.nameEn})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            {/* Date Range Filter */}
+            <div className="shrink-0">
+              <DateRangeFilter
+                value={dateRange}
+                onChange={(newRange) => {
+                  setDateRange(newRange)
+                  setPage(0)
+                }}
+              />
+            </div>
+          </div>
+
+          {/* 3. Active Filter Chips & Context Bar */}
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 text-xs">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+                Active Filters:
+              </span>
+
+              {currentProduct && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200 text-xs font-medium">
+                  <Package className="w-3 h-3 text-teal-600" />
+                  <span>{currentProduct.nameEn}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProductId(undefined)
+                      setSelectedLotId(undefined)
+                      setPage(0)
+                    }}
+                    className="hover:text-teal-950 cursor-pointer p-0.5 ml-0.5"
+                    title="Remove product filter"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {selectedLot && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200 text-xs font-medium font-mono">
+                  <Layers className="w-3 h-3 text-violet-600" />
+                  <span>{formatLotNumber(selectedLot.lotNumber)}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedLotId(undefined)
+                      setPage(0)
+                    }}
+                    className="hover:text-violet-950 cursor-pointer p-0.5 ml-0.5"
+                    title="Remove batch filter"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {selectedType !== "ALL" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200 text-xs font-medium">
+                  <span>Category: {MOVEMENT_CATEGORIES.find((c) => c.id === selectedType)?.label || selectedType}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedType("ALL")}
+                    className="hover:text-slate-900 cursor-pointer p-0.5 ml-0.5"
+                    title="Reset category"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {dateRange.preset !== "ALL" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-medium">
+                  <span>Date: {dateRange.preset.replace(/_/g, " ")}</span>
+                  <button
+                    type="button"
+                    onClick={() => setDateRange(defaultDateRange)}
+                    className="hover:text-emerald-950 cursor-pointer p-0.5 ml-0.5"
+                    title="Reset date filter"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              {searchQuery.trim() && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200 text-xs font-medium">
+                  <span>Search: &ldquo;{searchQuery.trim()}&rdquo;</span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="hover:text-blue-950 cursor-pointer p-0.5 ml-0.5"
+                    title="Clear search query"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="ml-auto text-xs font-bold text-rose-600 hover:text-rose-800 hover:underline cursor-pointer flex items-center gap-1"
+              >
+                <X className="w-3 h-3" />
+                <span>Clear All</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
-
-      {/* Active Filter Notification Banner */}
-      {selectedProductId && currentProduct && (
-        <div className="flex items-center justify-between px-4 py-2.5 bg-teal-50 border border-teal-200 rounded-xl text-xs text-teal-950">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-teal-700">Currently Focused Product:</span>
-            <span className="font-bold px-2 py-0.5 bg-white border border-teal-300 rounded-md shadow-2xs">
-              {currentProduct.nameEn} ({currentProduct.productCode})
-            </span>
-            {selectedLotId && (
-              <span className="font-mono text-teal-800 font-semibold">
-                • Batch #{availableLots.find((l) => l.lotId === selectedLotId)?.lotNumber || selectedLotId}
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedProductId(undefined)
-              setSelectedLotId(undefined)
-              setPage(0)
-            }}
-            className="text-xs font-bold text-teal-800 hover:text-teal-950 underline cursor-pointer"
-          >
-            Show All Products
-          </button>
-        </div>
-      )}
 
       {/* ─── High-Density Full-Width Bin Card Table ───────────────── */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
