@@ -59,6 +59,23 @@ export interface InventoryLot {
   createdAt?: string
 }
 
+export interface GroupedProduct {
+  product?: Product | null
+  productId: number
+  productCode: string
+  nameEn: string
+  nameBn?: string
+  category?: string
+  baseUnit: string
+  cartonMultiplier?: number
+  minStockAlert: number
+  retailPrice: number
+  wholesalePrice: number
+  buyingPrice: number
+  totalStock: number
+  lots: StockItem[]
+}
+
 export interface StockItem {
   productId: number
   productCode: string
