@@ -4,7 +4,7 @@ import { getCustomers } from "../api/endpoints"
 import CustomerDirectoryTable from "../components/customers/CustomerDirectoryTable"
 import AddCustomerModal from "../components/customers/AddCustomerModal"
 import EditCustomerModal from "../components/customers/EditCustomerModal"
-import CustomerDetailModal from "../components/customers/CustomerDetailModal"
+import CustomerLedgerView from "../components/customers/CustomerLedgerView"
 import CustomerRepayModal from "../components/customers/CustomerRepayModal"
 import ThermalReceipt from "../components/ThermalReceipt"
 import DueCollectionReceipt, { type DueReceiptData } from "../components/DueCollectionReceipt"
@@ -15,9 +15,9 @@ export default function Customers() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  // Active Modals state
+  // Active Views & Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false)
-  const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null)
   const [repayCustomer, setRepayCustomer] = useState<Customer | null>(null)
 
@@ -31,6 +31,12 @@ export default function Customers() {
       setErrorMessage(null)
       const data = await getCustomers()
       setCustomers(data)
+      // Keep selected customer in sync if one is currently open
+      setSelectedCustomer((current) => {
+        if (!current) return null
+        const matched = data.find((c) => c.id === current.id)
+        return matched || current
+      })
     } catch (err: any) {
       setErrorMessage(err?.message || "Failed to load customer list.")
     } finally {
@@ -58,8 +64,8 @@ export default function Customers() {
   const handleEditSuccess = (updated: Customer) => {
     setSuccessMessage("Customer profile updated successfully.")
     setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
-    if (detailCustomer && detailCustomer.id === updated.id) {
-      setDetailCustomer(updated)
+    if (selectedCustomer && selectedCustomer.id === updated.id) {
+      setSelectedCustomer(updated)
     }
     loadCustomers()
   }
@@ -72,35 +78,38 @@ export default function Customers() {
 
   return (
     <>
-      <CustomerDirectoryTable
-        customers={customers}
-        isLoading={isLoading}
-        successMessage={successMessage}
-        errorMessage={errorMessage}
-        onClearSuccessMessage={() => setSuccessMessage(null)}
-        onClearErrorMessage={() => setErrorMessage(null)}
-        onRefresh={loadCustomers}
-        onOpenAddCustomer={() => setIsAddModalOpen(true)}
-        onOpenRepayModal={(c) => setRepayCustomer(c)}
-        onOpenDetail={(c) => setDetailCustomer(c)}
-        onOpenEdit={(c) => setEditCustomer(c)}
-      />
+      {selectedCustomer ? (
+        <CustomerLedgerView
+          customer={selectedCustomer}
+          customers={customers}
+          onSelectCustomer={(c) => setSelectedCustomer(c)}
+          onBack={() => setSelectedCustomer(null)}
+          onOpenEdit={(c) => setEditCustomer(c)}
+          onOpenRepay={(c) => setRepayCustomer(c)}
+          onPrintInvoice={(sale) => setInvoiceToPrint(sale)}
+          onRefreshCustomers={loadCustomers}
+        />
+      ) : (
+        <CustomerDirectoryTable
+          customers={customers}
+          isLoading={isLoading}
+          successMessage={successMessage}
+          errorMessage={errorMessage}
+          onClearSuccessMessage={() => setSuccessMessage(null)}
+          onClearErrorMessage={() => setErrorMessage(null)}
+          onRefresh={loadCustomers}
+          onOpenAddCustomer={() => setIsAddModalOpen(true)}
+          onOpenRepayModal={(c) => setRepayCustomer(c)}
+          onOpenDetail={(c) => setSelectedCustomer(c)}
+          onOpenEdit={(c) => setEditCustomer(c)}
+        />
+      )}
 
       {/* Add Customer Modal */}
       <AddCustomerModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={handleAddSuccess}
-      />
-
-      {/* Unified Customer 360 Workspace Modal */}
-      <CustomerDetailModal
-        isOpen={!!detailCustomer}
-        customer={detailCustomer}
-        onClose={() => setDetailCustomer(null)}
-        onOpenEdit={(c) => setEditCustomer(c)}
-        onOpenRepay={(c) => setRepayCustomer(c)}
-        onPrintInvoice={(sale) => setInvoiceToPrint(sale)}
       />
 
       {/* Edit Customer Profile Modal */}
