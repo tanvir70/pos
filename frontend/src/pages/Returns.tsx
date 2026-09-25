@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
+import RefreshButton from "../components/ui/RefreshButton"
 import {
-  RefreshCw,
   CheckCircle2,
   AlertTriangle,
   X,
@@ -279,15 +279,11 @@ export default function Returns() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
+          <RefreshButton
             onClick={loadData}
-            disabled={isLoading}
-            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 cursor-pointer transition-colors text-xs"
+            isLoading={isLoading}
             title="Refresh returns data"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-          </button>
+          />
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import type { StockMovement, Product, StockItem, PagedResponse } from "../types"
 import { getStockMovements, getProducts, getStock } from "../api/endpoints"
 import GotposStatCard from "../components/dashboard/GotposStatCard"
 import Pagination from "../components/ui/Pagination"
+import RefreshButton from "../components/ui/RefreshButton"
 import DateRangeFilter, { type DateRange, defaultDateRange } from "../components/ui/DateRangeFilter"
 import {
   Select,
@@ -31,7 +32,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  RefreshCw,
   Search,
   Package,
   Layers,
@@ -400,18 +400,14 @@ export default function StockLedgerPage({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
+          <RefreshButton
             onClick={() => {
               setPage(0)
               loadMovements()
             }}
-            disabled={isLoading}
-            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl border border-slate-200 cursor-pointer transition-colors text-xs"
-            title="Refresh Ledger"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-          </button>
+            isLoading={isLoading}
+            title="Refresh stock ledger"
+          />
         </div>
       </div>
 

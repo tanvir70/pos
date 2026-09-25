@@ -13,6 +13,7 @@ import BarcodeStickerModal from "../components/BarcodeStickerModal"
 import StockLedgerModal from "../components/StockLedgerModal"
 import StockAdjustmentModal from "../components/StockAdjustmentModal"
 import Button from "../components/ui/Button"
+import RefreshButton from "../components/ui/RefreshButton"
 import InventoryStatCards from "../components/inventory/InventoryStatCards"
 import AddProductModal from "../components/inventory/AddProductModal"
 import QuickAddStockModal, { type StockModalProduct } from "../components/inventory/QuickAddStockModal"
@@ -21,7 +22,6 @@ import InventoryTable from "../components/inventory/InventoryTable"
 import {
   Package,
   Plus,
-  RefreshCw,
   X,
   History,
 } from "lucide-react"
@@ -271,15 +271,11 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
             {showAddProduct ? "Close Form" : "New Product"}
           </Button>
 
-          <button
-            type="button"
+          <RefreshButton
             onClick={loadData}
-            disabled={isLoading}
-            className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl border border-slate-200 cursor-pointer transition-colors text-xs"
-            title="Refresh"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-          </button>
+            isLoading={isLoading}
+            title="Refresh inventory"
+          />
         </div>
       </div>
 

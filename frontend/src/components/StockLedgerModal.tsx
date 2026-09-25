@@ -4,6 +4,7 @@ import { getStockMovements } from "../api/endpoints"
 import Pagination from "./ui/Pagination"
 import DateRangeFilter, { type DateRange, defaultDateRange } from "./ui/DateRangeFilter"
 import { formatLotNumber } from "../utils/lotNumber"
+import RefreshButton from "./ui/RefreshButton"
 import {
   X,
   History,
@@ -12,7 +13,6 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
-  RefreshCw,
   FileText,
   AlertTriangle,
   Package,
@@ -243,15 +243,12 @@ export default function StockLedgerModal({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <RefreshButton
               onClick={loadMovements}
-              disabled={isLoading}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              isLoading={isLoading}
+              size="sm"
               title="Refresh ledger"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-            </button>
+            />
             <button
               type="button"
               onClick={onClose}

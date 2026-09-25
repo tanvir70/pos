@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react"
 import type { Customer } from "../../types"
 import Pagination from "../ui/Pagination"
 import GotposStatCard from "../dashboard/GotposStatCard"
+import RefreshButton from "../ui/RefreshButton"
 import { BadgeAlert, Users, Store, UserCheck } from "lucide-react"
 import { focusSidebarMenu, focusFirstTableRow, focusPrimarySearch } from "../../utils/keyboard"
 
@@ -111,13 +112,11 @@ export default function CustomerDirectoryTable({
           >
             Add Customer
           </button>
-          <button
-            type="button"
+          <RefreshButton
             onClick={onRefresh}
-            className="px-3 py-1.5 rounded-md text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors"
-          >
-            Refresh
-          </button>
+            isLoading={isLoading}
+            title="Refresh customer accounts"
+          />
         </div>
       </div>
 

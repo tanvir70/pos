@@ -8,9 +8,10 @@ import OrderDetailsModal from "../components/dashboard/OrderDetailsModal"
 import DualPrintModal from "../components/pos/DualPrintModal"
 import Badge from "../components/ui/Badge"
 import Button from "../components/ui/Button"
+import RefreshButton from "../components/ui/RefreshButton"
 import {
   BarChart3,
-  RefreshCw,
+  Loader2,
   Save,
   CheckCircle2,
   XCircle,
@@ -103,18 +104,11 @@ export default function Dashboard({
 
         <div className="flex items-center gap-2">
           {/* Refresh Button */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
+          <RefreshButton
             onClick={loadDashboard}
-            disabled={isLoading}
-            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />}
-            className="text-xs font-semibold bg-white cursor-pointer"
-            title="Refresh latest data"
-          >
-            {isLoading ? "Loading..." : "Refresh"}
-          </Button>
+            isLoading={isLoading}
+            title="Refresh dashboard metrics"
+          />
 
           {/* Quick Backup */}
           <Button
@@ -125,7 +119,7 @@ export default function Dashboard({
             disabled={isBackupLoading}
             leftIcon={
               isBackupLoading ? (
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : backupStatus === "success" ? (
                 <CheckCircle2 className="w-3.5 h-3.5" />
               ) : backupStatus === "error" ? (

@@ -7,7 +7,6 @@ import {
   Maximize2,
   Minimize2,
   PackageCheck,
-  RefreshCw,
   Search,
 } from "lucide-react"
 import type { SaleMode, StockItem } from "../../types"
@@ -17,6 +16,7 @@ import { focusSidebarMenu } from "../../utils/keyboard"
 import Input from "../ui/Input"
 import Button from "../ui/Button"
 import Badge from "../ui/Badge"
+import RefreshButton from "../ui/RefreshButton"
 
 export interface ProductSearchProps {
   stocks: StockItem[]
@@ -394,17 +394,12 @@ export default function ProductSearch({
         </div>
 
         {onRefresh && (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
+          <RefreshButton
             onClick={onRefresh}
-            disabled={isLoading}
-            className="h-11 w-11 shrink-0 rounded-lg text-slate-500 hover:text-slate-900 cursor-pointer"
-            title="Refresh stock"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          </Button>
+            isLoading={isLoading}
+            title="Refresh stock catalog"
+            className="h-11 w-11 rounded-lg"
+          />
         )}
 
         {onToggleFocusMode && (

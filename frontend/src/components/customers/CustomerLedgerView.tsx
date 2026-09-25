@@ -3,6 +3,7 @@ import type { Customer, CustomerLedger, SaleResponse } from "../../types"
 import { getCustomerLedger, getCustomerPurchases } from "../../api/endpoints"
 import { Button } from "../ui/Button"
 import Pagination from "../ui/Pagination"
+import RefreshButton from "../ui/RefreshButton"
 import DateRangeFilter, { type DateRange, defaultDateRange } from "../ui/DateRangeFilter"
 import {
   Select,
@@ -29,7 +30,6 @@ import {
   RotateCcw,
   CheckCircle2,
   Printer,
-  RefreshCw,
   Search,
   X,
   Package,
@@ -209,10 +209,6 @@ export default function CustomerLedgerView({
   const due = Number(customer.currentDue) || 0
   const lifetimeBuy = Number(customer.totalPurchases) || 0
 
-  const handlePrintSlip = () => {
-    window.print()
-  }
-
   const handleCustomerSwitch = (customerIdStr: string) => {
     const target = customers.find((c) => String(c.id) === customerIdStr)
     if (target) {
@@ -374,27 +370,14 @@ export default function CustomerLedgerView({
               Edit Profile
             </Button>
 
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handlePrintSlip}
-              leftIcon={<Printer className="w-3.5 h-3.5 text-slate-500" />}
-            >
-              Print Statement
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
+            <RefreshButton
               onClick={() => {
                 loadData()
                 onRefreshCustomers()
               }}
-              leftIcon={<RefreshCw className="w-3.5 h-3.5 text-slate-500" />}
+              isLoading={isLedgerLoading || isPurchasesLoading}
               title="Refresh ledger records"
-            >
-              Refresh
-            </Button>
+            />
           </div>
         </div>
       </div>
