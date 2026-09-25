@@ -12,6 +12,7 @@ class CustomerDto(CamelModel):
     whatsapp_number: str | None = None
     email: str | None = None
     village_address: str | None = None
+    land_area: str | None = None
     customer_type: str = "RETAIL"
     total_purchases: Decimal = Decimal("0.00")
     current_due: Decimal = Decimal("0.00")
@@ -30,6 +31,7 @@ class CustomerRequest(CamelModel):
     whatsapp_number: str | None = None
     email: str | None = None
     village_address: str | None = None
+    land_area: str | None = None
     customer_type: str = "RETAIL"
     current_due: Decimal | None = None
     initial_due: Decimal | None = None

@@ -25,6 +25,7 @@ class Customer(Base):
     whatsapp_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
     email: Mapped[str | None] = mapped_column(String(100), nullable=True)
     village_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    land_area: Mapped[str | None] = mapped_column(String(100), nullable=True)
     customer_type: Mapped[str] = mapped_column(String(30), default="RETAIL", nullable=False)
     credit_limit: Mapped[Decimal] = mapped_column(
         Numeric(12, 2), default=Decimal("0.00"), nullable=False

@@ -3,9 +3,9 @@ import type { Customer, SaleResponse } from "../types"
 import { getCustomers } from "../api/endpoints"
 import CustomerDirectoryTable from "../components/customers/CustomerDirectoryTable"
 import AddCustomerModal from "../components/customers/AddCustomerModal"
+import EditCustomerModal from "../components/customers/EditCustomerModal"
+import CustomerDetailModal from "../components/customers/CustomerDetailModal"
 import CustomerRepayModal from "../components/customers/CustomerRepayModal"
-import CustomerPurchasesModal from "../components/customers/CustomerPurchasesModal"
-import CustomerLedgerModal from "../components/customers/CustomerLedgerModal"
 import ThermalReceipt from "../components/ThermalReceipt"
 import DueCollectionReceipt, { type DueReceiptData } from "../components/DueCollectionReceipt"
 
@@ -17,9 +17,9 @@ export default function Customers() {
 
   // Active Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false)
+  const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null)
+  const [editCustomer, setEditCustomer] = useState<Customer | null>(null)
   const [repayCustomer, setRepayCustomer] = useState<Customer | null>(null)
-  const [ledgerCustomer, setLedgerCustomer] = useState<Customer | null>(null)
-  const [purchasesCustomer, setPurchasesCustomer] = useState<Customer | null>(null)
 
   // Receipt & Reprint Modals state
   const [dueReceiptToPrint, setDueReceiptToPrint] = useState<DueReceiptData | null>(null)
@@ -51,12 +51,21 @@ export default function Customers() {
   }, [successMessage])
 
   const handleAddSuccess = () => {
-    setSuccessMessage("New customer added successfully!")
+    setSuccessMessage("New customer added successfully.")
+    loadCustomers()
+  }
+
+  const handleEditSuccess = (updated: Customer) => {
+    setSuccessMessage("Customer profile updated successfully.")
+    setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+    if (detailCustomer && detailCustomer.id === updated.id) {
+      setDetailCustomer(updated)
+    }
     loadCustomers()
   }
 
   const handleRepaySuccess = (receiptData: DueReceiptData) => {
-    setSuccessMessage(`Payment recorded successfully! MR Voucher: ${receiptData.receiptNo}`)
+    setSuccessMessage(`Payment recorded successfully. MR Voucher: ${receiptData.receiptNo}`)
     setDueReceiptToPrint(receiptData)
     loadCustomers()
   }
@@ -73,8 +82,8 @@ export default function Customers() {
         onRefresh={loadCustomers}
         onOpenAddCustomer={() => setIsAddModalOpen(true)}
         onOpenRepayModal={(c) => setRepayCustomer(c)}
-        onOpenLedger={(c) => setLedgerCustomer(c)}
-        onOpenPurchases={(c) => setPurchasesCustomer(c)}
+        onOpenDetail={(c) => setDetailCustomer(c)}
+        onOpenEdit={(c) => setEditCustomer(c)}
       />
 
       {/* Add Customer Modal */}
@@ -84,26 +93,29 @@ export default function Customers() {
         onSuccess={handleAddSuccess}
       />
 
+      {/* Edit Customer Profile Modal */}
+      <EditCustomerModal
+        isOpen={!!editCustomer}
+        customer={editCustomer}
+        onClose={() => setEditCustomer(null)}
+        onSuccess={handleEditSuccess}
+      />
+
+      {/* Unified Customer 360 Workspace Modal */}
+      <CustomerDetailModal
+        isOpen={!!detailCustomer}
+        customer={detailCustomer}
+        onClose={() => setDetailCustomer(null)}
+        onOpenEdit={(c) => setEditCustomer(c)}
+        onOpenRepay={(c) => setRepayCustomer(c)}
+        onPrintInvoice={(sale) => setInvoiceToPrint(sale)}
+      />
+
       {/* Repay / Collect Due Modal */}
       <CustomerRepayModal
         customer={repayCustomer}
         onClose={() => setRepayCustomer(null)}
         onSuccess={handleRepaySuccess}
-      />
-
-      {/* Purchases Drilldown Modal */}
-      <CustomerPurchasesModal
-        customer={purchasesCustomer}
-        onClose={() => setPurchasesCustomer(null)}
-        onOpenRepayModal={(c) => setRepayCustomer(c)}
-        onOpenLedger={(c) => setLedgerCustomer(c)}
-        onPrintInvoice={(sale) => setInvoiceToPrint(sale)}
-      />
-
-      {/* Customer Ledger Audit Modal */}
-      <CustomerLedgerModal
-        customer={ledgerCustomer}
-        onClose={() => setLedgerCustomer(null)}
       />
 
       {/* Invoice Thermal Reprint Modal */}

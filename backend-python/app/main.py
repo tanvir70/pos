@@ -47,6 +47,7 @@ async def lifespan(app: FastAPI):
             ("sale", "client_trx_id VARCHAR(64)"),
             ("customer_ledger", "client_trx_id VARCHAR(64)"),
             ("sale_return", "client_trx_id VARCHAR(64)"),
+            ("customer", "land_area VARCHAR(100)"),
         ]:
             try:
                 await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col}"))

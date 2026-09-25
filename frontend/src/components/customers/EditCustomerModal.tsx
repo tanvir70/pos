@@ -1,53 +1,60 @@
-import React, { useState } from "react"
-import type { CustomerRequest, CustomerType } from "../../types"
-import { createCustomer } from "../../api/endpoints"
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "../ui/select"
+import React, { useState, useEffect } from "react"
+import type { Customer, CustomerRequest, CustomerType } from "../../types"
+import { updateCustomer } from "../../api/endpoints"
 
-export interface AddCustomerModalProps {
+export interface EditCustomerModalProps {
   isOpen: boolean
+  customer: Customer | null
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (updated: Customer) => void
 }
 
-const initialFormState: CustomerRequest = {
-  name: "",
-  fatherName: "",
-  businessName: "",
-  phone: "",
-  whatsappNumber: "",
-  villageAddress: "",
-  landArea: "",
-  customerType: "RETAIL",
-  initialDue: 0,
-  mfsType: "",
-  mfsNumber: "",
-  bankName: "",
-  bankBranch: "",
-  bankAccountNo: "",
-}
-
-export default function AddCustomerModal({
+export default function EditCustomerModal({
   isOpen,
+  customer,
   onClose,
   onSuccess,
-}: AddCustomerModalProps) {
-  const [form, setForm] = useState<CustomerRequest>(initialFormState)
+}: EditCustomerModalProps) {
+  const [form, setForm] = useState<CustomerRequest>({
+    name: "",
+    fatherName: "",
+    businessName: "",
+    phone: "",
+    whatsappNumber: "",
+    villageAddress: "",
+    landArea: "",
+    customerType: "RETAIL",
+    mfsType: "",
+    mfsNumber: "",
+    bankName: "",
+    bankBranch: "",
+    bankAccountNo: "",
+  })
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState<boolean>(false)
 
-  if (!isOpen) return null
+  useEffect(() => {
+    if (customer) {
+      setForm({
+        name: customer.name || "",
+        fatherName: customer.fatherName || "",
+        businessName: customer.businessName || "",
+        phone: customer.phone || "",
+        whatsappNumber: customer.whatsappNumber || "",
+        villageAddress: customer.villageAddress || customer.address || "",
+        landArea: customer.landArea || "",
+        customerType: customer.customerType || "RETAIL",
+        mfsType: customer.mfsType || "",
+        mfsNumber: customer.mfsNumber || "",
+        bankName: customer.bankName || "",
+        bankBranch: customer.bankBranch || "",
+        bankAccountNo: customer.bankAccountNo || "",
+      })
+      setFormError(null)
+    }
+  }, [customer])
 
-  const handleClose = () => {
-    setForm(initialFormState)
-    setFormError(null)
-    onClose()
-  }
+  if (!isOpen || !customer) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,7 +70,7 @@ export default function AddCustomerModal({
     try {
       setIsSaving(true)
       setFormError(null)
-      await createCustomer({
+      const updated = await updateCustomer(customer.id, {
         ...form,
         name: form.name.trim(),
         phone: form.phone.trim(),
@@ -72,13 +79,11 @@ export default function AddCustomerModal({
         businessName: form.businessName ? form.businessName.trim() : undefined,
         villageAddress: form.villageAddress ? form.villageAddress.trim() : undefined,
         landArea: form.landArea ? form.landArea.trim() : undefined,
-        initialDue: Number(form.initialDue) || 0,
       })
-      setForm(initialFormState)
-      onSuccess()
+      onSuccess(updated)
       onClose()
     } catch (err: any) {
-      setFormError(err?.message || "Failed to create customer profile.")
+      setFormError(err?.message || "Failed to update customer profile.")
     } finally {
       setIsSaving(false)
     }
@@ -90,16 +95,15 @@ export default function AddCustomerModal({
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
             <h3 className="font-semibold text-slate-900 text-base">
-              Add New Customer
+              Edit Customer Profile
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Enter customer personal profile, contact information, and land area.
+              Update personal details, contact information, and cultivated land area.
             </p>
           </div>
           <button
             type="button"
-            data-testid="close-add-modal"
-            onClick={handleClose}
+            onClick={onClose}
             className="text-slate-400 hover:text-slate-700 text-sm font-medium px-2 py-1 rounded"
           >
             Close
@@ -114,7 +118,7 @@ export default function AddCustomerModal({
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {/* Name */}
+            {/* Customer Name */}
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
                 Customer Name *
@@ -186,7 +190,7 @@ export default function AddCustomerModal({
               />
             </div>
 
-            {/* Business Name */}
+            {/* Business / Shop Name */}
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
                 Business Name
@@ -217,53 +221,25 @@ export default function AddCustomerModal({
             {/* Customer Type */}
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                Customer Type *
+                Customer Type
               </label>
-              <Select
+              <select
                 value={form.customerType}
-                onValueChange={(val) =>
-                  setForm({
-                    ...form,
-                    customerType: val as CustomerType,
-                  })
-                }
-              >
-                <SelectTrigger className="w-full bg-white text-sm h-9">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="RETAIL">Retail Farmer</SelectItem>
-                  <SelectItem value="WHOLESALE">Wholesale Customer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Initial Due */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Opening Due Balance (if any)
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="10"
-                value={form.initialDue || ""}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
-                    initialDue: Number(e.target.value) || 0,
-                  })
+                  setForm({ ...form, customerType: e.target.value as CustomerType })
                 }
-                placeholder="0.00"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 tabular-nums"
-              />
+                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 bg-white"
+              >
+                <option value="RETAIL">Retail Farmer</option>
+                <option value="WHOLESALE">Wholesale Customer</option>
+              </select>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
               type="button"
-              onClick={handleClose}
+              onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
             >
               Cancel
@@ -273,7 +249,7 @@ export default function AddCustomerModal({
               disabled={isSaving}
               className="px-4 py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 rounded-md transition-colors"
             >
-              {isSaving ? "Saving..." : "Save Customer"}
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

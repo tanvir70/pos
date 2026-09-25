@@ -160,6 +160,7 @@ export interface Customer {
   email?: string | null
   villageAddress?: string | null
   address?: string | null
+  landArea?: string | null
   customerType: CustomerType | string
   totalPurchases?: number
   currentDue: number
@@ -179,6 +180,7 @@ export interface CustomerRequest {
   whatsappNumber?: string
   email?: string
   villageAddress?: string
+  landArea?: string
   customerType?: CustomerType | string
   currentDue?: number
   initialDue?: number

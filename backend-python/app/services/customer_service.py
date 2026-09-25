@@ -28,6 +28,7 @@ def to_customer_dto(c: Customer) -> CustomerDto:
         whatsapp_number=c.whatsapp_number,
         email=c.email,
         village_address=c.village_address,
+        land_area=c.land_area,
         customer_type=c.customer_type,
         total_purchases=c.total_purchases,
         current_due=c.current_due,
@@ -79,6 +80,7 @@ async def create_customer(db: AsyncSession, req: CustomerRequest) -> CustomerDto
         whatsapp_number=req.whatsapp_number.strip() if req.whatsapp_number else req.phone.strip(),
         email=req.email,
         village_address=req.village_address,
+        land_area=req.land_area,
         customer_type=(req.customer_type or "RETAIL").upper(),
         total_purchases=Decimal("0.00"),
         current_due=initial_due,
@@ -134,6 +136,8 @@ async def update_customer(db: AsyncSession, customer_id: int, req: CustomerReque
         c.email = req.email
     if req.village_address is not None:
         c.village_address = req.village_address
+    if req.land_area is not None:
+        c.land_area = req.land_area
     if req.customer_type is not None:
         c.customer_type = req.customer_type.upper()
     if req.mfs_type is not None:
