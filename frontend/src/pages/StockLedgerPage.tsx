@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from "react"
 import type { StockMovement, Product, StockItem, PagedResponse } from "../types"
 import { getStockMovements, getProducts, getStock } from "../api/endpoints"
 import GotposStatCard from "../components/dashboard/GotposStatCard"
-import Button from "../components/ui/Button"
 import Pagination from "../components/ui/Pagination"
 import DateRangeFilter, { type DateRange, defaultDateRange } from "../components/ui/DateRangeFilter"
 import {
@@ -37,7 +36,6 @@ import {
   Package,
   Layers,
   Flame,
-  Printer,
   FileText,
   X,
   ShoppingCart,
@@ -402,16 +400,6 @@ export default function StockLedgerPage({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.print()}
-            leftIcon={<Printer className="w-4 h-4 text-slate-600" />}
-            title="Print or export current ledger report"
-            className="text-xs"
-          >
-            Print Ledger
-          </Button>
           <button
             type="button"
             onClick={() => {
