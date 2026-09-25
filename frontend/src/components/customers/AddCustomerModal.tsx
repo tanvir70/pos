@@ -54,8 +54,13 @@ export default function AddCustomerModal({
       setFormError("Customer name is required.")
       return
     }
-    if (!form.phone.trim()) {
+    const cleanPhone = form.phone.replace(/\D/g, "")
+    if (!cleanPhone) {
       setFormError("Mobile number is required.")
+      return
+    }
+    if (!/^01[3-9]\d{8}$/.test(cleanPhone)) {
+      setFormError("Mobile number must be a valid 11-digit number starting with 01 (e.g. 01712345678).")
       return
     }
 
@@ -65,7 +70,7 @@ export default function AddCustomerModal({
       await createCustomer({
         ...form,
         name: form.name.trim(),
-        phone: form.phone.trim(),
+        phone: cleanPhone,
         fatherName: form.fatherName ? form.fatherName.trim() : undefined,
         businessName: form.businessName ? form.businessName.trim() : undefined,
         villageAddress: form.villageAddress ? form.villageAddress.trim() : undefined,
@@ -133,11 +138,18 @@ export default function AddCustomerModal({
                 Mobile Number *
               </label>
               <input
-                type="text"
+                type="tel"
+                inputMode="numeric"
+                maxLength={11}
                 required
                 value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="017xxxxxxxx"
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    phone: e.target.value.replace(/\D/g, "").slice(0, 11),
+                  })
+                }
+                placeholder="017XXXXXXXX"
                 className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
               />
             </div>
