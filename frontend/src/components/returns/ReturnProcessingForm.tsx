@@ -2,7 +2,6 @@ import React from "react"
 import {
   ClipboardEdit,
   AlertTriangle,
-  Receipt,
   CheckCircle2,
   Banknote,
   User,
@@ -19,15 +18,13 @@ import type {
   StockItem,
   Customer,
   SaleResponse,
+  SaleItemResponse,
   RefundType,
 } from "../../types"
-import ProductSearch from "../pos/ProductSearch"
-import { formatLotNumber } from "../../utils/lotNumber"
+import ReturnSuperSearch from "./ReturnSuperSearch"
 
 export interface ReturnProcessingFormProps {
-  invoiceInput: string
-  onInvoiceInputChange: (val: string) => void
-  onSearchInvoice: () => void
+  onSearchInvoice: (invoiceNo: string) => Promise<void>
   onClearInvoice: () => void
   isSearchingInvoice: boolean
   invoiceSearchError: string | null
@@ -38,6 +35,8 @@ export interface ReturnProcessingFormProps {
   stocks: StockItem[]
   selectedStockItem: StockItem | null
   onSelectStock: (item: StockItem) => void
+  onClearSelectedStock: () => void
+  onSelectInvoiceItem?: (saleItem: SaleItemResponse, stockItem: StockItem) => void
   quantity: string
   onQuantityChange: (val: string) => void
   refundPrice: string
@@ -56,8 +55,6 @@ const tk = (n: number | undefined | null) =>
   `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export default function ReturnProcessingForm({
-  invoiceInput,
-  onInvoiceInputChange,
   onSearchInvoice,
   onClearInvoice,
   isSearchingInvoice,
@@ -69,6 +66,8 @@ export default function ReturnProcessingForm({
   stocks,
   selectedStockItem,
   onSelectStock,
+  onClearSelectedStock,
+  onSelectInvoiceItem,
   quantity,
   onQuantityChange,
   refundPrice,
@@ -101,68 +100,20 @@ export default function ReturnProcessingForm({
       )}
 
       <form onSubmit={onSubmit} className="space-y-4">
-        {/* 1. Memo / Invoice Lookup (Optional) */}
-        <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/80">
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-              <Receipt className="w-4 h-4 text-slate-500" />
-              <span>Original Memo / Invoice No. (Optional)</span>
-            </label>
-            {foundSale && (
-              <button
-                type="button"
-                onClick={onClearInvoice}
-                className="text-[11px] text-rose-600 font-semibold hover:underline cursor-pointer"
-              >
-                Clear memo
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={invoiceInput}
-              onChange={(e) => onInvoiceInputChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  onSearchInvoice()
-                }
-              }}
-              placeholder="e.g. INV-20260917-1042"
-              className="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm bg-white font-mono placeholder:font-sans focus:border-emerald-600 focus:outline-hidden"
-            />
-            <button
-              type="button"
-              onClick={onSearchInvoice}
-              disabled={isSearchingInvoice || !invoiceInput.trim()}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-            >
-              {isSearchingInvoice ? "Searching..." : "Find Memo"}
-            </button>
-          </div>
-
-          {invoiceSearchError && (
-            <p className="text-xs text-amber-700 font-medium mt-1.5">
-              {invoiceSearchError}
-            </p>
-          )}
-
-          {foundSale && (
-            <div className="mt-2.5 pt-2 border-t border-slate-200/80 text-xs bg-emerald-50/70 p-2.5 rounded-xl text-emerald-900 flex items-center justify-between">
-              <div>
-                <div className="font-bold">Memo #{foundSale.invoiceNo}</div>
-                <div className="text-[11px] text-emerald-800">
-                  Customer: {foundSale.customerName || "Walk-in Retail"} · Date: {new Date(foundSale.saleDate).toLocaleDateString("en-US")}
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-emerald-700 block">Total Bill</span>
-                <span className="font-mono font-black">{tk(foundSale.totalAmount)}</span>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* 1. Super Search (Invoice, Barcode, Product, Lot) */}
+        <ReturnSuperSearch
+          stocks={stocks}
+          selectedStockItem={selectedStockItem}
+          onSelectStock={onSelectStock}
+          onClearSelectedStock={onClearSelectedStock}
+          foundSale={foundSale}
+          isSearchingInvoice={isSearchingInvoice}
+          invoiceSearchError={invoiceSearchError}
+          onSearchInvoice={onSearchInvoice}
+          onClearInvoice={onClearInvoice}
+          onSelectInvoiceItem={onSelectInvoiceItem}
+          selectedInvoiceItemLotId={selectedStockItem?.lotId}
+        />
 
         {/* 2. Customer Ledger Profile */}
         <div>
@@ -213,56 +164,7 @@ export default function ReturnProcessingForm({
           )}
         </div>
 
-        {/* 3. Product & Lot Selection using POS-grade ProductSearch */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-slate-900">
-            Select Product & Lot to Return *
-          </label>
-
-          <div className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs">
-            <ProductSearch
-              stocks={stocks}
-              onSelect={onSelectStock}
-              allowZeroStock={true}
-              placeholder="Scan barcode or search product name / code / lot..."
-              className="border-none px-3 py-2 bg-slate-50/40"
-            />
-          </div>
-
-          {selectedStockItem && (
-            <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                <div>
-                  <div className="font-bold text-slate-900 text-sm">
-                    {selectedStockItem.nameBn || selectedStockItem.productNameBn} ({selectedStockItem.nameEn || selectedStockItem.productNameEn})
-                  </div>
-                  <div className="text-[11px] text-slate-600 mt-0.5 flex flex-wrap items-center gap-2">
-                    <span className="font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
-                      Lot #{formatLotNumber(selectedStockItem.lotNumber)}
-                    </span>
-                    <span>·</span>
-                    <span>Barcode: {selectedStockItem.lotBarcode || selectedStockItem.barcode || "N/A"}</span>
-                    <span>·</span>
-                    <span>Exp: {selectedStockItem.expiryDate || "N/A"}</span>
-                    <span>·</span>
-                    <span>Unit: {selectedStockItem.baseUnit}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="text-right shrink-0">
-                <div className="text-xs font-bold text-slate-900 font-mono tabular-nums">
-                  Rate: {tk(selectedStockItem.lotRetailPrice)}
-                </div>
-                <div className="text-[10px] text-slate-500 font-mono">
-                  Current Stock: {selectedStockItem.quantity ?? (selectedStockItem as any).totalQuantity ?? 0} {selectedStockItem.baseUnit}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 4. Return Quantity & Refund Rate */}
+        {/* 3. Return Quantity & Refund Rate */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -297,7 +199,7 @@ export default function ReturnProcessingForm({
           </div>
         </div>
 
-        {/* 5. Refund Method */}
+        {/* 4. Refund Method */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1.5">
             Refund Method *
@@ -330,7 +232,7 @@ export default function ReturnProcessingForm({
           </div>
         </div>
 
-        {/* 6. Return Reason */}
+        {/* 5. Return Reason */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">
             Reason for Return
@@ -344,7 +246,7 @@ export default function ReturnProcessingForm({
           />
         </div>
 
-        {/* 7. Total Summary & Submit Action */}
+        {/* 6. Total Summary & Submit Action */}
         <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Total Refund Payable</span>

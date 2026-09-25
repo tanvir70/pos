@@ -12,6 +12,7 @@ import type {
   SaleReturnRequest,
   SaleReturnResponse,
   SaleResponse,
+  SaleItemResponse,
   RefundType,
 } from "../types"
 import {
@@ -37,7 +38,6 @@ export default function Returns() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // ─── Form State ─────────────────────────────────────────────────
-  const [invoiceInput, setInvoiceInput] = useState<string>("")
   const [isSearchingInvoice, setIsSearchingInvoice] = useState<boolean>(false)
   const [invoiceSearchError, setInvoiceSearchError] = useState<string | null>(null)
   const [foundSale, setFoundSale] = useState<SaleResponse | null>(null)
@@ -101,7 +101,7 @@ export default function Returns() {
     return stocks.find((s) => s.lotId === selectedLotId) || null
   }, [stocks, selectedLotId])
 
-  // POS-grade product search selection handler
+  // Product selection handler (Direct Return or Super Search)
   const handleSelectStock = (item: StockItem) => {
     setSelectedLotId(item.lotId)
     if (item.lotRetailPrice) {
@@ -110,8 +110,8 @@ export default function Returns() {
   }
 
   // ─── Invoice Lookup Action ──────────────────────────────────────
-  const handleSearchInvoice = async () => {
-    const trimmed = invoiceInput.trim()
+  const handleSearchInvoice = async (invoiceNo: string) => {
+    const trimmed = invoiceNo.trim()
     if (!trimmed) {
       setInvoiceSearchError("Please enter a memo / invoice number.")
       return
@@ -128,7 +128,7 @@ export default function Returns() {
         setSelectedCustomerId(sale.customerId)
       }
 
-      // If sale had items, select the first item's lot
+      // If sale had items, auto-select the first item
       if (sale.items && sale.items.length > 0) {
         const first = sale.items[0]
         setSelectedLotId(first.lotId)
@@ -144,9 +144,26 @@ export default function Returns() {
   }
 
   const handleClearInvoice = () => {
-    setInvoiceInput("")
     setFoundSale(null)
     setInvoiceSearchError(null)
+    setSelectedLotId(null)
+    setRefundPrice("")
+    setQuantity("1")
+  }
+
+  const handleSelectInvoiceItem = (saleItem: SaleItemResponse, _stockItem: StockItem) => {
+    setSelectedLotId(saleItem.lotId)
+    setRefundPrice(saleItem.unitPrice.toString())
+    setQuantity("1")
+    if (foundSale?.customerId) {
+      setSelectedCustomerId(foundSale.customerId)
+    }
+  }
+
+  const handleClearSelectedStock = () => {
+    setSelectedLotId(null)
+    setRefundPrice("")
+    setQuantity("1")
   }
 
   // ─── Return Submission ──────────────────────────────────────────
@@ -210,7 +227,6 @@ export default function Returns() {
       setRefundPrice("")
       setReason("")
       setFoundSale(null)
-      setInvoiceInput("")
 
       // Refresh list & stock
       await loadData()
@@ -303,11 +319,6 @@ export default function Returns() {
       {/* Main Grid: Left Return Form, Right Recent Returns */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <ReturnProcessingForm
-          invoiceInput={invoiceInput}
-          onInvoiceInputChange={(val) => {
-            setInvoiceInput(val)
-            setInvoiceSearchError(null)
-          }}
           onSearchInvoice={handleSearchInvoice}
           onClearInvoice={handleClearInvoice}
           isSearchingInvoice={isSearchingInvoice}
@@ -319,6 +330,8 @@ export default function Returns() {
           stocks={stocks}
           selectedStockItem={selectedStockItem}
           onSelectStock={handleSelectStock}
+          onClearSelectedStock={handleClearSelectedStock}
+          onSelectInvoiceItem={handleSelectInvoiceItem}
           quantity={quantity}
           onQuantityChange={setQuantity}
           refundPrice={refundPrice}
