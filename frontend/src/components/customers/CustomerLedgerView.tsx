@@ -38,7 +38,22 @@ import {
   TrendingDown,
   TrendingUp,
   FileText,
+  User,
+  Users,
+  Sprout,
+  AlertCircle,
+  Edit2,
+  ChevronRight,
 } from "lucide-react"
+
+const getInitials = (name?: string) => {
+  if (!name) return "C"
+  const clean = name.replace(/^(haji|md|mrs|mr|dr)\.?\s+/i, "").trim()
+  const target = clean || name.trim()
+  const parts = target.split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
 
 export interface CustomerLedgerViewProps {
   customer: Customer
@@ -261,123 +276,237 @@ export default function CustomerLedgerView({
   }
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
-      {/* ─── Top Header Bar ─────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3">
-        {/* Back Link & Fast Switcher */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg shadow-xs transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Customer Directory</span>
-          </button>
-
-          {/* Quick Customer Switcher */}
+    <div className="space-y-4">
+      {/* ─── Unified Customer Master Header Card ──────────────────────── */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        {/* Navigation Breadcrumb & Account Switcher Strip */}
+        <div className="px-4 py-2.5 bg-slate-50/80 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+          {/* Breadcrumb Navigation */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 font-medium">Switch Account:</span>
-            <div className="w-56 sm:w-64">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-2xs transition-colors cursor-pointer"
+              title="Return to customer accounts directory (Esc)"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>All Customers</span>
+            </button>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+            <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-slate-400" />
+              <span className="truncate max-w-[200px] sm:max-w-none">{customer.name}</span>
+            </span>
+          </div>
+
+          {/* Quick Account Switcher */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 font-medium hidden sm:inline">Switch Account:</span>
+            <div className="w-60 sm:w-72">
               <Select
                 value={String(customer.id)}
                 onValueChange={handleCustomerSwitch}
               >
-                <SelectTrigger className="w-full h-8 text-xs bg-white border-slate-200">
+                <SelectTrigger className="w-full h-8 text-xs bg-white border-slate-200/90 font-medium">
                   <SelectValue placeholder="Select Customer" />
                 </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  {customers.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)} className="text-xs">
-                      {c.name} ({c.phone})
-                    </SelectItem>
-                  ))}
+                <SelectContent className="max-h-72">
+                  {customers.map((c) => {
+                    const cDue = Number(c.currentDue) || 0
+                    return (
+                      <SelectItem key={c.id} value={String(c.id)} className="text-xs">
+                        <div className="flex items-center justify-between gap-2 w-full">
+                          <span className="font-medium text-slate-800 truncate">{c.name}</span>
+                          <span className="text-[11px] text-slate-400 shrink-0">({c.phone})</span>
+                          {cDue > 0 && (
+                            <span className="ml-auto text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded shrink-0">
+                              Due: {tk(cDue)}
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
           </div>
         </div>
 
-        {/* Customer Identity Banner & Actions */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                {customer.name}
-              </h1>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-800">
-                {customer.customerType === "WHOLESALE" ? "Wholesale Customer" : "Retail Farmer"}
-              </span>
-              {due > 0 ? (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                  Due: {tk(due)}
-                </span>
-              ) : (
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Account Settled
-                </span>
-              )}
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                Lifetime: <strong className="font-mono text-slate-900">{tk(lifetimeBuy)}</strong> ({purchases.length} orders)
+        {/* Identity & Financial Hero Row */}
+        <div className="p-4 sm:p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          {/* Left: Avatar + Identity + Metadata */}
+          <div className="flex items-start sm:items-center gap-3.5">
+            {/* Initials Avatar */}
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-50 to-slate-100 border border-indigo-100/90 flex items-center justify-center shrink-0 shadow-2xs">
+              <span className="text-base font-bold text-indigo-700 tracking-tight">
+                {getInitials(customer.name)}
               </span>
             </div>
 
-            {/* Profile Metadata Strip */}
-            <div className="flex items-center gap-4 flex-wrap text-xs text-slate-500">
-              <div className="flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-slate-400" />
-                <span className="font-medium text-slate-800 tabular-nums">
-                  {customer.phone || "No phone"}
+            <div className="space-y-1">
+              {/* Name & Type */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                  {customer.name}
+                </h1>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                    customer.customerType === "WHOLESALE"
+                      ? "bg-blue-50 text-blue-700 border-blue-200"
+                      : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  }`}
+                >
+                  {customer.customerType === "WHOLESALE" ? "Wholesale Dealer" : "Retail Farmer"}
                 </span>
               </div>
 
-              {customer.landArea && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-slate-400 font-medium">Land Area:</span>
-                  <span className="font-semibold text-slate-800 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
-                    {customer.landArea}
-                  </span>
-                </div>
-              )}
+              {/* Clean Metadata Strip */}
+              <div className="flex items-center gap-2.5 flex-wrap text-xs text-slate-500">
+                <a
+                  href={`tel:${customer.phone}`}
+                  className="inline-flex items-center gap-1.5 font-medium text-slate-700 hover:text-slate-900 tabular-nums transition-colors"
+                  title="Click to call customer phone"
+                >
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{customer.phone || "No phone"}</span>
+                </a>
 
-              {customer.villageAddress && (
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-slate-700">{customer.villageAddress}</span>
-                </div>
-              )}
+                {customer.landArea && (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <div className="inline-flex items-center gap-1.5 text-slate-600 font-medium">
+                      <Sprout className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{customer.landArea} Farm</span>
+                    </div>
+                  </>
+                )}
+
+                {customer.villageAddress && (
+                  <>
+                    <span className="text-slate-300">•</span>
+                    <div className="inline-flex items-center gap-1.5 text-slate-600">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{customer.villageAddress}</span>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Action Toolbar */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant="default"
-              size="sm"
-              disabled={due <= 0}
-              onClick={() => onOpenRepay(customer)}
-              leftIcon={<Receipt className="w-3.5 h-3.5" />}
-              className="bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-40"
+          {/* Right: Financial KPI Blocks & Action Toolbar */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+            {/* KPI 1: Outstanding Due, Advance Balance, or Settled */}
+            <div
+              className={`px-3.5 py-2 rounded-xl border flex flex-col justify-center min-w-[130px] ${
+                due > 0
+                  ? "bg-rose-50/90 border-rose-200/90 text-rose-900"
+                  : due < 0
+                  ? "bg-blue-50/90 border-blue-200/90 text-blue-900"
+                  : "bg-emerald-50/80 border-emerald-200/80 text-emerald-900"
+              }`}
             >
-              Collect Due
-            </Button>
+              <div className="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wider">
+                <span
+                  className={
+                    due > 0
+                      ? "text-rose-600"
+                      : due < 0
+                      ? "text-blue-700"
+                      : "text-emerald-700"
+                  }
+                >
+                  {due > 0
+                    ? "Outstanding Due"
+                    : due < 0
+                    ? "Advance Deposit"
+                    : "Ledger Status"}
+                </span>
+                {due > 0 ? (
+                  <AlertCircle className="w-3 h-3 text-rose-500 shrink-0" />
+                ) : due < 0 ? (
+                  <CheckCircle2 className="w-3 h-3 text-blue-600 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                )}
+              </div>
+              <div
+                className={`text-base sm:text-lg font-black font-mono tracking-tight mt-0.5 ${
+                  due > 0
+                    ? "text-rose-700"
+                    : due < 0
+                    ? `+${tk(Math.abs(due))}`
+                    : "Settled (৳0)"
+                }`}
+              >
+                {due > 0
+                  ? tk(due)
+                  : due < 0
+                  ? `+${tk(Math.abs(due))}`
+                  : "Settled (৳0)"}
+              </div>
+            </div>
 
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onOpenEdit(customer)}
-            >
-              Edit Profile
-            </Button>
+            {/* KPI 2: Lifetime Purchases */}
+            <div className="px-3.5 py-2 rounded-xl border border-slate-200/90 bg-slate-50/90 flex flex-col justify-center min-w-[130px]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Lifetime Buy
+              </span>
+              <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-slate-900 mt-0.5">
+                {tk(lifetimeBuy)}
+              </div>
+              <span className="text-[10px] text-slate-400 font-medium">
+                {purchases.length} total orders
+              </span>
+            </div>
 
-            <RefreshButton
-              onClick={() => {
-                loadData()
-                onRefreshCustomers()
-              }}
-              isLoading={isLedgerLoading || isPurchasesLoading}
-              title="Refresh ledger records"
-            />
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 ml-auto sm:ml-0">
+              {due > 0 ? (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onOpenRepay(customer)}
+                  leftIcon={<Receipt className="w-3.5 h-3.5" />}
+                  className="bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-xs cursor-pointer h-9 px-3.5 rounded-xl transition-all"
+                  title="Collect outstanding customer due payment"
+                >
+                  Collect Due
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => onOpenRepay(customer)}
+                  leftIcon={<Receipt className="w-3.5 h-3.5 text-slate-500" />}
+                  className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200/90 font-medium shadow-xs cursor-pointer h-9 px-3 rounded-xl transition-all"
+                  title="Record advance payment or credit adjustment"
+                >
+                  Payment / Credit
+                </Button>
+              )}
+
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => onOpenEdit(customer)}
+                leftIcon={<Edit2 className="w-3.5 h-3.5 text-slate-400" />}
+                className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200/90 font-semibold shadow-xs cursor-pointer h-9 px-3 rounded-xl transition-all"
+                title="Edit customer account details"
+              >
+                Edit
+              </Button>
+
+              <RefreshButton
+                onClick={() => {
+                  loadData()
+                  onRefreshCustomers()
+                }}
+                isLoading={isLedgerLoading || isPurchasesLoading}
+                title="Refresh ledger records"
+              />
+            </div>
           </div>
         </div>
       </div>
