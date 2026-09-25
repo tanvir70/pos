@@ -485,7 +485,6 @@ export default function StockLedgerPage({
             { id: "DAMAGE_ALL", label: "Damage Write-Offs" },
             { id: "RETURN_ALL", label: "Customer Returns" },
             { id: "PHYSICAL_AUDIT_VARIANCE", label: "Audit Variances" },
-            { id: "QUARANTINE_DISPOSAL", label: "Hazard Disposals" },
             { id: "OPENING_BALANCE", label: "Opening Balances" },
           ].map((typeItem) => {
             const isSelected = selectedType === typeItem.id

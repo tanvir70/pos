@@ -71,7 +71,6 @@ export default function StockAdjustmentModal({
   const [selectedProductId, setSelectedProductId] = useState<number | undefined>(initialProductId)
   const [selectedLotId, setSelectedLotId] = useState<number | undefined>(initialLotId)
   const [adjustmentType, setAdjustmentType] = useState<string>("BREAKAGE_LEAKAGE")
-  const [actionType, setActionType] = useState<"SCRAP_DISCARD" | "MOVE_TO_QUARANTINE">("SCRAP_DISCARD")
   const [cartons, setCartons] = useState<string>("")
   const [looseUnits, setLooseUnits] = useState<string>("1")
   const [reason, setReason] = useState<string>("")
@@ -145,7 +144,7 @@ export default function StockAdjustmentModal({
         lotId: currentLot.id,
         adjustmentType,
         quantity: totalBaseUnits,
-        actionType,
+        actionType: "SCRAP_DISCARD",
         reason: reason.trim(),
         performedBy: "Store Owner",
       }
@@ -174,7 +173,7 @@ export default function StockAdjustmentModal({
                 Stock Adjustment & Damage Write-Off
               </h2>
               <p className="text-xs text-slate-500">
-                Reconcile physical variance, bottle leakage, or safe quarantine isolation
+                Reconcile physical variance, bottle leakage, or stock write-off
               </p>
             </div>
           </div>
@@ -277,57 +276,7 @@ export default function StockAdjustmentModal({
             </div>
           </div>
 
-          {/* 4. Action Choice */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Inventory Disposition Action *
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label
-                className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
-                  actionType === "SCRAP_DISCARD"
-                    ? "bg-rose-50 border-rose-300 text-rose-950 font-bold"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="actionType"
-                  value="SCRAP_DISCARD"
-                  checked={actionType === "SCRAP_DISCARD"}
-                  onChange={() => setActionType("SCRAP_DISCARD")}
-                  className="accent-rose-600"
-                />
-                <div>
-                  <p className="text-xs">Direct Disposal / Scrap</p>
-                  <p className="text-[10px] text-slate-500 font-normal">Permanently write off stock</p>
-                </div>
-              </label>
-
-              <label
-                className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
-                  actionType === "MOVE_TO_QUARANTINE"
-                    ? "bg-amber-50 border-amber-300 text-amber-950 font-bold"
-                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-medium"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="actionType"
-                  value="MOVE_TO_QUARANTINE"
-                  checked={actionType === "MOVE_TO_QUARANTINE"}
-                  onChange={() => setActionType("MOVE_TO_QUARANTINE")}
-                  className="accent-amber-600"
-                />
-                <div>
-                  <p className="text-xs">Move to Quarantine</p>
-                  <p className="text-[10px] text-slate-500 font-normal">Hold for hazardous disposal</p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* 5. Quantity & Conversion */}
+          {/* 4. Quantity & Conversion */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Quantity to Deduct *

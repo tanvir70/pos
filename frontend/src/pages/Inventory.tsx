@@ -2,8 +2,6 @@ import { Fragment, useState, useEffect, useMemo, useCallback } from "react"
 import type {
   Product,
   StockItem,
-  QuarantineStockItem,
-  QuarantineDisposalRequest,
   NavigationTab,
   InventoryLot,
 } from "../types"
@@ -12,8 +10,6 @@ import {
   getProducts,
   createProduct,
   createLot,
-  getQuarantineStock,
-  disposeQuarantineStock,
 } from "../api/endpoints"
 import type { StockAdjustmentResponse } from "../types"
 import { useToast } from "../context/ToastContext"
@@ -48,9 +44,7 @@ import {
   CheckCircle2,
   Wallet,
   RefreshCw,
-  Biohazard,
   Tag,
-  Flame,
   ChevronUp,
   ChevronDown,
   Check,
@@ -67,8 +61,6 @@ export interface InventoryProps {
 export default function Inventory({ onNavigate }: InventoryProps = {}) {
   const { showSuccess, showError, showWarning } = useToast()
 
-  const [activeTab, setActiveTab] = useState<"catalog" | "quarantine">("catalog")
-
   // ─── Bin Card & Stock Adjustment Modals State ──────────────────
   const [showLedgerModal, setShowLedgerModal] = useState<boolean>(false)
   const [selectedLedgerProduct, setSelectedLedgerProduct] = useState<{ id?: number; nameEn?: string; productCode?: string } | undefined>(undefined)
@@ -81,7 +73,6 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   // ─── Remote Data State ──────────────────────────────────────────
   const [stocks, setStocks] = useState<StockItem[]>([])
   const [products, setProducts] = useState<Product[]>([])
-  const [quarantineItems, setQuarantineItems] = useState<QuarantineStockItem[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   // ─── Filters & Search ───────────────────────────────────────────
@@ -144,14 +135,6 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   const [addStockChallan, setAddStockChallan] = useState("")
   const [isAddingStock, setIsAddingStock] = useState(false)
 
-  // Quarantine Disposal Modal State
-  const [selectedQuarantineItem, setSelectedQuarantineItem] =
-    useState<QuarantineStockItem | null>(null)
-  const [disposalQty, setDisposalQty] = useState<string>("")
-  const [disposalType, setDisposalType] = useState<string>("WRITE_OFF")
-  const [disposalRemarks, setDisposalRemarks] = useState<string>("")
-  const [isDisposing, setIsDisposing] = useState<boolean>(false)
-
   // ─── New Product & Stock Form State ─────────────────────────────
   const [newProdName, setNewProdName] = useState("")
   const [newProdCode, setNewProdCode] = useState("")
@@ -167,14 +150,12 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true)
-      const [stockData, productData, quarantineData] = await Promise.all([
+      const [stockData, productData] = await Promise.all([
         getStock(),
         getProducts(),
-        getQuarantineStock().catch(() => []),
       ])
       setStocks(stockData)
       setProducts(productData)
-      setQuarantineItems(quarantineData)
     } catch (err) {
       showError(err, "Failed to load inventory data")
     } finally {
@@ -368,13 +349,6 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
       0,
     )
   }, [stocks])
-
-  const totalQuarantineLoss = useMemo(() => {
-    return quarantineItems.reduce(
-      (sum, item) => sum + (item.totalLossValue || item.quarantineQuantity * item.purchaseCost),
-      0,
-    )
-  }, [quarantineItems])
 
   // Lots at Risk of Expiring (< 30 days)
   const expiringLots = useMemo(() => {
@@ -575,48 +549,6 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
     }
   }
 
-  // ─── Quarantine Disposal Execution ──────────────────────────────
-  const handleOpenDisposalModal = (item: QuarantineStockItem) => {
-    setSelectedQuarantineItem(item)
-    setDisposalQty(String(item.quarantineQuantity))
-    setDisposalType("WRITE_OFF")
-    setDisposalRemarks("")
-  }
-
-  const handleExecuteDisposal = async () => {
-    if (!selectedQuarantineItem) return
-    const qty = parseFloat(disposalQty)
-    if (isNaN(qty) || qty <= 0) {
-      showWarning("Enter a valid quantity")
-      return
-    }
-    if (qty > selectedQuarantineItem.quarantineQuantity) {
-      showWarning("Cannot dispose more than the quantity in quarantine!")
-      return
-    }
-
-    const payload: QuarantineDisposalRequest = {
-      lotId: selectedQuarantineItem.lotId,
-      quantity: qty,
-      disposalType: disposalType,
-      remarks: disposalRemarks.trim() || undefined,
-    }
-
-    try {
-      setIsDisposing(true)
-      await disposeQuarantineStock(payload)
-      showSuccess(
-        `${qty} unit(s) of damaged chemical from lot #${selectedQuarantineItem.lotNumber} disposed of successfully!`,
-      )
-      setSelectedQuarantineItem(null)
-      await loadData()
-    } catch (err) {
-      showError(err, "Disposal failed")
-    } finally {
-      setIsDisposing(false)
-    }
-  }
-
   // ─── Stock Adjustment Success Callback ───────────────────────────
   const handleAdjustmentSuccess = (adj: StockAdjustmentResponse) => {
     showSuccess(
@@ -635,87 +567,51 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
             <span>Dokan Stock Management</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Real-time dokan stock, barcode stickers, and quarantine
+            Real-time counter inventory, lot tracking, and barcode stickers
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* View Tab Switcher */}
-          <div className="inline-flex bg-slate-50 p-0.5 rounded-xl border border-slate-200">
-            <button
-              type="button"
-              onClick={() => setActiveTab("catalog")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "catalog"
-                  ? "bg-white text-emerald-800 shadow-xs border border-slate-200/60"
-                  : "text-slate-500 hover:text-slate-900"
-              }`}
-            >
-              Dokan Stock ({stocks.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("quarantine")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === "quarantine"
-                  ? "bg-red-600 text-white shadow-xs"
-                  : "text-red-600 hover:bg-red-50"
-              }`}
-            >
-              <Biohazard className="w-3.5 h-3.5" />
-              <span>Quarantine</span>
-              {quarantineItems.length > 0 && (
-                <span className="bg-red-800 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">
-                  {quarantineItems.length}
-                </span>
-              )}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setAdjustmentInitialProduct(undefined)
+              setAdjustmentInitialLot(undefined)
+              setShowStockAdjustmentModal(true)
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+            title="Record breakage, bottle leakage, or physical count variance"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
+            <span>Adjust / Damage</span>
+          </button>
 
-          {activeTab === "catalog" && (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  setAdjustmentInitialProduct(undefined)
-                  setAdjustmentInitialLot(undefined)
-                  setShowStockAdjustmentModal(true)
-                }}
-                className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
-                title="Record breakage, bottle leakage, or physical count variance"
-              >
-                <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
-                <span>Adjust / Damage</span>
-              </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (onNavigate) {
+                onNavigate("bin-card")
+              } else {
+                setSelectedLedgerProduct(undefined)
+                setSelectedLedgerLot(undefined)
+                setShowLedgerModal(true)
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+            title="View entire immutable stock movement history on dedicated Stock Ledger page"
+          >
+            <History className="w-3.5 h-3.5 text-teal-700" />
+            <span>Stock Ledger</span>
+          </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (onNavigate) {
-                    onNavigate("bin-card")
-                  } else {
-                    setSelectedLedgerProduct(undefined)
-                    setSelectedLedgerLot(undefined)
-                    setShowLedgerModal(true)
-                  }
-                }}
-                className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
-                title="View entire immutable stock movement history on dedicated Stock Ledger page"
-              >
-                <History className="w-3.5 h-3.5 text-teal-700" />
-                <span>Stock Ledger</span>
-              </button>
-
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setShowAddProduct((p) => !p)}
-                leftIcon={showAddProduct ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-              >
-                {showAddProduct ? "Close Form" : "New Product"}
-              </Button>
-            </>
-          )}
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setShowAddProduct((p) => !p)}
+            leftIcon={showAddProduct ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          >
+            {showAddProduct ? "Close Form" : "New Product"}
+          </Button>
 
           <button
             type="button"
@@ -728,10 +624,6 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
           </button>
         </div>
       </div>
-
-      {/* ─── TAB 1: CATALOG & DOKAN STOCK ────────────────────────── */}
-      {activeTab === "catalog" && (
-        <>
           {/* KPI Stat Cards (Unified height & width across all 5 cards) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {/* 1. Registered Products */}
@@ -1549,117 +1441,6 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
               itemLabel="products"
             />
           </div>
-        </>
-      )}
-
-      {/* ─── TAB 2: QUARANTINE & DAMAGED CHEMICALS ───────────────── */}
-      {activeTab === "quarantine" && (
-        <div className="space-y-4 animate-in fade-in duration-150">
-          {/* Quarantine Overview Card */}
-          <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <Biohazard className="w-8 h-8 text-red-700 shrink-0" />
-              <div>
-                <h3 className="font-bold text-base text-red-950">
-                  Damaged &amp; Quarantined Chemical Isolation
-                </h3>
-                <p className="text-xs text-red-800 mt-0.5">
-                  Expired or damaged chemical goods are stored separately, isolated from
-                  sellable stock.
-                </p>
-              </div>
-            </div>
-
-            <div className="text-right shrink-0 bg-white/80 p-3 rounded-xl border border-red-200">
-              <span className="text-xs text-red-800 font-semibold block">
-                Total Potential Financial Loss:
-              </span>
-              <span className="text-xl font-black font-mono text-red-700 tabular-nums">
-                {formatTk(totalQuarantineLoss)}
-              </span>
-            </div>
-          </div>
-
-          {/* Quarantine Items Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Damaged Product &amp; Lot No</TableHead>
-                  <TableHead>Expiry Date</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead align="center">Damaged Quantity</TableHead>
-                  <TableHead align="right">Purchase Cost</TableHead>
-                  <TableHead align="right">Total Loss Value</TableHead>
-                  <TableHead align="right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableLoadingState colSpan={7} text="Loading quarantine stock..." />
-                ) : quarantineItems.length === 0 ? (
-                  <TableEmptyState
-                    colSpan={7}
-                    icon={<CheckCircle2 className="w-8 h-8" />}
-                    message="No damaged products in quarantine"
-                    submessage="All dokan stock is healthy and sellable."
-                  />
-                ) : (
-                  quarantineItems.map((item) => (
-                    <TableRow key={item.lotId}>
-                      <TableCell>
-                        <div className="font-bold text-slate-900 text-sm">
-                          {item.productNameEn}
-                        </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-2">
-                          <span>{item.productNameBn}</span>
-                          <span className="font-mono text-red-700 font-bold">
-                            Lot #{formatLotNumber(item.lotNumber)}
-                          </span>
-                        </div>
-                      </TableCell>
-
-                      <TableCell isMonospace className="text-red-700 font-semibold">
-                        {item.expiryDate}
-                      </TableCell>
-
-                      <TableCell className="text-xs text-slate-500">
-                        {item.supplierName || "Agro Supplier"}
-                      </TableCell>
-
-                      <TableCell align="center">
-                        <Badge variant="danger" size="md">
-                          {item.quarantineQuantity} {item.baseUnit}
-                        </Badge>
-                      </TableCell>
-
-                      <TableCell align="right" isMonospace>
-                        {formatTk(item.purchaseCost)}
-                      </TableCell>
-
-                      <TableCell align="right" isMonospace className="text-red-700 font-black">
-                        {formatTk(item.totalLossValue || item.quarantineQuantity * item.purchaseCost)}
-                      </TableCell>
-
-                      <TableCell align="right">
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleOpenDisposalModal(item)}
-                          leftIcon={<Flame className="w-3.5 h-3.5" />}
-                          className="text-xs"
-                        >
-                          Dispose
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      )}
 
       {/* Quick Add Dokan Stock Modal */}
       {stockModalProduct && (
@@ -1927,94 +1708,6 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
             setStickerLots([])
           }}
         />
-      )}
-
-      {/* Quarantine Disposal Confirmation Modal */}
-      {selectedQuarantineItem && (
-        <Modal
-          isOpen={!!selectedQuarantineItem}
-          onClose={() => setSelectedQuarantineItem(null)}
-          title="Approve Damaged Chemical Disposal"
-          subtitle="Permanently write off damaged stock from quarantine with owner approval"
-          icon={<Flame className="w-5 h-5 text-red-600" />}
-          size="md"
-        >
-          <div className="space-y-4">
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl space-y-1">
-              <div className="text-xs font-bold text-red-950">
-                Product: {selectedQuarantineItem.productNameEn} (Lot #
-                {formatLotNumber(selectedQuarantineItem.lotNumber)})
-              </div>
-              <div className="text-xs text-red-800 flex justify-between">
-                <span>Current Quarantine Stock:</span>
-                <span className="font-mono font-bold">
-                  {selectedQuarantineItem.quarantineQuantity} {selectedQuarantineItem.baseUnit}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Input
-                label={`Disposal Quantity (${selectedQuarantineItem.baseUnit})`}
-                type="number"
-                step="any"
-                max={selectedQuarantineItem.quarantineQuantity}
-                value={disposalQty}
-                onChange={(e) => setDisposalQty(e.target.value)}
-                placeholder="Quantity"
-                required
-              />
-
-              <div>
-                <label className="block text-xs font-bold text-slate-900 mb-1">
-                  Disposal Type / Reason:
-                </label>
-                <select
-                  value={disposalType}
-                  onChange={(e) => setDisposalType(e.target.value)}
-                  className="w-full text-xs py-2 px-3 bg-white border border-slate-200 rounded-xl focus:border-red-600 focus:outline-hidden"
-                >
-                  <option value="WRITE_OFF">Permanent Write-Off (Damaged)</option>
-                  <option value="SUPPLIER_CLAIM">Return to Supplier / Claim</option>
-                  <option value="DESTROYED">Disposed / Destroyed</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-900 mb-1">
-                  Remarks (optional):
-                </label>
-                <textarea
-                  value={disposalRemarks}
-                  onChange={(e) => setDisposalRemarks(e.target.value)}
-                  rows={2}
-                  placeholder="e.g. Disposed of due to expiry or bottle leakage..."
-                  className="w-full text-xs py-2 px-3 bg-white border border-slate-200 rounded-xl focus:border-red-600 focus:outline-hidden"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200/60">
-              <Button
-                variant="ghost"
-                size="md"
-                onClick={() => setSelectedQuarantineItem(null)}
-                disabled={isDisposing}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                size="md"
-                onClick={handleExecuteDisposal}
-                isLoading={isDisposing}
-                leftIcon={<Check className="w-4 h-4" />}
-              >
-                Confirm Disposal
-              </Button>
-            </div>
-          </div>
-        </Modal>
       )}
 
       {/* ─── Bin Card (Stock Movement Ledger) Modal ─────────────── */}

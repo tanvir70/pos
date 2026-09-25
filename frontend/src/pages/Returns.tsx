@@ -15,7 +15,6 @@ import {
   FileText,
   RotateCcw,
   Package,
-  ShieldAlert,
   ArrowRight,
   Phone,
   Eye,
@@ -42,8 +41,7 @@ import { formatLotNumber } from "../utils/lotNumber"
 
 // BUSINESS DECISION: Direct chemical returns support receipt-less processing without an original invoice number
 // because rural farmers frequently misplace paper receipts over 15-30 day spraying seasons.
-// BUSINESS DECISION: When 'isDamaged' is selected, goods are flagged for quarantine and
-// excluded from sellable counter stock to prevent accidental dispensing of compromised chemicals.
+// BUSINESS DECISION: All customer returns are restored directly to Dokan counter stock.
 // BUSINESS DECISION: Due adjustment refunds strictly require customer profile association to guarantee correct
 // credit reduction in the customer ledger.
 
@@ -70,7 +68,6 @@ export default function Returns() {
   const [productSearch, setProductSearch] = useState<string>("")
   const [quantity, setQuantity] = useState<string>("1")
   const [refundPrice, setRefundPrice] = useState<string>("")
-  const [isDamaged, setIsDamaged] = useState<boolean>(false)
   const [refundType, setRefundType] = useState<RefundType>("CASH_REFUND")
   const [reason, setReason] = useState<string>("")
 
@@ -240,13 +237,13 @@ export default function Returns() {
         originalSaleId: foundSale?.id ?? null,
         customerId: selectedCustomerId,
         refundType,
-        reason: reason.trim() || (isDamaged ? "Damaged chemical" : "Customer return"),
+        reason: reason.trim() || "Customer return",
         items: [
           {
             lotId: selectedLotId,
             quantity: qtyNum,
             refundPrice: priceNum,
-            isDamaged,
+            isDamaged: false,
           },
         ],
       }
@@ -259,7 +256,6 @@ export default function Returns() {
       setSelectedLotId(null)
       setQuantity("1")
       setRefundPrice("")
-      setIsDamaged(false)
       setReason("")
       setFoundSale(null)
       setInvoiceInput("")
@@ -594,32 +590,7 @@ export default function Returns() {
               </div>
             </div>
 
-            {/* 6. Damaged Chemical / Quarantine Toggle */}
-            <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3">
-              <label className="flex items-center justify-between cursor-pointer gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-                    <AlertTriangle className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-amber-950 block">
-                      Quarantine Damaged Chemical
-                    </span>
-                    <span className="text-[11px] text-amber-800">
-                      Quarantine damaged/unsealed goods — do not restore to sellable stock
-                    </span>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={isDamaged}
-                  onChange={(e) => setIsDamaged(e.target.checked)}
-                  className="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
-                />
-              </label>
-            </div>
-
-            {/* 7. Return Reason */}
+            {/* 6. Return Reason */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Reason for Return
@@ -896,11 +867,6 @@ export default function Returns() {
                           <tr key={idx}>
                             <td className="py-1">
                               {it.productNameBn || it.productNameEn || `Lot #${it.lotId}`}
-                              {it.isDamaged && (
-                                <span className="block text-[10px] text-red-600 font-bold">
-                                  [Damaged / Quarantined]
-                                </span>
-                              )}
                             </td>
                             <td className="py-1 text-center tabular-nums">{it.quantity}</td>
                             <td className="py-1 text-right tabular-nums">{tk(it.refundPrice)}</td>
@@ -1066,7 +1032,6 @@ export default function Returns() {
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
                     <tr>
                       <th className="py-2.5 px-3">Product & Lot</th>
-                      <th className="py-2.5 px-3 text-center">Status / Inventory</th>
                       <th className="py-2.5 px-3 text-center">Qty</th>
                       <th className="py-2.5 px-3 text-right">Refund Rate</th>
                       <th className="py-2.5 px-3 text-right">Line Total</th>
@@ -1094,19 +1059,6 @@ export default function Returns() {
                               )}
                             </div>
                           </td>
-                          <td className="py-2.5 px-3 text-center">
-                            {it.isDamaged ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                <ShieldAlert className="w-3 h-3" />
-                                Damaged / Quarantined
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <Package className="w-3 h-3" />
-                                Restocked to Dokan
-                              </span>
-                            )}
-                          </td>
                           <td className="py-2.5 px-3 text-center font-bold font-mono tabular-nums text-slate-800">
                             {it.quantity}
                           </td>
@@ -1120,7 +1072,7 @@ export default function Returns() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="py-4 text-center text-slate-400 italic">
+                        <td colSpan={4} className="py-4 text-center text-slate-400 italic">
                           No items listed for this return
                         </td>
                       </tr>
@@ -1128,7 +1080,7 @@ export default function Returns() {
                   </tbody>
                   <tfoot className="bg-slate-50 border-t border-slate-200 font-bold">
                     <tr>
-                      <td colSpan={4} className="py-2.5 px-3 text-right text-slate-700">
+                      <td colSpan={3} className="py-2.5 px-3 text-right text-slate-700">
                         Total Refund Amount:
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono text-sm text-emerald-800 tabular-nums">
