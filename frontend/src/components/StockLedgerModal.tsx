@@ -47,6 +47,7 @@ const formatDate = (isoString?: string) => {
 const getMovementBadge = (type: string) => {
   switch (type) {
     case "LOT_ENTRY":
+    case "LOT_INWARD":
       return {
         label: "Lot Inward",
         bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -76,17 +77,46 @@ const getMovementBadge = (type: string) => {
       }
     case "BREAKAGE_LEAKAGE":
     case "DAMAGE_WRITE_OFF":
+    case "DAMAGE_WRITEOFF":
       return {
         label: "Damage Write-Off",
         bg: "bg-rose-50 text-rose-700 border-rose-200",
         icon: <ArrowDownRight className="w-3 h-3 text-rose-600" />,
         isAddition: false,
       }
+    case "DAMAGE_SPOILAGE":
+      return {
+        label: "Moisture Spoilage",
+        bg: "bg-rose-50 text-rose-700 border-rose-200",
+        icon: <ArrowDownRight className="w-3 h-3 text-rose-600" />,
+        isAddition: false,
+      }
+    case "EXPIRED_SCRAP":
+      return {
+        label: "Expired Scrap",
+        bg: "bg-red-50 text-red-700 border-red-200",
+        icon: <ArrowDownRight className="w-3 h-3 text-red-600" />,
+        isAddition: false,
+      }
     case "PHYSICAL_AUDIT_VARIANCE":
       return {
-        label: "Count Variance",
+        label: "Audit Variance",
         bg: "bg-amber-50 text-amber-700 border-amber-200",
         icon: <Filter className="w-3 h-3 text-amber-600" />,
+        isAddition: false,
+      }
+    case "PROMOTIONAL_SAMPLE":
+      return {
+        label: "Demo Sample",
+        bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        icon: <ArrowDownRight className="w-3 h-3 text-emerald-600" />,
+        isAddition: false,
+      }
+    case "ADJUSTMENT":
+      return {
+        label: "Adjustment",
+        bg: "bg-amber-50 text-amber-700 border-amber-200",
+        icon: <ArrowDownRight className="w-3 h-3 text-amber-600" />,
         isAddition: false,
       }
     case "DAMAGE_TO_QUARANTINE":
@@ -119,7 +149,7 @@ const getMovementBadge = (type: string) => {
       }
     default:
       return {
-        label: type,
+        label: type.replace(/_/g, " "),
         bg: "bg-slate-50 text-slate-600 border-slate-200",
         icon: <History className="w-3 h-3" />,
         isAddition: false,

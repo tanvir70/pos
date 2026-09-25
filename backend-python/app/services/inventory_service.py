@@ -355,14 +355,14 @@ async def record_stock_adjustment(
         product_id=prod.id,
         lot_id=lot.id,
         movement_time=datetime.now(),
-        movement_type="ADJUSTMENT",
+        movement_type=req.adjustment_type or "ADJUSTMENT",
         location="DOKAN",
         quantity_change=-req.quantity,
         balance_before=before_dokan,
         balance_after=after_dokan,
         unit=prod.base_unit,
         reference_doc_no=adj_no,
-        remarks=f"Adjustment: {req.reason}",
+        remarks=req.reason if req.reason else f"Adjustment: {req.adjustment_type}",
         performed_by=req.performed_by or "Admin",
     )
     db.add(mov1)

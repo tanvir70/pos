@@ -57,6 +57,7 @@ const formatDate = (isoString?: string) => {
 const getMovementBadge = (type: string) => {
   switch (type) {
     case "LOT_ENTRY":
+    case "LOT_INWARD":
       return {
         label: "Lot Inward",
         bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -86,17 +87,46 @@ const getMovementBadge = (type: string) => {
       }
     case "BREAKAGE_LEAKAGE":
     case "DAMAGE_WRITE_OFF":
+    case "DAMAGE_WRITEOFF":
       return {
         label: "Damage Write-Off",
         bg: "bg-rose-50 text-rose-700 border-rose-200",
         icon: <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />,
         isAddition: false,
       }
+    case "DAMAGE_SPOILAGE":
+      return {
+        label: "Moisture Spoilage",
+        bg: "bg-rose-50 text-rose-700 border-rose-200",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />,
+        isAddition: false,
+      }
+    case "EXPIRED_SCRAP":
+      return {
+        label: "Expired Scrap",
+        bg: "bg-red-50 text-red-700 border-red-200",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-red-600" />,
+        isAddition: false,
+      }
     case "PHYSICAL_AUDIT_VARIANCE":
       return {
-        label: "Count Variance",
+        label: "Audit Variance",
         bg: "bg-amber-50 text-amber-700 border-amber-200",
         icon: <Filter className="w-3.5 h-3.5 text-amber-600" />,
+        isAddition: false,
+      }
+    case "PROMOTIONAL_SAMPLE":
+      return {
+        label: "Demo Sample",
+        bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600" />,
+        isAddition: false,
+      }
+    case "ADJUSTMENT":
+      return {
+        label: "Adjustment",
+        bg: "bg-amber-50 text-amber-700 border-amber-200",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-amber-600" />,
         isAddition: false,
       }
     case "DAMAGE_TO_QUARANTINE":
@@ -224,8 +254,11 @@ export default function StockLedgerPage({
           if (
             m.movementType !== "BREAKAGE_LEAKAGE" &&
             m.movementType !== "DAMAGE_WRITE_OFF" &&
+            m.movementType !== "DAMAGE_WRITEOFF" &&
+            m.movementType !== "DAMAGE_SPOILAGE" &&
             m.movementType !== "EXPIRED_SCRAP" &&
-            m.movementType !== "DAMAGE_TO_QUARANTINE"
+            m.movementType !== "DAMAGE_TO_QUARANTINE" &&
+            m.movementType !== "QUARANTINE_DISPOSAL"
           ) {
             return false
           }
@@ -233,6 +266,13 @@ export default function StockLedgerPage({
           if (
             m.movementType !== "RETURN_RESTOCKED" &&
             m.movementType !== "RETURN_QUARANTINED"
+          ) {
+            return false
+          }
+        } else if (selectedType === "LOT_ENTRY") {
+          if (
+            m.movementType !== "LOT_ENTRY" &&
+            m.movementType !== "LOT_INWARD"
           ) {
             return false
           }
@@ -270,6 +310,7 @@ export default function StockLedgerPage({
       const isAdd =
         m.quantityChange > 0 ||
         m.movementType === "LOT_ENTRY" ||
+        m.movementType === "LOT_INWARD" ||
         m.movementType === "RETURN_RESTOCKED" ||
         m.movementType === "OPENING_BALANCE"
 
@@ -282,6 +323,8 @@ export default function StockLedgerPage({
       if (
         m.movementType === "BREAKAGE_LEAKAGE" ||
         m.movementType === "DAMAGE_WRITE_OFF" ||
+        m.movementType === "DAMAGE_WRITEOFF" ||
+        m.movementType === "DAMAGE_SPOILAGE" ||
         m.movementType === "EXPIRED_SCRAP" ||
         m.movementType === "QUARANTINE_DISPOSAL"
       ) {
@@ -485,6 +528,7 @@ export default function StockLedgerPage({
             { id: "DAMAGE_ALL", label: "Damage Write-Offs" },
             { id: "RETURN_ALL", label: "Customer Returns" },
             { id: "PHYSICAL_AUDIT_VARIANCE", label: "Audit Variances" },
+            { id: "PROMOTIONAL_SAMPLE", label: "Farmer Demos" },
             { id: "OPENING_BALANCE", label: "Opening Balances" },
           ].map((typeItem) => {
             const isSelected = selectedType === typeItem.id
