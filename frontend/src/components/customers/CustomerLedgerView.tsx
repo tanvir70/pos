@@ -51,7 +51,7 @@ export interface CustomerLedgerViewProps {
   onRefreshCustomers: () => void
 }
 
-type TabType = "ALL" | "INVOICES" | "PAYMENTS" | "PURCHASES" | "THERMAL"
+type TabType = "ALL" | "INVOICES" | "PAYMENTS" | "PURCHASES"
 
 const tk = (n: number | undefined | null) =>
   `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -456,19 +456,6 @@ export default function CustomerLedgerView({
               <Package className="w-3.5 h-3.5 text-slate-500" />
               <span>Invoice Items ({purchases.length})</span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("THERMAL")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
-                activeTab === "THERMAL"
-                  ? "bg-slate-900 text-white shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
-              }`}
-            >
-              <Printer className="w-3.5 h-3.5 text-slate-500" />
-              <span>80mm Slip Preview</span>
-            </button>
           </div>
 
           {hasActiveFilters && (
@@ -485,111 +472,51 @@ export default function CustomerLedgerView({
         </div>
 
         {/* Secondary Filter Bar: Search + Date Range Filter */}
-        {activeTab !== "THERMAL" && (
-          <div className="p-3.5 space-y-2.5">
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-              {/* Search Bar */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={
-                    activeTab === "PURCHASES"
-                      ? "Search invoice number or product name..."
-                      : "Search by voucher, invoice number, or note..."
-                  }
-                  className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 bg-white"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-xs text-slate-400 hover:text-slate-700"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Date Filter (for ledger transactions) */}
-              {activeTab !== "PURCHASES" && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <DateRangeFilter
-                    value={dateRange}
-                    onChange={(newRange) => {
-                      setDateRange(newRange)
-                      setPage(0)
-                    }}
-                  />
-                </div>
+        <div className="p-3.5 space-y-2.5">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            {/* Search Bar */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={
+                  activeTab === "PURCHASES"
+                    ? "Search invoice number or product name..."
+                    : "Search by voucher, invoice number, or note..."
+                }
+                className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 bg-white"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-xs text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               )}
             </div>
+
+            {/* Date Filter (for ledger transactions) */}
+            {activeTab !== "PURCHASES" && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <DateRangeFilter
+                  value={dateRange}
+                  onChange={(newRange) => {
+                    setDateRange(newRange)
+                    setPage(0)
+                  }}
+                />
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* ─── Main Content Views ─────────────────────────────────────── */}
-      {activeTab === "THERMAL" ? (
-        /* 80mm Thermal Slip Preview */
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 flex flex-col items-center">
-          <div className="w-full max-w-[360px] bg-slate-50 border border-slate-200 p-5 rounded-xl font-mono text-xs shadow-sm">
-            <div className="text-center pb-3 border-b border-dashed border-slate-300">
-              <p className="font-bold text-base text-slate-900">RAJIB ENTERPRISE</p>
-              <p className="text-[11px] text-slate-600">Uttar Bazar, Belabo, Narsingdi</p>
-              <p className="text-[11px] text-slate-600">Tel: 01711-123456</p>
-              <p className="font-bold text-xs mt-2 px-2 py-0.5 bg-slate-200 inline-block rounded">
-                CUSTOMER STATEMENT
-              </p>
-            </div>
-
-            <div className="py-2.5 border-b border-dashed border-slate-300 space-y-1 text-xs">
-              <p><strong>Customer:</strong> {customer.name}</p>
-              <p><strong>Phone:</strong> {customer.phone}</p>
-              {customer.landArea && <p><strong>Land Area:</strong> {customer.landArea}</p>}
-              <p><strong>Date:</strong> {new Date().toLocaleDateString("en-GB")}</p>
-            </div>
-
-            <div className="py-2.5 space-y-2">
-              {filteredLedger.slice(0, 20).map((e) => (
-                <div key={e.id} className="text-xs border-b border-dotted border-slate-200 pb-1.5">
-                  <div className="flex justify-between font-semibold">
-                    <span>{e.transactionDate ? new Date(e.transactionDate).toLocaleDateString("en-GB") : ""}</span>
-                    <span className={e.debit > 0 ? "text-rose-600" : "text-emerald-700"}>
-                      {e.debit > 0 ? `+${tk(e.debit)}` : `-${tk(e.credit)}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-slate-600 text-[11px] mt-0.5">
-                    <span>{e.moneyReceiptNo || (e.saleId ? `INV-${e.saleId}` : e.transactionType)}</span>
-                    <span>Bal: {tk(e.balanceAfter)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-3 border-t border-dashed border-slate-300 text-sm">
-              <div className="flex justify-between font-bold">
-                <span>Current Due:</span>
-                <span className="text-rose-600">{tk(customer.currentDue)}</span>
-              </div>
-            </div>
-
-            <div className="pt-5 text-center">
-              <Button
-                variant="default"
-                size="sm"
-                fullWidth
-                onClick={handlePrintSlip}
-                leftIcon={<Printer className="w-4 h-4" />}
-                className="bg-slate-900 text-white hover:bg-slate-800"
-              >
-                Print Slip (80mm)
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : activeTab === "PURCHASES" ? (
+      {activeTab === "PURCHASES" ? (
         /* Itemized Purchases History List */
         <div className="space-y-3">
           {isPurchasesLoading ? (
@@ -812,48 +739,6 @@ export default function CustomerLedgerView({
           )}
         </div>
       )}
-
-      {/* ─── Printable Hidden Area for 80mm Slip ────────────────────── */}
-      <div className="hidden print:block print:w-[80mm] print:p-2 text-black bg-white font-mono text-[10px]">
-        <div className="text-center pb-2 border-b border-black">
-          <p className="font-bold text-xs">RAJIB ENTERPRISE</p>
-          <p className="text-[9px]">Uttar Bazar, Belabo, Narsingdi</p>
-          <p className="text-[9px]">Phone: 01711-123456</p>
-          <p className="font-bold text-[10px] mt-1">CUSTOMER STATEMENT</p>
-        </div>
-
-        <div className="py-1.5 border-b border-black text-[9px] space-y-0.5">
-          <p><strong>Customer:</strong> {customer.name}</p>
-          <p><strong>Phone:</strong> {customer.phone}</p>
-          {customer.landArea && <p><strong>Land Area:</strong> {customer.landArea}</p>}
-          <p><strong>Date:</strong> {new Date().toLocaleDateString("en-GB")}</p>
-        </div>
-
-        <div className="py-2 space-y-1">
-          {filteredLedger.map((e) => (
-            <div key={e.id} className="border-b border-dotted border-gray-400 pb-1">
-              <div className="flex justify-between">
-                <span>{e.transactionDate ? new Date(e.transactionDate).toLocaleDateString("en-GB") : ""}</span>
-                <span>{e.debit > 0 ? `+${tk(e.debit)}` : `-${tk(e.credit)}`}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>{e.moneyReceiptNo || (e.saleId ? `INV-${e.saleId}` : e.transactionType)}</span>
-                <span>Bal: {tk(e.balanceAfter)}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="pt-2 border-t border-black font-bold flex justify-between text-xs">
-          <span>Current Due:</span>
-          <span>{tk(customer.currentDue)}</span>
-        </div>
-
-        <div className="pt-4 text-center text-[8px] text-gray-600">
-          <p>Thank you for your business!</p>
-          <p>Rajib Enterprise POS</p>
-        </div>
-      </div>
     </div>
   )
 }
