@@ -87,17 +87,6 @@ export default function CustomerDirectoryTable({
     return customers.filter((c) => (Number(c.currentDue) || 0) > 0).length
   }, [customers])
 
-  const formatWhatsAppUrl = (phone?: string | null, name?: string, due?: number) => {
-    if (!phone) return null
-    let clean = phone.replace(/[^0-9]/g, "")
-    if (clean.startsWith("0")) clean = "88" + clean
-    if (!clean.startsWith("880")) return null
-    const text = encodeURIComponent(
-      `Assalamu Alaikum ${name || "Customer"}, your outstanding due balance at Rajib Enterprise is ৳${(due || 0).toLocaleString("en-IN")}. Please arrange payment when convenient. Thank you!`
-    )
-    return `https://wa.me/${clean}?text=${text}`
-  }
-
   return (
     <div className="space-y-4">
       {/* Page Header */}
@@ -318,7 +307,6 @@ export default function CustomerDirectoryTable({
                 <tbody className="divide-y divide-slate-100">
                   {paginatedCustomers.map((c) => {
                     const due = Number(c.currentDue) || 0
-                    const waUrl = formatWhatsAppUrl(c.whatsappNumber || c.phone, c.name, due)
 
                     return (
                       <tr
@@ -391,22 +379,11 @@ export default function CustomerDirectoryTable({
                           {c.villageAddress || c.address || <span className="text-slate-400">—</span>}
                         </td>
 
-                        {/* Phone & WhatsApp */}
+                        {/* Phone */}
                         <td className="px-3 py-3">
                           <div className="tabular-nums font-medium text-slate-900">
                             {c.phone}
                           </div>
-                          {waUrl && due > 0 && (
-                            <a
-                              href={waUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-[10px] text-slate-500 hover:text-slate-900 underline block mt-0.5"
-                            >
-                              WhatsApp Reminder
-                            </a>
-                          )}
                         </td>
 
                         {/* Lifetime Purchases */}

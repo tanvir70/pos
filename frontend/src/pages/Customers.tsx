@@ -93,14 +93,6 @@ export default function Customers() {
         onSuccess={handleAddSuccess}
       />
 
-      {/* Edit Customer Profile Modal */}
-      <EditCustomerModal
-        isOpen={!!editCustomer}
-        customer={editCustomer}
-        onClose={() => setEditCustomer(null)}
-        onSuccess={handleEditSuccess}
-      />
-
       {/* Unified Customer 360 Workspace Modal */}
       <CustomerDetailModal
         isOpen={!!detailCustomer}
@@ -109,6 +101,14 @@ export default function Customers() {
         onOpenEdit={(c) => setEditCustomer(c)}
         onOpenRepay={(c) => setRepayCustomer(c)}
         onPrintInvoice={(sale) => setInvoiceToPrint(sale)}
+      />
+
+      {/* Edit Customer Profile Modal */}
+      <EditCustomerModal
+        isOpen={!!editCustomer}
+        customer={editCustomer}
+        onClose={() => setEditCustomer(null)}
+        onSuccess={handleEditSuccess}
       />
 
       {/* Repay / Collect Due Modal */}

@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react"
 import type { Customer, CustomerRequest, CustomerType } from "../../types"
 import { updateCustomer } from "../../api/endpoints"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../ui/select"
 
 export interface EditCustomerModalProps {
   isOpen: boolean
@@ -20,7 +27,6 @@ export default function EditCustomerModal({
     fatherName: "",
     businessName: "",
     phone: "",
-    whatsappNumber: "",
     villageAddress: "",
     landArea: "",
     customerType: "RETAIL",
@@ -40,7 +46,6 @@ export default function EditCustomerModal({
         fatherName: customer.fatherName || "",
         businessName: customer.businessName || "",
         phone: customer.phone || "",
-        whatsappNumber: customer.whatsappNumber || "",
         villageAddress: customer.villageAddress || customer.address || "",
         landArea: customer.landArea || "",
         customerType: customer.customerType || "RETAIL",
@@ -74,7 +79,6 @@ export default function EditCustomerModal({
         ...form,
         name: form.name.trim(),
         phone: form.phone.trim(),
-        whatsappNumber: form.whatsappNumber ? form.whatsappNumber.trim() : undefined,
         fatherName: form.fatherName ? form.fatherName.trim() : undefined,
         businessName: form.businessName ? form.businessName.trim() : undefined,
         villageAddress: form.villageAddress ? form.villageAddress.trim() : undefined,
@@ -90,15 +94,15 @@ export default function EditCustomerModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-lg border border-slate-200 max-w-xl w-full p-6 my-8">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 my-8">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div>
             <h3 className="font-semibold text-slate-900 text-base">
               Edit Customer Profile
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Update personal details, contact information, and cultivated land area.
+              Update customer details, contact number, and cultivated land area.
             </p>
           </div>
           <button
@@ -148,20 +152,6 @@ export default function EditCustomerModal({
               />
             </div>
 
-            {/* WhatsApp */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                WhatsApp Number
-              </label>
-              <input
-                type="text"
-                value={form.whatsappNumber || ""}
-                onChange={(e) => setForm({ ...form, whatsappNumber: e.target.value })}
-                placeholder="017xxxxxxxx"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
-            </div>
-
             {/* Land Area */}
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
@@ -204,6 +194,27 @@ export default function EditCustomerModal({
               />
             </div>
 
+            {/* Customer Type with shadcn Select */}
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Customer Type
+              </label>
+              <Select
+                value={form.customerType}
+                onValueChange={(val) =>
+                  setForm({ ...form, customerType: val as CustomerType })
+                }
+              >
+                <SelectTrigger className="w-full bg-white text-sm h-9">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="RETAIL">Retail Farmer</SelectItem>
+                  <SelectItem value="WHOLESALE">Wholesale Customer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Village / Address */}
             <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-slate-700 mb-1">
@@ -216,23 +227,6 @@ export default function EditCustomerModal({
                 placeholder="Village / Union / Sub-district"
                 className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
               />
-            </div>
-
-            {/* Customer Type */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Customer Type
-              </label>
-              <select
-                value={form.customerType}
-                onChange={(e) =>
-                  setForm({ ...form, customerType: e.target.value as CustomerType })
-                }
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 bg-white"
-              >
-                <option value="RETAIL">Retail Farmer</option>
-                <option value="WHOLESALE">Wholesale Customer</option>
-              </select>
             </div>
           </div>
 

@@ -20,7 +20,6 @@ const initialFormState: CustomerRequest = {
   fatherName: "",
   businessName: "",
   phone: "",
-  whatsappNumber: "",
   villageAddress: "",
   landArea: "",
   customerType: "RETAIL",
@@ -67,7 +66,6 @@ export default function AddCustomerModal({
         ...form,
         name: form.name.trim(),
         phone: form.phone.trim(),
-        whatsappNumber: form.whatsappNumber ? form.whatsappNumber.trim() : undefined,
         fatherName: form.fatherName ? form.fatherName.trim() : undefined,
         businessName: form.businessName ? form.businessName.trim() : undefined,
         villageAddress: form.villageAddress ? form.villageAddress.trim() : undefined,
@@ -139,20 +137,6 @@ export default function AddCustomerModal({
                 required
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="017xxxxxxxx"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
-            </div>
-
-            {/* WhatsApp */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                WhatsApp Number
-              </label>
-              <input
-                type="text"
-                value={form.whatsappNumber || ""}
-                onChange={(e) => setForm({ ...form, whatsappNumber: e.target.value })}
                 placeholder="017xxxxxxxx"
                 className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
               />

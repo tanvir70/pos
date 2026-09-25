@@ -198,11 +198,6 @@ export default function CustomerDetailModal({
               <span className="font-medium text-slate-900 tabular-nums">
                 {customer.phone || "—"}
               </span>
-              {customer.whatsappNumber && (
-                <span className="text-slate-500 block text-[11px] mt-0.5">
-                  WhatsApp: {customer.whatsappNumber}
-                </span>
-              )}
             </div>
 
             <div>
