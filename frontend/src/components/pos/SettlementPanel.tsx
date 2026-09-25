@@ -292,8 +292,19 @@ export default function SettlementPanel({
             <input
               type="number"
               step="any"
+              min="0"
               value={cashPaidInput}
-              onChange={(e) => setCashPaidInput(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value
+                if (val === "" || (!val.startsWith("-") && Number(val) >= 0)) {
+                  setCashPaidInput(val)
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "e" || e.key === "E") {
+                  e.preventDefault()
+                }
+              }}
               onFocus={(e) => e.target.select()}
               placeholder="0.00"
               className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
@@ -314,8 +325,19 @@ export default function SettlementPanel({
             <input
               type="number"
               step="any"
+              min="0"
               value={digitalPaidInput}
-              onChange={(e) => setDigitalPaidInput(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value
+                if (val === "" || (!val.startsWith("-") && Number(val) >= 0)) {
+                  setDigitalPaidInput(val)
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "e" || e.key === "E") {
+                  e.preventDefault()
+                }
+              }}
               onFocus={(e) => e.target.select()}
               placeholder="0.00"
               className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
@@ -359,6 +381,11 @@ export default function SettlementPanel({
               max={finalTotalAmount}
               value={dueAmountInput}
               onChange={(e) => handleDueAmountChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "e" || e.key === "E") {
+                  e.preventDefault()
+                }
+              }}
               onFocus={(e) => e.target.select()}
               placeholder={finalTotalAmount > 0 ? String(finalTotalAmount) : "0.00"}
               className="h-12 w-full rounded-lg border border-amber-300 bg-white px-3 text-right font-mono text-2xl font-black text-amber-950 tabular-nums outline-hidden focus:border-amber-600 focus:ring-4 focus:ring-amber-500/15"

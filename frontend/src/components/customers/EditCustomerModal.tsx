@@ -24,7 +24,6 @@ export default function EditCustomerModal({
 }: EditCustomerModalProps) {
   const [form, setForm] = useState<CustomerRequest>({
     name: "",
-    fatherName: "",
     businessName: "",
     phone: "",
     villageAddress: "",
@@ -38,7 +37,6 @@ export default function EditCustomerModal({
     if (customer) {
       setForm({
         name: customer.name || "",
-        fatherName: customer.fatherName || "",
         businessName: customer.businessName || "",
         phone: customer.phone || "",
         villageAddress: customer.villageAddress || customer.address || "",
@@ -55,7 +53,6 @@ export default function EditCustomerModal({
     const initialName = (customer.name || "").trim()
     const initialPhone = (customer.phone || "").trim()
     const initialLand = (customer.landArea || "").trim()
-    const initialFather = (customer.fatherName || "").trim()
     const initialBusiness = (customer.businessName || "").trim()
     const initialAddress = (customer.villageAddress || customer.address || "").trim()
     const initialType = (customer.customerType || "RETAIL").toUpperCase()
@@ -63,7 +60,6 @@ export default function EditCustomerModal({
     const currentName = (form.name || "").trim()
     const currentPhone = (form.phone || "").trim()
     const currentLand = (form.landArea || "").trim()
-    const currentFather = (form.fatherName || "").trim()
     const currentBusiness = (form.businessName || "").trim()
     const currentAddress = (form.villageAddress || "").trim()
     const currentType = (form.customerType || "RETAIL").toUpperCase()
@@ -72,7 +68,6 @@ export default function EditCustomerModal({
       currentName !== initialName ||
       currentPhone !== initialPhone ||
       currentLand !== initialLand ||
-      currentFather !== initialFather ||
       currentBusiness !== initialBusiness ||
       currentAddress !== initialAddress ||
       currentType !== initialType
@@ -105,7 +100,6 @@ export default function EditCustomerModal({
       const updated = await updateCustomer(customer.id, {
         name: form.name.trim(),
         phone: cleanPhone,
-        fatherName: form.fatherName?.trim() ? form.fatherName.trim() : null,
         businessName: form.businessName?.trim() ? form.businessName.trim() : null,
         villageAddress: form.villageAddress?.trim() ? form.villageAddress.trim() : null,
         landArea: form.landArea?.trim() ? form.landArea.trim() : null,
@@ -200,19 +194,6 @@ export default function EditCustomerModal({
               />
             </div>
 
-            {/* Father's Name */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Father's Name
-              </label>
-              <input
-                type="text"
-                value={form.fatherName || ""}
-                onChange={(e) => setForm({ ...form, fatherName: e.target.value })}
-                placeholder="Father's Name"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
-            </div>
 
             {/* Business / Shop Name */}
             <div>

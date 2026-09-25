@@ -17,7 +17,6 @@ export interface AddCustomerModalProps {
 
 const initialFormState: CustomerRequest = {
   name: "",
-  fatherName: "",
   businessName: "",
   phone: "",
   villageAddress: "",
@@ -71,7 +70,6 @@ export default function AddCustomerModal({
         ...form,
         name: form.name.trim(),
         phone: cleanPhone,
-        fatherName: form.fatherName ? form.fatherName.trim() : undefined,
         businessName: form.businessName ? form.businessName.trim() : undefined,
         villageAddress: form.villageAddress ? form.villageAddress.trim() : undefined,
         landArea: form.landArea ? form.landArea.trim() : undefined,
@@ -168,19 +166,6 @@ export default function AddCustomerModal({
               />
             </div>
 
-            {/* Father's Name */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Father's Name
-              </label>
-              <input
-                type="text"
-                value={form.fatherName || ""}
-                onChange={(e) => setForm({ ...form, fatherName: e.target.value })}
-                placeholder="Father's Name"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
-            </div>
 
             {/* Business Name */}
             <div>

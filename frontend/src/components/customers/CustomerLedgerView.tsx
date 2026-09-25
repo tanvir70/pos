@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react"
 import type { Customer, CustomerLedger, SaleResponse } from "../../types"
 import { getCustomerLedger, getCustomerPurchases } from "../../api/endpoints"
-import GotposStatCard from "../dashboard/GotposStatCard"
 import { Button } from "../ui/Button"
 import Pagination from "../ui/Pagination"
 import DateRangeFilter, { type DateRange, defaultDateRange } from "../ui/DateRangeFilter"
@@ -34,13 +33,11 @@ import {
   Search,
   X,
   Package,
-  Layers,
   Phone,
   MapPin,
   TrendingDown,
   TrendingUp,
   FileText,
-  BadgeAlert,
 } from "lucide-react"
 
 export interface CustomerLedgerViewProps {
@@ -324,6 +321,9 @@ export default function CustomerLedgerView({
                   Account Settled
                 </span>
               )}
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                Lifetime: <strong className="font-mono text-slate-900">{tk(lifetimeBuy)}</strong> ({purchases.length} orders)
+              </span>
             </div>
 
             {/* Profile Metadata Strip */}
@@ -348,13 +348,6 @@ export default function CustomerLedgerView({
                 <div className="flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
                   <span className="text-slate-700">{customer.villageAddress}</span>
-                </div>
-              )}
-
-              {customer.fatherName && (
-                <div className="flex items-center gap-1.5 text-slate-500">
-                  <span>Father:</span>
-                  <span className="text-slate-700 font-medium">{customer.fatherName}</span>
                 </div>
               )}
             </div>
@@ -406,49 +399,6 @@ export default function CustomerLedgerView({
         </div>
       </div>
 
-      {/* ─── 4 GotposStatCard Summary Cards ─────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* 1. Outstanding Due */}
-        <GotposStatCard
-          title="Current Due Balance"
-          value={tk(due)}
-          subtitle={
-            due > 0
-              ? "Credit pending settlement"
-              : "Account settled in full"
-          }
-          theme={due > 0 ? "rose" : "emerald"}
-          icon={<BadgeAlert className="w-5 h-5" />}
-          valueColor={due > 0 ? "text-rose-600" : "text-emerald-700"}
-        />
-
-        {/* 2. Period Invoices Billed */}
-        <GotposStatCard
-          title="Period Billed (+Debit)"
-          value={tk(periodDebit)}
-          subtitle="Sales charges in selected range"
-          theme="blue"
-          icon={<ShoppingCart className="w-5 h-5" />}
-        />
-
-        {/* 3. Period Payments Collected */}
-        <GotposStatCard
-          title="Period Collected (-Credit)"
-          value={tk(periodCredit)}
-          subtitle="Cash & bank settlements in range"
-          theme="emerald"
-          icon={<CheckCircle2 className="w-5 h-5" />}
-        />
-
-        {/* 4. Lifetime Purchases */}
-        <GotposStatCard
-          title="Lifetime Total Purchases"
-          value={tk(lifetimeBuy)}
-          subtitle={`${purchases.length} total orders completed`}
-          theme="navy"
-          icon={<Layers className="w-5 h-5" />}
-        />
-      </div>
 
       {/* ─── Filter & Navigation Toolbar ────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">

@@ -178,12 +178,6 @@ export default function A4InvoicePrint({
                       {customer?.name || sale.customerName || "-"}
                     </span>
                   </div>
-                  {customer?.fatherName && (
-                    <div className="flex">
-                      <span className="w-24 text-gray-600">Father's Name:</span>
-                      <span className="text-gray-700">{customer.fatherName}</span>
-                    </div>
-                  )}
                   <div className="flex">
                     <span className="w-24 text-gray-600">Address / Village:</span>
                     <span className="text-gray-700">

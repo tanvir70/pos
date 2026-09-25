@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react"
 import type { Customer } from "../../types"
 import Pagination from "../ui/Pagination"
+import GotposStatCard from "../dashboard/GotposStatCard"
+import { BadgeAlert, Users, Store, UserCheck } from "lucide-react"
 import { focusSidebarMenu, focusFirstTableRow, focusPrimarySearch } from "../../utils/keyboard"
 
 export type FilterType = "ALL" | "WHOLESALE" | "RETAIL" | "HAS_DUE"
@@ -121,57 +123,54 @@ export default function CustomerDirectoryTable({
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div
+        <GotposStatCard
+          title="Total Outstanding Due"
+          value={tk(totalMarketDue)}
+          subtitle={`${customersWithDueCount} customer(s) with dues`}
+          theme="rose"
+          icon={<BadgeAlert className="w-5 h-5" />}
+          valueColor="text-rose-600"
           onClick={() => setFilterType("HAS_DUE")}
-          className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all cursor-pointer shadow-xs"
-        >
-          <span className="text-xs font-medium text-slate-500 block">Total Outstanding Due</span>
-          <span className="text-lg font-bold text-red-600 mt-0.5 block tabular-nums">
-            {tk(totalMarketDue)}
-          </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">
-            {customersWithDueCount} customer(s) with dues
-          </span>
-        </div>
+          className={`cursor-pointer transition-all ${
+            filterType === "HAS_DUE" ? "ring-2 ring-rose-500 shadow-sm" : ""
+          }`}
+        />
 
-        <div
+        <GotposStatCard
+          title="Total Customers"
+          value={customers.length}
+          subtitle="Active customer accounts"
+          theme="navy"
+          icon={<Users className="w-5 h-5" />}
           onClick={() => setFilterType("ALL")}
-          className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all cursor-pointer shadow-xs"
-        >
-          <span className="text-xs font-medium text-slate-500 block">Total Customers</span>
-          <span className="text-lg font-bold text-slate-900 mt-0.5 block tabular-nums">
-            {customers.length}
-          </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">
-            Active customer accounts
-          </span>
-        </div>
+          className={`cursor-pointer transition-all ${
+            filterType === "ALL" ? "ring-2 ring-slate-800 shadow-sm" : ""
+          }`}
+        />
 
-        <div
+        <GotposStatCard
+          title="Wholesale Customers"
+          value={wholesaleCount}
+          subtitle="Dealers & sub-stockists"
+          theme="blue"
+          icon={<Store className="w-5 h-5" />}
           onClick={() => setFilterType("WHOLESALE")}
-          className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all cursor-pointer shadow-xs"
-        >
-          <span className="text-xs font-medium text-slate-500 block">Wholesale Customers</span>
-          <span className="text-lg font-bold text-slate-900 mt-0.5 block tabular-nums">
-            {wholesaleCount}
-          </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">
-            Dealers & sub-stockists
-          </span>
-        </div>
+          className={`cursor-pointer transition-all ${
+            filterType === "WHOLESALE" ? "ring-2 ring-blue-500 shadow-sm" : ""
+          }`}
+        />
 
-        <div
+        <GotposStatCard
+          title="Retail Farmers"
+          value={retailCount}
+          subtitle="Local growers & farmers"
+          theme="teal"
+          icon={<UserCheck className="w-5 h-5" />}
           onClick={() => setFilterType("RETAIL")}
-          className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all cursor-pointer shadow-xs"
-        >
-          <span className="text-xs font-medium text-slate-500 block">Retail Farmers</span>
-          <span className="text-lg font-bold text-slate-900 mt-0.5 block tabular-nums">
-            {retailCount}
-          </span>
-          <span className="text-[11px] text-slate-400 mt-0.5 block">
-            Local growers & farmers
-          </span>
-        </div>
+          className={`cursor-pointer transition-all ${
+            filterType === "RETAIL" ? "ring-2 ring-teal-500 shadow-sm" : ""
+          }`}
+        />
       </div>
 
       {/* Feedback Alerts */}
@@ -347,11 +346,6 @@ export default function CustomerDirectoryTable({
                           {c.businessName && (
                             <div className="text-[11px] text-slate-600 mt-0.5">
                               {c.businessName}
-                            </div>
-                          )}
-                          {c.fatherName && (
-                            <div className="text-[11px] text-slate-400 mt-0.5">
-                              Father: {c.fatherName}
                             </div>
                           )}
                         </td>

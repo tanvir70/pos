@@ -291,11 +291,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (paymentMethod === "CASH" && cashPaidInput.trim() === "") {
       return finalTotalAmount
     }
-    return parseFloat(cashPaidInput) || 0
+    return Math.max(0, parseFloat(cashPaidInput) || 0)
   }, [paymentMethod, dueAmount, cashPaidInput, finalTotalAmount])
 
   const digitalPaid = useMemo(() => {
-    return parseFloat(digitalPaidInput) || 0
+    return Math.max(0, parseFloat(digitalPaidInput) || 0)
   }, [digitalPaidInput])
 
   const totalPaid = useMemo(() => {
