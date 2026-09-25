@@ -480,14 +480,9 @@ export default function Returns() {
 
             {/* 3. Product & Lot Selection using POS-grade ProductSearch */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold text-slate-900">
-                  Select Product & Lot to Return *
-                </label>
-                <span className="text-[11px] text-slate-500 font-mono hidden sm:inline-block">
-                  Barcode ready · Press <kbd className="px-1 py-0.5 rounded bg-slate-100 border border-slate-300 font-bold">F2</kbd>
-                </span>
-              </div>
+              <label className="block text-xs font-semibold text-slate-900">
+                Select Product & Lot to Return *
+              </label>
 
               <div className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs">
                 <ProductSearch
