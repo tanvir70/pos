@@ -24,6 +24,13 @@ import Badge from "../components/ui/Badge"
 import GotposStatCard from "../components/dashboard/GotposStatCard"
 import Modal from "../components/ui/Modal"
 import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../components/ui/select"
+import {
   Table,
   TableHeader,
   TableBody,
@@ -745,36 +752,44 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
                     <label className="block text-xs font-bold text-slate-900 mb-1">
                       Category
                     </label>
-                    <select
+                    <Select
                       value={newProdCategory}
-                      onChange={(e) => setNewProdCategory(e.target.value)}
-                      className="w-full text-xs py-2.5 px-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-600 focus:outline-hidden cursor-pointer font-medium"
+                      onValueChange={(val) => setNewProdCategory(val)}
                     >
-                      <option value="Insecticide">Insecticide</option>
-                      <option value="Fungicide">Fungicide</option>
-                      <option value="Herbicide">Herbicide</option>
-                      <option value="Bio-stimulant">Bio-stimulant (Growth Promoter)</option>
-                      <option value="Seed">Seed</option>
-                    </select>
+                      <SelectTrigger className="w-full bg-white font-medium">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Insecticide">Insecticide</SelectItem>
+                        <SelectItem value="Fungicide">Fungicide</SelectItem>
+                        <SelectItem value="Herbicide">Herbicide</SelectItem>
+                        <SelectItem value="Bio-stimulant">Bio-stimulant (Growth Promoter)</SelectItem>
+                        <SelectItem value="Seed">Seed</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-900 mb-1">
                       Packaging Unit
                     </label>
-                    <select
+                    <Select
                       value={newProdBaseUnit}
-                      onChange={(e) => setNewProdBaseUnit(e.target.value)}
-                      className="w-full text-xs py-2.5 px-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-600 focus:outline-hidden cursor-pointer font-medium"
+                      onValueChange={(val) => setNewProdBaseUnit(val)}
                     >
-                      <option value="Bottle">Bottle</option>
-                      <option value="Packet">Packet</option>
-                      <option value="Kg">Kg</option>
-                      <option value="Gram">Gram</option>
-                      <option value="Liter">Liter</option>
-                      <option value="Milliliter">Mili Liters (ml)</option>
-                      <option value="Piece">Piece</option>
-                    </select>
+                      <SelectTrigger className="w-full bg-white font-medium">
+                        <SelectValue placeholder="Select unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Bottle">Bottle</SelectItem>
+                        <SelectItem value="Packet">Packet</SelectItem>
+                        <SelectItem value="Kg">Kg</SelectItem>
+                        <SelectItem value="Gram">Gram</SelectItem>
+                        <SelectItem value="Liter">Liter</SelectItem>
+                        <SelectItem value="Milliliter">Mili Liters (ml)</SelectItem>
+                        <SelectItem value="Piece">Piece</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <Input

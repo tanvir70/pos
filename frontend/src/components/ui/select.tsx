@@ -42,6 +42,7 @@ function SelectTrigger({
       data-size={size}
       className={cn(
         "flex w-full items-center justify-between gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 focus:bg-white py-2 px-3 text-xs font-semibold text-slate-800 transition-colors outline-hidden select-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 cursor-pointer",
+        size === "sm" && "py-1 px-2.5 h-7 rounded-lg text-[11px]",
         className
       )}
       {...props}
@@ -67,7 +68,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "relative z-50 max-h-72 min-w-[12rem] overflow-x-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 text-slate-900 shadow-xl duration-150 animate-in fade-in-0 zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "relative z-[100] max-h-72 min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 text-slate-900 shadow-xl duration-150 animate-in fade-in-0 zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           position === "popper" && "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className
         )}

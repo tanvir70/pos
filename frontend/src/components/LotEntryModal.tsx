@@ -4,6 +4,13 @@ import { createLot } from "../api/endpoints"
 import { calcWholesalePrice, getWholesaleSettings } from "../utils/wholesaleSettings"
 import { getNextLotNumber } from "../utils/lotNumber"
 import { Package, X, AlertTriangle, Loader2, Check } from "lucide-react"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "./ui/select"
 
 export interface LotEntryModalProps {
   products: Product[]
@@ -175,20 +182,21 @@ export default function LotEntryModal({
             >
               Select Product *
             </label>
-            <select
-              id={selectedProductIdId}
-              value={selectedProductId}
-              onChange={(e) => handleProductChange(e.target.value)}
-              required
-              className="w-full bg-white border-2 border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 focus:outline-hidden transition-all cursor-pointer"
+            <Select
+              value={selectedProductId ? String(selectedProductId) : ""}
+              onValueChange={(val) => handleProductChange(val)}
             >
-              <option value="">-- Choose a product --</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nameEn} ({p.nameBn}) — {p.category} ({p.baseUnit})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id={selectedProductIdId} className="w-full bg-white text-sm py-2.5">
+                <SelectValue placeholder="-- Choose a product --" />
+              </SelectTrigger>
+              <SelectContent>
+                {products.map((p) => (
+                  <SelectItem key={p.id} value={String(p.id)}>
+                    {p.nameEn} ({p.nameBn}) — {p.category} ({p.baseUnit})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Row 2: Lot Number & Dates */}

@@ -3,6 +3,13 @@ import type { StockItem } from "../types"
 import { getBarcodePngUrl } from "../api/endpoints"
 import { Tag, X, Sprout, Printer, Layers } from "lucide-react"
 import { formatLotNumber } from "../utils/lotNumber"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "./ui/select"
 
 // BUSINESS DECISION: Standard thermal barcode stickers format at 50mm × 25mm standard dimensions.
 // Features dealership branding, dual English/Bengali product names, FEFO expiry date,
@@ -247,25 +254,29 @@ export default function BarcodeStickerModal({
                   {lots.length} Lots Available
                 </span>
               </div>
-              <select
-                value={item.lotId}
-                onChange={(e) => {
-                  const selected = lots.find((l) => l.lotId === Number(e.target.value))
+              <Select
+                value={item.lotId ? String(item.lotId) : ""}
+                onValueChange={(val) => {
+                  const selected = lots.find((l) => l.lotId === Number(val))
                   if (selected && onSelectLot) {
                     onSelectLot(selected)
                   }
                 }}
-                className="w-full text-xs font-medium py-2 px-3 bg-white border border-emerald-300 rounded-lg text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 cursor-pointer shadow-2xs"
               >
-                {lots.map((l, idx) => {
-                  const qty = Number(l.quantity ?? (l as any).totalQuantity ?? 0)
-                  return (
-                    <option key={l.lotId} value={l.lotId}>
-                      {formatLotNumber(l.lotNumber, idx)} • Stock: {qty} units • Exp: {l.expiryDate || "N/A"} • #{l.lotBarcode || l.barcode || l.defaultBarcode || ""}
-                    </option>
-                  )
-                })}
-              </select>
+                <SelectTrigger className="w-full bg-white border-emerald-300 font-mono text-xs">
+                  <SelectValue placeholder="Select lot" />
+                </SelectTrigger>
+                <SelectContent>
+                  {lots.map((l, idx) => {
+                    const qty = Number(l.quantity ?? (l as any).totalQuantity ?? 0)
+                    return (
+                      <SelectItem key={l.lotId} value={String(l.lotId)} className="font-mono text-xs">
+                        {formatLotNumber(l.lotNumber, idx)} • Stock: {qty} units • Exp: {l.expiryDate || "N/A"} • #{l.lotBarcode || l.barcode || l.defaultBarcode || ""}
+                      </SelectItem>
+                    )
+                  })}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

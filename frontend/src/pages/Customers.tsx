@@ -33,6 +33,13 @@ import {
 import type { Customer, CustomerRequest, CustomerLedger, CustomerPaymentRequest, CustomerType, PaymentMethod, SaleResponse } from "../types"
 import { getCustomers, createCustomer, getCustomerLedger, recordPayment, getCustomerPurchases, getNextDueInvoiceNo } from "../api/endpoints"
 import DueCollectionReceipt, { type DueReceiptData } from "../components/DueCollectionReceipt"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../components/ui/select"
 import ThermalReceipt from "../components/ThermalReceipt"
 import GotposStatCard from "../components/dashboard/GotposStatCard"
 import Pagination from "../components/ui/Pagination"
@@ -962,19 +969,23 @@ export default function Customers() {
                   <label className="block text-xs font-semibold text-slate-900 mb-1">
                     Customer Type *
                   </label>
-                  <select
+                  <Select
                     value={newCustomerForm.customerType}
-                    onChange={(e) =>
+                    onValueChange={(val) =>
                       setNewCustomerForm({
                         ...newCustomerForm,
-                        customerType: e.target.value as CustomerType,
+                        customerType: val as CustomerType,
                       })
                     }
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden bg-white"
                   >
-                    <option value="RETAIL">Retail Farmer</option>
-                    <option value="WHOLESALE">Wholesale Customer</option>
-                  </select>
+                    <SelectTrigger className="w-full bg-white text-sm">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="RETAIL">Retail Farmer</SelectItem>
+                      <SelectItem value="WHOLESALE">Wholesale Customer</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
 
@@ -1005,22 +1016,26 @@ export default function Customers() {
                     Mobile Financial Service (bKash/Nagad)
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={newCustomerForm.mfsType || ""}
-                      onChange={(e) =>
+                    <Select
+                      value={newCustomerForm.mfsType || "NONE"}
+                      onValueChange={(val) =>
                         setNewCustomerForm({
                           ...newCustomerForm,
-                          mfsType: e.target.value,
+                          mfsType: val === "NONE" ? "" : val,
                         })
                       }
-                      className="px-2 py-2 border border-slate-200 rounded-lg text-xs bg-white"
                     >
-                      <option value="">Not specified</option>
-                      <option value="bKash">bKash</option>
-                      <option value="Nagad">Nagad</option>
-                      <option value="Rocket">Rocket</option>
-                      <option value="Upay">Upay</option>
-                    </select>
+                      <SelectTrigger className="w-full bg-white text-xs py-2">
+                        <SelectValue placeholder="Not specified" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NONE">Not specified</SelectItem>
+                        <SelectItem value="bKash">bKash</SelectItem>
+                        <SelectItem value="Nagad">Nagad</SelectItem>
+                        <SelectItem value="Rocket">Rocket</SelectItem>
+                        <SelectItem value="Upay">Upay</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <input
                       type="text"
                       value={newCustomerForm.mfsNumber || ""}
@@ -1235,16 +1250,20 @@ export default function Customers() {
                 <label className="block text-xs font-semibold text-slate-900 mb-1">
                   Payment Method *
                 </label>
-                <select
+                <Select
                   value={repayMethod}
-                  onChange={(e) => setRepayMethod(e.target.value as PaymentMethod)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs sm:text-sm bg-white"
+                  onValueChange={(val) => setRepayMethod(val as PaymentMethod)}
                 >
-                  <option value="CASH">Cash</option>
-                  <option value="BKASH">bKash</option>
-                  <option value="NAGAD">Nagad</option>
-                  <option value="BANK_TRANSFER">Bank Transfer</option>
-                </select>
+                  <SelectTrigger className="w-full bg-white text-xs sm:text-sm py-2">
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CASH">Cash</SelectItem>
+                    <SelectItem value="BKASH">bKash</SelectItem>
+                    <SelectItem value="NAGAD">Nagad</SelectItem>
+                    <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Due Invoice */}

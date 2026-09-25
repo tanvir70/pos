@@ -12,6 +12,13 @@ import {
   CheckCircle2,
   Package,
 } from "lucide-react"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "./ui/select"
 
 export interface StockAdjustmentModalProps {
   isOpen: boolean
@@ -202,23 +209,25 @@ export default function StockAdjustmentModal({
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Product *
               </label>
-              <select
-                value={selectedProductId || ""}
-                onChange={(e) => {
-                  const val = Number(e.target.value) || undefined
-                  setSelectedProductId(val)
+              <Select
+                value={selectedProductId ? String(selectedProductId) : ""}
+                onValueChange={(val) => {
+                  const numVal = Number(val) || undefined
+                  setSelectedProductId(numVal)
                   setSelectedLotId(undefined)
                 }}
-                className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-emerald-500"
-                required
               >
-                <option value="">-- Select Product --</option>
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nameEn} ({p.productCode})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full bg-white">
+                  <SelectValue placeholder="-- Select Product --" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.nameEn} ({p.productCode})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* 2. Lot Selection */}
@@ -226,19 +235,22 @@ export default function StockAdjustmentModal({
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Batch / Lot *
               </label>
-              <select
-                value={selectedLotId || currentLot?.id || ""}
-                onChange={(e) => setSelectedLotId(Number(e.target.value))}
-                className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-emerald-500 font-mono"
-                required
-                disabled={!selectedProductId}
+              <Select
+                value={selectedLotId ? String(selectedLotId) : (currentLot?.id ? String(currentLot.id) : "")}
+                onValueChange={(val) => setSelectedLotId(Number(val))}
+                disabled={!selectedProductId || productLots.length === 0}
               >
-                {productLots.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {formatLotNumber(l.lotNumber)} (Exp: {l.expiryDate} • Cost: {formatTk(l.purchaseCost)})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full bg-white font-mono">
+                  <SelectValue placeholder="-- Select Batch / Lot --" />
+                </SelectTrigger>
+                <SelectContent>
+                  {productLots.map((l) => (
+                    <SelectItem key={l.id} value={String(l.id)} className="font-mono">
+                      {formatLotNumber(l.lotNumber)} (Exp: {l.expiryDate} • Cost: {formatTk(l.purchaseCost)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

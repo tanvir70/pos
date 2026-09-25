@@ -19,6 +19,13 @@ import {
   Phone,
   Eye,
 } from "lucide-react"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../components/ui/select"
 import type {
   StockItem,
   Customer,
@@ -451,25 +458,31 @@ export default function Returns() {
                   </button>
                 )}
               </div>
-              <select
-                value={selectedCustomerId || ""}
-                onChange={(e) =>
-                  setSelectedCustomerId(e.target.value ? Number(e.target.value) : null)
+              <Select
+                value={selectedCustomerId ? String(selectedCustomerId) : "WALK_IN"}
+                onValueChange={(val) =>
+                  setSelectedCustomerId(val === "WALK_IN" ? null : Number(val))
                 }
-                className={`w-full px-3 py-2 border rounded-xl text-xs sm:text-sm bg-white transition-colors focus:border-emerald-600 focus:outline-hidden ${
-                  refundType === "DUE_ADJUSTMENT" && !selectedCustomerId
-                    ? "border-rose-300 bg-rose-50/30"
-                    : "border-slate-200"
-                }`}
               >
-                <option value="">Walk-in / Cash Buyer (No Ledger Profile)</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.businessName ? `(${c.businessName})` : ""}
-                    {Number(c.currentDue || 0) > 0 ? ` — Due: ${tk(c.currentDue)}` : ""}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  className={`w-full bg-white text-xs sm:text-sm py-2.5 ${
+                    refundType === "DUE_ADJUSTMENT" && !selectedCustomerId
+                      ? "border-rose-300 bg-rose-50/30"
+                      : "border-slate-200"
+                  }`}
+                >
+                  <SelectValue placeholder="Walk-in / Cash Buyer (No Ledger Profile)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WALK_IN">Walk-in / Cash Buyer (No Ledger Profile)</SelectItem>
+                  {customers.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.name} {c.businessName ? `(${c.businessName})` : ""}
+                      {Number(c.currentDue || 0) > 0 ? ` — Due: ${tk(c.currentDue)}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {refundType === "DUE_ADJUSTMENT" && !selectedCustomerId && (
                 <p className="text-[11px] text-rose-600 font-semibold mt-1 flex items-center gap-1">
                   <AlertTriangle className="w-3.5 h-3.5" />
