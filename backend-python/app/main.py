@@ -53,6 +53,13 @@ async def lifespan(app: FastAPI):
             except Exception:
                 pass  # column already exists
 
+        # Standardize lot numbers: migrate legacy 'DEFAULT' or empty to 'LOT-01'
+        try:
+            await conn.execute(text("UPDATE inventory_lot SET lot_number = 'LOT-01' WHERE UPPER(lot_number) IN ('DEFAULT', 'INITIAL', '') OR lot_number IS NULL"))
+            await conn.execute(text("UPDATE stock_movement SET remarks = REPLACE(REPLACE(remarks, 'DEFAULT', 'LOT-01'), 'default', 'LOT-01') WHERE remarks LIKE '%DEFAULT%' OR remarks LIKE '%default%'"))
+        except Exception:
+            pass
+
     # 2. Seed initial data if empty
     from app.database import async_session_maker
     async with async_session_maker() as session:
@@ -125,37 +132,37 @@ async def lifespan(app: FastAPI):
 
             # Seed Lots
             l1 = InventoryLot(
-                product_id=p1.id, lot_number="DEFAULT", entry_date=date(2026, 5, 15), expiry_date=date(2030, 12, 31),
+                product_id=p1.id, lot_number="LOT-01", entry_date=date(2026, 5, 15), expiry_date=date(2030, 12, 31),
                 purchase_cost=Decimal("500.00"), lot_retail_price=Decimal("650.00"), lot_wholesale_price=Decimal("580.00"),
                 barcode="SYN-AMI-202502"
             )
             l2 = InventoryLot(
-                product_id=p1.id, lot_number="AMI-NEW-202609", entry_date=date(2026, 9, 19), expiry_date=date(2031, 12, 31),
+                product_id=p1.id, lot_number="LOT-02", entry_date=date(2026, 9, 19), expiry_date=date(2031, 12, 31),
                 purchase_cost=Decimal("590.00"), lot_retail_price=Decimal("720.00"), lot_wholesale_price=Decimal("680.00"),
                 barcode="SYN-AMI-NEW-202609", supplier_name="Agro Chemical Ltd", challan_no="CH-SYN-202609"
             )
             l3 = InventoryLot(
-                product_id=p2.id, lot_number="DEFAULT", entry_date=date(2026, 8, 10), expiry_date=date(2030, 12, 31),
+                product_id=p2.id, lot_number="LOT-01", entry_date=date(2026, 8, 10), expiry_date=date(2030, 12, 31),
                 purchase_cost=Decimal("275.00"), lot_retail_price=Decimal("350.00"), lot_wholesale_price=Decimal("310.00"),
                 barcode="SYN-VIR-202601"
             )
             l4 = InventoryLot(
-                product_id=p3.id, lot_number="DEFAULT", entry_date=date(2026, 8, 15), expiry_date=date(2030, 12, 31),
+                product_id=p3.id, lot_number="LOT-01", entry_date=date(2026, 8, 15), expiry_date=date(2030, 12, 31),
                 purchase_cost=Decimal("380.00"), lot_retail_price=Decimal("480.00"), lot_wholesale_price=Decimal("420.00"),
                 barcode="SYN-REF-202601"
             )
             l5 = InventoryLot(
-                product_id=p4.id, lot_number="DEFAULT", entry_date=date(2026, 8, 20), expiry_date=date(2030, 12, 31),
+                product_id=p4.id, lot_number="LOT-01", entry_date=date(2026, 8, 20), expiry_date=date(2030, 12, 31),
                 purchase_cost=Decimal("250.00"), lot_retail_price=Decimal("320.00"), lot_wholesale_price=Decimal("280.00"),
                 barcode="SYN-ISA-202601"
             )
             l6 = InventoryLot(
-                product_id=p5.id, lot_number="DEFAULT", entry_date=date(2026, 8, 25), expiry_date=date(2030, 12, 31),
+                product_id=p5.id, lot_number="LOT-01", entry_date=date(2026, 8, 25), expiry_date=date(2030, 12, 31),
                 purchase_cost=Decimal("200.00"), lot_retail_price=Decimal("260.00"), lot_wholesale_price=Decimal("230.00"),
                 barcode="SYN-KAR-202601"
             )
             l7 = InventoryLot(
-                product_id=p6.id, lot_number="DEFAULT", entry_date=date(2026, 9, 1), expiry_date=date(2030, 12, 31),
+                product_id=p6.id, lot_number="LOT-01", entry_date=date(2026, 9, 1), expiry_date=date(2030, 12, 31),
                 purchase_cost=Decimal("320.00"), lot_retail_price=Decimal("420.00"), lot_wholesale_price=Decimal("380.00"),
                 barcode="SYN-SCO-250EC"
             )

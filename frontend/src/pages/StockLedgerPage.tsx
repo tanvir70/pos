@@ -3,6 +3,9 @@ import type { StockMovement, Product, StockItem, PagedResponse } from "../types"
 import { getStockMovements, getProducts, getStock } from "../api/endpoints"
 import GotposStatCard from "../components/dashboard/GotposStatCard"
 import Button from "../components/ui/Button"
+import Pagination from "../components/ui/Pagination"
+import DateRangeFilter, { type DateRange, defaultDateRange } from "../components/ui/DateRangeFilter"
+import { formatLotNumber } from "../utils/lotNumber"
 import {
   Table,
   TableHeader,
@@ -144,8 +147,9 @@ export default function StockLedgerPage({
   const [selectedLotId, setSelectedLotId] = useState<number | undefined>(initialLotId)
   const [selectedType, setSelectedType] = useState<string>("ALL")
   const [searchQuery, setSearchQuery] = useState<string>("")
+  const [dateRange, setDateRange] = useState<DateRange>(defaultDateRange)
   const [page, setPage] = useState<number>(0)
-  const pageSize = 20
+  const [pageSize, setPageSize] = useState<number>(20)
 
   // ─── Remote Data State ──────────────────────────────────────────
   const [products, setProducts] = useState<Product[]>([])
@@ -178,14 +182,21 @@ export default function StockLedgerPage({
   const loadMovements = useCallback(async () => {
     try {
       setIsLoading(true)
-      const data = await getStockMovements(selectedProductId, selectedLotId, page, pageSize)
+      const data = await getStockMovements(
+        selectedProductId,
+        selectedLotId,
+        page,
+        pageSize,
+        dateRange.startDate,
+        dateRange.endDate
+      )
       setPagedMovements(data)
     } catch (err) {
       console.error("Failed to fetch stock movements:", err)
     } finally {
       setIsLoading(false)
     }
-  }, [selectedProductId, selectedLotId, page, pageSize])
+  }, [selectedProductId, selectedLotId, page, pageSize, dateRange.startDate, dateRange.endDate])
 
   useEffect(() => {
     loadMovements()
@@ -418,7 +429,7 @@ export default function StockLedgerPage({
               <option value="">All Batches / Lots</option>
               {availableLots.map((l) => (
                 <option key={l.lotId} value={l.lotId}>
-                  {l.lotNumber || "LOT-DEFAULT"} ({l.nameEn} • Exp: {l.expiryDate || "N/A"})
+                  {formatLotNumber(l.lotNumber)} ({l.nameEn} • Exp: {l.expiryDate || "N/A"})
                 </option>
               ))}
             </select>
@@ -449,6 +460,17 @@ export default function StockLedgerPage({
               )}
             </div>
           </div>
+        </div>
+
+        {/* Date Range Filter */}
+        <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <DateRangeFilter
+            value={dateRange}
+            onChange={(newRange) => {
+              setDateRange(newRange)
+              setPage(0)
+            }}
+          />
         </div>
 
         {/* Movement Type Filter Chips */}
@@ -483,7 +505,7 @@ export default function StockLedgerPage({
             )
           })}
 
-          {(selectedProductId || selectedLotId || selectedType !== "ALL" || searchQuery) && (
+          {(selectedProductId || selectedLotId || selectedType !== "ALL" || searchQuery || dateRange.preset !== "ALL") && (
             <button
               type="button"
               onClick={() => {
@@ -491,6 +513,7 @@ export default function StockLedgerPage({
                 setSelectedLotId(undefined)
                 setSelectedType("ALL")
                 setSearchQuery("")
+                setDateRange(defaultDateRange)
                 setPage(0)
               }}
               className="ml-auto text-xs font-semibold text-rose-600 hover:text-rose-800 cursor-pointer flex items-center gap-1 shrink-0 pl-2"
@@ -672,51 +695,18 @@ export default function StockLedgerPage({
         </Table>
 
         {/* ─── Pagination Footer ────────────────────────────────────── */}
-        {pagedMovements && pagedMovements.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-t border-slate-200 text-xs">
-            <div className="text-slate-500">
-              Showing{" "}
-              <span className="font-bold text-slate-900">
-                {page * pageSize + 1}
-              </span>{" "}
-              to{" "}
-              <span className="font-bold text-slate-900">
-                {Math.min((page + 1) * pageSize, pagedMovements.totalElements)}
-              </span>{" "}
-              of{" "}
-              <span className="font-bold text-slate-900">
-                {pagedMovements.totalElements}
-              </span>{" "}
-              audit records
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                disabled={pagedMovements.first || isLoading}
-                leftIcon={<ChevronLeft className="w-4 h-4" />}
-                className="text-xs px-2.5 py-1"
-              >
-                Previous
-              </Button>
-              <span className="text-xs font-bold text-slate-700 font-mono px-2">
-                Page {page + 1} of {pagedMovements.totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(pagedMovements.totalPages - 1, p + 1))}
-                disabled={pagedMovements.last || isLoading}
-                rightIcon={<ChevronRight className="w-4 h-4" />}
-                className="text-xs px-2.5 py-1"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          totalElements={pagedMovements?.totalElements || 0}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize)
+            setPage(0)
+          }}
+          pageSizeOptions={[10, 20, 50, 100]}
+          itemLabel="movements"
+        />
       </div>
     </div>
   )

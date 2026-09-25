@@ -100,10 +100,14 @@ export async function getStockMovements(
   lotId?: number,
   page = 0,
   size = 20,
+  startDate?: string,
+  endDate?: string,
 ): Promise<PagedResponse<StockMovement>> {
   const params = new URLSearchParams()
   if (productId != null) params.set("productId", productId.toString())
   if (lotId != null) params.set("lotId", lotId.toString())
+  if (startDate) params.set("startDate", startDate)
+  if (endDate) params.set("endDate", endDate)
   params.set("page", page.toString())
   params.set("size", size.toString())
   return apiClient<PagedResponse<StockMovement>>(`/inventory/movements?${params.toString()}`)

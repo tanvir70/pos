@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react"
 import type { Product, InventoryLot, StockAdjustmentRequest, StockAdjustmentResponse } from "../types"
 import { recordStockAdjustment } from "../api/endpoints"
+import { formatLotNumber } from "../utils/lotNumber"
 import {
   X,
   AlertTriangle,
@@ -235,7 +236,7 @@ export default function StockAdjustmentModal({
               >
                 {productLots.map((l) => (
                   <option key={l.id} value={l.id}>
-                    {l.lotNumber || "DEFAULT"} (Exp: {l.expiryDate} • Cost: {formatTk(l.purchaseCost)})
+                    {formatLotNumber(l.lotNumber)} (Exp: {l.expiryDate} • Cost: {formatTk(l.purchaseCost)})
                   </option>
                 ))}
               </select>

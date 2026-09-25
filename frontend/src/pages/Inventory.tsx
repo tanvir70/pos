@@ -36,6 +36,7 @@ import {
   TableCell,
   TableEmptyState,
   TableLoadingState,
+  Pagination,
 } from "../components/ui/Table"
 import {
   Package,
@@ -86,6 +87,13 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   // ─── Filters & Search ───────────────────────────────────────────
   const [search, setSearch] = useState<string>("")
   const [activeFilter, setActiveFilter] = useState<string>("ALL")
+  const [stockPage, setStockPage] = useState<number>(0)
+  const [stockPageSize, setStockPageSize] = useState<number>(15)
+
+  // Reset page when filters change
+  useEffect(() => {
+    setStockPage(0)
+  }, [search, activeFilter])
 
   const handleFilterClick = useCallback((filter: string) => {
     setActiveFilter((prev) => (prev === filter ? "ALL" : filter))
@@ -325,6 +333,12 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
       return item.category === activeFilter
     })
   }, [groupedProducts, activeFilter, search])
+
+  // Paginated slice for current page
+  const paginatedProducts = useMemo(() => {
+    const start = stockPage * stockPageSize
+    return filteredProducts.slice(start, start + stockPageSize)
+  }, [filteredProducts, stockPage, stockPageSize])
 
   // Summary Metrics
   const totalStockUnits = useMemo(
@@ -1090,7 +1104,7 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
                     }
                   />
                 ) : (
-                  filteredProducts.map((item) => {
+                  paginatedProducts.map((item) => {
                     const isLowStock = item.totalStock <= item.minStockAlert
                     const isExpanded = expandedProductIds.has(item.productId)
                     const activeLots = item.lots.filter(
@@ -1522,6 +1536,18 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
                 )}
               </TableBody>
             </Table>
+            <Pagination
+              page={stockPage}
+              pageSize={stockPageSize}
+              totalElements={filteredProducts.length}
+              onPageChange={setStockPage}
+              onPageSizeChange={(newSize) => {
+                setStockPageSize(newSize)
+                setStockPage(0)
+              }}
+              pageSizeOptions={[10, 15, 25, 50]}
+              itemLabel="products"
+            />
           </div>
         </>
       )}

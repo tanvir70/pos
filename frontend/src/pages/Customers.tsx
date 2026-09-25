@@ -35,6 +35,8 @@ import { getCustomers, createCustomer, getCustomerLedger, recordPayment, getCust
 import DueCollectionReceipt, { type DueReceiptData } from "../components/DueCollectionReceipt"
 import ThermalReceipt from "../components/ThermalReceipt"
 import GotposStatCard from "../components/dashboard/GotposStatCard"
+import Pagination from "../components/ui/Pagination"
+import DateRangeFilter, { type DateRange, defaultDateRange } from "../components/ui/DateRangeFilter"
 
 // BUSINESS DECISION: Direct WhatsApp messaging automatically formats Bangladesh mobile numbers to +880
 // international format and generates a pre-composed polite balance reminder message.
@@ -67,6 +69,15 @@ export default function Customers() {
   const [ledgerEntries, setLedgerEntries] = useState<CustomerLedger[]>([])
   const [isLedgerLoading, setIsLedgerLoading] = useState<boolean>(false)
   const [statementViewMode, setStatementViewMode] = useState<"table" | "thermal">("table")
+
+  // Statement date filtering & pagination
+  const [statementDateRange, setStatementDateRange] = useState<DateRange>(defaultDateRange)
+  const [statementPage, setStatementPage] = useState<number>(0)
+  const [statementPageSize, setStatementPageSize] = useState<number>(10)
+
+  // Customer Directory pagination
+  const [customerPage, setCustomerPage] = useState<number>(0)
+  const [customerPageSize, setCustomerPageSize] = useState<number>(15)
 
   // Customer Purchases Drilldown Modal
   const [purchasesCustomer, setPurchasesCustomer] = useState<Customer | null>(null)
@@ -146,6 +157,50 @@ export default function Customers() {
       return nameMatch || bizMatch || phoneMatch || villageMatch
     })
   }, [customers, filterType, search])
+
+  // Reset directory page on filter change
+  useEffect(() => {
+    setCustomerPage(0)
+  }, [search, filterType])
+
+  const paginatedCustomers = useMemo(() => {
+    const start = customerPage * customerPageSize
+    return filteredCustomers.slice(start, start + customerPageSize)
+  }, [filteredCustomers, customerPage, customerPageSize])
+
+  // Reset statement modal pagination & date filter when customer opens
+  useEffect(() => {
+    if (ledgerCustomer) {
+      setStatementPage(0)
+      setStatementDateRange(defaultDateRange)
+    }
+  }, [ledgerCustomer?.id])
+
+  const filteredLedgerEntries = useMemo(() => {
+    if (statementDateRange.preset === "ALL" && !statementDateRange.startDate && !statementDateRange.endDate) {
+      return ledgerEntries
+    }
+    return ledgerEntries.filter((item) => {
+      if (!item.transactionDate) return true
+      const d = new Date(item.transactionDate).toISOString().slice(0, 10)
+      if (statementDateRange.startDate && d < statementDateRange.startDate) return false
+      if (statementDateRange.endDate && d > statementDateRange.endDate) return false
+      return true
+    })
+  }, [ledgerEntries, statementDateRange])
+
+  const periodDebit = useMemo(() => {
+    return filteredLedgerEntries.reduce((sum, item) => sum + (Number(item.debit) || 0), 0)
+  }, [filteredLedgerEntries])
+
+  const periodCredit = useMemo(() => {
+    return filteredLedgerEntries.reduce((sum, item) => sum + (Number(item.credit) || 0), 0)
+  }, [filteredLedgerEntries])
+
+  const paginatedLedgerEntries = useMemo(() => {
+    const start = statementPage * statementPageSize
+    return filteredLedgerEntries.slice(start, start + statementPageSize)
+  }, [filteredLedgerEntries, statementPage, statementPageSize])
 
   const filteredPurchases = useMemo(() => {
     if (!purchasesSearch.trim()) return purchasesList
@@ -565,7 +620,8 @@ export default function Customers() {
             <p className="text-xs mt-1">Try adjusting your search or filters.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-900 font-bold">
                 <tr>
@@ -579,7 +635,7 @@ export default function Customers() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/60">
-                {filteredCustomers.map((c) => {
+                {paginatedCustomers.map((c) => {
                   const due = Number(c.currentDue) || 0
                   const waUrl = formatWhatsAppUrl(c.whatsappNumber || c.phone, c.name, due)
 
@@ -735,7 +791,20 @@ export default function Customers() {
               </tbody>
             </table>
           </div>
-        )}
+          <Pagination
+            page={customerPage}
+            pageSize={customerPageSize}
+            totalElements={filteredCustomers.length}
+            onPageChange={setCustomerPage}
+            onPageSizeChange={(newSize) => {
+              setCustomerPageSize(newSize)
+              setCustomerPage(0)
+            }}
+            pageSizeOptions={[10, 15, 25, 50]}
+            itemLabel="customers"
+          />
+        </>
+      )}
       </div>
 
       {/* ─── Add Customer Modal ─────────────────────────────────────── */}
@@ -1643,84 +1712,120 @@ export default function Customers() {
                   </div>
                 </div>
 
+                {/* Statement Date Range Filter & Period Summary */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <DateRangeFilter
+                    value={statementDateRange}
+                    onChange={(newRange) => {
+                      setStatementDateRange(newRange)
+                      setStatementPage(0)
+                    }}
+                  />
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 font-bold">
+                      Period Billed: {tk(periodDebit)}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                      Period Paid: {tk(periodCredit)}
+                    </span>
+                    <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 font-bold">
+                      Net: {tk(periodDebit - periodCredit)}
+                    </span>
+                  </div>
+                </div>
+
                 {/* Ledger Entries Table */}
                 {isLedgerLoading ? (
                   <div className="py-16 text-center text-slate-500">
                     <Loader2 className="w-6 h-6 animate-spin inline-block mb-1" />
                     <p>Loading ledger audit records...</p>
                   </div>
-                ) : ledgerEntries.length === 0 ? (
+                ) : filteredLedgerEntries.length === 0 ? (
                   <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl">
-                    <p className="text-sm font-semibold">No transaction records found.</p>
-                    <p className="text-xs mt-1">This customer has no previous invoices or payments.</p>
+                    <p className="text-sm font-semibold">No transaction records found in selected range.</p>
+                    <p className="text-xs mt-1">Try resetting the date filter to "All Time".</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-900 font-bold">
-                        <tr>
-                          <th className="px-3 py-2.5">Date</th>
-                          <th className="px-3 py-2.5">Description / Transaction Type</th>
-                          <th className="px-2 py-2.5">MR / Invoice No.</th>
-                          <th className="px-3 py-2.5 text-right text-red-600">Debit (Due ৳)</th>
-                          <th className="px-3 py-2.5 text-right text-emerald-600">Credit (Paid ৳)</th>
-                          <th className="px-3 py-2.5 text-right font-bold">Balance After (৳)</th>
-                          <th className="px-3 py-2.5">Notes</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200/60">
-                        {ledgerEntries.map((item) => {
-                          const isPayment = item.transactionType === "CASH_PAYMENT" || item.transactionType === "MFS_PAYMENT" || item.transactionType === "BANK_TRANSFER"
-                          const isReturn = item.transactionType === "RETURN_CREDIT"
-                          const isInvoice = item.transactionType === "INVOICE_BILL"
+                  <div className="space-y-3">
+                    <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-900 font-bold">
+                          <tr>
+                            <th className="px-3 py-2.5">Date</th>
+                            <th className="px-3 py-2.5">Description / Transaction Type</th>
+                            <th className="px-2 py-2.5">MR / Invoice No.</th>
+                            <th className="px-3 py-2.5 text-right text-red-600">Debit (Due ৳)</th>
+                            <th className="px-3 py-2.5 text-right text-emerald-600">Credit (Paid ৳)</th>
+                            <th className="px-3 py-2.5 text-right font-bold">Balance After (৳)</th>
+                            <th className="px-3 py-2.5">Notes</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200/60">
+                          {paginatedLedgerEntries.map((item) => {
+                            const isPayment = item.transactionType === "CASH_PAYMENT" || item.transactionType === "MFS_PAYMENT" || item.transactionType === "BANK_TRANSFER"
+                            const isReturn = item.transactionType === "RETURN_CREDIT"
+                            const isInvoice = item.transactionType === "INVOICE_BILL"
 
-                          return (
-                            <tr key={item.id} className="hover:bg-slate-50/30">
-                              <td className="px-3 py-2 whitespace-nowrap text-slate-500 tabular-nums">
-                                {item.transactionDate
-                                  ? new Date(item.transactionDate).toLocaleDateString("en-GB")
-                                  : "—"}
-                              </td>
-                              <td className="px-3 py-2 font-semibold">
-                                {isPayment && (
-                                  <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                                    <Banknote className="w-3 h-3" /> Due Payment Received
-                                  </span>
-                                )}
-                                {isReturn && (
-                                  <span className="inline-flex items-center gap-1 text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                                    <RefreshCw className="w-3 h-3" /> Return Adjustment
-                                  </span>
-                                )}
-                                {isInvoice && (
-                                  <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                                    <ShoppingCart className="w-3 h-3" /> Sales Invoice
-                                  </span>
-                                )}
-                                {!isPayment && !isReturn && !isInvoice && (
-                                  <span className="text-slate-900">{item.transactionType}</span>
-                                )}
-                              </td>
-                              <td className="px-2 py-2 font-mono text-[11px] text-slate-900 whitespace-nowrap">
-                                {item.moneyReceiptNo || (item.saleId ? `INV-${item.saleId}` : "—")}
-                              </td>
-                              <td className="px-3 py-2 text-right tabular-nums text-red-600 font-semibold">
-                                {item.debit > 0 ? tk(item.debit) : "—"}
-                              </td>
-                              <td className="px-3 py-2 text-right tabular-nums text-emerald-600 font-semibold">
-                                {item.credit > 0 ? tk(item.credit) : "—"}
-                              </td>
-                              <td className="px-3 py-2 text-right tabular-nums font-bold text-slate-900">
-                                {tk(item.balanceAfter)}
-                              </td>
-                              <td className="px-3 py-2 text-slate-500 text-[11px]">
-                                {item.notes || "—"}
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
+                            return (
+                              <tr key={item.id} className="hover:bg-slate-50/30">
+                                <td className="px-3 py-2 whitespace-nowrap text-slate-500 tabular-nums">
+                                  {item.transactionDate
+                                    ? new Date(item.transactionDate).toLocaleDateString("en-GB")
+                                    : "—"}
+                                </td>
+                                <td className="px-3 py-2 font-semibold">
+                                  {isPayment && (
+                                    <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                      <Banknote className="w-3 h-3" /> Due Payment Received
+                                    </span>
+                                  )}
+                                  {isReturn && (
+                                    <span className="inline-flex items-center gap-1 text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                      <RefreshCw className="w-3 h-3" /> Return Adjustment
+                                    </span>
+                                  )}
+                                  {isInvoice && (
+                                    <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                                      <ShoppingCart className="w-3 h-3" /> Sales Invoice
+                                    </span>
+                                  )}
+                                  {!isPayment && !isReturn && !isInvoice && (
+                                    <span className="text-slate-900">{item.transactionType}</span>
+                                  )}
+                                </td>
+                                <td className="px-2 py-2 font-mono text-[11px] text-slate-900 whitespace-nowrap">
+                                  {item.moneyReceiptNo || (item.saleId ? `INV-${item.saleId}` : "—")}
+                                </td>
+                                <td className="px-3 py-2 text-right tabular-nums text-red-600 font-semibold">
+                                  {item.debit > 0 ? tk(item.debit) : "—"}
+                                </td>
+                                <td className="px-3 py-2 text-right tabular-nums text-emerald-600 font-semibold">
+                                  {item.credit > 0 ? tk(item.credit) : "—"}
+                                </td>
+                                <td className="px-3 py-2 text-right tabular-nums font-bold text-slate-900">
+                                  {tk(item.balanceAfter)}
+                                </td>
+                                <td className="px-3 py-2 text-slate-500 text-[11px]">
+                                  {item.notes || "—"}
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <Pagination
+                      page={statementPage}
+                      pageSize={statementPageSize}
+                      totalElements={filteredLedgerEntries.length}
+                      onPageChange={setStatementPage}
+                      onPageSizeChange={(newSize) => {
+                        setStatementPageSize(newSize)
+                        setStatementPage(0)
+                      }}
+                      pageSizeOptions={[10, 20, 50]}
+                      itemLabel="transactions"
+                    />
                   </div>
                 )}
 
@@ -1793,10 +1898,10 @@ export default function Customers() {
                   <div className="pb-2 mb-2 border-b border-dashed border-gray-500">
                     <div className="text-[10px] font-bold uppercase pb-1 mb-1.5 border-b border-dotted border-gray-400 flex justify-between">
                       <span>Transaction Records</span>
-                      <span>{ledgerEntries.length} Items</span>
+                      <span>{filteredLedgerEntries.length} Items</span>
                     </div>
                     <div className="space-y-2">
-                      {ledgerEntries.map((item) => (
+                      {filteredLedgerEntries.map((item) => (
                         <div key={item.id} className="pb-1.5 border-b border-dotted border-gray-200">
                           <div className="flex justify-between items-center text-[10px]">
                             <span className="font-mono text-gray-600">
@@ -1915,10 +2020,10 @@ export default function Customers() {
             <div className="pb-2 mb-2 border-b border-dashed border-gray-500">
               <div className="text-[10px] font-bold uppercase pb-1 mb-1.5 border-b border-dotted border-gray-400 flex justify-between">
                 <span>Transaction Records</span>
-                <span>{ledgerEntries.length} Items</span>
+                <span>{filteredLedgerEntries.length} Items</span>
               </div>
               <div className="space-y-2">
-                {ledgerEntries.map((item) => (
+                {filteredLedgerEntries.map((item) => (
                   <div key={item.id} className="pb-1.5 border-b border-dotted border-gray-300">
                     <div className="flex justify-between items-center text-[10px]">
                       <span className="font-mono text-gray-600">

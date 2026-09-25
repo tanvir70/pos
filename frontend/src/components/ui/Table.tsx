@@ -224,4 +224,6 @@ export {
   TableCaption,
 }
 
+export { Pagination } from "./Pagination"
+
 export default Table

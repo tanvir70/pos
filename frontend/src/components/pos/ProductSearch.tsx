@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import type { SaleMode, StockItem } from "../../types"
 import { formatTk } from "../../utils/currency"
+import { formatLotNumber } from "../../utils/lotNumber"
 import Input from "../ui/Input"
 import Button from "../ui/Button"
 import Badge from "../ui/Badge"
@@ -19,12 +20,16 @@ import Badge from "../ui/Badge"
 export interface ProductSearchProps {
   stocks: StockItem[]
   isLoading?: boolean
-  onAddToCart: (stock: StockItem) => void
-  saleMode: SaleMode
+  onAddToCart?: (stock: StockItem) => void
+  onSelect?: (stock: StockItem) => void
+  saleMode?: SaleMode
   onRefresh?: () => void
   onEmptyEnter?: () => void
   isFocusMode?: boolean
   onToggleFocusMode?: () => void
+  allowZeroStock?: boolean
+  placeholder?: string
+  className?: string
 }
 
 const MAX_RESULTS = 8
@@ -58,11 +63,15 @@ export default function ProductSearch({
   stocks,
   isLoading = false,
   onAddToCart,
-  saleMode,
+  onSelect,
+  saleMode = "RETAIL",
   onRefresh,
   onEmptyEnter,
   isFocusMode = false,
   onToggleFocusMode,
+  allowZeroStock = false,
+  placeholder = "Search product, code, or scan barcode",
+  className,
 }: ProductSearchProps) {
   const [search, setSearch] = useState("")
   const [isOpen, setIsOpen] = useState(false)
@@ -110,7 +119,7 @@ export default function ProductSearch({
 
     const lotsByProduct = new Map<number, StockItem[]>()
     for (const item of stocks) {
-      if (availableQuantity(item) <= 0) continue
+      if (!allowZeroStock && availableQuantity(item) <= 0) continue
       const lots = lotsByProduct.get(item.productId) ?? []
       lots.push(item)
       lotsByProduct.set(item.productId, lots)
@@ -119,8 +128,8 @@ export default function ProductSearch({
     const matchedLots: ProductSearchResult[] = []
 
     for (const item of stocks) {
-      // Do not show if product/lot stock is empty or zero
-      if (availableQuantity(item) <= 0) continue
+      // Do not show if product/lot stock is empty or zero unless allowZeroStock is enabled
+      if (!allowZeroStock && availableQuantity(item) <= 0) continue
 
       const itemValues = [
         item.productCode,
@@ -141,10 +150,10 @@ export default function ProductSearch({
         item.lotNumber?.toLowerCase() === query
 
       const productLots = (lotsByProduct.get(item.productId) ?? [item]).filter(
-        (lot) => availableQuantity(lot) > 0
+        (lot) => allowZeroStock || availableQuantity(lot) > 0
       )
       const totalQuantity = productLots.reduce((sum, lot) => sum + availableQuantity(lot), 0)
-      if (totalQuantity <= 0) continue
+      if (!allowZeroStock && totalQuantity <= 0) continue
 
       matchedLots.push({
         item,
@@ -167,14 +176,18 @@ export default function ProductSearch({
         return lotSortValue(a.item) - lotSortValue(b.item)
       })
       .slice(0, MAX_RESULTS)
-  }, [search, stocks])
+  }, [search, stocks, allowZeroStock])
 
   useEffect(() => {
     setActiveIndex(0)
   }, [search])
 
   const selectProduct = (item: StockItem) => {
-    onAddToCart(item)
+    if (onSelect) {
+      onSelect(item)
+    } else if (onAddToCart) {
+      onAddToCart(item)
+    }
     setSearch("")
     setIsOpen(false)
     searchInputRef.current?.focus()
@@ -215,7 +228,7 @@ export default function ProductSearch({
   return (
     <div
       ref={searchRootRef}
-      className="relative z-30 border-b border-slate-200 bg-white px-4 py-3"
+      className={`relative z-30 border-b border-slate-200 bg-white px-4 py-3 ${className || ""}`}
     >
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
@@ -232,7 +245,7 @@ export default function ProductSearch({
               setSearch("")
               setIsOpen(false)
             }}
-            placeholder="Search product, code, or scan barcode"
+            placeholder={placeholder}
             leftAdornment={<Search className="h-4 w-4" />}
             inputSize="lg"
             autoComplete="off"
@@ -248,9 +261,13 @@ export default function ProductSearch({
                 </div>
               ) : results.length === 0 ? (
                 <div className="px-5 py-8 text-center">
-                  <p className="text-sm font-bold text-slate-900">No matching in-stock product</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {allowZeroStock ? "No matching product found" : "No matching in-stock product"}
+                  </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Check the name, code, or barcode. Products with 0 stock are hidden.
+                    {allowZeroStock
+                      ? "Check the name, code, lot, or scan a barcode."
+                      : "Check the name, code, or barcode. Products with 0 stock are hidden."}
                   </p>
                 </div>
               ) : (
@@ -261,7 +278,7 @@ export default function ProductSearch({
                     const retailPrice =
                       item.lotRetailPrice ?? item.standardRetailPrice ?? 0
                     const isActive = index === activeIndex
-                    const isOutOfStock = selectedLotQuantity <= 0
+                    const isOutOfStock = !allowZeroStock && selectedLotQuantity <= 0
 
                     return (
                       <button
@@ -302,7 +319,7 @@ export default function ProductSearch({
                             </span>
                             {hasBusinessLot(item) && (
                               <span className="font-semibold text-slate-700">
-                                Selling lot {item.lotNumber}
+                                Selling lot #{formatLotNumber(item.lotNumber)}
                               </span>
                             )}
                             {result.productLotCount > 1 && (

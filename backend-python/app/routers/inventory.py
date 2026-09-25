@@ -75,11 +75,15 @@ async def get_stock_adjustments(
 async def get_stock_movements(
     product_id: int | None = Query(default=None, alias="productId"),
     lot_id: int | None = Query(default=None, alias="lotId"),
+    start_date: str | None = Query(default=None, alias="startDate"),
+    end_date: str | None = Query(default=None, alias="endDate"),
     page: int = Query(default=0, ge=0),
     size: int = Query(default=20, ge=1),
     db: AsyncSession = Depends(get_db),
 ) -> PagedResponse[StockMovementDto]:
-    return await inventory_service.get_stock_movements(db, product_id, lot_id, page, size)
+    return await inventory_service.get_stock_movements(
+        db, product_id, lot_id, page, size, start_date, end_date
+    )
 
 @router.get("/valuation", response_model=StockValuationSummaryDto)
 async def get_stock_valuation(

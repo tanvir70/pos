@@ -14,6 +14,11 @@ import {
   Search,
   FileText,
   RotateCcw,
+  Package,
+  ShieldAlert,
+  ArrowRight,
+  Phone,
+  Eye,
 } from "lucide-react"
 import type {
   StockItem,
@@ -30,6 +35,10 @@ import {
   getRecentReturns,
   getSaleByInvoice,
 } from "../api/endpoints"
+import ProductSearch from "../components/pos/ProductSearch"
+import Pagination from "../components/ui/Pagination"
+import DateRangeFilter, { type DateRange, defaultDateRange } from "../components/ui/DateRangeFilter"
+import { formatLotNumber } from "../utils/lotNumber"
 
 // BUSINESS DECISION: Direct chemical returns support receipt-less processing without an original invoice number
 // because rural farmers frequently misplace paper receipts over 15-30 day spraying seasons.
@@ -71,9 +80,13 @@ export default function Returns() {
   // Voucher / Confirmation Modal
   const [completedReturn, setCompletedReturn] = useState<SaleReturnResponse | null>(null)
   const [viewingReturn, setViewingReturn] = useState<SaleReturnResponse | null>(null)
+  const [detailModalReturn, setDetailModalReturn] = useState<SaleReturnResponse | null>(null)
 
-  // Returns List Search
+  // Returns List Search & Date Filter & Pagination
   const [returnsSearch, setReturnsSearch] = useState<string>("")
+  const [returnsDateRange, setReturnsDateRange] = useState<DateRange>(defaultDateRange)
+  const [returnsPage, setReturnsPage] = useState<number>(0)
+  const [returnsPageSize, setReturnsPageSize] = useState<number>(6)
 
   // ─── Data Loading ───────────────────────────────────────────────
   const loadData = useCallback(async () => {
@@ -112,6 +125,14 @@ export default function Returns() {
     if (!selectedLotId) return null
     return stocks.find((s) => s.lotId === selectedLotId) || null
   }, [stocks, selectedLotId])
+
+  // POS-grade product search selection handler
+  const handleSelectStock = (item: StockItem) => {
+    setSelectedLotId(item.lotId)
+    if (item.lotRetailPrice) {
+      setRefundPrice(item.lotRetailPrice.toString())
+    }
+  }
 
   // When selectedStockItem changes, auto-fill refundPrice if empty
   const handleSelectLot = (lotId: number) => {
@@ -252,17 +273,32 @@ export default function Returns() {
     }
   }
 
-  // ─── Filtered Recent Returns ────────────────────────────────────
+  // ─── Filtered & Paginated Recent Returns ─────────────────────────
+  useEffect(() => {
+    setReturnsPage(0)
+  }, [returnsSearch, returnsDateRange])
+
   const filteredRecentReturns = useMemo(() => {
     const q = returnsSearch.trim().toLowerCase()
-    if (!q) return recentReturns
     return recentReturns.filter((r) => {
+      // Date filter
+      if (returnsDateRange.startDate || returnsDateRange.endDate) {
+        const d = new Date(r.returnDate).toISOString().slice(0, 10)
+        if (returnsDateRange.startDate && d < returnsDateRange.startDate) return false
+        if (returnsDateRange.endDate && d > returnsDateRange.endDate) return false
+      }
+      if (!q) return true
       const matchNo = r.returnNo?.toLowerCase().includes(q)
       const matchCust = r.customerName?.toLowerCase().includes(q)
       const matchReason = r.reason?.toLowerCase().includes(q)
       return matchNo || matchCust || matchReason
     })
-  }, [recentReturns, returnsSearch])
+  }, [recentReturns, returnsSearch, returnsDateRange])
+
+  const paginatedRecentReturns = useMemo(() => {
+    const start = returnsPage * returnsPageSize
+    return filteredRecentReturns.slice(start, start + returnsPageSize)
+  }, [filteredRecentReturns, returnsPage, returnsPageSize])
 
   return (
     <div className="space-y-6">
@@ -431,76 +467,61 @@ export default function Returns() {
               )}
             </div>
 
-            {/* 3. Product & Lot Selection */}
+            {/* 3. Product & Lot Selection using POS-grade ProductSearch */}
             <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-900">
-                Select Product & Lot to Return *
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-slate-900">
+                  Select Product & Lot to Return *
+                </label>
+                <span className="text-[11px] text-slate-500 font-mono hidden sm:inline-block">
+                  Barcode ready · Press <kbd className="px-1 py-0.5 rounded bg-slate-100 border border-slate-300 font-bold">F2</kbd>
+                </span>
+              </div>
 
-              {/* Quick search input */}
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  placeholder="Filter product by name, code, or lot number..."
-                  className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/40 focus:bg-white focus:border-emerald-600 focus:outline-hidden"
+              <div className="rounded-xl border border-slate-200 overflow-hidden bg-white shadow-2xs">
+                <ProductSearch
+                  stocks={stocks}
+                  onSelect={handleSelectStock}
+                  allowZeroStock={true}
+                  placeholder="Scan barcode (F2) or search product name / code / lot..."
+                  className="border-none px-3 py-2 bg-slate-50/40"
                 />
               </div>
 
-              <div className="border border-slate-200/90 rounded-xl max-h-48 overflow-y-auto divide-y divide-slate-100 bg-white">
-                {filteredStockOptions.map((item) => {
-                  const isSelected = selectedLotId === item.lotId
-                  return (
-                    <button
-                      key={item.lotId}
-                      type="button"
-                      onClick={() => handleSelectLot(item.lotId)}
-                      className={`w-full text-left p-2.5 transition-all flex items-center justify-between cursor-pointer ${
-                        isSelected
-                          ? "bg-emerald-50/80 border-l-4 border-emerald-600"
-                          : "hover:bg-slate-50"
-                      }`}
-                    >
-                      <div className="min-w-0 pr-2">
-                        <div className="font-bold text-slate-900 text-xs truncate">
-                          {item.nameBn || item.productNameBn} ({item.nameEn || item.productNameEn})
-                        </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5 flex flex-wrap items-center gap-2">
-                          <span className="font-mono font-semibold text-slate-700">
-                            #{item.lotNumber}
-                          </span>
-                          <span>·</span>
-                          <span>Exp: {item.expiryDate}</span>
-                          <span>·</span>
-                          <span>Unit: {item.baseUnit}</span>
-                        </div>
+              {selectedStockItem ? (
+                <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <div>
+                      <div className="font-bold text-slate-900 text-sm">
+                        {selectedStockItem.nameBn || selectedStockItem.productNameBn} ({selectedStockItem.nameEn || selectedStockItem.productNameEn})
                       </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-xs font-bold text-slate-900 font-mono tabular-nums">
-                          {tk(item.lotRetailPrice)}
-                        </div>
-                        <div className="text-[10px] text-slate-500 font-mono">
-                          Stock: {item.totalQuantity}
-                        </div>
+                      <div className="text-[11px] text-slate-600 mt-0.5 flex flex-wrap items-center gap-2">
+                        <span className="font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                          Lot #{formatLotNumber(selectedStockItem.lotNumber)}
+                        </span>
+                        <span>·</span>
+                        <span>Barcode: {selectedStockItem.lotBarcode || selectedStockItem.barcode || "N/A"}</span>
+                        <span>·</span>
+                        <span>Exp: {selectedStockItem.expiryDate || "N/A"}</span>
+                        <span>·</span>
+                        <span>Unit: {selectedStockItem.baseUnit}</span>
                       </div>
-                    </button>
-                  )
-                })}
-              </div>
-
-              {selectedStockItem && (
-                <div className="p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex justify-between items-center">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>
-                      <strong>Selected:</strong> {selectedStockItem.nameBn} (Lot #{selectedStockItem.lotNumber})
-                    </span>
+                    </div>
                   </div>
-                  <span className="font-mono font-bold text-[11px] text-emerald-800">
-                    Stock: {selectedStockItem.quantity} {selectedStockItem.baseUnit}
-                  </span>
+                  <div className="text-right shrink-0">
+                    <div className="text-xs font-bold text-slate-900 font-mono tabular-nums">
+                      Rate: {tk(selectedStockItem.lotRetailPrice)}
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-mono">
+                      Current Stock: {selectedStockItem.quantity ?? (selectedStockItem as any).totalQuantity ?? 0} {selectedStockItem.baseUnit}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-2.5 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-xs text-slate-500 flex items-center gap-2">
+                  <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span>Use search box above to select return item (out-of-stock items permitted for return).</span>
                 </div>
               )}
             </div>
@@ -648,107 +669,147 @@ export default function Returns() {
         </div>
 
         {/* Recent Returns History (5 cols) */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <ScrollText className="w-5 h-5 text-emerald-700" />
-              <h2 className="font-bold text-slate-900 text-base">
-                Recent Returns
-              </h2>
+        <div className="lg:col-span-5 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <ScrollText className="w-5 h-5 text-emerald-700" />
+                <h2 className="font-bold text-slate-900 text-base">
+                  Recent Returns
+                </h2>
+              </div>
+              <span className="text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full tabular-nums">
+                {filteredRecentReturns.length} records
+              </span>
             </div>
-            <span className="text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full tabular-nums">
-              {recentReturns.length} records
-            </span>
+
+            {/* Search Box & Date Filter */}
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={returnsSearch}
+                  onChange={(e) => setReturnsSearch(e.target.value)}
+                  placeholder="Search voucher #, customer, or reason..."
+                  className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/40 focus:bg-white focus:border-emerald-600 focus:outline-hidden"
+                />
+              </div>
+              <DateRangeFilter
+                value={returnsDateRange}
+                onChange={(r) => {
+                  setReturnsDateRange(r)
+                  setReturnsPage(0)
+                }}
+                compact={true}
+              />
+            </div>
+
+            {isLoading ? (
+              <div className="py-12 text-center text-slate-500">
+                <Loader2 className="w-6 h-6 animate-spin inline-block mb-1 text-emerald-700" />
+                <p className="text-xs">Loading returns...</p>
+              </div>
+            ) : filteredRecentReturns.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl">
+                <p className="text-xs font-semibold">No returns found.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Try adjusting date range or search query.</p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {paginatedRecentReturns.map((ret) => (
+                  <div
+                    key={ret.id}
+                    onClick={() => setDetailModalReturn(ret)}
+                    className="p-3 bg-white hover:bg-slate-50/80 border border-slate-200/80 hover:border-emerald-300 rounded-xl transition-all cursor-pointer shadow-2xs group relative"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-xs font-bold text-slate-900 flex items-center gap-1 group-hover:text-emerald-700 transition-colors">
+                            <FileText className="w-3.5 h-3.5 text-slate-400" />
+                            {ret.returnNo}
+                          </span>
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                              ret.refundType === "DUE_ADJUSTMENT"
+                                ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            }`}
+                          >
+                            {ret.refundType === "DUE_ADJUSTMENT" ? "Due Adjusted" : "Cash Refund"}
+                          </span>
+                        </div>
+                        <p className="text-xs font-semibold text-slate-800 mt-1 flex items-center gap-1 truncate">
+                          {ret.customerName ? (
+                            <>
+                              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate">{ret.customerName}</span>
+                            </>
+                          ) : (
+                            <span className="text-slate-500 italic">Walk-in Cash Return</span>
+                          )}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {new Date(ret.returnDate).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-bold font-mono tabular-nums text-slate-900 group-hover:text-emerald-800 transition-colors">
+                          {tk(ret.totalRefundAmount)}
+                        </div>
+                        <div className="mt-2 flex items-center justify-end gap-1.5">
+                          <span className="text-[10px] font-semibold text-slate-400 group-hover:text-emerald-600 flex items-center gap-0.5">
+                            <Eye className="w-3 h-3" />
+                            <span>Details</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setViewingReturn(ret)
+                            }}
+                            title="Print 80mm Voucher"
+                            className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-200/60 transition-colors"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {ret.reason && (
+                      <p className="text-[11px] text-slate-500 italic mt-2 bg-slate-50 group-hover:bg-white p-1.5 rounded-lg border border-slate-100 truncate">
+                        Note: {ret.reason}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={returnsSearch}
-              onChange={(e) => setReturnsSearch(e.target.value)}
-              placeholder="Search voucher # or customer name..."
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50/40 focus:bg-white focus:border-emerald-600 focus:outline-hidden"
+          {/* Pagination */}
+          <div className="pt-3 border-t border-slate-100">
+            <Pagination
+              page={returnsPage}
+              pageSize={returnsPageSize}
+              totalElements={filteredRecentReturns.length}
+              onPageChange={setReturnsPage}
+              onPageSizeChange={(newSize) => {
+                setReturnsPageSize(newSize)
+                setReturnsPage(0)
+              }}
+              pageSizeOptions={[4, 6, 10, 20]}
+              itemLabel="returns"
             />
           </div>
-
-          {isLoading ? (
-            <div className="py-12 text-center text-slate-500">
-              <Loader2 className="w-6 h-6 animate-spin inline-block mb-1 text-emerald-700" />
-              <p className="text-xs">Loading returns...</p>
-            </div>
-          ) : filteredRecentReturns.length === 0 ? (
-            <div className="py-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl">
-              <p className="text-xs font-semibold">No returns found.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100 max-h-[520px] overflow-y-auto pr-1">
-              {filteredRecentReturns.map((ret) => (
-                <div key={ret.id} className="py-3 px-1 hover:bg-slate-50/60 rounded-lg transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="font-mono text-xs font-bold text-slate-900 flex items-center gap-1">
-                        <FileText className="w-3.5 h-3.5 text-slate-400" />
-                        {ret.returnNo}
-                      </span>
-                      <p className="text-xs font-semibold text-slate-800 mt-0.5 flex items-center gap-1">
-                        {ret.customerName ? (
-                          <>
-                            <User className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{ret.customerName}</span>
-                          </>
-                        ) : (
-                          "Walk-in Cash Return"
-                        )}
-                      </p>
-                      <p className="text-[11px] text-slate-400 mt-0.5">
-                        {new Date(ret.returnDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold font-mono tabular-nums text-slate-900">
-                        {tk(ret.totalRefundAmount)}
-                      </div>
-                      <span
-                        className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                          ret.refundType === "DUE_ADJUSTMENT"
-                            ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                            : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        }`}
-                      >
-                        {ret.refundType === "DUE_ADJUSTMENT" ? "Due Adjusted" : "Cash Refund"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {ret.reason && (
-                    <p className="text-[11px] text-slate-500 italic mt-1 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
-                      Reason: {ret.reason}
-                    </p>
-                  )}
-
-                  {/* View Voucher Action */}
-                  <div className="mt-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => setViewingReturn(ret)}
-                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-emerald-50 transition-colors"
-                    >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>Print Voucher</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
@@ -891,6 +952,215 @@ export default function Returns() {
               </div>
             )
           })()}
+        </div>
+      )}
+
+      {/* ─── Detailed Return Information Modal ───────────────────────── */}
+      {detailModalReturn && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-200">
+                  <RotateCcw className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-slate-900 text-base">
+                      Sales Return Voucher #{detailModalReturn.returnNo}
+                    </h3>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        detailModalReturn.refundType === "DUE_ADJUSTMENT"
+                          ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                          : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      }`}
+                    >
+                      {detailModalReturn.refundType === "DUE_ADJUSTMENT"
+                        ? "Due Adjustment (বাকি সমন্বয়)"
+                        : "Cash Refund (ক্যাশ ফেরত)"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Processed on {new Date(detailModalReturn.returnDate).toLocaleString("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailModalReturn(null)}
+                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quick Meta Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Customer
+                </span>
+                <p className="text-sm font-bold text-slate-900 mt-0.5 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{detailModalReturn.customerName || "Walk-in Cash Customer"}</span>
+                </p>
+                {detailModalReturn.customerPhone && (
+                  <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                    <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span>{detailModalReturn.customerPhone}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Original Invoice
+                </span>
+                <p className="text-sm font-bold text-slate-900 mt-0.5 flex items-center gap-1.5">
+                  <Receipt className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>
+                    {detailModalReturn.originalSaleId
+                      ? `Sale #${detailModalReturn.originalSaleId}`
+                      : "Direct Return (No memo)"}
+                  </span>
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {detailModalReturn.originalSaleId ? "Receipt matched" : "Counter receipt-less return"}
+                </p>
+              </div>
+
+              <div className="p-3 bg-emerald-50/60 border border-emerald-200/80 rounded-xl">
+                <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider block">
+                  Total Refund
+                </span>
+                <p className="text-lg font-black font-mono text-emerald-900 mt-0.5">
+                  {tk(detailModalReturn.totalRefundAmount)}
+                </p>
+                <span className="text-[10px] font-semibold text-emerald-700">
+                  {detailModalReturn.refundType === "DUE_ADJUSTMENT"
+                    ? "Deducted from customer due"
+                    : "Cash paid out at counter"}
+                </span>
+              </div>
+            </div>
+
+            {/* Return Reason if present */}
+            {detailModalReturn.reason && (
+              <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-amber-900">
+                <span className="font-bold">Return Reason / Notes: </span>
+                <span>{detailModalReturn.reason}</span>
+              </div>
+            )}
+
+            {/* Itemized Table */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Returned Products ({detailModalReturn.items?.length || 0})
+              </h4>
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                    <tr>
+                      <th className="py-2.5 px-3">Product & Lot</th>
+                      <th className="py-2.5 px-3 text-center">Status / Inventory</th>
+                      <th className="py-2.5 px-3 text-center">Qty</th>
+                      <th className="py-2.5 px-3 text-right">Refund Rate</th>
+                      <th className="py-2.5 px-3 text-right">Line Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {detailModalReturn.items && detailModalReturn.items.length > 0 ? (
+                      detailModalReturn.items.map((it, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50/50">
+                          <td className="py-2.5 px-3">
+                            <p className="font-bold text-slate-900">
+                              {it.productNameBn || it.productNameEn || `Lot #${it.lotId}`}
+                            </p>
+                            {it.productNameEn && it.productNameBn && (
+                              <p className="text-[11px] text-slate-500">{it.productNameEn}</p>
+                            )}
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-100 border border-slate-200 text-slate-700">
+                                {formatLotNumber(it.lotNumber)}
+                              </span>
+                              {it.barcode && (
+                                <span className="text-[10px] font-mono text-slate-400">
+                                  {it.barcode}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            {it.isDamaged ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                <ShieldAlert className="w-3 h-3" />
+                                Damaged / Quarantined
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <Package className="w-3 h-3" />
+                                Restocked to Dokan
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-center font-bold font-mono tabular-nums text-slate-800">
+                            {it.quantity}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-700">
+                            {tk(it.refundPrice)}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-bold font-mono tabular-nums text-slate-900">
+                            {tk(it.subtotal || it.quantity * it.refundPrice)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="py-4 text-center text-slate-400 italic">
+                          No items listed for this return
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                  <tfoot className="bg-slate-50 border-t border-slate-200 font-bold">
+                    <tr>
+                      <td colSpan={4} className="py-2.5 px-3 text-right text-slate-700">
+                        Total Refund Amount:
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-sm text-emerald-800 tabular-nums">
+                        {tk(detailModalReturn.totalRefundAmount)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-slate-200 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setViewingReturn(detailModalReturn)
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-black transition-all cursor-pointer shadow-xs flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print 80mm Thermal Slip</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDetailModalReturn(null)}
+                className="px-5 py-2 rounded-xl text-xs font-semibold border border-slate-200 hover:bg-slate-100 transition-all cursor-pointer text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

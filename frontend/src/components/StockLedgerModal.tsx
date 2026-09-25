@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react"
 import type { StockMovement, PagedResponse } from "../types"
 import { getStockMovements } from "../api/endpoints"
+import Pagination from "./ui/Pagination"
+import DateRangeFilter, { type DateRange, defaultDateRange } from "./ui/DateRangeFilter"
+import { formatLotNumber } from "../utils/lotNumber"
 import {
   X,
   History,
@@ -134,7 +137,8 @@ export default function StockLedgerModal({
   onClose,
 }: StockLedgerModalProps) {
   const [page, setPage] = useState<number>(0)
-  const pageSize = 15
+  const [pageSize, setPageSize] = useState<number>(15)
+  const [dateRange, setDateRange] = useState<DateRange>(defaultDateRange)
   const [pagedData, setPagedData] = useState<PagedResponse<StockMovement> | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [selectedType, setSelectedType] = useState<string>("ALL")
@@ -142,14 +146,21 @@ export default function StockLedgerModal({
   const loadMovements = useCallback(async () => {
     try {
       setIsLoading(true)
-      const data = await getStockMovements(productId, lotId, page, pageSize)
+      const data = await getStockMovements(
+        productId,
+        lotId,
+        page,
+        pageSize,
+        dateRange.startDate,
+        dateRange.endDate
+      )
       setPagedData(data)
     } catch (err) {
       console.error("Failed to fetch stock movements:", err)
     } finally {
       setIsLoading(false)
     }
-  }, [productId, lotId, page])
+  }, [productId, lotId, page, pageSize, dateRange.startDate, dateRange.endDate])
 
   useEffect(() => {
     if (isOpen) {
@@ -222,8 +233,8 @@ export default function StockLedgerModal({
         </div>
 
         {/* Filter Toolbar */}
-        <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-3 text-xs overflow-x-auto">
-          <div className="flex items-center gap-1.5 shrink-0">
+        <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-1.5 overflow-x-auto shrink-0">
             <span className="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">Filter:</span>
             {["ALL", "SALE", "LOT_ENTRY", "BREAKAGE_LEAKAGE", "RETURN_RESTOCKED"].map((type) => (
               <button
@@ -241,11 +252,20 @@ export default function StockLedgerModal({
             ))}
           </div>
 
-          {pagedData && (
-            <span className="text-[11px] text-slate-400 shrink-0">
-              Total <span className="font-semibold text-slate-700">{pagedData.totalElements}</span> entries
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            <DateRangeFilter
+              value={dateRange}
+              onChange={(newRange) => {
+                setDateRange(newRange)
+                setPage(0)
+              }}
+            />
+            {pagedData && (
+              <span className="text-[11px] text-slate-400 shrink-0">
+                Total <span className="font-semibold text-slate-700">{pagedData.totalElements}</span> entries
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Table Content */}
@@ -304,7 +324,7 @@ export default function StockLedgerModal({
                         </td>
                         <td className="py-3 px-2">
                           <span className="font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
-                            {m.lotNumber || "DEFAULT"}
+                            {formatLotNumber(m.lotNumber)}
                           </span>
                         </td>
                         <td className="py-3 px-2 font-mono text-slate-600 text-[11px]">
@@ -344,35 +364,18 @@ export default function StockLedgerModal({
         </div>
 
         {/* Footer Pagination */}
-        {pagedData && pagedData.totalPages > 1 && (
-          <div className="p-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>
-              Page <span className="font-semibold text-slate-900">{page + 1}</span> of{" "}
-              <span className="font-semibold text-slate-900">{pagedData.totalPages}</span>
-            </span>
-
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={page === 0 || isLoading}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer font-semibold text-xs shadow-xs"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span>Prev</span>
-              </button>
-              <button
-                type="button"
-                disabled={page >= pagedData.totalPages - 1 || isLoading}
-                onClick={() => setPage((p) => p + 1)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer font-semibold text-xs shadow-xs"
-              >
-                <span>Next</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          totalElements={pagedData?.totalElements || 0}
+          onPageChange={setPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize)
+            setPage(0)
+          }}
+          pageSizeOptions={[10, 15, 25, 50]}
+          itemLabel="movements"
+        />
       </div>
     </div>
   )

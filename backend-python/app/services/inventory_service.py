@@ -46,10 +46,32 @@ async def record_lot_entry(db: AsyncSession, request: LotEntryRequest) -> Invent
             detail=f"Barcode '{request.barcode}' is already in use by lot {existing_lot.lot_number}",
         )
 
+    # 2b. Standardize sequential LOT-01 naming if lot_number is blank or DEFAULT
+    import re
+    lot_num = (request.lot_number or "").strip()
+    if not lot_num or lot_num.upper() in ("DEFAULT", "INITIAL", ""):
+        existing_lots_res = await db.execute(
+            select(InventoryLot.lot_number).where(InventoryLot.product_id == request.product_id)
+        )
+        existing_lots = existing_lots_res.scalars().all()
+        max_n = 0
+        for ln in existing_lots:
+            if not ln:
+                continue
+            m = re.match(r"^LOT-(\d+)$", ln.strip(), re.IGNORECASE)
+            if m:
+                try:
+                    n = int(m.group(1))
+                    if n > max_n:
+                        max_n = n
+                except ValueError:
+                    pass
+        lot_num = f"LOT-{str(max_n + 1).zfill(2)}"
+
     # 3. Create lot
     lot = InventoryLot(
         product_id=request.product_id,
-        lot_number=request.lot_number.strip(),
+        lot_number=lot_num,
         entry_date=request.entry_date,
         expiry_date=request.expiry_date,
         purchase_cost=request.purchase_cost,
@@ -437,6 +459,8 @@ async def get_stock_movements(
     lot_id: int | None = None,
     page: int = 0,
     size: int = 20,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> PagedResponse[StockMovementDto]:
     stmt = (
         select(StockMovement)
@@ -450,6 +474,22 @@ async def get_stock_movements(
     if lot_id:
         stmt = stmt.where(StockMovement.lot_id == lot_id)
         count_stmt = count_stmt.where(StockMovement.lot_id == lot_id)
+    if start_date:
+        try:
+            sd = datetime.fromisoformat(start_date)
+            stmt = stmt.where(StockMovement.movement_time >= sd)
+            count_stmt = count_stmt.where(StockMovement.movement_time >= sd)
+        except Exception:
+            pass
+    if end_date:
+        try:
+            ed = datetime.fromisoformat(end_date)
+            if len(end_date) <= 10:
+                ed = ed.replace(hour=23, minute=59, second=59)
+            stmt = stmt.where(StockMovement.movement_time <= ed)
+            count_stmt = count_stmt.where(StockMovement.movement_time <= ed)
+        except Exception:
+            pass
 
     total_elements = (await db.execute(count_stmt)).scalar() or 0
     total_pages = (total_elements + size - 1) // size if total_elements > 0 else 0
