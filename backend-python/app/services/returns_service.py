@@ -237,9 +237,9 @@ async def process_return(
         it.sale_return_id = sale_return.id
         db.add(it)
 
-    # If DUE_ADJUSTMENT, deduct due and write ledger entry
+    # If DUE_ADJUSTMENT, deduct due and write ledger entry (due can never be negative)
     if refund_type == "DUE_ADJUSTMENT" and customer:
-        customer.current_due = (customer.current_due - total_refund).quantize(Decimal("0.01"))
+        customer.current_due = max(Decimal("0.00"), (customer.current_due - total_refund).quantize(Decimal("0.01")))
         ledger = CustomerLedger(
             customer_id=customer.id,
             transaction_date=datetime.now(),

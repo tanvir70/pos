@@ -75,7 +75,7 @@ export default function CustomerDirectoryTable({
 
   // Metrics
   const totalMarketDue = useMemo(() => {
-    return customers.reduce((sum, c) => sum + (Number(c.currentDue) || 0), 0)
+    return customers.reduce((sum, c) => sum + Math.max(0, Number(c.currentDue) || 0), 0)
   }, [customers])
 
   const wholesaleCount = useMemo(() => {
@@ -304,7 +304,7 @@ export default function CustomerDirectoryTable({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {paginatedCustomers.map((c) => {
-                    const due = Number(c.currentDue) || 0
+                    const due = Math.max(0, Number(c.currentDue) || 0)
 
                     return (
                       <tr

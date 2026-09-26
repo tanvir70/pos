@@ -63,8 +63,12 @@ export default function CustomerRepayModal({
       setRepayError("Enter a valid repayment amount!")
       return
     }
+    if (customer.currentDue <= 0) {
+      setRepayError("Customer has no outstanding due to collect.")
+      return
+    }
     if (amountNum > customer.currentDue) {
-      setRepayError(`You can repay up to a maximum of the current due of ${tk(customer.currentDue)}.`)
+      setRepayError(`You can repay up to a maximum of the current due of ${tk(customer.currentDue)}. Advance due is not permitted.`)
       return
     }
 

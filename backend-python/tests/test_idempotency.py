@@ -123,8 +123,20 @@ async def test_customer_payment_idempotency():
             token = login_res.json()["token"]
             headers = {"Authorization": f"Bearer {token}"}
 
-            customers = (await ac.get("/api/customers", headers=headers)).json()
-            c = customers[0]
+            import random
+            cust_phone = f"017{random.randint(10000000, 99999999)}"
+            new_c_res = await ac.post(
+                "/api/customers",
+                json={
+                    "name": "Idempotent Test Customer",
+                    "phone": cust_phone,
+                    "customerType": "RETAIL",
+                    "currentDue": 5000.0,
+                },
+                headers=headers,
+            )
+            assert new_c_res.status_code == 201
+            c = new_c_res.json()
             initial_due = float(c["currentDue"])
 
             pay_key = f"IDEM-PAY-TEST-{uuid.uuid4()}"

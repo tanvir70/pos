@@ -221,7 +221,7 @@ export default function CustomerLedgerView({
     return filteredPurchases.slice(start, start + purchasePageSize)
   }, [filteredPurchases, purchasePage, purchasePageSize])
 
-  const due = Number(customer.currentDue) || 0
+  const due = Math.max(0, Number(customer.currentDue) || 0)
   const lifetimeBuy = Number(customer.totalPurchases) || 0
 
   const handleCustomerSwitch = (customerIdStr: string) => {
@@ -397,54 +397,30 @@ export default function CustomerLedgerView({
 
           {/* Right: Financial KPI Blocks & Action Toolbar */}
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
-            {/* KPI 1: Outstanding Due, Advance Balance, or Settled */}
+            {/* KPI 1: Outstanding Due or Account Settled */}
             <div
               className={`px-3.5 py-2 rounded-xl border flex flex-col justify-center min-w-[130px] ${
                 due > 0
                   ? "bg-rose-50/90 border-rose-200/90 text-rose-900"
-                  : due < 0
-                  ? "bg-blue-50/90 border-blue-200/90 text-blue-900"
                   : "bg-emerald-50/80 border-emerald-200/80 text-emerald-900"
               }`}
             >
               <div className="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wider">
-                <span
-                  className={
-                    due > 0
-                      ? "text-rose-600"
-                      : due < 0
-                      ? "text-blue-700"
-                      : "text-emerald-700"
-                  }
-                >
-                  {due > 0
-                    ? "Outstanding Due"
-                    : due < 0
-                    ? "Advance Deposit"
-                    : "Ledger Status"}
+                <span className={due > 0 ? "text-rose-600" : "text-emerald-700"}>
+                  {due > 0 ? "Outstanding Due" : "Ledger Status"}
                 </span>
                 {due > 0 ? (
                   <AlertCircle className="w-3 h-3 text-rose-500 shrink-0" />
-                ) : due < 0 ? (
-                  <CheckCircle2 className="w-3 h-3 text-blue-600 shrink-0" />
                 ) : (
                   <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
                 )}
               </div>
               <div
                 className={`text-base sm:text-lg font-black font-mono tracking-tight mt-0.5 ${
-                  due > 0
-                    ? "text-rose-700"
-                    : due < 0
-                    ? `+${tk(Math.abs(due))}`
-                    : "Settled (৳0)"
+                  due > 0 ? "text-rose-700" : "text-emerald-700"
                 }`}
               >
-                {due > 0
-                  ? tk(due)
-                  : due < 0
-                  ? `+${tk(Math.abs(due))}`
-                  : "Settled (৳0)"}
+                {due > 0 ? tk(due) : "Settled (৳0.00)"}
               </div>
             </div>
 
@@ -475,16 +451,13 @@ export default function CustomerLedgerView({
                   Collect Due
                 </Button>
               ) : (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => onOpenRepay(customer)}
-                  leftIcon={<Receipt className="w-3.5 h-3.5 text-slate-500" />}
-                  className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200/90 font-medium shadow-xs cursor-pointer h-9 px-3 rounded-xl transition-all"
-                  title="Record advance payment or credit adjustment"
+                <div
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-2xs select-none"
+                  title="All customer dues have been cleared"
                 >
-                  Payment / Credit
-                </Button>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Account Settled</span>
+                </div>
               )}
 
               <Button
@@ -821,7 +794,7 @@ export default function CustomerLedgerView({
 
                       {/* Balance After */}
                       <TableCell align="right" className="tabular-nums font-bold text-slate-900 whitespace-nowrap py-3">
-                        {tk(row.balanceAfter)}
+                        {tk(Math.max(0, Number(row.balanceAfter) || 0))}
                       </TableCell>
 
                       {/* Notes */}

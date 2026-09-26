@@ -2,7 +2,7 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 from fastapi import HTTPException
-from sqlalchemy import desc, func, select
+from sqlalchemy import case, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -101,9 +101,14 @@ async def get_dashboard_summary(db: AsyncSession) -> DashboardSummaryDto:
     total_sales_month = (await db.execute(sales_month_stmt)).scalar() or Decimal("0.00")
     total_sales_month = total_sales_month.quantize(Decimal("0.01"))
 
-    # 5. Customer total market due & count
+    # 5. Customer total market due & count (only strictly positive unpaid dues)
     cust_stats_stmt = select(
-        func.coalesce(func.sum(Customer.current_due), Decimal("0.00")),
+        func.coalesce(
+            func.sum(
+                case((Customer.current_due > Decimal("0.00"), Customer.current_due), else_=Decimal("0.00"))
+            ),
+            Decimal("0.00"),
+        ),
         func.count(Customer.id),
     )
     cust_res = (await db.execute(cust_stats_stmt)).first()

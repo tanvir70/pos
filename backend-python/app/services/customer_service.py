@@ -217,7 +217,16 @@ async def record_customer_payment(
         raise HTTPException(status_code=404, detail=f"Customer with id {customer_id} not found")
 
     amount = req.amount
-    new_due = c.current_due - amount
+    if c.current_due <= Decimal("0.00"):
+        raise HTTPException(status_code=400, detail="Customer has no outstanding due to collect.")
+
+    if amount > c.current_due:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Payment amount ({amount}) cannot exceed current outstanding due ({c.current_due}). Advance due is not permitted.",
+        )
+
+    new_due = max(Decimal("0.00"), (c.current_due - amount).quantize(Decimal("0.01")))
     c.current_due = new_due
 
     method = (req.payment_method or "CASH").upper()
