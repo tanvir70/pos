@@ -39,3 +39,11 @@ This project uses **Tailwind CSS v4** through the `@tailwindcss/vite` plugin con
 - Use double quotes for strings containing apostrophes (`"We're here to help"`), or escape them in single-quoted strings. An unescaped apostrophe in a single-quoted string breaks the build.
 - Ensure JSX tags are closed and braces are balanced.
 - Export components as default exports.
+
+## Repository Maintenance Skill & Standards
+
+For all feature implementations, bug fixes, UI modifications, database changes, or test suite maintenance, consult and follow:
+- **Skill**: [`.agents/skills/pos-maintenance/SKILL.md`](.agents/skills/pos-maintenance/SKILL.md)
+- **Backend Quality Gate**: Run `cd backend-python && .venv/bin/pytest -v` (Must achieve 100% pass rate).
+- **Frontend Quality Gate**: Run `cd frontend && pnpm exec tsc --noEmit && pnpm run build` (Must achieve 0 errors).
+- **Evidence First**: Always verify changes with fresh command output before claiming completion.
