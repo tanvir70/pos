@@ -1,6 +1,7 @@
 import React from "react"
 import { CheckCircle2, X, Printer } from "lucide-react"
 import type { SaleReturnResponse } from "../../types"
+import { formatQuantityByUnit } from "../../utils/unit"
 
 export interface ReturnReceiptModalProps {
   voucher: SaleReturnResponse | null
@@ -90,7 +91,9 @@ export default function ReturnReceiptModal({ voucher, onClose }: ReturnReceiptMo
                     <td className="py-1">
                       {it.productNameBn || it.productNameEn || `Lot #${it.lotId}`}
                     </td>
-                    <td className="py-1 text-center tabular-nums">{it.quantity}</td>
+                    <td className="py-1 text-center tabular-nums font-mono">
+                      {formatQuantityByUnit(it.quantity, (it as any).baseUnit)}
+                    </td>
                     <td className="py-1 text-right tabular-nums">{tk(it.refundPrice)}</td>
                     <td className="py-1 text-right tabular-nums font-bold">
                       {tk(it.subtotal || it.quantity * it.refundPrice)}

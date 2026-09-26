@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 from fastapi import HTTPException, status
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -352,18 +352,74 @@ async def get_sale_by_id(db: AsyncSession, sale_id: int) -> SaleResponse:
     return to_sale_response(sale)
 
 async def get_sale_by_invoice(db: AsyncSession, invoice_no: str) -> SaleResponse:
+    raw = invoice_no.strip()
+    clean = raw.lstrip("#").strip()
+    if not clean:
+        raise HTTPException(status_code=404, detail="Invoice number cannot be empty")
+
+    options = (
+        selectinload(Sale.customer),
+        selectinload(Sale.items).selectinload(SaleItem.lot).selectinload(InventoryLot.product),
+    )
+
+    # 1. Exact match on raw or clean
     stmt = (
         select(Sale)
-        .where(Sale.invoice_no == invoice_no.strip())
-        .options(
-            selectinload(Sale.customer),
-            selectinload(Sale.items).selectinload(SaleItem.lot).selectinload(InventoryLot.product),
-        )
+        .where(or_(Sale.invoice_no == raw, Sale.invoice_no == clean))
+        .options(*options)
     )
     sale = (await db.execute(stmt)).scalar_one_or_none()
+
+    # 2. Suffix / partial match (e.g. searching '217' matches 'INV-20260926-0000217')
+    if not sale:
+        suffix_stmt = (
+            select(Sale)
+            .where(
+                or_(
+                    Sale.invoice_no.ilike(f"%{clean}"),
+                    Sale.invoice_no.ilike(f"%-{clean.zfill(7)}"),
+                    Sale.invoice_no.ilike(f"%{clean}%"),
+                )
+            )
+            .options(*options)
+            .order_by(desc(Sale.sale_date), desc(Sale.id))
+        )
+        sale = (await db.execute(suffix_stmt)).scalars().first()
+
     if not sale:
         raise HTTPException(status_code=404, detail=f"Sale not found with invoice: {invoice_no}")
     return to_sale_response(sale)
+
+async def search_sales_by_query(
+    db: AsyncSession, query: str, limit: int = 10
+) -> list[SaleResponse]:
+    raw = query.strip()
+    clean = raw.lstrip("#").strip()
+    if not clean:
+        return []
+
+    max_limit = min(max(1, limit), 50)
+    options = (
+        selectinload(Sale.customer),
+        selectinload(Sale.items).selectinload(SaleItem.lot).selectinload(InventoryLot.product),
+    )
+
+    stmt = (
+        select(Sale)
+        .outerjoin(Sale.customer)
+        .where(
+            or_(
+                Sale.invoice_no.ilike(f"%{clean}%"),
+                Customer.name.ilike(f"%{clean}%"),
+                Customer.phone.ilike(f"%{clean}%"),
+            )
+        )
+        .options(*options)
+        .order_by(desc(Sale.sale_date), desc(Sale.id))
+        .limit(max_limit)
+    )
+    sales = (await db.execute(stmt)).scalars().all()
+    return [to_sale_response(s) for s in sales]
 
 async def get_recent_sales(db: AsyncSession, limit: int = 50) -> list[SaleResponse]:
     stmt = (

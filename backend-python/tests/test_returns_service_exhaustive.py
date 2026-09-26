@@ -233,3 +233,96 @@ async def test_returns_quantity_and_price_boundaries():
             recent_rets = await ac.get("/api/returns", headers=headers)
             assert recent_rets.status_code == 200
             assert len(recent_rets.json()) >= 1
+
+@pytest.mark.asyncio
+async def test_returns_multiple_items_in_single_voucher():
+    """Verify returning multiple items from an invoice in a single return voucher."""
+    async with lifespan(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            login = await ac.post("/api/auth/login", json={"username": "owner", "password": "1234"})
+            token = login.json()["token"]
+            headers = {"Authorization": f"Bearer {token}"}
+
+            # 1. Create two lots
+            lot1_res = await ac.post(
+                "/api/inventory/lots",
+                json={
+                    "productId": 1,
+                    "lotNumber": f"LOT-MULTI-A-{uuid.uuid4().hex[:5].upper()}",
+                    "quantity": 10.0,
+                    "purchaseCost": 50.0,
+                    "lotRetailPrice": 100.0,
+                    "lotWholesalePrice": 90.0,
+                    "barcode": f"BAR-{uuid.uuid4().hex[:6]}",
+                    "entryDate": "2026-09-26",
+                    "expiryDate": "2028-09-26",
+                },
+                headers=headers,
+            )
+            assert lot1_res.status_code == 201
+            lot1_id = lot1_res.json()["id"]
+
+            lot2_res = await ac.post(
+                "/api/inventory/lots",
+                json={
+                    "productId": 2,
+                    "lotNumber": f"LOT-MULTI-B-{uuid.uuid4().hex[:5].upper()}",
+                    "quantity": 15.0,
+                    "purchaseCost": 30.0,
+                    "lotRetailPrice": 60.0,
+                    "lotWholesalePrice": 55.0,
+                    "barcode": f"BAR-{uuid.uuid4().hex[:6]}",
+                    "entryDate": "2026-09-26",
+                    "expiryDate": "2028-09-26",
+                },
+                headers=headers,
+            )
+            assert lot2_res.status_code == 201
+            lot2_id = lot2_res.json()["id"]
+
+            # 2. Make sale with both lots: 2 of lot1 @ 100, 3 of lot2 @ 60 -> total 380
+            sale_res = await ac.post(
+                "/api/sales",
+                json={
+                    "saleMode": "RETAIL",
+                    "items": [
+                        {"lotId": lot1_id, "totalQuantity": 2.0, "unitPrice": 100.0},
+                        {"lotId": lot2_id, "totalQuantity": 3.0, "unitPrice": 60.0},
+                    ],
+                    "discount": 0.0,
+                    "paymentMethod": "CASH",
+                    "cashPaid": 380.0,
+                },
+                headers=headers,
+            )
+            assert sale_res.status_code == 201
+            sale = sale_res.json()
+            sale_id = sale["id"]
+
+            # 3. Process multi-item return: 1 unit of lot1 @ 100, 2 units of lot2 @ 60 -> total refund 220
+            ret_res = await ac.post(
+                "/api/returns",
+                json={
+                    "originalSaleId": sale_id,
+                    "refundType": "CASH_REFUND",
+                    "reason": "Customer returning unneeded seasonal chemicals",
+                    "items": [
+                        {"lotId": lot1_id, "quantity": 1.0, "refundPrice": 100.0, "isDamaged": False},
+                        {"lotId": lot2_id, "quantity": 2.0, "refundPrice": 60.0, "isDamaged": False},
+                    ],
+                },
+                headers=headers,
+            )
+            assert ret_res.status_code == 201
+            ret = ret_res.json()
+            assert ret["returnNo"].startswith("RET-")
+            assert len(ret["items"]) == 2
+            assert float(ret["totalRefundAmount"]) == 220.0
+
+            # Verify both items in voucher response
+            item_lots = {it["lotId"]: it for it in ret["items"]}
+            assert float(item_lots[lot1_id]["quantity"]) == 1.0
+            assert float(item_lots[lot1_id]["refundPrice"]) == 100.0
+            assert float(item_lots[lot2_id]["quantity"]) == 2.0
+            assert float(item_lots[lot2_id]["refundPrice"]) == 60.0

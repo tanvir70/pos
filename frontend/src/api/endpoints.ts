@@ -182,6 +182,15 @@ export async function getSaleByInvoice(
   )
 }
 
+export async function searchSales(
+  query: string,
+  limit = 10,
+): Promise<SaleResponse[]> {
+  return apiClient<SaleResponse[]>(
+    `/sales/search?query=${encodeURIComponent(query)}&limit=${limit}`,
+  )
+}
+
 export async function getRecentSales(limit = 50): Promise<SaleResponse[]> {
   return apiClient<SaleResponse[]>(`/sales?limit=${limit}`)
 }

@@ -216,9 +216,28 @@ async def test_sale_customer_credit_and_queries():
             bad_id = await ac.get("/api/sales/999999", headers=headers)
             assert bad_id.status_code == 404
 
-            # 7. Get sale by invoice (200 vs 404)
+            # 7. Get sale by invoice (200 vs 404), including suffix match and # prefix
             get_inv = await ac.get(f"/api/sales/invoice/{invoice_no}", headers=headers)
             assert get_inv.status_code == 200
+
+            # Suffix match (e.g. searching '217' for INV-20260926-0000217)
+            seq_part = invoice_no.split("-")[-1]
+            short_seq = seq_part.lstrip("0") or seq_part
+            suffix_inv = await ac.get(f"/api/sales/invoice/{short_seq}", headers=headers)
+            assert suffix_inv.status_code == 200
+            assert suffix_inv.json()["invoiceNo"] == invoice_no
+
+            # With leading # symbol
+            hash_inv = await ac.get(f"/api/sales/invoice/%23{short_seq}", headers=headers)
+            assert hash_inv.status_code == 200
+            assert hash_inv.json()["invoiceNo"] == invoice_no
+
+            # Search endpoint for suggestions
+            search_res = await ac.get(f"/api/sales/search?query={short_seq}", headers=headers)
+            assert search_res.status_code == 200
+            suggestions = search_res.json()
+            assert len(suggestions) >= 1
+            assert any(s["invoiceNo"] == invoice_no for s in suggestions)
 
             bad_inv = await ac.get("/api/sales/invoice/INV-NONEXISTENT", headers=headers)
             assert bad_inv.status_code == 404

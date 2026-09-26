@@ -15,6 +15,14 @@ async def create_sale(
 ) -> SaleResponse:
     return await sale_service.process_sale(db, body, client_trx_id=x_idempotency_key)
 
+@router.get("/search", response_model=list[SaleResponse])
+async def search_sales(
+    query: str = Query(..., min_length=1),
+    limit: int = Query(default=10, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+) -> list[SaleResponse]:
+    return await sale_service.search_sales_by_query(db, query, limit)
+
 @router.get("/{sale_id}", response_model=SaleResponse)
 async def get_sale(
     sale_id: int,

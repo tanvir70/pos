@@ -12,23 +12,33 @@ import {
   Check,
   Tag,
   AlertTriangle,
+  CheckSquare,
+  Square,
 } from "lucide-react"
 import type { StockItem, SaleResponse, SaleItemResponse } from "../../types"
 import { formatLotNumber } from "../../utils/lotNumber"
+import { formatQuantityByUnit } from "../../utils/unit"
 import { focusSidebarMenu } from "../../utils/keyboard"
+import { searchSales } from "../../api/endpoints"
 
 export interface ReturnSuperSearchProps {
   stocks: StockItem[]
-  selectedStockItem: StockItem | null
+  selectedStockItem?: StockItem | null
   onSelectStock: (item: StockItem) => void
-  onClearSelectedStock: () => void
+  onClearSelectedStock?: () => void
   foundSale: SaleResponse | null
   isSearchingInvoice: boolean
   invoiceSearchError: string | null
   onSearchInvoice: (invoiceNo: string) => Promise<void>
   onClearInvoice: () => void
+  onSelectFoundSale?: (sale: SaleResponse) => void
   onSelectInvoiceItem?: (saleItem: SaleItemResponse, stockItem: StockItem) => void
   selectedInvoiceItemLotId?: number | null
+  // Multi-item return props
+  selectedLotIds?: number[]
+  onToggleInvoiceItem?: (saleItem: SaleItemResponse, stockItem: StockItem) => void
+  onSelectAllInvoiceItems?: () => void
+  onDeselectAllInvoiceItems?: () => void
 }
 
 const tk = (n: number | undefined | null) =>
@@ -44,12 +54,21 @@ export default function ReturnSuperSearch({
   invoiceSearchError,
   onSearchInvoice,
   onClearInvoice,
+  onSelectFoundSale,
   onSelectInvoiceItem,
   selectedInvoiceItemLotId,
+  selectedLotIds = [],
+  onToggleInvoiceItem,
+  onSelectAllInvoiceItems,
+  onDeselectAllInvoiceItems,
 }: ReturnSuperSearchProps) {
   const [query, setQuery] = useState("")
   const [isOpen, setIsOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
+
+  // Live matching sales/invoices state
+  const [matchingSales, setMatchingSales] = useState<SaleResponse[]>([])
+  const [isSearchingSales, setIsSearchingSales] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -75,13 +94,42 @@ export default function ReturnSuperSearch({
   // Auto-detect if current input is likely an invoice query
   const isInvoiceQuery = useMemo(() => {
     const q = query.trim().toUpperCase()
-    return q.startsWith("INV") || q.startsWith("MEMO") || (q.length > 5 && q.includes("-"))
+    return (
+      q.startsWith("INV") ||
+      q.startsWith("MEMO") ||
+      q.startsWith("#") ||
+      /^\d+$/.test(q) ||
+      (q.length > 3 && q.includes("-"))
+    )
+  }, [query])
+
+  // Live query for matching invoices (debounced)
+  useEffect(() => {
+    const trimmed = query.trim()
+    if (!trimmed) {
+      setMatchingSales([])
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearchingSales(true)
+        const sales = await searchSales(trimmed, 6)
+        setMatchingSales(sales)
+      } catch {
+        setMatchingSales([])
+      } finally {
+        setIsSearchingSales(false)
+      }
+    }, 160)
+
+    return () => clearTimeout(timer)
   }, [query])
 
   // Filter matching stock items for live product suggestions
   const matchingStocks = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q || isInvoiceQuery) return []
+    if (!q) return []
 
     return stocks
       .filter((s) => {
@@ -93,7 +141,7 @@ export default function ReturnSuperSearch({
         return matchNameEn || matchNameBn || matchCode || matchLot || matchBarcode
       })
       .slice(0, 8)
-  }, [stocks, query, isInvoiceQuery])
+  }, [stocks, query])
 
   // Handle Search Submission (Barcode Scan or Enter Key)
   const handleTriggerSearch = async () => {
@@ -115,7 +163,20 @@ export default function ReturnSuperSearch({
       return
     }
 
-    // 2. Otherwise trigger invoice search
+    // 2. If matching sales exist and top matches well, or general invoice search
+    if (matchingSales.length > 0) {
+      const topSale = matchingSales[0]
+      if (onSelectFoundSale) {
+        onSelectFoundSale(topSale)
+      } else {
+        await onSearchInvoice(topSale.invoiceNo)
+      }
+      setQuery("")
+      setIsOpen(false)
+      return
+    }
+
+    // 3. Otherwise trigger invoice search with trimmed string
     setIsOpen(false)
     await onSearchInvoice(trimmed)
   }
@@ -133,8 +194,23 @@ export default function ReturnSuperSearch({
 
     if (e.key === "Enter") {
       e.preventDefault()
-      if (isOpen && matchingStocks.length > 0 && activeIndex < matchingStocks.length) {
-        onSelectStock(matchingStocks[activeIndex])
+      if (isOpen && matchingSales.length > 0 && activeIndex < matchingSales.length) {
+        const selected = matchingSales[activeIndex]
+        if (onSelectFoundSale) {
+          onSelectFoundSale(selected)
+        } else {
+          void onSearchInvoice(selected.invoiceNo)
+        }
+        setQuery("")
+        setIsOpen(false)
+      } else if (
+        isOpen &&
+        matchingStocks.length > 0 &&
+        activeIndex >= matchingSales.length &&
+        activeIndex < matchingSales.length + matchingStocks.length
+      ) {
+        const stockIdx = activeIndex - matchingSales.length
+        onSelectStock(matchingStocks[stockIdx])
         setQuery("")
         setIsOpen(false)
       } else {
@@ -142,7 +218,10 @@ export default function ReturnSuperSearch({
       }
     } else if (e.key === "ArrowDown") {
       e.preventDefault()
-      setActiveIndex((prev) => Math.min(prev + 1, matchingStocks.length - 1))
+      const totalCount = matchingSales.length + matchingStocks.length
+      if (totalCount > 0) {
+        setActiveIndex((prev) => Math.min(prev + 1, totalCount - 1))
+      }
     } else if (e.key === "ArrowUp") {
       e.preventDefault()
       setActiveIndex((prev) => Math.max(prev - 1, 0))
@@ -151,7 +230,7 @@ export default function ReturnSuperSearch({
     }
   }
 
-  // Handle item selection from found invoice
+  // Handle item selection/toggle from found invoice
   const handleInvoiceItemClick = (it: SaleItemResponse) => {
     const matchedStock = stocks.find((s) => s.lotId === it.lotId)
     const stockToUse: StockItem = matchedStock || {
@@ -174,7 +253,9 @@ export default function ReturnSuperSearch({
       quantity: 0,
     }
 
-    if (onSelectInvoiceItem) {
+    if (onToggleInvoiceItem) {
+      onToggleInvoiceItem(it, stockToUse)
+    } else if (onSelectInvoiceItem) {
       onSelectInvoiceItem(it, stockToUse)
     } else {
       onSelectStock(stockToUse)
@@ -191,7 +272,7 @@ export default function ReturnSuperSearch({
             <span>Super Search (Invoice #, Barcode, Product, or Lot)</span>
           </span>
           <span className="text-[11px] text-slate-500 font-normal">
-            Auto-detects invoice or product barcode
+            Type suffix (e.g. <strong>217</strong>) or scan barcode
           </span>
         </label>
 
@@ -214,7 +295,7 @@ export default function ReturnSuperSearch({
               if (query.trim()) setIsOpen(true)
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Scan barcode / memo, or search product name, lot, invoice #..."
+            placeholder="Search memo (e.g. 217), scan barcode, or search product name..."
             className="w-full pl-10 pr-24 py-2.5 bg-slate-50/60 focus:bg-white border border-slate-200 focus:border-emerald-600 rounded-xl text-xs sm:text-sm font-medium transition-all shadow-2xs focus:outline-hidden"
           />
 
@@ -225,6 +306,7 @@ export default function ReturnSuperSearch({
                 onClick={() => {
                   setQuery("")
                   setIsOpen(false)
+                  setMatchingSales([])
                 }}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 title="Clear search"
@@ -258,8 +340,8 @@ export default function ReturnSuperSearch({
 
         {/* Live Autocomplete Dropdown */}
         {isOpen && query.trim() && (
-          <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden divide-y divide-slate-100 animate-in fade-in duration-100">
-            {/* Action 1: Search Invoice Option */}
+          <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden divide-y divide-slate-100 animate-in fade-in duration-100 max-h-96 overflow-y-auto">
+            {/* Action 1: Search Memo Direct Trigger */}
             <div
               onClick={() => {
                 void handleTriggerSearch()
@@ -269,7 +351,7 @@ export default function ReturnSuperSearch({
               <div className="flex items-center gap-2">
                 <Receipt className="w-4 h-4 text-emerald-700" />
                 <span>
-                  Search Memo / Invoice <strong className="font-mono text-emerald-800">"{query.trim()}"</strong>
+                  Search Memo / Suffix <strong className="font-mono text-emerald-800">"{query.trim()}"</strong>
                 </span>
               </div>
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-md group-hover:bg-emerald-200">
@@ -277,14 +359,82 @@ export default function ReturnSuperSearch({
               </span>
             </div>
 
-            {/* Action 2: Matching Product Lots List */}
+            {/* Action 2: Matching Invoices List (Suggestions for 217, INV, etc.) */}
+            {matchingSales.length > 0 && (
+              <div className="divide-y divide-emerald-100/50 bg-emerald-50/20">
+                <div className="px-3 py-1.5 bg-emerald-100/70 text-[10px] font-bold uppercase tracking-wider text-emerald-950 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Receipt className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Matching Invoices ({matchingSales.length})</span>
+                  </span>
+                  <span className="text-[10px] font-normal text-emerald-700">Click to select memo</span>
+                </div>
+                {matchingSales.map((sale, idx) => {
+                  const isSelected = activeIndex === idx
+                  return (
+                    <div
+                      key={sale.id}
+                      onClick={() => {
+                        if (onSelectFoundSale) {
+                          onSelectFoundSale(sale)
+                        } else {
+                          void onSearchInvoice(sale.invoiceNo)
+                        }
+                        setQuery("")
+                        setIsOpen(false)
+                      }}
+                      className={`p-2.5 text-xs transition-colors cursor-pointer flex items-center justify-between ${
+                        isSelected ? "bg-emerald-100/80" : "hover:bg-emerald-50"
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1 pr-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-emerald-950 text-xs sm:text-sm">
+                            #{sale.invoiceNo}
+                          </span>
+                          <span className="text-[10px] font-bold bg-emerald-200 text-emerald-900 px-1.5 py-0.2 rounded-md">
+                            {sale.saleMode || "RETAIL"}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-600 mt-0.5 flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-slate-800">
+                            {sale.customerName || "Walk-in Retail"}
+                          </span>
+                          <span>·</span>
+                          <span>
+                            {new Date(sale.saleDate).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <span>·</span>
+                          <span>{sale.items?.length || 0} items</span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-mono font-black text-slate-900 text-xs sm:text-sm">
+                          {tk(sale.totalAmount)}
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-700">
+                          Select Memo ↵
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Action 3: Matching Product Lots List */}
             {matchingStocks.length > 0 && (
-              <div className="max-h-64 overflow-y-auto divide-y divide-slate-50">
+              <div className="divide-y divide-slate-50">
                 <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   Matching Products & Lots ({matchingStocks.length})
                 </div>
                 {matchingStocks.map((item, idx) => {
-                  const isSelected = activeIndex === idx
+                  const globalIdx = matchingSales.length + idx
+                  const isSelected = activeIndex === globalIdx
                   const stockQty = item.quantity ?? (item as any).totalQuantity ?? 0
 
                   return (
@@ -313,7 +463,9 @@ export default function ReturnSuperSearch({
                             </span>
                           )}
                           <span>·</span>
-                          <span>Stock: <strong className="text-slate-800">{stockQty} {item.baseUnit}</strong></span>
+                          <span>
+                            Stock: <strong className="text-slate-800">{stockQty} {item.baseUnit}</strong>
+                          </span>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
@@ -341,7 +493,7 @@ export default function ReturnSuperSearch({
         )}
       </div>
 
-      {/* ─── Invoice Found Card with Purchased Items ─────────────────── */}
+      {/* ─── Invoice Found Card with Multi-Select Purchased Items ─────── */}
       {foundSale && (
         <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 space-y-3 animate-in fade-in zoom-in-98 duration-150">
           <div className="flex items-center justify-between pb-2.5 border-b border-emerald-200/80">
@@ -357,7 +509,8 @@ export default function ReturnSuperSearch({
                   </span>
                 </div>
                 <div className="text-[11px] text-emerald-800">
-                  Customer: <strong>{foundSale.customerName || "Walk-in Retail"}</strong> · Date: {new Date(foundSale.saleDate).toLocaleDateString("en-US")}
+                  Customer: <strong>{foundSale.customerName || "Walk-in Retail"}</strong> · Date:{" "}
+                  {new Date(foundSale.saleDate).toLocaleDateString("en-US")}
                 </div>
               </div>
             </div>
@@ -378,15 +531,38 @@ export default function ReturnSuperSearch({
             </div>
           </div>
 
-          {/* Interactive Purchased Item Selector */}
-          <div className="space-y-1.5">
-            <span className="text-xs font-bold text-emerald-950 block">
-              Click an item from this invoice to return:
-            </span>
+          {/* Interactive Multi-Select Purchased Items */}
+          <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <span className="text-xs font-bold text-emerald-950">
+                Select items from this invoice to return ({selectedLotIds.length} of {foundSale.items?.length || 0} selected):
+              </span>
+              <div className="flex items-center gap-2">
+                {onSelectAllInvoiceItems && (
+                  <button
+                    type="button"
+                    onClick={onSelectAllInvoiceItems}
+                    className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-100 hover:bg-emerald-200 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                  >
+                    Select All Items
+                  </button>
+                )}
+                {onDeselectAllInvoiceItems && (
+                  <button
+                    type="button"
+                    onClick={onDeselectAllInvoiceItems}
+                    className="text-[11px] font-semibold text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                  >
+                    Deselect All
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 gap-2">
               {foundSale.items && foundSale.items.length > 0 ? (
                 foundSale.items.map((it) => {
-                  const isSelected = selectedInvoiceItemLotId === it.lotId || (selectedStockItem && selectedStockItem.lotId === it.lotId)
+                  const isSelected = selectedLotIds.includes(it.lotId) || selectedInvoiceItemLotId === it.lotId
 
                   return (
                     <div
@@ -394,31 +570,47 @@ export default function ReturnSuperSearch({
                       onClick={() => handleInvoiceItemClick(it)}
                       className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex items-center justify-between ${
                         isSelected
-                          ? "bg-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/20"
+                          ? "bg-white border-emerald-600 shadow-xs ring-2 ring-emerald-500/20"
                           : "bg-white/80 border-emerald-200/90 hover:border-emerald-400 hover:bg-white"
                       }`}
                     >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900">
-                            {it.productNameBn || it.productNameEn}
-                          </span>
-                          <span className="font-mono text-[10px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded border border-slate-200">
-                            Lot #{formatLotNumber(it.lotNumber)}
-                          </span>
-                          {isSelected && (
-                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.2 rounded-full flex items-center gap-1">
-                              <Check className="w-3 h-3" />
-                              <span>Selected</span>
-                            </span>
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="shrink-0 text-emerald-700">
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-emerald-700" />
+                          ) : (
+                            <Square className="w-4 h-4 text-slate-400" />
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-600 mt-0.5 flex items-center gap-3">
-                          <span>Purchased: <strong className="text-slate-900 font-mono">{it.totalQuantity} {it.baseUnit || "unit"}</strong></span>
-                          <span>·</span>
-                          <span>Billed Rate: <strong className="text-emerald-800 font-mono">{tk(it.unitPrice)}</strong></span>
-                          <span>·</span>
-                          <span>Line Total: <strong className="text-slate-900 font-mono">{tk(it.subtotal)}</strong></span>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-slate-900">
+                              {it.productNameBn || it.productNameEn}
+                            </span>
+                            <span className="font-mono text-[10px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded border border-slate-200">
+                              Lot #{formatLotNumber(it.lotNumber)}
+                            </span>
+                            {isSelected && (
+                              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.2 rounded-full flex items-center gap-1">
+                                <Check className="w-3 h-3" />
+                                <span>Selected for return</span>
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-600 mt-0.5 flex items-center gap-2 flex-wrap">
+                            <span>
+                              Purchased: <strong className="text-slate-900 font-mono">{formatQuantityByUnit(it.totalQuantity, it.baseUnit)} {it.baseUnit || "unit"}</strong>
+                            </span>
+                            <span>·</span>
+                            <span>
+                              Billed Rate: <strong className="text-emerald-800 font-mono">{tk(it.unitPrice)}</strong>
+                            </span>
+                            <span>·</span>
+                            <span>
+                              Line Total: <strong className="text-slate-900 font-mono">{tk(it.subtotal)}</strong>
+                            </span>
+                          </div>
                         </div>
                       </div>
 
@@ -445,7 +637,7 @@ export default function ReturnSuperSearch({
         </div>
       )}
 
-      {/* ─── Selected Product Card (Direct Return or Selected Item) ─── */}
+      {/* ─── Selected Product Card (Direct Return) ─────────────────── */}
       {!foundSale && selectedStockItem && (
         <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-center justify-between animate-in fade-in duration-100">
           <div className="flex items-center gap-2.5">
@@ -476,14 +668,16 @@ export default function ReturnSuperSearch({
                 Current Stock: {selectedStockItem.quantity ?? (selectedStockItem as any).totalQuantity ?? 0} {selectedStockItem.baseUnit}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={onClearSelectedStock}
-              className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
-              title="Remove selected product"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            {onClearSelectedStock && (
+              <button
+                type="button"
+                onClick={onClearSelectedStock}
+                className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                title="Remove selected product"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}

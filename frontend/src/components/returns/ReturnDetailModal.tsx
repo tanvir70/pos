@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import type { SaleReturnResponse } from "../../types"
 import { formatLotNumber } from "../../utils/lotNumber"
+import { formatQuantityByUnit } from "../../utils/unit"
 
 export interface ReturnDetailModalProps {
   returnDetail: SaleReturnResponse | null
@@ -164,7 +165,7 @@ export default function ReturnDetailModal({
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-center font-bold font-mono tabular-nums text-slate-800">
-                        {it.quantity}
+                        {formatQuantityByUnit(it.quantity, (it as any).baseUnit)}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-700">
                         {tk(it.refundPrice)}

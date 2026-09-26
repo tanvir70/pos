@@ -318,6 +318,20 @@ export interface SaleReturnItemRequest {
   isDamaged?: boolean
 }
 
+export interface ReturnDraftItem {
+  lotId: number
+  productName: string
+  productNameBn?: string
+  productNameEn?: string
+  lotNumber: string
+  barcode?: string
+  baseUnit: string
+  purchasedQuantity?: number
+  quantity: string
+  refundPrice: string
+  isDamaged: boolean
+}
+
 export interface SaleReturnRequest {
   originalSaleId?: number | null
   customerId?: number | null
