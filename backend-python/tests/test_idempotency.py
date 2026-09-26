@@ -18,8 +18,7 @@ async def test_sale_idempotency_via_header():
             # Fetch product & lot
             lots_res = await ac.get("/api/inventory/lots", headers=headers)
             lots = lots_res.json()
-            assert len(lots) > 0
-            lot = lots[0]
+            lot = next(l for l in lots if l["id"] == 1 or l["id"] == 7)
 
             # Get initial stock
             stock_res_before = await ac.get("/api/inventory/stock", headers=headers)
@@ -80,7 +79,7 @@ async def test_sale_idempotency_via_body_client_trx_id():
             headers = {"Authorization": f"Bearer {token}"}
 
             lots = (await ac.get("/api/inventory/lots", headers=headers)).json()
-            lot = lots[0]
+            lot = next(l for l in lots if l["id"] == 1 or l["id"] == 7)
 
             trx_id = f"IDEM-TEST-BODY-{uuid.uuid4()}"
             sale_req = {
@@ -180,7 +179,7 @@ async def test_sale_return_idempotency():
             headers = {"Authorization": f"Bearer {token}"}
 
             lots = (await ac.get("/api/inventory/lots", headers=headers)).json()
-            lot = lots[0]
+            lot = next(l for l in lots if l["id"] == 1 or l["id"] == 7)
 
             return_key = f"IDEM-RET-TEST-{uuid.uuid4()}"
             ret_req = {
@@ -222,7 +221,7 @@ async def test_concurrent_duplicate_sales():
             headers = {"Authorization": f"Bearer {token}"}
 
             lots = (await ac.get("/api/inventory/lots", headers=headers)).json()
-            lot = lots[0]
+            lot = next(l for l in lots if l["id"] == 1 or l["id"] == 7)
 
             concurrent_key = f"IDEM-CONCURRENT-{uuid.uuid4()}"
             sale_req = {

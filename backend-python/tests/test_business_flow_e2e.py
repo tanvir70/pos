@@ -27,7 +27,7 @@ async def test_dealership_complete_business_flow():
             assert lots_res.status_code == 200
             lots = lots_res.json()
             assert len(lots) >= 1
-            lot1 = lots[0]
+            lot1 = next(l for l in lots if l["id"] == 1 or l["id"] == 7)
 
             # 4. Get Customers
             cust_res = await ac.get("/api/customers", headers=headers)

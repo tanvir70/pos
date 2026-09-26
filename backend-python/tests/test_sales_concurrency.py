@@ -11,15 +11,16 @@ async def test_sale_business_rules_validation():
             token = login.json()["token"]
             headers = {"Authorization": f"Bearer {token}"}
 
-            lots_res = await ac.get("/api/inventory/lots", headers=headers)
-            lot1 = lots_res.json()[0]
+            stocks = (await ac.get("/api/inventory/stock?inStockOnly=true", headers=headers)).json()
+            stock_item = next(s for s in stocks if float(s["quantity"]) >= 5.0 and (not s.get("expiryDate") or s["expiryDate"] >= "2026-09-26"))
+            lot1_id = stock_item["lotId"]
 
             # 1. Reject sale exceeding available stock
             sale_excess = {
                 "saleMode": "RETAIL",
                 "items": [
                     {
-                        "lotId": lot1["id"],
+                        "lotId": lot1_id,
                         "totalQuantity": 999999.0,
                         "unitPrice": 100.0,
                     }
@@ -37,7 +38,7 @@ async def test_sale_business_rules_validation():
                 "saleMode": "RETAIL",
                 "items": [
                     {
-                        "lotId": lot1["id"],
+                        "lotId": lot1_id,
                         "totalQuantity": 1.0,
                         "unitPrice": 100.0,
                     }

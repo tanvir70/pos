@@ -13,13 +13,14 @@ async def test_sale_validation_rules():
             token = login.json()["token"]
             headers = {"Authorization": f"Bearer {token}"}
 
-            lots = (await ac.get("/api/inventory/lots", headers=headers)).json()
-            lot = next((l for l in lots if l["id"] == 7 or float(l["lotRetailPrice"]) > 0), lots[0])
+            stocks = (await ac.get("/api/inventory/stock?inStockOnly=true", headers=headers)).json()
+            stock_item = next(s for s in stocks if float(s["quantity"]) >= 10.0 and (not s.get("expiryDate") or s["expiryDate"] >= "2026-09-26"))
+            lot_id = stock_item["lotId"]
 
             # 1. Negative discount rejected by schema
             neg_disc_req = {
                 "saleMode": "RETAIL",
-                "items": [{"lotId": lot["id"], "totalQuantity": 1.0, "unitPrice": 100.0}],
+                "items": [{"lotId": lot_id, "totalQuantity": 1.0, "unitPrice": 100.0}],
                 "discount": -10.0,
                 "paymentMethod": "CASH",
                 "cashPaid": 100.0,
@@ -30,7 +31,7 @@ async def test_sale_validation_rules():
             # 2. Discount exceeding subtotal rejected
             excess_disc_req = {
                 "saleMode": "RETAIL",
-                "items": [{"lotId": lot["id"], "totalQuantity": 1.0, "unitPrice": 100.0}],
+                "items": [{"lotId": lot_id, "totalQuantity": 1.0, "unitPrice": 100.0}],
                 "discount": 150.0,
                 "paymentMethod": "CASH",
                 "cashPaid": 0.0,
@@ -42,7 +43,7 @@ async def test_sale_validation_rules():
             # 3. Cash tendered less than cash paid rejected
             bad_tender_req = {
                 "saleMode": "RETAIL",
-                "items": [{"lotId": lot["id"], "totalQuantity": 1.0, "unitPrice": 100.0}],
+                "items": [{"lotId": lot_id, "totalQuantity": 1.0, "unitPrice": 100.0}],
                 "discount": 0.0,
                 "paymentMethod": "CASH",
                 "cashPaid": 100.0,
