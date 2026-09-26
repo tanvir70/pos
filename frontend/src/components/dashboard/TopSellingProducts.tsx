@@ -71,9 +71,6 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({ onProduc
               <CardTitle className="text-sm sm:text-base font-bold text-slate-900">
                 Top Selling Products
               </CardTitle>
-              <CardDescription className="text-[11px] text-slate-400">
-                High-velocity items by volume
-              </CardDescription>
             </div>
           </div>
 

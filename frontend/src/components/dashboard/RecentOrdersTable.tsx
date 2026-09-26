@@ -171,17 +171,17 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
 
       {/* Table Content */}
       <CardContent className="p-0 overflow-x-auto min-h-[420px]">
-        <Table className="whitespace-nowrap border-0 shadow-none rounded-none">
+        <Table containerClassName="border-0 shadow-none rounded-none w-full overflow-x-auto" className="w-full whitespace-nowrap border-0 shadow-none rounded-none">
           <TableHeader>
-            <TableRow className="border-b border-slate-100 hover:bg-transparent">
-              <TableHead className="py-3 px-3">Order ID</TableHead>
-              <TableHead className="py-3 px-3">Date & Time</TableHead>
-              <TableHead className="py-3 px-3">Customer</TableHead>
-              <TableHead align="center" className="py-3 px-3">Items</TableHead>
-              <TableHead align="center" className="py-3 px-3">Qty</TableHead>
-              <TableHead align="right" className="py-3 px-3">Total Amount</TableHead>
-              <TableHead align="center" className="py-3 px-3">Payment Status</TableHead>
-              <TableHead align="center" className="py-3 px-3">Action</TableHead>
+            <TableRow className="border-b border-slate-100 hover:bg-transparent text-xs">
+              <TableHead className="py-2.5 px-2.5 sm:px-3 text-left">Order ID</TableHead>
+              <TableHead className="py-2.5 px-2 text-left">Date & Time</TableHead>
+              <TableHead className="py-2.5 px-2.5 sm:px-3 text-left">Customer</TableHead>
+              <TableHead align="center" className="py-2.5 px-1.5 text-center">Items</TableHead>
+              <TableHead align="center" className="py-2.5 px-1.5 text-center">Qty</TableHead>
+              <TableHead align="right" className="py-2.5 px-2.5 sm:px-3 text-right">Total Amount</TableHead>
+              <TableHead align="center" className="py-2.5 px-2 text-center">Payment Status</TableHead>
+              <TableHead align="center" className="py-2.5 px-1.5 text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -189,29 +189,29 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
               // Skeleton rows
               [...Array(pageSize)].map((_, i) => (
                 <TableRow key={i} className="animate-pulse">
-                  <TableCell className="py-3.5 px-3">
+                  <TableCell className="py-2.5 px-2.5 sm:px-3">
                     <div className="w-24 h-4 bg-slate-100 rounded" />
                   </TableCell>
-                  <TableCell className="py-3.5 px-3">
+                  <TableCell className="py-2.5 px-2">
                     <div className="w-20 h-4 bg-slate-100 rounded" />
                   </TableCell>
-                  <TableCell className="py-3.5 px-3">
+                  <TableCell className="py-2.5 px-2.5 sm:px-3">
                     <div className="w-28 h-4 bg-slate-100 rounded" />
                   </TableCell>
-                  <TableCell align="center" className="py-3.5 px-3">
+                  <TableCell align="center" className="py-2.5 px-1.5 text-center">
+                    <div className="w-6 h-4 bg-slate-100 rounded mx-auto" />
+                  </TableCell>
+                  <TableCell align="center" className="py-2.5 px-1.5 text-center">
                     <div className="w-8 h-4 bg-slate-100 rounded mx-auto" />
                   </TableCell>
-                  <TableCell align="center" className="py-3.5 px-3">
-                    <div className="w-10 h-4 bg-slate-100 rounded mx-auto" />
-                  </TableCell>
-                  <TableCell align="right" className="py-3.5 px-3">
+                  <TableCell align="right" className="py-2.5 px-2.5 sm:px-3 text-right">
                     <div className="w-16 h-4 bg-slate-100 rounded ml-auto" />
                   </TableCell>
-                  <TableCell align="center" className="py-3.5 px-3">
+                  <TableCell align="center" className="py-2.5 px-2 text-center">
                     <div className="w-14 h-4 bg-slate-100 rounded mx-auto" />
                   </TableCell>
-                  <TableCell align="center" className="py-3.5 px-3">
-                    <div className="w-8 h-8 bg-slate-100 rounded-lg mx-auto" />
+                  <TableCell align="center" className="py-2.5 px-1.5 text-center">
+                    <div className="w-7 h-7 bg-slate-100 rounded-lg mx-auto" />
                   </TableCell>
                 </TableRow>
               ))
@@ -250,7 +250,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                     onClick={() => handleViewDetails(sale)}
                   >
                     {/* Invoice No & Mode */}
-                    <TableCell className="py-3.5 px-3 font-mono font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                    <TableCell className="py-2.5 px-2.5 sm:px-3 font-mono font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
@@ -273,18 +273,18 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                     </TableCell>
 
                     {/* Date */}
-                    <TableCell className="py-3.5 px-3 text-slate-500 tabular-nums">
+                    <TableCell className="py-2.5 px-2 text-slate-500 tabular-nums">
                       {formatDate(sale.saleDate)}
                     </TableCell>
 
                     {/* Customer */}
-                    <TableCell className="py-3.5 px-3">
+                    <TableCell className="py-2.5 px-2.5 sm:px-3">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold shrink-0">
                           {sale.customerName ? sale.customerName[0].toUpperCase() : <User className="w-3 h-3 text-slate-400" />}
                         </div>
                         <div className="min-w-0">
-                          <span className="font-bold text-slate-800 block truncate max-w-[140px]">
+                          <span className="font-bold text-slate-800 block truncate max-w-[130px] lg:max-w-[150px] xl:max-w-[180px]">
                             {sale.customerName || "Walk-in Retail"}
                           </span>
                           {sale.customerPhone && (
@@ -297,22 +297,22 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                     </TableCell>
 
                     {/* Items count */}
-                    <TableCell align="center" isMonospace className="py-3.5 px-3 text-slate-800">
+                    <TableCell align="center" isMonospace className="py-2.5 px-1.5 text-slate-800 text-center">
                       {itemsCount}
                     </TableCell>
 
                     {/* Total Quantity */}
-                    <TableCell align="center" isMonospace className="py-3.5 px-3 text-slate-900">
+                    <TableCell align="center" isMonospace className="py-2.5 px-1.5 text-slate-900 text-center">
                       {formatQuantity(unitsCount)}
                     </TableCell>
 
                     {/* Total Price */}
-                    <TableCell align="right" className="py-3.5 px-3 font-bold text-slate-900 tabular-nums">
+                    <TableCell align="right" className="py-2.5 px-2.5 sm:px-3 font-bold text-slate-900 tabular-nums text-right">
                       {tk(sale.totalAmount)}
                     </TableCell>
 
                     {/* Payment Status Badge */}
-                    <TableCell align="center" className="py-3.5 px-3">
+                    <TableCell align="center" className="py-2.5 px-2 text-center">
                       {isDue ? (
                         <Badge
                           variant={isPartial ? "warning" : "danger"}
@@ -333,7 +333,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                     </TableCell>
 
                     {/* Action Button */}
-                    <TableCell align="center" className="py-3.5 px-3" onClick={(e) => e.stopPropagation()}>
+                    <TableCell align="center" className="py-2.5 px-1.5 text-center" onClick={(e) => e.stopPropagation()}>
                       <Button
                         type="button"
                         variant="ghost"
