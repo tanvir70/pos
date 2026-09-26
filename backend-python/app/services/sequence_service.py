@@ -18,9 +18,8 @@ def calculate_next_val(current_val: int, max_val: int) -> int:
 
 async def get_next_sequence(session: AsyncSession, sequence_name: str) -> str:
     stmt = select(DocumentSequence).where(DocumentSequence.sequence_name == sequence_name)
-    # Check dialect for with_for_update support (SQLite vs MySQL)
     bind = session.bind
-    is_sqlite = bind and "sqlite" in str(bind.url)
+    is_sqlite = bool(bind and getattr(bind, "dialect", None) and bind.dialect.name == "sqlite")
     if not is_sqlite:
         stmt = stmt.with_for_update()
 

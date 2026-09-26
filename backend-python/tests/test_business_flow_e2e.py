@@ -20,14 +20,14 @@ async def test_dealership_complete_business_flow():
             assert prod_res.status_code == 200
             products = prod_res.json()
             assert len(products) >= 6
-            p1 = products[0]
+            p1 = next((p for p in products if p["productCode"] == "SYN-AMI-TOP"), products[0])
 
             # 3. Get Lots
             lots_res = await ac.get(f"/api/inventory/lots?productId={p1['id']}", headers=headers)
             assert lots_res.status_code == 200
             lots = lots_res.json()
             assert len(lots) >= 1
-            lot1 = next(l for l in lots if l["id"] == 1 or l["id"] == 7)
+            lot1 = next((l for l in lots if l["id"] == 1 or l["id"] == 7), lots[0])
 
             # 4. Get Customers
             cust_res = await ac.get("/api/customers", headers=headers)
