@@ -141,19 +141,41 @@ When modifying or designing user interfaces:
 
 ---
 
-### Runbook 4: Client Requirement Evolution & Field Cleanup
+### Runbook 4: Client Requirement Evolution & Database Migrations (Alembic)
 
-When a business requirement changes (e.g. dropping a field, modifying return policies):
+When a business requirement changes or database schema evolves (e.g. adding columns or tables):
 
-1. **Clean Deprecation**:
-   - Remove fields from UI forms, search tables, and print templates.
-   - Keep backward compatibility in DB columns (nullable) until formal migration to avoid breaking existing historical records.
-2. **Database Integrity**:
-   - Run cleanup queries on SQLite if legacy data contains invalid invariants (e.g. resetting negative dues to 0.00).
+1. **Alembic Schema Evolution**:
+   - Never rely on `create_all` for existing tables.
+   - Generate an automated migration revision:
+     ```bash
+     cd backend-python && .venv/bin/alembic revision --autogenerate -m "describe_change"
+     ```
+   - Review the generated script in `backend-python/alembic/versions/` (ensure `render_as_batch=True` is maintained for SQLite compatibility).
+   - Apply migration:
+     ```bash
+     cd backend-python && .venv/bin/alembic upgrade head
+     ```
+2. **Clean Deprecation & Backward Compatibility**:
+   - When dropping fields (e.g., father name or advance due), remove from UI and print templates.
+   - Keep DB columns nullable in legacy records until a formal migration drops them.
 
 ---
 
-## 4. The Non-Negotiable Quality & Verification Gate
+## 4. Performance & Hardware Standards
+
+1. **Lightweight In-Memory Data Caching (Zero External Bloat)**:
+   - Use `apiCache` (`frontend/src/api/cache.ts`) and `useQuery` (`frontend/src/api/useQuery.ts`).
+   - Mutations on `/sales`, `/returns`, `/customers`, and `/inventory` automatically invalidate associated cache keys.
+   - The universal `<RefreshButton />` serves as the manual cache-busting trigger (`forceRefresh: true`).
+2. **Pure 80mm Thermal Receipt Printing**:
+   - All thermal slips are styled with `@page { size: 80mm auto; margin: 0; }` in `frontend/src/index.css`.
+   - Continuous roll printing with `height: auto` and `page-break-after: avoid` eliminates blank paper ejection.
+   - A4 invoices use `@page a4-page { size: A4 portrait; margin: 8mm; }`.
+
+---
+
+## 5. The Non-Negotiable Quality & Verification Gate
 
 **The Iron Law: Never claim completion, fixes, or passing state without fresh, reproducible terminal verification.**
 
@@ -164,7 +186,7 @@ Before committing or presenting work to the user, run and confirm:
    ```bash
    cd backend-python && .venv/bin/pytest -v
    ```
-   - Must achieve **100% pass rate** (63+ tests passing, 0 failures, 0 broken).
+   - Must achieve **100% pass rate** (65+ tests passing across all 21 test files, 0 failures, 0 broken).
 2. **Frontend Typecheck & Build**:
    ```bash
    cd frontend && pnpm exec tsc --noEmit && pnpm run build

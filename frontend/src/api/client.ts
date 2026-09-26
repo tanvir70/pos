@@ -4,6 +4,9 @@
 // ============================================================================
 
 import type { ErrorResponse } from "../types"
+import { apiCache } from "./cache"
+
+export { apiCache }
 
 // BUSINESS DECISION: Frontend uses native browser fetch targeting /api prefixed endpoints,
 // routed to backend via Vite development proxy and configurable via VITE_API_BASE_URL.
@@ -128,16 +131,33 @@ function createTimeoutSignal(timeoutMs: number, customSignal?: AbortSignal | nul
   return { signal: controller.signal, isTimedOut: () => isTimedOut, cleanup }
 }
 
+export interface ApiClientOptions extends RequestInit {
+  cacheTtlMs?: number
+  forceRefresh?: boolean
+  useCache?: boolean
+}
+
 /**
- * Lean native fetch wrapper for typed JSON requests.
+ * Lean native fetch wrapper for typed JSON requests with lightweight caching.
  */
 export async function apiClient<T>(
   endpoint: string,
-  options?: RequestInit,
+  options?: ApiClientOptions,
 ): Promise<T> {
   const url = endpoint.startsWith("http")
     ? endpoint
     : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`
+
+  const method = (options?.method || "GET").toUpperCase()
+
+  // 1. In-Memory Cache Lookup for GET requests
+  const shouldCache = method === "GET" && options?.useCache !== false
+  if (shouldCache && !options?.forceRefresh) {
+    const cachedData = apiCache.get<T>(url)
+    if (cachedData !== undefined) {
+      return cachedData
+    }
+  }
 
   const headers = new Headers(options?.headers)
   if (
@@ -158,7 +178,6 @@ export async function apiClient<T>(
   }
 
   // Inject Idempotency key for mutating requests (POST, PUT, DELETE)
-  const method = (options?.method || "GET").toUpperCase()
   if (["POST", "PUT", "DELETE"].includes(method) && !headers.has("X-Idempotency-Key")) {
     headers.set("X-Idempotency-Key", generateIdempotencyKey())
   }
@@ -226,15 +245,31 @@ export async function apiClient<T>(
 
   // Handle 204 No Content or empty bodies
   if (response.status === 204) {
+    if (["POST", "PUT", "DELETE"].includes(method)) {
+      apiCache.invalidateOnMutation(url)
+    }
     return {} as T
   }
 
+  let resultData: T
   const contentType = response.headers.get("content-type") || ""
   if (contentType.includes("application/json")) {
-    return (await response.json()) as T
+    resultData = (await response.json()) as T
+  } else {
+    resultData = (await response.text()) as unknown as T
   }
 
-  return (await response.text()) as unknown as T
+  // 2. Cache successful GET responses
+  if (shouldCache) {
+    apiCache.set<T>(url, resultData, options?.cacheTtlMs ?? 30_000)
+  }
+
+  // 3. Invalidate dependent caches on mutations
+  if (["POST", "PUT", "DELETE"].includes(method)) {
+    apiCache.invalidateOnMutation(url)
+  }
+
+  return resultData
 }
 
 /**
