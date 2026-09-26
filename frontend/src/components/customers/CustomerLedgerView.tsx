@@ -222,7 +222,17 @@ export default function CustomerLedgerView({
   }, [filteredPurchases, purchasePage, purchasePageSize])
 
   const due = Number(customer.currentDue) || 0
-  const lifetimeBuy = Number(customer.totalPurchases) || 0
+  const purchasesTotal = useMemo(() => {
+    return purchases.reduce((sum, p) => sum + (Number(p.totalAmount) || 0), 0)
+  }, [purchases])
+
+  const lifetimeBuy = useMemo(() => {
+    const raw = Number(customer.totalPurchases) || 0
+    return raw > 0 ? raw : purchasesTotal
+  }, [customer.totalPurchases, purchasesTotal])
+
+  const totalOrdersCount = purchases.length
+  const averageOrderValue = totalOrdersCount > 0 ? lifetimeBuy / totalOrdersCount : 0
 
   const handleCustomerSwitch = (customerIdStr: string) => {
     const target = customers.find((c) => String(c.id) === customerIdStr)
@@ -432,18 +442,52 @@ export default function CustomerLedgerView({
               </div>
             </div>
 
-            {/* KPI 2: Lifetime Purchases */}
-            <div className="px-3.5 py-2 rounded-xl border border-slate-200/90 bg-slate-50/90 flex flex-col justify-center min-w-[130px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Lifetime Buy
-              </span>
+            {/* KPI 2: Lifetime Purchases (Unbound Monetary Metric) */}
+            <div
+              className="px-3.5 py-2 rounded-xl border border-slate-200/90 bg-slate-50/90 flex flex-col justify-center min-w-[130px]"
+              title="Total cumulative purchase volume billed to this customer"
+            >
+              <div className="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <span>Lifetime Buy</span>
+                <TrendingUp className="w-3 h-3 text-slate-400" />
+              </div>
               <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-slate-900 mt-0.5">
                 {tk(lifetimeBuy)}
               </div>
-              <span className="text-[10px] text-slate-400 font-medium">
-                {purchases.length} total orders
+              <span className="text-[10px] text-slate-500 font-medium">
+                {totalOrdersCount > 0 ? `Avg: ${tk(averageOrderValue)} / order` : "Gross billed"}
               </span>
             </div>
+
+            {/* KPI 3: Total Orders (Unbound Interactive Metric) */}
+            <button
+              type="button"
+              onClick={() => setActiveTab("PURCHASES")}
+              className={`px-3.5 py-2 rounded-xl border text-left flex flex-col justify-center min-w-[125px] transition-all cursor-pointer group ${
+                activeTab === "PURCHASES"
+                  ? "bg-blue-50/90 border-blue-300 ring-2 ring-blue-500/20 shadow-2xs"
+                  : "bg-slate-50/90 border-slate-200/90 hover:bg-white hover:border-blue-300 shadow-2xs"
+              }`}
+              title={`Click to view all ${totalOrdersCount} customer orders`}
+            >
+              <div className="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-blue-700 transition-colors">
+                <span>Total Orders</span>
+                <ShoppingCart
+                  className={`w-3 h-3 ${
+                    activeTab === "PURCHASES" ? "text-blue-600" : "text-slate-400 group-hover:text-blue-600"
+                  }`}
+                />
+              </div>
+              <div className="text-base sm:text-lg font-black font-mono tracking-tight text-slate-900 mt-0.5 flex items-baseline gap-1">
+                <span>{totalOrdersCount}</span>
+                <span className="text-xs font-semibold text-slate-500">
+                  {totalOrdersCount === 1 ? "Order" : "Orders"}
+                </span>
+              </div>
+              <span className="text-[10px] text-blue-700 font-semibold group-hover:underline flex items-center gap-0.5">
+                {activeTab === "PURCHASES" ? "Viewing orders" : "View orders →"}
+              </span>
+            </button>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 ml-auto sm:ml-0">
@@ -554,8 +598,8 @@ export default function CustomerLedgerView({
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
               }`}
             >
-              <Package className="w-3.5 h-3.5 text-slate-500" />
-              <span>Invoice Items ({purchases.length})</span>
+              <ShoppingCart className="w-3.5 h-3.5 text-blue-500" />
+              <span>Order History ({totalOrdersCount})</span>
             </button>
           </div>
 
@@ -630,6 +674,39 @@ export default function CustomerLedgerView({
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Order History Summary Banner */}
+              <div className="bg-white rounded-xl border border-slate-200/90 p-3.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center shrink-0">
+                    <ShoppingCart className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                      <span>Order History</span>
+                      <span className="text-[11px] font-semibold bg-blue-100 text-blue-800 px-2 py-0.2 rounded-full">
+                        {totalOrdersCount} {totalOrdersCount === 1 ? "Order" : "Orders"} Recorded
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      Showing detailed counter invoices and line item bills for <strong>{customer.name}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 text-xs font-mono">
+                  <div className="text-right">
+                    <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">Lifetime Total</span>
+                    <span className="font-black text-slate-900">{tk(lifetimeBuy)}</span>
+                  </div>
+                  {totalOrdersCount > 0 && (
+                    <div className="text-right border-l border-slate-200 pl-3">
+                      <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">Average / Order</span>
+                      <span className="font-bold text-slate-700">{tk(averageOrderValue)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {paginatedPurchases.map((sale) => {
                 const saleDue = Number(sale.dueAmount) || 0
                 return (
