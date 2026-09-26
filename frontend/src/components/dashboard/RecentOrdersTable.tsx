@@ -116,7 +116,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
   const totalElements = pagedData?.totalElements || 0
 
   return (
-    <Card className="rounded-2xl border-slate-200/90 shadow-xs flex flex-col justify-between overflow-hidden">
+    <Card className="rounded-2xl border-slate-200/90 shadow-xs flex flex-col justify-between h-full overflow-hidden">
       {/* Card Header & Controls */}
       <CardHeader className="p-5 pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -170,7 +170,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
       <Separator />
 
       {/* Table Content */}
-      <CardContent className="p-0 overflow-x-auto min-h-[420px]">
+      <CardContent className="p-0 overflow-x-auto min-h-[420px] flex-1">
         <Table containerClassName="border-0 shadow-none rounded-none w-full overflow-x-auto" className="w-full whitespace-nowrap border-0 shadow-none rounded-none">
           <TableHeader>
             <TableRow className="border-b border-slate-100 hover:bg-transparent text-xs">
@@ -179,8 +179,8 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
               <TableHead className="py-2.5 px-2.5 sm:px-3 text-left">Customer</TableHead>
               <TableHead align="center" className="py-2.5 px-1.5 text-center">Items</TableHead>
               <TableHead align="center" className="py-2.5 px-1.5 text-center">Qty</TableHead>
-              <TableHead align="right" className="py-2.5 px-2.5 sm:px-3 text-right">Total Amount</TableHead>
-              <TableHead align="center" className="py-2.5 px-2 text-center">Payment Status</TableHead>
+              <TableHead align="center" className="py-2.5 px-2.5 sm:px-3 text-center">Total (৳)</TableHead>
+              <TableHead align="center" className="py-2.5 px-2 text-center">Status</TableHead>
               <TableHead align="center" className="py-2.5 px-1.5 text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -204,8 +204,8 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                   <TableCell align="center" className="py-2.5 px-1.5 text-center">
                     <div className="w-8 h-4 bg-slate-100 rounded mx-auto" />
                   </TableCell>
-                  <TableCell align="right" className="py-2.5 px-2.5 sm:px-3 text-right">
-                    <div className="w-16 h-4 bg-slate-100 rounded ml-auto" />
+                  <TableCell align="center" className="py-2.5 px-2.5 sm:px-3 text-center">
+                    <div className="w-16 h-4 bg-slate-100 rounded mx-auto" />
                   </TableCell>
                   <TableCell align="center" className="py-2.5 px-2 text-center">
                     <div className="w-14 h-4 bg-slate-100 rounded mx-auto" />
@@ -307,7 +307,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                     </TableCell>
 
                     {/* Total Price */}
-                    <TableCell align="right" className="py-2.5 px-2.5 sm:px-3 font-bold text-slate-900 tabular-nums text-right">
+                    <TableCell align="center" className="py-2.5 px-2.5 sm:px-3 font-bold text-slate-900 tabular-nums text-center">
                       {tk(sale.totalAmount)}
                     </TableCell>
 

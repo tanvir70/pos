@@ -668,7 +668,7 @@ export default function InventoryTable({
           totalElements={filteredProducts.length}
           onPageChange={onPageChange}
           onPageSizeChange={onPageSizeChange}
-          pageSizeOptions={[10, 15, 25, 50]}
+          pageSizeOptions={[5, 10, 15, 25, 50]}
           itemLabel="products"
         />
       </div>

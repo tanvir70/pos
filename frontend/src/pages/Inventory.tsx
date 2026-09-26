@@ -51,7 +51,7 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   const [search, setSearch] = useState<string>("")
   const [activeFilter, setActiveFilter] = useState<string>("ALL")
   const [stockPage, setStockPage] = useState<number>(0)
-  const [stockPageSize, setStockPageSize] = useState<number>(15)
+  const [stockPageSize, setStockPageSize] = useState<number>(10)
 
   // Reset page when filters change
   useEffect(() => {

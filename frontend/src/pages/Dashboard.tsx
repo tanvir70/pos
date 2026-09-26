@@ -234,9 +234,9 @@ export default function Dashboard({
       </div>
 
       {/* ─── 2. Main 2-Column Analytics Grid ───────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left: Recent Orders (Expanded to 8 cols on lg / 9 cols on 2xl to eliminate horizontal scroll) */}
-        <div className="lg:col-span-8 2xl:col-span-9">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Left: Recent Orders (Balanced 7 cols on lg/xl/2xl with zero horizontal scroll) */}
+        <div className="lg:col-span-7 xl:col-span-7 2xl:col-span-7 flex flex-col h-full">
           <RecentOrdersTable
             onViewDetails={(sale) => setSelectedSaleForDetails(sale)}
             onPrintReceipt={(sale) => setSelectedSaleForPrint(sale)}
@@ -244,8 +244,8 @@ export default function Dashboard({
           />
         </div>
 
-        {/* Right: Top Selling Products (Compact 4 cols on lg / 3 cols on 2xl) */}
-        <div className="lg:col-span-4 2xl:col-span-3">
+        {/* Right: Top Selling Products (Widened to 5 cols, matching equal height with Recent Orders) */}
+        <div className="lg:col-span-5 xl:col-span-5 2xl:col-span-5 flex flex-col h-full">
           <TopSellingProducts onProductClick={() => onNavigate?.("inventory")} />
         </div>
       </div>
