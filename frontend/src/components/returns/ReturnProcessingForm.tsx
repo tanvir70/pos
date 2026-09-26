@@ -23,6 +23,7 @@ import type {
 import { formatLotNumber } from "../../utils/lotNumber"
 import { isDiscreteUnit, formatQuantityByUnit } from "../../utils/unit"
 import ReturnSuperSearch from "./ReturnSuperSearch"
+import InvoiceItemsCard from "./InvoiceItemsCard"
 
 export interface ReturnProcessingFormProps {
   onSearchInvoice: (invoiceNo: string) => Promise<void>
@@ -116,31 +117,92 @@ export default function ReturnProcessingForm({
       )}
 
       <form onSubmit={onSubmit} className="space-y-4">
-        {/* 1. Super Search (Invoice, Suffix #217, Barcode, Product, Lot) */}
-        <ReturnSuperSearch
-          stocks={stocks}
-          selectedStockItem={selectedStockItem}
-          onSelectStock={onSelectStock}
-          onClearSelectedStock={onClearSelectedStock}
-          foundSale={foundSale}
-          isSearchingInvoice={isSearchingInvoice}
-          invoiceSearchError={invoiceSearchError}
-          onSearchInvoice={onSearchInvoice}
-          onClearInvoice={onClearInvoice}
-          onSelectFoundSale={onSelectFoundSale}
-          selectedLotIds={selectedLotIds}
-          onToggleInvoiceItem={onToggleInvoiceItem}
-          onSelectAllInvoiceItems={onSelectAllInvoiceItems}
-          onDeselectAllInvoiceItems={onDeselectAllInvoiceItems}
-        />
+        {/* ── Top Row: Side-by-Side Search (Left: Invoice / Item Lookup, Right: Customer Account) ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <ReturnSuperSearch
+            stocks={stocks}
+            selectedStockItem={selectedStockItem}
+            onSelectStock={onSelectStock}
+            onClearSelectedStock={onClearSelectedStock}
+            foundSale={foundSale}
+            isSearchingInvoice={isSearchingInvoice}
+            invoiceSearchError={invoiceSearchError}
+            onSearchInvoice={onSearchInvoice}
+            onClearInvoice={onClearInvoice}
+            onSelectFoundSale={onSelectFoundSale}
+            selectedLotIds={selectedLotIds}
+            onToggleInvoiceItem={onToggleInvoiceItem}
+            onSelectAllInvoiceItems={onSelectAllInvoiceItems}
+            onDeselectAllInvoiceItems={onDeselectAllInvoiceItems}
+            renderOnlySearch={true}
+          />
 
-        {/* 2. Searchable Customer Ledger Profile */}
-        <CustomerSearchSelect
-          customers={customers}
-          selectedCustomerId={selectedCustomerId}
-          onSelectCustomerId={onSelectCustomerId}
-          refundType={refundType}
-        />
+          <CustomerSearchSelect
+            customers={customers}
+            selectedCustomerId={selectedCustomerId}
+            onSelectCustomerId={onSelectCustomerId}
+            refundType={refundType}
+            calculatedTotalRefund={calculatedTotalRefund}
+          />
+        </div>
+
+        {/* ── Full Width: Matched Invoice Line Items Selection Panel ── */}
+        {foundSale && (
+          <InvoiceItemsCard
+            foundSale={foundSale}
+            stocks={stocks}
+            selectedLotIds={selectedLotIds}
+            onClearInvoice={onClearInvoice}
+            onToggleInvoiceItem={onToggleInvoiceItem}
+            onSelectAllInvoiceItems={onSelectAllInvoiceItems}
+            onDeselectAllInvoiceItems={onDeselectAllInvoiceItems}
+          />
+        )}
+
+        {/* ── Full Width: Direct Selected Product Banner (without invoice) ── */}
+        {!foundSale && selectedStockItem && (
+          <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-center justify-between animate-in fade-in duration-100">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div>
+                <div className="font-bold text-slate-900 text-sm">
+                  {selectedStockItem.nameBn || selectedStockItem.productNameBn} ({selectedStockItem.nameEn || selectedStockItem.productNameEn})
+                </div>
+                <div className="text-[11px] text-slate-600 mt-0.5 flex flex-wrap items-center gap-2">
+                  <span className="font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                    Lot #{formatLotNumber(selectedStockItem.lotNumber)}
+                  </span>
+                  <span>·</span>
+                  <span>Barcode: {selectedStockItem.lotBarcode || selectedStockItem.barcode || "N/A"}</span>
+                  <span>·</span>
+                  <span>Exp: {selectedStockItem.expiryDate || "N/A"}</span>
+                  <span>·</span>
+                  <span>Unit: {selectedStockItem.baseUnit}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-right">
+                <div className="text-xs font-bold text-slate-900 font-mono tabular-nums">
+                  Rate: {tk(selectedStockItem.lotRetailPrice)}
+                </div>
+                <div className="text-[10px] text-slate-500 font-mono">
+                  Current Stock: {selectedStockItem.quantity ?? (selectedStockItem as any).totalQuantity ?? 0} {selectedStockItem.baseUnit}
+                </div>
+              </div>
+              {onClearSelectedStock && (
+                <button
+                  type="button"
+                  onClick={onClearSelectedStock}
+                  className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                  title="Remove selected product"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 3. Multi-Item Return Table / Cart */}
         <div className="space-y-2 pt-1">
