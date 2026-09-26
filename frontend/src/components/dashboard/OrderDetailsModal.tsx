@@ -134,7 +134,7 @@ export default function OrderDetailsModal({
             <span>Ordered Items ({sale.items?.length || 0})</span>
             <span className="font-mono text-[11px] text-slate-500">
               Total Qty:{" "}
-              {(sale.items ?? []).reduce((acc, it) => acc + (it.totalQuantity || 0), 0)}
+              {(sale.items ?? []).reduce((acc, it) => acc + (Number(it.totalQuantity) || 0), 0)}
             </span>
           </div>
 

@@ -241,7 +241,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                 const isPartial = isDue && ((sale.cashPaid ?? 0) > 0 || (sale.digitalPaid ?? 0) > 0)
                 const itemsCount = sale.items?.length || 0
                 const unitsCount =
-                  sale.items?.reduce((sum, item) => sum + (item.totalQuantity || 0), 0) || 0
+                  sale.items?.reduce((sum, item) => sum + (Number(item.totalQuantity) || 0), 0) || 0
 
                 return (
                   <TableRow

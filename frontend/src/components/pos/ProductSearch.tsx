@@ -46,8 +46,19 @@ function productName(item: StockItem) {
   return item.productNameEn || item.nameEn || "Unnamed product"
 }
 
-function availableQuantity(item: StockItem) {
-  return item.quantity ?? item.totalQuantity ?? 0
+function availableQuantity(item: StockItem): number {
+  const qty = item.quantity ?? item.totalQuantity ?? 0
+  const parsed = typeof qty === "number" ? qty : parseFloat(String(qty))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function formatQuantity(value: number | string | undefined | null): string {
+  if (value === undefined || value === null || value === "") return "0"
+  const n = typeof value === "number" ? value : parseFloat(String(value))
+  if (!Number.isFinite(n)) return "0"
+  return Number.isInteger(n)
+    ? n.toLocaleString("en-IN")
+    : n.toLocaleString("en-IN", { maximumFractionDigits: 3 })
 }
 
 function hasBusinessLot(item: StockItem) {
@@ -353,12 +364,12 @@ export default function ProductSearch({
                           </div>
                         </div>
 
-                        <div className="flex min-w-[130px] flex-col items-end justify-center">
+                        <div className="flex shrink-0 min-w-[140px] max-w-[220px] flex-col items-end justify-center text-right overflow-hidden">
                           <span className="font-mono text-base font-black text-emerald-800 tabular-nums">
                             {formatTk(retailPrice)}
                           </span>
                           {saleMode === "WHOLESALE" && (
-                            <span className="mt-0.5 text-[10px] font-semibold text-slate-500">
+                            <span className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">
                               Wholesale adjusted at checkout
                             </span>
                           )}
@@ -367,12 +378,12 @@ export default function ProductSearch({
                               selectedLotQuantity > 0 ? "text-emerald-700" : "text-red-600"
                             }`}
                           >
-                            <PackageCheck className="h-3.5 w-3.5" />
-                            {selectedLotQuantity} {item.baseUnit} in this lot
+                            <PackageCheck className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{formatQuantity(selectedLotQuantity)} {item.baseUnit} in this lot</span>
                           </span>
                           {result.productLotCount > 1 && (
-                            <span className="mt-0.5 text-[10px] font-semibold text-slate-500">
-                              {result.productTotalQuantity} total across lots
+                            <span className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">
+                              {formatQuantity(result.productTotalQuantity)} total across lots
                             </span>
                           )}
                         </div>
