@@ -582,7 +582,7 @@ export default function DualPrintModal({
                     </p>
                   </div>
                 </div>
-                {Number(matchedCustomer.currentDue || 0) > 0 && (
+                {Number(matchedCustomer.currentDue || 0) > 0 ? (
                   <div className="shrink-0 rounded-lg border border-rose-200/80 bg-white/90 px-2.5 py-1 text-right">
                     <span className="block text-[10px] font-bold uppercase tracking-wider text-rose-600">
                       Current Due
@@ -591,7 +591,16 @@ export default function DualPrintModal({
                       {formatTk(matchedCustomer.currentDue)}
                     </span>
                   </div>
-                )}
+                ) : Number(matchedCustomer.currentDue || 0) < 0 ? (
+                  <div className="shrink-0 rounded-lg border border-emerald-200/80 bg-white/90 px-2.5 py-1 text-right">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                      Store Credit
+                    </span>
+                    <span className="font-mono text-xs font-black text-emerald-700">
+                      +{formatTk(Math.abs(Number(matchedCustomer.currentDue)))}
+                    </span>
+                  </div>
+                ) : null}
               </div>
             ) : shouldCreateCustomer ? (
               <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-sky-200 bg-sky-50/80 p-3 text-xs text-sky-900">

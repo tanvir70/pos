@@ -159,12 +159,14 @@ async def search_customers(
 ) -> list[CustomerDto]:
     stmt = select(Customer)
     if query and query.strip():
-        q = f"%{query.strip()}%"
+        raw = query.strip()
+        escaped = raw.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        q = f"%{escaped}%"
         stmt = stmt.where(
             or_(
-                Customer.name.ilike(q),
-                Customer.phone.ilike(q),
-                Customer.business_name.ilike(q),
+                Customer.name.ilike(q, escape="\\"),
+                Customer.phone.ilike(q, escape="\\"),
+                Customer.business_name.ilike(q, escape="\\"),
             )
         )
     if customer_type and customer_type.strip():
@@ -216,17 +218,18 @@ async def record_customer_payment(
     if not c:
         raise HTTPException(status_code=404, detail=f"Customer with id {customer_id} not found")
 
-    amount = req.amount
-    if c.current_due <= Decimal("0.00"):
+    amount = req.amount.quantize(Decimal("0.01"))
+    current_due = (c.current_due or Decimal("0.00")).quantize(Decimal("0.01"))
+    if current_due <= Decimal("0.00"):
         raise HTTPException(status_code=400, detail="Customer has no outstanding due to collect.")
 
-    if amount > c.current_due:
+    if amount > current_due:
         raise HTTPException(
             status_code=400,
-            detail=f"Payment amount ({amount}) cannot exceed current outstanding due ({c.current_due}). Advance due is not permitted.",
+            detail=f"Payment amount ({amount}) cannot exceed current outstanding due ({current_due}). Advance due is not permitted.",
         )
 
-    new_due = max(Decimal("0.00"), (c.current_due - amount).quantize(Decimal("0.01")))
+    new_due = max(Decimal("0.00"), (current_due - amount).quantize(Decimal("0.01")))
     c.current_due = new_due
 
     method = (req.payment_method or "CASH").upper()

@@ -1,22 +1,43 @@
 from datetime import datetime
 from decimal import Decimal
-from pydantic import Field
+from pydantic import Field, field_validator
 from app.schemas.base import CamelModel
 
 class SaleReturnItemRequest(CamelModel):
-    lot_id: int
+    lot_id: int = Field(gt=0)
     quantity: Decimal = Field(gt=Decimal("0.000"))
     refund_price: Decimal = Field(ge=Decimal("0.00"))
     is_damaged: bool = False
     restock_location: str = "DOKAN"
 
+    @field_validator("restock_location")
+    @classmethod
+    def validate_location(cls, v: str) -> str:
+        return (v or "DOKAN").strip().upper()
+
 class SaleReturnRequest(CamelModel):
-    original_sale_id: int | None = None
-    customer_id: int | None = None
+    original_sale_id: int | None = Field(default=None, gt=0)
+    customer_id: int | None = Field(default=None, gt=0)
     refund_type: str = "CASH_REFUND"  # 'CASH_REFUND' or 'DUE_ADJUSTMENT'
     reason: str | None = None
     client_trx_id: str | None = None
-    items: list[SaleReturnItemRequest]
+    items: list[SaleReturnItemRequest] = Field(min_length=1)
+
+    @field_validator("refund_type")
+    @classmethod
+    def validate_refund_type(cls, v: str) -> str:
+        cleaned = (v or "CASH_REFUND").strip().upper()
+        if cleaned not in ("CASH_REFUND", "DUE_ADJUSTMENT"):
+            raise ValueError("Refund type must be CASH_REFUND or DUE_ADJUSTMENT")
+        return cleaned
+
+    @field_validator("reason", "client_trx_id")
+    @classmethod
+    def sanitize_strings(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        trimmed = v.strip()
+        return trimmed or None
 
 class SaleReturnItemDto(CamelModel):
     id: int

@@ -143,7 +143,7 @@ export default function ThermalReceipt({
                 </tr>
               </thead>
               <tbody className="divide-y divide-dashed divide-gray-300">
-                {sale.items?.map((item) => (
+                {(sale.items ?? []).map((item) => (
                   <tr key={item.id || `${item.lotId}-${item.productNameBn}`}>
                     <td className="py-1.5 pr-1">
                       <div className="font-bold text-[11px] leading-tight">

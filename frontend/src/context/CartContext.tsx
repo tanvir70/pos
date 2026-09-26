@@ -242,9 +242,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [roundOffDeficit])
 
+  const boundedRoundOff = useMemo(() => {
+    return Math.max(0, Math.min(50, roundOff || 0))
+  }, [roundOff])
+
   const finalTotalAmount = useMemo(() => {
-    return Math.max(0, roundAccounting(preRoundTotal - roundOff))
-  }, [preRoundTotal, roundOff])
+    return Math.max(0, roundAccounting(preRoundTotal - boundedRoundOff))
+  }, [preRoundTotal, boundedRoundOff])
 
   // Auto-sync digital tender when payment method or total changes.
   // Note: cashPaidInput is deliberately NOT pre-filled so cashiers can type

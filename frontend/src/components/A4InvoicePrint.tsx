@@ -246,7 +246,7 @@ export default function A4InvoicePrint({
                   </tr>
                 </thead>
                 <tbody>
-                  {sale.items?.map((item, idx) => {
+                  {(sale.items ?? []).map((item, idx) => {
                     const totalUnits = item.totalQuantity || 0
 
                     return (

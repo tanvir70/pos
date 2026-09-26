@@ -201,22 +201,48 @@ async def process_sale(
         sale_items.append(sale_item)
 
     discount = req.discount.quantize(Decimal("0.01"))
-    round_off = req.round_off.quantize(Decimal("0.01"))
-    total_amount = (subtotal - discount - round_off).quantize(Decimal("0.01"))
+    if discount < Decimal("0.00"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Discount cannot be negative",
+        )
+    if discount > subtotal:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Discount ({discount}) cannot exceed invoice subtotal ({subtotal})",
+        )
 
+    round_off = req.round_off.quantize(Decimal("0.01"))
+    if round_off < Decimal("0.00") or round_off > Decimal("50.00"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Round-off must be between 0.00 and 50.00 BDT",
+        )
+
+    total_amount = (subtotal - discount - round_off).quantize(Decimal("0.01"))
     if total_amount < Decimal("0.00"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Discount and round-off cannot exceed subtotal ({subtotal})",
         )
 
-    cash_paid = req.cash_paid.quantize(Decimal("0.01"))
-    cash_tendered = req.cash_tendered.quantize(Decimal("0.01")) if req.cash_tendered > Decimal("0.00") else cash_paid
+    cash_paid = max(Decimal("0.00"), req.cash_paid.quantize(Decimal("0.01")))
+    cash_tendered = (
+        max(Decimal("0.00"), req.cash_tendered.quantize(Decimal("0.01")))
+        if req.cash_tendered > Decimal("0.00")
+        else cash_paid
+    )
+    if cash_tendered < cash_paid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cash tendered ({cash_tendered}) cannot be less than cash paid ({cash_paid})",
+        )
+
     change_amount = Decimal("0.00")
     if cash_tendered > cash_paid:
         change_amount = (cash_tendered - cash_paid).quantize(Decimal("0.01"))
 
-    digital_paid = req.digital_paid.quantize(Decimal("0.01"))
+    digital_paid = max(Decimal("0.00"), req.digital_paid.quantize(Decimal("0.01")))
     total_paid = cash_paid + digital_paid
     due_amount = max(Decimal("0.00"), total_amount - total_paid).quantize(Decimal("0.01"))
 
@@ -274,9 +300,9 @@ async def process_sale(
         db.add(it)
 
     if customer:
-        customer.total_purchases = (customer.total_purchases + total_amount).quantize(Decimal("0.01"))
+        customer.total_purchases = ((customer.total_purchases or Decimal("0.00")) + total_amount).quantize(Decimal("0.01"))
         if due_amount > Decimal("0.00"):
-            customer.current_due = (customer.current_due + due_amount).quantize(Decimal("0.01"))
+            customer.current_due = ((customer.current_due or Decimal("0.00")) + due_amount).quantize(Decimal("0.01"))
             ledger = CustomerLedger(
                 customer_id=customer.id,
                 transaction_date=datetime.now(),

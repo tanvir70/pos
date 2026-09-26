@@ -304,7 +304,7 @@ export default function CustomerDirectoryTable({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {paginatedCustomers.map((c) => {
-                    const due = Math.max(0, Number(c.currentDue) || 0)
+                    const due = Number(c.currentDue) || 0
 
                     return (
                       <tr
@@ -334,7 +334,7 @@ export default function CustomerDirectoryTable({
                           }
                         }}
                         className={`hover:bg-slate-50/80 cursor-pointer transition-colors focus:outline-none focus:bg-slate-100 ${
-                          due > 0 ? "bg-red-50/20" : ""
+                          due > 0 ? "bg-red-50/20" : due < 0 ? "bg-emerald-50/20" : ""
                         }`}
                       >
                         {/* Name & Subtitle */}
@@ -386,13 +386,22 @@ export default function CustomerDirectoryTable({
 
                         {/* Current Due */}
                         <td className="px-4 py-3 text-right">
-                          <span
-                            className={`tabular-nums font-semibold ${
-                              due > 0 ? "text-red-600" : "text-emerald-700"
-                            }`}
-                          >
-                            {tk(due)}
-                          </span>
+                          {due > 0 ? (
+                            <span className="tabular-nums font-semibold text-red-600">
+                              {tk(due)}
+                            </span>
+                          ) : due < 0 ? (
+                            <span
+                              className="tabular-nums font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]"
+                              title="Customer store credit / advance balance from returns or overpayment"
+                            >
+                              +{tk(Math.abs(due))} (Cr)
+                            </span>
+                          ) : (
+                            <span className="tabular-nums font-medium text-slate-500">
+                              {tk(0)}
+                            </span>
+                          )}
                         </td>
 
                         {/* Actions */}

@@ -449,7 +449,15 @@ export default function SettlementPanel({
                     type="number"
                     min="0"
                     value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^\d.]/g, "")
+                      setDiscountValue(val)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                        e.preventDefault()
+                      }
+                    }}
                     onFocus={(e) => e.target.select()}
                     placeholder="0"
                     className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-right font-mono text-sm font-bold outline-hidden focus:border-emerald-700"
@@ -497,13 +505,22 @@ export default function SettlementPanel({
               <div className="grid grid-cols-[1fr_112px] items-end gap-2">
                 <label className="space-y-1">
                   <span className="block text-[11px] font-bold text-slate-500">
-                    Round off
+                    Round off (Max 50)
                   </span>
                   <input
                     type="number"
                     min="0"
+                    max="50"
                     value={roundOff || ""}
-                    onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = Math.max(0, Math.min(50, parseFloat(e.target.value) || 0))
+                      setRoundOff(val)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e" || e.key === "E" || e.key === "+") {
+                        e.preventDefault()
+                      }
+                    }}
                     onFocus={(e) => e.target.select()}
                     placeholder="0"
                     className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-right font-mono text-sm font-bold outline-hidden focus:border-emerald-700"

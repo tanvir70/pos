@@ -46,6 +46,13 @@ async def record_lot_entry(db: AsyncSession, request: LotEntryRequest) -> Invent
             detail=f"Barcode '{request.barcode}' is already in use by lot {existing_lot.lot_number}",
         )
 
+    # 2a. Validate dates
+    if request.expiry_date < request.entry_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Lot expiry date ({request.expiry_date}) cannot be earlier than entry date ({request.entry_date})",
+        )
+
     # 2b. Standardize sequential LOT-01 naming if lot_number is blank or DEFAULT
     import re
     lot_num = (request.lot_number or "").strip()

@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from pydantic import Field
+from pydantic import Field, field_validator
 from app.schemas.base import CamelModel
 
 class ProductDto(CamelModel):
@@ -30,10 +30,26 @@ class ProductCreateDto(CamelModel):
     carton_multiplier: Decimal = Field(default=Decimal("1.000"), ge=Decimal("0.001"))
     default_barcode: str | None = None
     standard_retail_price: Decimal = Field(ge=Decimal("0.00"))
-    standard_wholesale_price: Decimal | None = None
-    buying_price: Decimal | None = None
-    min_stock_alert: int = 5
+    standard_wholesale_price: Decimal | None = Field(default=None, ge=Decimal("0.00"))
+    buying_price: Decimal | None = Field(default=None, ge=Decimal("0.00"))
+    min_stock_alert: int = Field(default=5, ge=0)
     image_path: str | None = None
+
+    @field_validator("product_code", "name_en", "name_bn")
+    @classmethod
+    def validate_non_empty(cls, v: str) -> str:
+        trimmed = (v or "").strip()
+        if not trimmed:
+            raise ValueError("Field cannot be empty")
+        return trimmed
+
+    @field_validator("category", "base_unit", "company_name", "default_barcode")
+    @classmethod
+    def sanitize_strings(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        trimmed = v.strip()
+        return trimmed or None
 
 class ProductUpdateDto(CamelModel):
     name_en: str | None = None

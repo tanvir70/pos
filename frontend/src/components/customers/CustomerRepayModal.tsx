@@ -187,8 +187,14 @@ export default function CustomerRepayModal({
               min="1"
               max={customer.currentDue}
               value={repayAmount}
+              onKeyDown={(e) => {
+                if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+                  e.preventDefault()
+                }
+              }}
               onChange={(e) => {
-                setRepayAmount(e.target.value)
+                const val = e.target.value.replace(/[^\d.]/g, "")
+                setRepayAmount(val)
                 setRepayError(null)
               }}
               placeholder="0.00"

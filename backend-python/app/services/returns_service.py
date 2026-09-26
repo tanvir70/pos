@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from fastapi import HTTPException, status
 from sqlalchemy import desc, func, select
@@ -145,20 +145,55 @@ async def process_return(
             )
 
         qty = it_req.quantity.quantize(Decimal("0.001"))
-        refund_price = it_req.refund_price.quantize(Decimal("0.01"))
+        if qty <= Decimal("0.000"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Return quantity must be greater than zero for lot {lot.lot_number}",
+            )
 
-        # If linked to original sale and refund_price not specified, use original price
-        if original_sale and refund_price == Decimal("0.00"):
-            for orig_it in original_sale.items:
-                if orig_it.lot_id == lot.id:
-                    refund_price = orig_it.unit_price
-                    break
+        refund_price = it_req.refund_price.quantize(Decimal("0.01"))
+        if refund_price < Decimal("0.00"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Refund price cannot be negative",
+            )
+
+        # Cumulative validation against original invoice
+        if original_sale:
+            orig_it = next((si for si in original_sale.items if si.lot_id == lot.id), None)
+            if not orig_it:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Lot {lot.lot_number} was not part of original invoice {original_sale.invoice_no}",
+                )
+
+            # Check historical returned quantity on this sale
+            prev_ret_stmt = (
+                select(func.coalesce(func.sum(SaleReturnItem.quantity), Decimal("0.000")))
+                .join(SaleReturn, SaleReturnItem.sale_return_id == SaleReturn.id)
+                .where(
+                    SaleReturn.original_sale_id == original_sale.id,
+                    SaleReturnItem.lot_id == lot.id,
+                )
+            )
+            already_returned = (await db.execute(prev_ret_stmt)).scalar() or Decimal("0.000")
+            if already_returned + qty > orig_it.total_quantity:
+                prod_label = lot.product.name_en if lot.product else lot.lot_number
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Cannot return {qty} units of {prod_label}. Already returned {already_returned} of {orig_it.total_quantity} purchased on invoice {original_sale.invoice_no}.",
+                )
+
+            if refund_price == Decimal("0.00"):
+                refund_price = orig_it.unit_price
 
         line_subtotal = (qty * refund_price).quantize(Decimal("0.01"))
         total_refund += line_subtotal
 
-        # Location routing: Damaged chemicals go to QUARANTINE
-        location = "QUARANTINE" if it_req.is_damaged else (it_req.restock_location or "DOKAN").upper()
+        # Regulated check (Pesticide Ordinance 1971): Expired chemicals cannot be restocked into DOKAN
+        is_expired = bool(lot.expiry_date and lot.expiry_date < date.today())
+        is_damaged = it_req.is_damaged or is_expired
+        location = "QUARANTINE" if is_damaged else (it_req.restock_location or "DOKAN").upper()
 
         stock_res = await db.execute(
             select(StockInventory).where(
@@ -174,7 +209,7 @@ async def process_return(
         after_stock = (before_stock + qty).quantize(Decimal("0.001"))
         stock.quantity = after_stock
 
-        movement_type = "RETURN_QUARANTINED" if it_req.is_damaged else "RETURN_RESTOCKED"
+        movement_type = "RETURN_QUARANTINED" if is_damaged else "RETURN_RESTOCKED"
         movement = StockMovement(
             product_id=lot.product_id,
             lot_id=lot.id,
@@ -186,7 +221,7 @@ async def process_return(
             balance_after=after_stock,
             unit=lot.product.base_unit if lot.product else "Unit",
             reference_doc_no=return_no,
-            remarks=f"Customer return ({movement_type}) from {customer.name if customer else 'Walk-in'}",
+            remarks=f"Customer return ({movement_type}) from {customer.name if customer else 'Walk-in'}{' (Expired chemical)' if is_expired else ''}",
             performed_by="Cashier",
         )
         db.add(movement)
@@ -195,10 +230,24 @@ async def process_return(
             lot_id=lot.id,
             quantity=qty,
             refund_price=refund_price,
-            is_damaged=it_req.is_damaged,
+            is_damaged=is_damaged,
             restock_location=location,
         )
         return_items.append(ret_item)
+
+    # Invariant: Cumulative refunds cannot exceed original invoice total amount
+    if original_sale:
+        prev_refund_stmt = (
+            select(func.coalesce(func.sum(SaleReturn.total_refund_amount), Decimal("0.00")))
+            .where(SaleReturn.original_sale_id == original_sale.id)
+        )
+        prev_refund_total = (await db.execute(prev_refund_stmt)).scalar() or Decimal("0.00")
+        if prev_refund_total + total_refund > original_sale.total_amount:
+            max_allowed = max(Decimal("0.00"), original_sale.total_amount - prev_refund_total)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Total return refund ({total_refund}) exceeds remaining refundable amount ({max_allowed}) for invoice {original_sale.invoice_no}",
+            )
 
     sale_return = SaleReturn(
         return_no=return_no,
@@ -237,16 +286,18 @@ async def process_return(
         it.sale_return_id = sale_return.id
         db.add(it)
 
-    # If DUE_ADJUSTMENT, deduct due and write ledger entry (due can never be negative)
+    # If DUE_ADJUSTMENT, deduct due and write ledger entry
+    # As explicitly instructed: Trap B allows due to go into minus (advance balance) on refund overflow
     if refund_type == "DUE_ADJUSTMENT" and customer:
-        customer.current_due = max(Decimal("0.00"), (customer.current_due - total_refund).quantize(Decimal("0.01")))
+        new_due = ((customer.current_due or Decimal("0.00")) - total_refund).quantize(Decimal("0.01"))
+        customer.current_due = new_due
         ledger = CustomerLedger(
             customer_id=customer.id,
             transaction_date=datetime.now(),
             transaction_type="RETURN_REFUND",
             debit=Decimal("0.00"),
             credit=total_refund,
-            balance_after=customer.current_due,
+            balance_after=new_due,
             money_receipt_no=return_no,
             sale_id=original_sale.id if original_sale else None,
             notes=f"Return refund adjustment {return_no}",

@@ -53,9 +53,10 @@ export default function AddProductModal({
       const code =
         newProdCode.trim() ||
         `SYN-${newProdName.replace(/\s+/g, "-").toUpperCase().slice(0, 6)}`
-      const retail = parseFloat(newProdRetail) || 0
-      const buying = parseFloat(newProdBuying) || 0
-      const initialStock = parseFloat(newProdInitialStock) || 0
+      const retail = Math.max(0, parseFloat(newProdRetail) || 0)
+      const buying = Math.max(0, parseFloat(newProdBuying) || 0)
+      const initialStock = Math.max(0, parseFloat(newProdInitialStock) || 0)
+      const minStock = Math.max(0, parseInt(newProdMinStock) || 5)
 
       const created = await createProduct({
         productCode: code,
@@ -67,7 +68,7 @@ export default function AddProductModal({
         cartonMultiplier: 1,
         standardRetailPrice: retail,
         buyingPrice: buying,
-        minStockAlert: parseInt(newProdMinStock) || 5,
+        minStockAlert: minStock,
         defaultBarcode: `${code}-DEF`,
       })
 
@@ -197,6 +198,7 @@ export default function AddProductModal({
             label="Retail Price (৳)"
             type="number"
             step="0.01"
+            min="0"
             required
             value={newProdRetail}
             onChange={(e) => setNewProdRetail(e.target.value)}
@@ -207,6 +209,7 @@ export default function AddProductModal({
             label="Buying Price (৳)"
             type="number"
             step="0.01"
+            min="0"
             required
             value={newProdBuying}
             onChange={(e) => setNewProdBuying(e.target.value)}
@@ -216,6 +219,7 @@ export default function AddProductModal({
           <Input
             label="Low Stock Alert Threshold"
             type="number"
+            min="0"
             value={newProdMinStock}
             onChange={(e) => setNewProdMinStock(e.target.value)}
             placeholder="5"

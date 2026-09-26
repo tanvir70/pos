@@ -71,17 +71,17 @@ export default function QuickAddStockModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const qty = parseFloat(addStockQty)
-    if (isNaN(qty) || qty <= 0) {
+    const qty = Math.max(0, parseFloat(addStockQty) || 0)
+    if (qty <= 0) {
       showWarning("Please enter a valid stock quantity")
       return
     }
 
     try {
       setIsAddingStock(true)
-      const buying = parseFloat(addStockBuying) || product.buyingPrice || 0
-      const retail = parseFloat(addStockRetail) || product.retailPrice || 0
-      const wholesale = parseFloat(addStockWholesale) || product.wholesalePrice || retail
+      const buying = Math.max(0, parseFloat(addStockBuying) || product.buyingPrice || 0)
+      const retail = Math.max(0, parseFloat(addStockRetail) || product.retailPrice || 0)
+      const wholesale = Math.max(0, parseFloat(addStockWholesale) || product.wholesalePrice || retail)
 
       if (retail <= 0) {
         showWarning("Please enter a valid retail price")
@@ -93,13 +93,20 @@ export default function QuickAddStockModal({
         return
       }
 
+      const today = new Date().toISOString().split("T")[0]
+      const expiryDate =
+        addStockExpiry ||
+        new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+
+      if (expiryDate < today) {
+        showWarning("Expiry date cannot be in the past.")
+        return
+      }
+
       const matched = groupedProducts.find((p) => p.productId === product.productId)
       const defaultLot = getNextLotNumber(matched?.lots)
       const lotNumber = addStockLotNumber.trim() || defaultLot
       const challanNo = addStockChallan.trim() || `CH-${Date.now().toString().slice(-6)}`
-      const expiryDate =
-        addStockExpiry ||
-        new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
 
       await createLot({
         productId: product.productId,

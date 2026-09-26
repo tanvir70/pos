@@ -35,12 +35,37 @@ class CustomerRequest(CamelModel):
     land_area: str | None = None
     customer_type: str = "RETAIL"
     current_due: Decimal | None = None
-    initial_due: Decimal | None = None
+    initial_due: Decimal | None = Field(default=None, ge=Decimal("0.00"))
     mfs_type: str | None = None
     mfs_number: str | None = None
     bank_name: str | None = None
     bank_branch: str | None = None
     bank_account_no: str | None = None
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        trimmed = (v or "").strip()
+        if not trimmed:
+            raise ValueError("Customer name is required and cannot be empty.")
+        return trimmed
+
+    @field_validator(
+        "father_name",
+        "business_name",
+        "email",
+        "village_address",
+        "land_area",
+        "bank_name",
+        "bank_branch",
+        "bank_account_no",
+    )
+    @classmethod
+    def sanitize_optional_text(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        trimmed = v.strip()
+        return trimmed or None
 
     @field_validator("phone")
     @classmethod
@@ -80,6 +105,19 @@ class CustomerPaymentRequest(CamelModel):
     money_receipt_no: str | None = None
     notes: str | None = None
     client_trx_id: str | None = None
+
+    @field_validator("payment_method")
+    @classmethod
+    def validate_method(cls, v: str) -> str:
+        return (v or "CASH").strip().upper()
+
+    @field_validator("money_receipt_no", "notes", "client_trx_id")
+    @classmethod
+    def sanitize_strings(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        trimmed = v.strip()
+        return trimmed or None
 
 class CustomerLedgerDto(CamelModel):
     id: int

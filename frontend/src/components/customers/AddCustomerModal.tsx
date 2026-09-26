@@ -73,7 +73,7 @@ export default function AddCustomerModal({
         businessName: form.businessName ? form.businessName.trim() : undefined,
         villageAddress: form.villageAddress ? form.villageAddress.trim() : undefined,
         landArea: form.landArea ? form.landArea.trim() : undefined,
-        initialDue: Number(form.initialDue) || 0,
+        initialDue: Math.max(0, Number(form.initialDue) || 0),
       })
       setForm(initialFormState)
       onSuccess()
@@ -229,10 +229,15 @@ export default function AddCustomerModal({
                 min="0"
                 step="10"
                 value={form.initialDue || ""}
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+                    e.preventDefault()
+                  }
+                }}
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    initialDue: Number(e.target.value) || 0,
+                    initialDue: Math.max(0, Number(e.target.value) || 0),
                   })
                 }
                 placeholder="0.00"

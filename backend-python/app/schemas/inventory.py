@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from pydantic import Field
+from pydantic import Field, field_validator, model_validator
 from app.schemas.base import CamelModel
 
 class InventoryLotDto(CamelModel):
@@ -20,7 +20,7 @@ class InventoryLotDto(CamelModel):
     created_at: datetime | None = None
 
 class LotEntryRequest(CamelModel):
-    product_id: int
+    product_id: int = Field(gt=0)
     lot_number: str
     entry_date: date
     expiry_date: date
@@ -32,6 +32,30 @@ class LotEntryRequest(CamelModel):
     location: str = "DOKAN"
     supplier_name: str | None = None
     challan_no: str | None = None
+
+    @field_validator("lot_number", "barcode")
+    @classmethod
+    def validate_code(cls, v: str) -> str:
+        trimmed = (v or "").strip()
+        if not trimmed:
+            raise ValueError("Value cannot be blank")
+        return trimmed
+
+    @field_validator("supplier_name", "challan_no")
+    @classmethod
+    def sanitize_optional_text(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        trimmed = v.strip()
+        return trimmed or None
+
+    @model_validator(mode="after")
+    def validate_expiry(self) -> "LotEntryRequest":
+        if self.expiry_date < self.entry_date:
+            raise ValueError(
+                f"Lot expiry date ({self.expiry_date}) cannot be earlier than entry date ({self.entry_date})."
+            )
+        return self
 
 class StockItemResponse(CamelModel):
     product_id: int
@@ -69,10 +93,18 @@ class QuarantineStockResponse(CamelModel):
     estimated_loss: Decimal
 
 class QuarantineDisposalRequest(CamelModel):
-    lot_id: int
+    lot_id: int = Field(gt=0)
     quantity: Decimal = Field(gt=Decimal("0.000"))
     reason: str
     performed_by: str | None = None
+
+    @field_validator("reason")
+    @classmethod
+    def validate_reason(cls, v: str) -> str:
+        trimmed = (v or "").strip()
+        if not trimmed:
+            raise ValueError("Reason cannot be blank")
+        return trimmed
 
 class StockMovementDto(CamelModel):
     id: int
@@ -92,13 +124,21 @@ class StockMovementDto(CamelModel):
     performed_by: str | None = None
 
 class StockAdjustmentRequest(CamelModel):
-    product_id: int
-    lot_id: int
+    product_id: int = Field(gt=0)
+    lot_id: int = Field(gt=0)
     adjustment_type: str
     quantity: Decimal = Field(gt=Decimal("0.000"))
     action_type: str = "SCRAP_DISCARD"  # 'SCRAP_DISCARD' or 'MOVE_TO_QUARANTINE'
     reason: str
     performed_by: str | None = None
+
+    @field_validator("reason", "adjustment_type", "action_type")
+    @classmethod
+    def validate_adjustment_text(cls, v: str) -> str:
+        trimmed = (v or "").strip()
+        if not trimmed:
+            raise ValueError("Field cannot be blank")
+        return trimmed
 
 class StockAdjustmentResponse(CamelModel):
     id: int

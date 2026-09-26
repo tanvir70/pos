@@ -151,7 +151,11 @@ export default function ReturnProcessingForm({
               {customers.map((c) => (
                 <SelectItem key={c.id} value={String(c.id)}>
                   {c.name} {c.businessName ? `(${c.businessName})` : ""}
-                  {Number(c.currentDue || 0) > 0 ? ` — Due: ${tk(c.currentDue)}` : ""}
+                  {Number(c.currentDue || 0) > 0
+                    ? ` — Due: ${tk(c.currentDue)}`
+                    : Number(c.currentDue || 0) < 0
+                    ? ` — Credit: ${tk(Math.abs(Number(c.currentDue)))}`
+                    : ""}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -256,7 +260,7 @@ export default function ReturnProcessingForm({
             <span className="text-[11px] font-semibold text-emerald-700">
               {refundType === "CASH_REFUND"
                 ? "Cash paid directly from till"
-                : "Credited to customer ledger due"}
+                : "Credited to customer ledger (store credit if exceeds due)"}
             </span>
           </div>
 
