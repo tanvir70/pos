@@ -278,11 +278,25 @@ app.include_router(dashboard.router)
 app.include_router(backup.router)
 
 # Optional: Serve React frontend static files if built
-frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../frontend/dist"))
+frontend_dist_local = os.path.abspath(os.path.join(os.path.dirname(__file__), "../dist"))
+frontend_dist_parent = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../frontend/dist"))
+frontend_dist = frontend_dist_local if os.path.exists(frontend_dist_local) else frontend_dist_parent
+
 if os.path.exists(frontend_dist):
+    class ImmutableStaticFiles(StaticFiles):
+        """Serves hashed static assets with 1-year immutable caching."""
+        def is_not_modified(self, response_headers, request_headers) -> bool:
+            return super().is_not_modified(response_headers, request_headers)
+
+        async def get_response(self, path: str, scope):
+            response = await super().get_response(path, scope)
+            # 1 Year immutable cache for Vite-hashed bundle assets
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            return response
+
     assets_dir = os.path.join(frontend_dist, "assets")
     if os.path.exists(assets_dir):
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+        app.mount("/assets", ImmutableStaticFiles(directory=assets_dir), name="assets")
 
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
@@ -290,5 +304,12 @@ if os.path.exists(frontend_dist):
             raise HTTPException(status_code=404, detail="API endpoint not found")
         index_html = os.path.join(frontend_dist, "index.html")
         if os.path.exists(index_html):
-            return FileResponse(index_html)
+            return FileResponse(
+                index_html,
+                headers={
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
+                },
+            )
         raise HTTPException(status_code=404, detail="Not found")

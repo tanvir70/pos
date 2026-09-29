@@ -23,7 +23,7 @@ class InventoryLot(Base):
 
     version: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
     product_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("product.id", ondelete="CASCADE"), nullable=False, index=True
+        Integer, ForeignKey("product.id", ondelete="CASCADE"), nullable=False, index=True
     )
     lot_number: Mapped[str] = mapped_column(String(50), nullable=False)
     entry_date: Mapped[date] = mapped_column(Date, nullable=False)
