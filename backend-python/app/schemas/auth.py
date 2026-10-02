@@ -1,3 +1,4 @@
+from pydantic import Field
 from app.schemas.base import CamelModel
 
 class LoginRequest(CamelModel):
@@ -17,3 +18,12 @@ class UserProfileResponse(CamelModel):
     full_name: str | None = None
     role: str
     active: bool
+
+class ChangePasswordRequest(CamelModel):
+    current_password: str = Field(description="Current user password")
+    new_password: str = Field(description="New password (minimum 6 characters)")
+
+class ChangePasswordResponse(CamelModel):
+    status: str
+    message: str
+

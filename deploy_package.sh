@@ -45,6 +45,7 @@ zip -r "$PROJECT_ROOT/deploy.zip" \
     run.py \
     requirements.txt \
     watchdog.sh \
+    reset_password.py \
     -x "*/__pycache__/*" "*.pyc" "*.db*" "logs/*" ".env*"
 
 cd "$PROJECT_ROOT"

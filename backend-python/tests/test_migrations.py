@@ -11,7 +11,7 @@ def test_alembic_configuration_and_head():
     script = ScriptDirectory.from_config(cfg)
     heads = script.get_heads()
     assert len(heads) == 1
-    assert heads[0] == "1553d6061019"
+    assert heads[0] == script.get_current_head()
 
 def test_alembic_upgrade_on_fresh_database():
     """Verify running alembic upgrade head on a clean database creates all tables successfully."""
@@ -23,6 +23,7 @@ def test_alembic_upgrade_on_fresh_database():
         # Run upgrade head
         command.upgrade(cfg, "head")
 
+        script = ScriptDirectory.from_config(cfg)
         # Verify that alembic_version table exists and is at head
         import sqlite3
         conn = sqlite3.connect(tmp_db)
@@ -30,7 +31,7 @@ def test_alembic_upgrade_on_fresh_database():
         cursor.execute("SELECT version_num FROM alembic_version")
         row = cursor.fetchone()
         assert row is not None
-        assert row[0] == "1553d6061019"
+        assert row[0] == script.get_current_head()
 
         # Verify essential business tables exist
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")

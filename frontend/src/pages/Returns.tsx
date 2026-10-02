@@ -485,6 +485,7 @@ export default function Returns() {
         returnDetail={detailModalReturn}
         onClose={() => setDetailModalReturn(null)}
         onPrintThermal={(ret) => {
+          setDetailModalReturn(null)
           setViewingReturn(ret)
         }}
       />

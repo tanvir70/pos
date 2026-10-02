@@ -65,6 +65,14 @@ function hasBusinessLot(item: StockItem) {
   return !!item.lotNumber
 }
 
+function isLotExpired(item: StockItem): boolean {
+  if (!item.expiryDate) return false
+  const exp = new Date(item.expiryDate)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return exp < today
+}
+
 function lotSortValue(item: StockItem) {
   const expiryTime = item.expiryDate ? new Date(item.expiryDate).getTime() : Number.MAX_SAFE_INTEGER
   const entryTime = item.entryDate ? new Date(item.entryDate).getTime() : Number.MAX_SAFE_INTEGER
@@ -138,7 +146,7 @@ export default function ProductSearch({
 
     const lotsByProduct = new Map<number, StockItem[]>()
     for (const item of stocks) {
-      if (!allowZeroStock && availableQuantity(item) <= 0) continue
+      if (!allowZeroStock && (availableQuantity(item) <= 0 || isLotExpired(item))) continue
       const lots = lotsByProduct.get(item.productId) ?? []
       lots.push(item)
       lotsByProduct.set(item.productId, lots)
@@ -147,8 +155,8 @@ export default function ProductSearch({
     const matchedLots: ProductSearchResult[] = []
 
     for (const item of stocks) {
-      // Do not show if product/lot stock is empty or zero unless allowZeroStock is enabled
-      if (!allowZeroStock && availableQuantity(item) <= 0) continue
+      // Do not show if product/lot stock is empty, zero, or expired unless allowZeroStock is enabled
+      if (!allowZeroStock && (availableQuantity(item) <= 0 || isLotExpired(item))) continue
 
       const itemValues = [
         item.productCode,
@@ -332,6 +340,16 @@ export default function ProductSearch({
                             <span className="truncate text-sm font-bold text-slate-950">
                               {productName(item)}
                             </span>
+                            {item.packSize && (
+                              <span className="shrink-0 text-[10px] font-medium text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-300">
+                                {item.packSize}
+                              </span>
+                            )}
+                            {Number(item.cartonMultiplier) > 1 && (
+                              <span className="shrink-0 text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                                {Number(item.cartonMultiplier)} {item.baseUnit}/ctn
+                              </span>
+                            )}
                             {isActive && (
                               <Check className="h-3.5 w-3.5 shrink-0 text-emerald-700" />
                             )}
@@ -370,7 +388,7 @@ export default function ProductSearch({
                           </span>
                           {saleMode === "WHOLESALE" && (
                             <span className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">
-                              Wholesale adjusted at checkout
+                              {item.lotWholesalePrice ? `Wholesale: ${formatTk(item.lotWholesalePrice)}` : "Wholesale adjusted at checkout"}
                             </span>
                           )}
                           <span
@@ -379,7 +397,18 @@ export default function ProductSearch({
                             }`}
                           >
                             <PackageCheck className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">{formatQuantity(selectedLotQuantity)} {item.baseUnit} in this lot</span>
+                            <span className="truncate">
+                              {formatQuantity(selectedLotQuantity)} {item.baseUnit}
+                              {Number(item.cartonMultiplier) > 1 && selectedLotQuantity > 0 && (
+                                <span className="font-normal text-slate-500 ml-1">
+                                  ({Math.floor(selectedLotQuantity / Number(item.cartonMultiplier))} Ctn
+                                  {selectedLotQuantity % Number(item.cartonMultiplier) !== 0
+                                    ? ` + ${selectedLotQuantity % Number(item.cartonMultiplier)}`
+                                    : ""}
+                                  )
+                                </span>
+                              )}
+                            </span>
                           </span>
                           {result.productLotCount > 1 && (
                             <span className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">

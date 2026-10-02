@@ -1,4 +1,5 @@
 import { formatTk } from "./currency"
+import { STORE_INFO } from "../constants/store"
 
 /**
  * WhatsApp Integration Utility for Agrochemical Dealer Ledger
@@ -51,7 +52,7 @@ export function generateDueReminderUrl({
   customerName,
   businessName,
   dueAmount,
-  shopName = "Rajib Enterprise",
+  shopName = STORE_INFO.name,
 }: DueReminderParams): string {
   const normalizedPhone = normalizeBDPhone(phone)
   if (!normalizedPhone) return ""
@@ -65,7 +66,8 @@ Your current outstanding balance with ${shopName} is ${formattedDue}.
 Kindly settle the due amount at your earliest convenience. We appreciate your cooperation.
 
 Thank you,
-${shopName}`
+${shopName}
+Phone: ${STORE_INFO.phone}`
 
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`
 }
@@ -79,7 +81,7 @@ export function openWhatsAppPaymentReminder(
   totalAmount: number,
   remainingDue: number,
   invoiceNumber?: string,
-  shopName = "Rajib Enterprise",
+  shopName = STORE_INFO.name,
 ): void {
   const normalizedPhone = normalizeBDPhone(phone)
   if (!normalizedPhone) return
@@ -99,7 +101,8 @@ The full bill has been paid in full.`
   message += `
 
 Thank you,
-${shopName}`
+${shopName}
+Phone: ${STORE_INFO.phone}`
 
   const url = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`
   window.open(url, "_blank", "noopener,noreferrer")

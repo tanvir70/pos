@@ -128,12 +128,18 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
       const latestStock = prodStocks[0]
 
       return {
+        product: prod,
         productId: prod.id,
         nameEn: prod.nameEn,
         nameBn: prod.nameBn,
         productCode: prod.productCode,
         category: prod.category,
         baseUnit: prod.baseUnit,
+        packSize: prod.packSize,
+        unitSize: prod.unitSize,
+        cartonMultiplier: prod.cartonMultiplier,
+        cartonWholesalePrice: prod.cartonWholesalePrice,
+        cartonBuyingPrice: prod.cartonBuyingPrice,
         minStockAlert: prod.minStockAlert ?? 5,
         totalStock,
         retailPrice: prod.standardRetailPrice || latestStock?.lotRetailPrice || 0,
@@ -216,8 +222,12 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   const openAddStockModal = (product: GroupedProduct) => {
     setStockModalProduct({
       productId: product.productId,
+      productCode: product.productCode,
       nameEn: product.nameEn,
       baseUnit: product.baseUnit,
+      packSize: product.packSize,
+      unitSize: product.unitSize,
+      cartonMultiplier: product.cartonMultiplier,
       retailPrice: product.retailPrice,
       wholesalePrice: product.wholesalePrice,
       buyingPrice: product.buyingPrice,
@@ -296,6 +306,10 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
         isOpen={showAddProduct}
         onClose={() => setShowAddProduct(false)}
         onSuccess={loadData}
+        onPrintSticker={(lot) => {
+          setStickerItem(lot)
+          setIsStickerOpen(true)
+        }}
       />
 
       {/* Dokan Stock Inventory Table */}

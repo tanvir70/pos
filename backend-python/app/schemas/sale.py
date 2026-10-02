@@ -43,6 +43,10 @@ class SaleItemDetailResponse(CamelModel):
     barcode: str
     product_name_en: str
     product_name_bn: str
+    pack_size: str | None = None
+    unit_size: str | None = None
+    carton_multiplier: Decimal | None = None
+    base_unit: str | None = None
     total_quantity: Decimal
     unit_price: Decimal
     unit_cost: Decimal

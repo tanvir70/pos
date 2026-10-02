@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import type { StockItem, SaleResponse, SaleItemResponse } from "../../types"
 import { formatLotNumber } from "../../utils/lotNumber"
-import { formatQuantityByUnit } from "../../utils/unit"
+import { formatQuantityByUnit, pluralizeUnit } from "../../utils/unit"
 import { searchSales } from "../../api/endpoints"
 
 export interface ReturnSuperSearchProps {
@@ -465,7 +465,7 @@ export default function ReturnSuperSearch({
                   {matchingStocks.map((item, idx) => {
                     const globalIdx = matchingSales.length + idx
                     const isSelected = activeIndex === globalIdx
-                    const stockQty = item.quantity ?? (item as any).totalQuantity ?? 0
+                    const stockQty = item.quantity ?? item.totalQuantity ?? 0
 
                     return (
                       <div
@@ -481,8 +481,15 @@ export default function ReturnSuperSearch({
                         }`}
                       >
                         <div className="min-w-0 flex-1 pr-3">
-                          <div className="font-bold text-slate-900 truncate">
-                            {item.nameBn || item.productNameBn} ({item.nameEn || item.productNameEn})
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="font-bold text-slate-900 truncate">
+                              {item.nameBn || item.productNameBn} ({item.nameEn || item.productNameEn})
+                            </span>
+                            {item.packSize && (
+                              <span className="shrink-0 text-[10px] font-medium text-emerald-800 bg-emerald-100/80 px-1.5 py-0.2 rounded border border-emerald-300">
+                                {item.packSize}
+                              </span>
+                            )}
                           </div>
                           <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
                             <span className="font-mono font-bold bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 text-slate-700">
@@ -495,7 +502,7 @@ export default function ReturnSuperSearch({
                             )}
                             <span>·</span>
                             <span>
-                              Stock: <strong className="text-slate-800">{stockQty} {item.baseUnit}</strong>
+                              Stock: <strong className="text-slate-800">{stockQty} {pluralizeUnit(item.baseUnit, stockQty)}</strong>
                             </span>
                           </div>
                         </div>

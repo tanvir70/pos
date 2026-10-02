@@ -2,6 +2,7 @@ import React from "react"
 import { CheckCircle2, X, Printer } from "lucide-react"
 import type { SaleReturnResponse } from "../../types"
 import { formatQuantityByUnit } from "../../utils/unit"
+import { STORE_INFO } from "../../constants/store"
 
 export interface ReturnReceiptModalProps {
   voucher: SaleReturnResponse | null
@@ -15,7 +16,7 @@ export default function ReturnReceiptModal({ voucher, onClose }: ReturnReceiptMo
   if (!voucher) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 print:m-0 print:p-0 print:border-none print:shadow-none print-area">
         {/* Actions Header (hidden on print) */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-200 no-print">
@@ -36,10 +37,13 @@ export default function ReturnReceiptModal({ voucher, onClose }: ReturnReceiptMo
         {/* Printable Slip Content */}
         <div className="py-3 text-center border-b border-dashed border-slate-200">
           <h2 className="text-lg font-bold text-slate-900">
-            Rajib Enterprise
+            {STORE_INFO.name}
           </h2>
           <p className="text-xs text-slate-500">
-            Authorized Agro Dealer · Uttar Bazar, Belabo, Narsingdi
+            {STORE_INFO.tagline} · {STORE_INFO.address}
+          </p>
+          <p className="text-xs text-slate-500">
+            Phone: {STORE_INFO.phone}
           </p>
           <div className="inline-block mt-1 px-2.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900">
             Sales Return Voucher (Credit Note)
@@ -120,6 +124,36 @@ export default function ReturnReceiptModal({ voucher, onClose }: ReturnReceiptMo
             Note: {voucher.reason}
           </p>
         )}
+
+        {/* Dual Signature Section (Tasteful 80mm Layout) */}
+        <div className="pt-8 pb-2 grid grid-cols-2 gap-4 text-center text-[10px] leading-tight">
+          <div>
+            <div className="border-t border-dashed border-gray-600 pt-1 font-semibold text-black">
+              Customer Signature
+            </div>
+            <div className="text-[9px] text-gray-500 mt-0.5 font-normal">
+              Refund Received
+            </div>
+          </div>
+          <div>
+            <div className="border-t border-dashed border-gray-600 pt-1 font-semibold text-black">
+              Authorized Signature
+            </div>
+            <div className="text-[9px] text-gray-500 mt-0.5 font-normal">
+              Rajib Enterprise
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-dashed border-gray-400 mt-3 pt-2 text-center space-y-1">
+          <p className="text-[11px] font-bold text-black">
+            Returned goods verified & received
+          </p>
+          <p className="text-[9px] text-gray-500 font-mono mt-1">
+            Powered by Rajib Enterprise POS
+          </p>
+        </div>
 
         {/* Print Buttons (no-print) */}
         <div className="mt-5 pt-3 border-t border-slate-200 flex gap-2 no-print">

@@ -8,6 +8,8 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  Lock,
+  KeyRound,
 } from "lucide-react"
 import {
   getWholesaleSettings,
@@ -15,10 +17,11 @@ import {
   DEFAULT_WHOLESALE_SETTINGS,
   type WholesaleSettings,
 } from "../utils/wholesaleSettings"
-import { downloadDatabaseBackup } from "../api/endpoints"
+import { downloadDatabaseBackup, changePassword } from "../api/endpoints"
 import { roundAccounting } from "../utils/currency"
 import { useToast } from "../context/ToastContext"
 import Button from "../components/ui/Button"
+import Input from "../components/ui/Input"
 
 export default function SettingsPage() {
   const { showSuccess, showError, showWarning } = useToast()
@@ -32,6 +35,12 @@ export default function SettingsPage() {
   // Backup state
   const [isBackupLoading, setIsBackupLoading] = useState(false)
   const [backupStatus, setBackupStatus] = useState<"idle" | "success" | "error">("idle")
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
 
   useEffect(() => {
     const handleSettingsUpdated = (e: Event) => {
@@ -94,6 +103,34 @@ export default function SettingsPage() {
       setTimeout(() => setBackupStatus("idle"), 4000)
     } finally {
       setIsBackupLoading(false)
+    }
+  }
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!currentPassword) {
+      showWarning("Please enter your current password.")
+      return
+    }
+    if (newPassword.length < 6) {
+      showWarning("New password must be at least 6 characters long.")
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      showWarning("New password and confirmation do not match.")
+      return
+    }
+    try {
+      setIsChangingPassword(true)
+      await changePassword({ currentPassword, newPassword })
+      showSuccess("Password changed successfully! Keep your new credentials safe.")
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+    } catch (err) {
+      showError(err, "Failed to update password")
+    } finally {
+      setIsChangingPassword(false)
     }
   }
 
@@ -200,6 +237,72 @@ export default function SettingsPage() {
         >
           {isBackupLoading ? "Downloading..." : "Download Backup"}
         </Button>
+      </div>
+
+      {/* Account Security & Password Card */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
+            <Lock className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">Account Security</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Change your password for secure access to the POS terminal and inventory.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg">
+          <Input
+            label="Current Password"
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Enter current password"
+            leftAdornment={<KeyRound className="w-4 h-4" />}
+            disabled={isChangingPassword}
+            inputSize="md"
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input
+              label="New Password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              leftAdornment={<Lock className="w-4 h-4" />}
+              disabled={isChangingPassword}
+              inputSize="md"
+            />
+            <Input
+              label="Confirm New Password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter password"
+              leftAdornment={<Lock className="w-4 h-4" />}
+              disabled={isChangingPassword}
+              inputSize="md"
+            />
+          </div>
+          {newPassword && confirmPassword && newPassword !== confirmPassword && (
+            <p className="text-xs text-rose-600 font-medium">New password and confirmation do not match.</p>
+          )}
+          {newPassword && newPassword.length > 0 && newPassword.length < 6 && (
+            <p className="text-xs text-amber-600 font-medium">New password must be at least 6 characters.</p>
+          )}
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={!currentPassword || newPassword.length < 6 || newPassword !== confirmPassword || isChangingPassword}
+            isLoading={isChangingPassword}
+            leftIcon={<Save className="w-4 h-4" />}
+            className="font-bold cursor-pointer disabled:opacity-50"
+          >
+            Update Password
+          </Button>
+        </form>
       </div>
     </div>
   )

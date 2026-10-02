@@ -1,6 +1,8 @@
 import { useCallback, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { FileText, Printer, X } from "lucide-react"
 import type { SaleResponse, Customer } from "../types"
+import { STORE_INFO } from "../constants/store"
 
 // BUSINESS DECISION: A4 Invoice & Challan prints wholesale agricultural dispatches with
 // full customer profile, carton conversions, previous balance integration, and dual legal signatures.
@@ -23,6 +25,13 @@ export default function A4InvoicePrint({
   onAfterPrint,
   autoPrint = false,
 }: A4InvoicePrintProps) {
+  useEffect(() => {
+    document.body.classList.add("printing-a4-active")
+    return () => {
+      document.body.classList.remove("printing-a4-active")
+    }
+  }, [])
+
   const printAndClose = useCallback(() => {
     window.print()
     window.setTimeout(() => {
@@ -77,9 +86,63 @@ export default function A4InvoicePrint({
 
   const totalPaid = (sale.cashPaid || 0) + (sale.digitalPaid || 0)
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full overflow-hidden flex flex-col my-auto">
+  return createPortal(
+    <div className="a4-print-portal fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto print:static print:block print:p-0 print:m-0 print:bg-white print:overflow-visible print:h-auto a4-print-modal-root">
+      {/* Scoped Print Pagination & A4 Engine Styles */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 12mm 10mm 15mm 10mm;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            height: auto !important;
+            min-height: 100% !important;
+            overflow: visible !important;
+          }
+          .a4-print-portal,
+          .a4-print-modal-root,
+          .a4-print-modal-card,
+          .a4-print-scroll-container,
+          .a4-invoice-print {
+            position: static !important;
+            display: block !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+          }
+          .a4-print-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+          }
+          .a4-print-table thead {
+            display: table-header-group !important;
+          }
+          .a4-print-table tr,
+          .a4-item-row {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .a4-no-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+        }
+      `}</style>
+
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full overflow-hidden flex flex-col my-auto print:static print:block print:shadow-none print:border-none print:rounded-none print:max-w-none print:w-full print:m-0 print:p-0 print:overflow-visible a4-print-modal-card">
         {/* Screen Top Bar (no-print) */}
         <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between no-print">
           <div className="flex items-center gap-2">
@@ -108,9 +171,9 @@ export default function A4InvoicePrint({
         </div>
 
         {/* Printable A4 Document */}
-        <div className="p-6 sm:p-10 bg-white overflow-y-auto max-h-[82vh]">
+        <div className="p-6 sm:p-10 bg-white overflow-y-auto max-h-[82vh] print:static print:block print:p-0 print:m-0 print:max-h-none print:overflow-visible print:h-auto a4-print-scroll-container">
           <div
-            className="a4-invoice-print mx-auto text-black bg-white"
+            className="a4-invoice-print mx-auto text-black bg-white print:static print:block print:p-0 print:m-0 print:w-full print:max-w-none print:overflow-visible"
             style={{
               width: "100%",
               maxWidth: "210mm",
@@ -125,20 +188,20 @@ export default function A4InvoicePrint({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-black text-emerald-800 tracking-tight">
-                      Rajib Enterprise
+                      {STORE_INFO.name}
                     </span>
                     <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
-                      Authorized Agro Dealer
+                      {STORE_INFO.tagline}
                     </span>
                   </div>
                   <p className="text-xs font-semibold text-gray-700 mt-0.5">
-                    Agrochemical Dealership Cockpit — Pesticides, Fertilizers & Seeds
+                    {STORE_INFO.dealershipDescription}
                   </p>
                   <p className="text-[11px] text-gray-600">
-                    Krishi Market, Uttar Bazar, Narsingdi Sadar, Narsingdi.
+                    {STORE_INFO.address}.
                   </p>
                   <p className="text-[11px] text-gray-600">
-                    Mobile: 01711-234567, 01911-123456 | Email: rajib.enterprise.narsingdi@gmail.com
+                    Mobile: {STORE_INFO.phone}
                   </p>
                 </div>
 
@@ -152,15 +215,15 @@ export default function A4InvoicePrint({
                   <p className="text-[11px] text-gray-600">
                     Date: {formattedDate} ({formattedTime})
                   </p>
-                  <p className="text-[11px] text-gray-600">
-                    Served by: {sale.cashierName || "Rajib"}
+                  <p className="text-[11px] text-gray-600 font-medium">
+                    Served by: Rajib Enterprise
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Customer & Delivery Profile Section */}
-            <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 border border-gray-200 rounded-lg mb-5 text-[11px]">
+            <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 border border-gray-200 rounded-lg mb-5 text-[11px] a4-no-break print:break-inside-avoid print:bg-gray-50/70">
               <div>
                 <span className="text-xs font-bold text-emerald-900 block border-b border-gray-200 pb-1 mb-1.5">
                   Billed To:
@@ -199,18 +262,6 @@ export default function A4InvoicePrint({
                     </span>
                   </div>
                   <div className="flex">
-                    <span className="w-24 text-gray-600">WhatsApp:</span>
-                    <span className="font-mono text-gray-800">
-                      {customer?.whatsappNumber || customer?.phone || "-"}
-                    </span>
-                  </div>
-                  <div className="flex">
-                    <span className="w-24 text-gray-600">Supply Source:</span>
-                    <span className="font-semibold text-gray-800">
-                      Shop & Central Warehouse (Dual Stock)
-                    </span>
-                  </div>
-                  <div className="flex">
                     <span className="w-24 text-gray-600">Payment Method:</span>
                     <span className="font-semibold text-emerald-800">
                       {sale.paymentMethod || "CASH"}
@@ -221,10 +272,10 @@ export default function A4InvoicePrint({
             </div>
 
             {/* Product Items Table */}
-            <div className="mb-4">
-              <table className="w-full border-collapse text-[11px]">
+            <div className="mb-4 print:mb-6 overflow-visible">
+              <table className="w-full border-collapse text-[11px] a4-print-table">
                 <thead>
-                  <tr className="bg-emerald-900 text-white">
+                  <tr className="bg-emerald-900 text-white print:bg-emerald-900 print:text-white">
                     <th className="border border-emerald-950 py-2 px-2 text-center w-10">
                       SL
                     </th>
@@ -248,33 +299,63 @@ export default function A4InvoicePrint({
                 <tbody>
                   {(sale.items ?? []).map((item, idx) => {
                     const totalUnits = item.totalQuantity || 0
+                    const multiplier = item.cartonMultiplier || 1
+                    const hasCartons = multiplier > 1 && totalUnits >= multiplier
+                    const ctns = hasCartons ? Math.floor(totalUnits / multiplier) : 0
+                    const loose = hasCartons ? Math.round((totalUnits % multiplier) * 1000) / 1000 : 0
 
                     return (
                       <tr
                         key={item.id || idx}
-                        className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                        className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} a4-item-row`}
                       >
-                        <td className="border border-gray-300 py-2 px-2 text-center tabular-nums">
+                        <td className="border border-gray-300 py-1.5 px-2 text-center tabular-nums">
                           {idx + 1}
                         </td>
-                        <td className="border border-gray-300 py-2 px-3">
+                        <td className="border border-gray-300 py-1.5 px-3">
                           <div className="font-bold text-gray-900">
                             {item.productNameEn || item.productNameBn}
                           </div>
-                          <div className="text-[10px] text-gray-500">
-                            {item.productNameBn}
+                          <div className="text-[10px] text-gray-500 flex flex-wrap items-center gap-1.5">
+                            {item.packSize && (
+                              <span className="font-semibold text-emerald-900">
+                                {item.packSize}
+                              </span>
+                            )}
+                            {item.productNameBn && item.productNameBn !== item.productNameEn && (
+                              <span>• {item.productNameBn}</span>
+                            )}
+                            {multiplier > 1 && (
+                              <span className="text-gray-400 font-mono text-[9px]">
+                                (1 Ctn = {multiplier} {item.baseUnit || "Pcs"})
+                              </span>
+                            )}
                           </div>
                         </td>
-                        <td className="border border-gray-300 py-2 px-2 text-center font-mono text-[10px]">
+                        <td className="border border-gray-300 py-1.5 px-2 text-center font-mono text-[10px]">
                           #{item.lotNumber}
                         </td>
-                        <td className="border border-gray-300 py-2 px-2 text-center font-bold tabular-nums">
-                          {totalUnits}
+                        <td className="border border-gray-300 py-1.5 px-2 text-center tabular-nums">
+                          <div className="font-bold text-gray-900">
+                            {totalUnits} {item.baseUnit || "Pcs"}
+                          </div>
+                          {hasCartons && (
+                            <div className="text-[10px] font-semibold text-emerald-800">
+                              {loose > 0
+                                ? `(${ctns} Ctn + ${loose} Pk)`
+                                : `(${ctns} ${ctns > 1 ? "Ctns" : "Ctn"})`}
+                            </div>
+                          )}
                         </td>
-                        <td className="border border-gray-300 py-2 px-3 text-right tabular-nums">
-                          {tk(item.unitPrice)}
+                        <td className="border border-gray-300 py-1.5 px-3 text-right tabular-nums">
+                          <div>{tk(item.unitPrice)}</div>
+                          {multiplier > 1 && (
+                            <div className="text-[9px] text-gray-400 font-mono">
+                              {tk(item.unitPrice * multiplier)}/ctn
+                            </div>
+                          )}
                         </td>
-                        <td className="border border-gray-300 py-2 px-3 text-right font-bold tabular-nums text-gray-900">
+                        <td className="border border-gray-300 py-1.5 px-3 text-right font-bold tabular-nums text-gray-900">
                           {tk(item.subtotal)}
                         </td>
                       </tr>
@@ -285,25 +366,22 @@ export default function A4InvoicePrint({
             </div>
 
             {/* Financial Summary & Breakdown */}
-            <div className="grid grid-cols-2 gap-6 items-start mb-6">
-              {/* Notes & Terms */}
-              <div className="border border-gray-300 rounded-lg p-3 text-[11px] bg-gray-50/50 space-y-1.5">
-                <span className="font-bold text-gray-800 block">
-                  Terms & Conditions:
-                </span>
-                <p className="text-[10px] text-gray-600 leading-relaxed">
-                  1. Unopened, sealed products are returnable within 15 days of purchase.
-                </p>
-                <p className="text-[10px] text-gray-600 leading-relaxed">
-                  2. Please read the packaging instructions carefully before using any pesticide or insecticide.
-                </p>
-                <p className="text-[10px] text-gray-600 leading-relaxed">
-                  3. Outstanding dues are payable against the next invoice or within the agreed credit limit.
-                </p>
-                {sale.digitalTrxId && (
-                  <p className="text-[10px] font-mono text-emerald-800 pt-1">
-                    Digital Payment TrxID: {sale.digitalTrxId} ({sale.digitalMedium || "MFS"})
-                  </p>
+            <div className="grid grid-cols-2 gap-6 items-start mb-6 a4-no-break print:break-inside-avoid">
+              {/* Left Column: Transaction reference */}
+              <div className="text-[11px] space-y-2">
+                {sale.digitalTrxId ? (
+                  <div className="border border-gray-200 rounded-lg p-2.5 bg-gray-50/70">
+                    <span className="font-bold text-gray-700 block text-[10px] uppercase tracking-wide">
+                      Digital Payment Reference
+                    </span>
+                    <p className="font-mono text-xs text-emerald-800 font-semibold mt-0.5">
+                      TrxID: {sale.digitalTrxId} ({sale.digitalMedium || "MFS"})
+                    </p>
+                  </div>
+                ) : (
+                  <div className="border border-dashed border-gray-200 rounded-lg p-2.5 text-gray-500 text-[10px]">
+                    Official computer-generated invoice from {STORE_INFO.name}.
+                  </div>
                 )}
               </div>
 
@@ -380,7 +458,7 @@ export default function A4InvoicePrint({
             </div>
 
             {/* Dual Legal Signatures */}
-            <div className="pt-12 mt-8 border-t border-gray-300">
+            <div className="pt-10 mt-6 border-t border-gray-300 a4-no-break print:break-inside-avoid">
               <div className="grid grid-cols-2 gap-10">
                 <div className="text-center">
                   <div className="border-t border-black w-48 mx-auto pt-1">
@@ -427,6 +505,8 @@ export default function A4InvoicePrint({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
+

@@ -219,14 +219,25 @@ export async function apiClient<T>(
       const contentType = response.headers.get("content-type") || ""
       if (contentType.includes("application/json")) {
         responseData = await response.json()
-        if (responseData && typeof responseData === "object") {
-          const obj = responseData as Partial<ErrorResponse> & Record<string, unknown>
-          errorDetail = (obj.message ||
-            obj.error ||
-            JSON.stringify(responseData)) as string
+          const obj = responseData as any
+          if (Array.isArray(obj.detail)) {
+            errorDetail = obj.detail
+              .map((d: any) => {
+                const field = Array.isArray(d.loc)
+                  ? d.loc.filter((x: any) => x !== "body").join(".")
+                  : ""
+                return field ? `${field}: ${d.msg}` : (d.msg || "Invalid field")
+              })
+              .join("; ")
+          } else if (typeof obj.detail === "string") {
+            errorDetail = obj.detail
+          } else {
+            errorDetail = (obj.message ||
+              obj.error ||
+              JSON.stringify(responseData)) as string
+          }
           errorCode = obj.errorCode
           details = obj.details
-        }
       } else {
         const text = await response.text()
         if (text) errorDetail = text

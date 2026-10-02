@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import date, timedelta
 import pytest
@@ -286,3 +287,76 @@ async def test_quarantine_disposal_and_valuation():
             assert float(val_data["totalCostValuation"]) >= 0.0
             assert float(val_data["totalRetailValuation"]) >= 0.0
             assert int(val_data["totalLots"]) >= 1
+
+@pytest.mark.asyncio
+async def test_lot_entry_canonical_quantity_and_scannable_sticker_barcode():
+    async with lifespan(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            login = await ac.post("/api/auth/login", json={"username": "owner", "password": "1234"})
+            token = login.json()["token"]
+            headers = {"Authorization": f"Bearer {token}"}
+
+            # Fetch any active product
+            prods_res = await ac.get("/api/products", headers=headers)
+            prods = prods_res.json()
+            assert len(prods) > 0
+            prod = prods[0]
+            pid = prod["id"]
+            clean_code = re.sub(r"[^A-Za-z0-9]", "", (prod.get("defaultBarcode") or prod["productCode"]).strip())
+
+            # 1. Canonical quantity + omitted barcode auto-generates clean Code 128 sticker barcode
+            lot_res = await ac.post(
+                "/api/inventory/lots",
+                json={
+                    "productId": pid,
+                    "lotNumber": "LOT-01",
+                    "quantity": 10,
+                    "purchaseCost": 47,
+                    "lotRetailPrice": 60,
+                    "lotWholesalePrice": 53,
+                    "entryDate": "2026-10-02",
+                    "expiryDate": "2028-10-01",
+                    "supplierName": "Syngenta Bangladesh Limited",
+                    "challanNo": "CH-773559",
+                },
+                headers=headers,
+            )
+            assert lot_res.status_code == 201, lot_res.text
+            data = lot_res.json()
+            assert data["productId"] == pid
+            assert data["lotNumber"] == "LOT-01"
+            assert data["barcode"] == f"{clean_code}-01"
+
+            # 2. Second lot LOT-02 auto-generates unique sequential barcode
+            lot2_res = await ac.post(
+                "/api/inventory/lots",
+                json={
+                    "productId": pid,
+                    "lotNumber": "LOT-02",
+                    "quantity": 20,
+                    "purchaseCost": 47,
+                    "lotRetailPrice": 60,
+                    "lotWholesalePrice": 53,
+                    "expiryDate": "2028-10-01",
+                },
+                headers=headers,
+            )
+            assert lot2_res.status_code == 201, lot2_res.text
+            data2 = lot2_res.json()
+            assert data2["barcode"] == f"{clean_code}-02"
+
+            # 3. Missing quantity must fail with 422
+            fail_res = await ac.post(
+                "/api/inventory/lots",
+                json={
+                    "productId": pid,
+                    "lotNumber": "LOT-03",
+                    "purchaseCost": 47,
+                    "lotRetailPrice": 60,
+                    "lotWholesalePrice": 53,
+                    "expiryDate": "2028-10-01",
+                },
+                headers=headers,
+            )
+            assert fail_res.status_code == 422

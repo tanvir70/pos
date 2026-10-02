@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react"
 import { Printer, X } from "lucide-react"
 import type { SaleResponse } from "../types"
+import { STORE_INFO } from "../constants/store"
 
 // BUSINESS DECISION: Thermal receipt (80mm/58mm) formatted specifically for fast retail counter
 // transactions with compact item breakdown, digital payment trace, and dealership footer.
@@ -86,16 +87,16 @@ export default function ThermalReceipt({
             {/* Store Letterhead */}
             <div className="text-center pb-3 mb-2 border-b border-dashed border-gray-400">
               <h1 className="text-base font-bold leading-tight text-black">
-                Rajib Enterprise
+                {STORE_INFO.name}
               </h1>
               <p className="text-[11px] font-semibold text-gray-800 mt-0.5">
-                Authorized Agro Dealer
+                {STORE_INFO.tagline}
               </p>
               <p className="text-[10px] text-gray-700">
-                Krishi Market, Uttar Bazar, Narsingdi
+                {STORE_INFO.address}
               </p>
               <p className="text-[10px] text-gray-700">
-                Phone: 01711-234567, 01911-123456
+                Phone: {STORE_INFO.phone}
               </p>
               <div className="mt-1.5 inline-block border border-black rounded px-2 py-0.5 text-[10px] font-bold">
                 Cash Memo
@@ -143,27 +144,41 @@ export default function ThermalReceipt({
                 </tr>
               </thead>
               <tbody className="divide-y divide-dashed divide-gray-300">
-                {(sale.items ?? []).map((item) => (
-                  <tr key={item.id || `${item.lotId}-${item.productNameBn}`}>
-                    <td className="py-1.5 pr-1">
-                      <div className="font-bold text-[11px] leading-tight">
-                        {item.productNameEn || item.productNameBn}
-                      </div>
-                      <div className="text-[9px] text-gray-600 font-mono">
-                        #{item.lotNumber}
-                      </div>
-                    </td>
-                    <td className="py-1.5 text-center font-bold tabular-nums">
-                      {item.totalQuantity}
-                    </td>
-                    <td className="py-1.5 text-right tabular-nums text-gray-700">
-                      {tk(item.unitPrice)}
-                    </td>
-                    <td className="py-1.5 text-right font-bold tabular-nums">
-                      {tk(item.subtotal)}
-                    </td>
-                  </tr>
-                ))}
+                {(sale.items ?? []).map((item) => {
+                  const totalUnits = item.totalQuantity || 0
+                  const multiplier = item.cartonMultiplier || 1
+                  const hasCartons = multiplier > 1 && totalUnits >= multiplier
+                  const ctns = hasCartons ? Math.floor(totalUnits / multiplier) : 0
+                  const loose = hasCartons ? Math.round((totalUnits % multiplier) * 1000) / 1000 : 0
+
+                  return (
+                    <tr key={item.id || `${item.lotId}-${item.productNameBn}`}>
+                      <td className="py-1.5 pr-1">
+                        <div className="font-bold text-[11px] leading-tight">
+                          {item.productNameEn || item.productNameBn}
+                        </div>
+                        <div className="text-[9px] text-gray-600 font-mono">
+                          #{item.lotNumber}
+                          {item.packSize && ` • ${item.packSize}`}
+                        </div>
+                      </td>
+                      <td className="py-1.5 text-center font-bold tabular-nums">
+                        <div>{item.totalQuantity}</div>
+                        {hasCartons && (
+                          <div className="text-[9px] text-gray-600 font-medium">
+                            {loose > 0 ? `${ctns}c+${loose}p` : `${ctns}ctn`}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-1.5 text-right tabular-nums text-gray-700">
+                        {tk(item.unitPrice)}
+                      </td>
+                      <td className="py-1.5 text-right font-bold tabular-nums">
+                        {tk(item.subtotal)}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
 

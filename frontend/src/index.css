@@ -82,12 +82,18 @@ body {
     print-color-adjust: exact !important;
   }
 
+  body.printing-a4-active > #root,
+  body:has(.a4-print-portal) > #root {
+    display: none !important;
+  }
+
   body * {
     visibility: hidden !important;
   }
 
   .print-area, .print-area *,
   .thermal-receipt-print, .thermal-receipt-print *,
+  .a4-print-portal, .a4-print-portal *:not(.no-print),
   .a4-invoice-print, .a4-invoice-print *,
   .barcode-sticker-print, .barcode-sticker-print * {
     visibility: visible !important;
@@ -112,16 +118,36 @@ body {
 
   .a4-invoice-print {
     page: a4-page;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 210mm !important;
+    position: static !important;
+    width: 100% !important;
     max-width: 100% !important;
     margin: 0 auto !important;
-    padding: 8mm !important;
+    padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
     background: white !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .a4-invoice-print table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+  }
+
+  .a4-invoice-print thead {
+    display: table-header-group !important;
+  }
+
+  .a4-invoice-print tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .a4-invoice-print .a4-no-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .barcode-sticker-print {

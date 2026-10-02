@@ -21,6 +21,21 @@ export type NavigationTab =
 // ----------------------------------------------------------------------------
 // Product
 // ----------------------------------------------------------------------------
+export interface InitialStockRequest {
+  quantity: number
+  cartons?: number
+  looseUnits?: number
+  lotNumber?: string
+  barcode?: string
+  entryDate?: string
+  expiryDate?: string
+  purchaseCost?: number
+  lotRetailPrice?: number
+  lotWholesalePrice?: number
+  supplierName?: string
+  challanNo?: string
+}
+
 export interface Product {
   id: number
   productCode: string
@@ -29,14 +44,20 @@ export interface Product {
   companyName: string
   category: string
   baseUnit: string
+  packSize?: string | null
+  unitSize?: string | null
   cartonMultiplier: number
   defaultBarcode: string
   standardRetailPrice: number
   standardWholesalePrice?: number
   buyingPrice?: number
+  cartonWholesalePrice?: number | null
+  cartonBuyingPrice?: number | null
   minStockAlert: number
   imagePath?: string | null
   createdAt?: string
+  initialStock?: InitialStockRequest
+  initialLot?: InventoryLot | null
 }
 
 // ----------------------------------------------------------------------------
@@ -67,7 +88,11 @@ export interface GroupedProduct {
   nameBn?: string
   category?: string
   baseUnit: string
+  packSize?: string | null
+  unitSize?: string | null
   cartonMultiplier?: number
+  cartonWholesalePrice?: number | null
+  cartonBuyingPrice?: number | null
   minStockAlert: number
   retailPrice: number
   wholesalePrice: number
@@ -85,12 +110,16 @@ export interface StockItem {
   productNameBn?: string
   category: string
   baseUnit: string
+  packSize?: string | null
+  unitSize?: string | null
   cartonMultiplier: number
   defaultBarcode: string
   minStockAlert?: number
   standardRetailPrice?: number
   standardWholesalePrice?: number
   buyingPrice?: number
+  cartonWholesalePrice?: number | null
+  cartonBuyingPrice?: number | null
   lotId: number
   lotNumber: string
   entryDate: string
@@ -116,8 +145,7 @@ export interface LotEntryRequest {
   barcode?: string
   supplierName?: string
   challanNo?: string
-  quantityCartons?: number
-  quantityBaseUnits?: number
+  quantity: number
   location?: string
 }
 
@@ -224,6 +252,8 @@ export interface CartItem {
   nameBn: string
   category?: string
   baseUnit: string
+  packSize?: string | null
+  unitSize?: string | null
   cartonMultiplier: number
   defaultBarcode?: string
   lotId: number
@@ -233,6 +263,8 @@ export interface CartItem {
   purchaseCost: number
   lotRetailPrice: number
   lotWholesalePrice: number
+  cartonWholesalePrice?: number | null
+  cartonBuyingPrice?: number | null
   barcode?: string
   availableStock: number
   quantity: number
@@ -271,6 +303,8 @@ export interface SaleItemResponse {
   lotId: number
   productNameEn: string
   productNameBn: string
+  packSize?: string | null
+  unitSize?: string | null
   lotNumber: string
   barcode: string
   totalQuantity: number
@@ -464,6 +498,16 @@ export interface LoginRequest {
   password: string
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+}
+
+export interface ChangePasswordResponse {
+  status: string
+  message: string
+}
+
 // ----------------------------------------------------------------------------
 // Immutable Stock Movement Ledger (Bin Card) & Adjustments
 // ----------------------------------------------------------------------------
@@ -528,4 +572,18 @@ export interface StockValuationSummary {
   totalProductsInStock: number
   totalUnitsInStock: number
 }
+
+export interface UnitOption {
+  value: string
+  label: string
+  isDiscrete: boolean
+  category: "liquid" | "weight" | "container"
+}
+
+export interface UnitGroup {
+  groupId: string
+  label: string
+  units: UnitOption[]
+}
+
 

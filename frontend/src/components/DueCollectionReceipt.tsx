@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react"
 import { Printer, X } from "lucide-react"
+import { STORE_INFO } from "../constants/store"
 
 export interface DueReceiptData {
   receiptNo: string
@@ -121,16 +122,16 @@ export default function DueCollectionReceipt({
             {/* Store Letterhead */}
             <div className="text-center pb-3 mb-2 border-b border-dashed border-gray-400">
               <h1 className="text-base font-bold leading-tight text-black">
-                Rajib Enterprise
+                {STORE_INFO.name}
               </h1>
               <p className="text-[11px] font-semibold text-gray-800 mt-0.5">
-                Authorized Agro Dealer
+                {STORE_INFO.tagline}
               </p>
               <p className="text-[10px] text-gray-700">
-                Krishi Market, Uttar Bazar, Narsingdi
+                {STORE_INFO.address}
               </p>
               <p className="text-[10px] text-gray-700">
-                Phone: 01711-234567, 01911-123456
+                Phone: {STORE_INFO.phone}
               </p>
               <div className="mt-1.5 inline-block border border-black rounded px-2 py-0.5 text-[10px] font-bold">
                 DUE COLLECTION INVOICE
@@ -230,12 +231,9 @@ export default function DueCollectionReceipt({
             </div>
 
             {/* Footer Notice */}
-            <div className="text-center pt-2 border-t border-dashed border-gray-400 text-[10px] text-gray-600 space-y-0.5">
+            <div className="text-center pt-2 border-t border-dashed border-gray-400 text-[10px] text-gray-600">
               <p className="font-medium text-gray-800">
-                Thank you for clearing your ledger dues!
-              </p>
-              <p className="text-[9px] text-gray-500 font-mono">
-                {receiptDisplayNo} · Powered by Rajib Enterprise POS
+                Thank you for clearing your dues!
               </p>
             </div>
           </div>

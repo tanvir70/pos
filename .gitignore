@@ -2,6 +2,7 @@ node_modules/
 dist/
 build/
 .cache/
+.env.deploy
 # .env*
 .vite/
 vite.config.*.timestamp-*
@@ -32,19 +33,20 @@ vite.config.*.timestamp-*
 .idea/
 *.iml
 
-# Python ignores disabled per user request
-# .env*
-# logs/
-# *.log
-# venv/
-# .venv/
-# env/
-# .deps/
-# __pycache__/
-# *.py[cod]
-# *$py.class
-# .pytest_cache/
-# *.db
-# *.sqlite
-# *.sqlite3
+# Python & Database temporary ignores
+logs/
+*.log
+venv/
+.venv/
+env/
+.deps/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.db-wal
+*.db-shm
+*.db.backup*
+deploy.zip
+
 

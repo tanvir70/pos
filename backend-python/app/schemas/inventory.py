@@ -1,3 +1,4 @@
+from typing import Any
 from datetime import date, datetime
 from decimal import Decimal
 from pydantic import Field, field_validator, model_validator
@@ -20,26 +21,34 @@ class InventoryLotDto(CamelModel):
     created_at: datetime | None = None
 
 class LotEntryRequest(CamelModel):
-    product_id: int = Field(gt=0)
-    lot_number: str
-    entry_date: date
-    expiry_date: date
-    purchase_cost: Decimal = Field(gt=Decimal("0.00"))
-    lot_retail_price: Decimal = Field(gt=Decimal("0.00"))
-    lot_wholesale_price: Decimal = Field(gt=Decimal("0.00"))
-    barcode: str
-    quantity: Decimal = Field(gt=Decimal("0.000"))
-    location: str = "DOKAN"
-    supplier_name: str | None = None
-    challan_no: str | None = None
+    product_id: int = Field(gt=0, description="Master product ID")
+    lot_number: str = Field(default="LOT-01", description="Lot batch number, e.g. LOT-01")
+    entry_date: date | None = Field(default=None, description="Arrival date, defaults to today")
+    expiry_date: date = Field(description="Mandatory expiration date for agricultural chemicals")
+    purchase_cost: Decimal = Field(gt=Decimal("0.00"), description="Supplier purchase cost per unit")
+    lot_retail_price: Decimal = Field(gt=Decimal("0.00"), description="Mandated MRP retail price per unit")
+    lot_wholesale_price: Decimal = Field(gt=Decimal("0.00"), description="Wholesale trade price per unit")
+    barcode: str | None = Field(default=None, description="Optional custom barcode. Auto-generated Code 128 if omitted.")
+    quantity: Decimal = Field(gt=Decimal("0.000"), description="Total stock quantity to receive in base units")
+    location: str = Field(default="DOKAN", description="Stock receiving location")
+    supplier_name: str | None = Field(default=None, description="Distributor / vendor name")
+    challan_no: str | None = Field(default=None, description="Delivery challan reference")
 
-    @field_validator("lot_number", "barcode")
+    @field_validator("lot_number")
     @classmethod
     def validate_code(cls, v: str) -> str:
         trimmed = (v or "").strip()
         if not trimmed:
-            raise ValueError("Value cannot be blank")
+            raise ValueError("Lot number cannot be blank")
         return trimmed
+
+    @field_validator("barcode")
+    @classmethod
+    def sanitize_barcode(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        trimmed = v.strip()
+        return trimmed or None
 
     @field_validator("supplier_name", "challan_no")
     @classmethod
@@ -49,8 +58,21 @@ class LotEntryRequest(CamelModel):
         trimmed = v.strip()
         return trimmed or None
 
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_defaults(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            # Default entry_date to today if missing
+            if not data.get("entry_date") and not data.get("entryDate"):
+                from datetime import date
+                data["entry_date"] = date.today().isoformat()
+        return data
+
     @model_validator(mode="after")
-    def validate_expiry(self) -> "LotEntryRequest":
+    def validate_dates(self) -> "LotEntryRequest":
+        if self.entry_date is None:
+            from datetime import date
+            self.entry_date = date.today()
         if self.expiry_date < self.entry_date:
             raise ValueError(
                 f"Lot expiry date ({self.expiry_date}) cannot be earlier than entry date ({self.entry_date})."
@@ -65,8 +87,12 @@ class StockItemResponse(CamelModel):
     category: str
     base_unit: str
     carton_multiplier: Decimal
+    pack_size: str | None = None
+    unit_size: str | None = None
     default_barcode: str | None = None
     buying_price: Decimal | None = None
+    carton_wholesale_price: Decimal | None = None
+    carton_buying_price: Decimal | None = None
 
     lot_id: int
     lot_number: str

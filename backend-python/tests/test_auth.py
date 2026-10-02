@@ -59,3 +59,55 @@ async def test_auth_me_endpoint_security():
             profile = res_valid.json()
             assert profile["username"] == "owner"
             assert profile["active"] is True
+
+@pytest.mark.asyncio
+async def test_change_password_endpoint():
+    async with lifespan(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            # Login
+            login = await ac.post("/api/auth/login", json={"username": "owner", "password": "1234"})
+            token = login.json()["token"]
+            headers = {"Authorization": f"Bearer {token}"}
+
+            # Wrong current password
+            bad_pw = await ac.post(
+                "/api/auth/change-password",
+                headers=headers,
+                json={"currentPassword": "wrongpassword", "newPassword": "BrandNewSecretPassword123!"},
+            )
+            assert bad_pw.status_code == 400
+            assert "Current password is incorrect" in bad_pw.json()["message"]
+
+            # Too short new password
+            short_pw = await ac.post(
+                "/api/auth/change-password",
+                headers=headers,
+                json={"currentPassword": "owner123", "newPassword": "123"},
+            )
+            assert short_pw.status_code == 400
+
+            # Successful password change
+            success = await ac.post(
+                "/api/auth/change-password",
+                headers=headers,
+                json={"currentPassword": "owner123", "newPassword": "NewSecurePassword#2026"},
+            )
+            assert success.status_code == 200
+            assert success.json()["status"] == "SUCCESS"
+
+            # Verify login with new password works
+            new_login = await ac.post(
+                "/api/auth/login",
+                json={"username": "owner", "password": "NewSecurePassword#2026"},
+            )
+            assert new_login.status_code == 200
+
+            # Restore original password for test idempotency
+            restore = await ac.post(
+                "/api/auth/change-password",
+                headers={"Authorization": f"Bearer {new_login.json()['token']}"},
+                json={"currentPassword": "NewSecurePassword#2026", "newPassword": "owner123"},
+            )
+            assert restore.status_code == 200
+

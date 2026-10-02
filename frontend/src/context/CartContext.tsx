@@ -293,7 +293,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return roundAccounting(Math.max(0, finalTotalAmount - dueAmount))
     }
     if (paymentMethod === "CASH" && cashPaidInput.trim() === "") {
-      return finalTotalAmount
+      return 0
     }
     return Math.max(0, parseFloat(cashPaidInput) || 0)
   }, [paymentMethod, dueAmount, cashPaidInput, finalTotalAmount])
@@ -391,7 +391,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      const defaultPrice = targetLot.lotRetailPrice
+      const defaultPrice =
+        saleMode === "WHOLESALE"
+          ? (targetLot.lotWholesalePrice || targetLot.lotRetailPrice)
+          : targetLot.lotRetailPrice
 
       setCart((prevCart) => {
         const existingIndex = prevCart.findIndex((i) => i.lotId === targetLot.id)
@@ -421,7 +424,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           nameBn: stockOrLot.productNameBn || stockOrLot.nameBn || "",
           category: stockOrLot.category,
           baseUnit: stockOrLot.baseUnit || "Piece",
-          cartonMultiplier: stockOrLot.cartonMultiplier || 1,
+          packSize: (stockOrLot as any).packSize || null,
+          unitSize: (stockOrLot as any).unitSize || null,
+          cartonMultiplier: Number(stockOrLot.cartonMultiplier) || 1,
+          cartonWholesalePrice: Number((stockOrLot as any).cartonWholesalePrice) || null,
+          cartonBuyingPrice: Number((stockOrLot as any).cartonBuyingPrice) || null,
           defaultBarcode: stockOrLot.defaultBarcode,
           lotId: targetLot.id,
           lotNumber: targetLot.lotNumber,
@@ -441,7 +448,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return [newItem, ...prevCart]
       })
     },
-    [],
+    [saleMode],
   )
 
   const adjustQuantity = useCallback((itemId: string, delta: number) => {
@@ -492,7 +499,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setCart((prev) =>
         prev.map((item) => {
           if (item.id !== itemId) return item
-          const defaultPrice = newLot.lotRetailPrice
+          const defaultPrice =
+            saleMode === "WHOLESALE"
+              ? (newLot.lotWholesalePrice || newLot.lotRetailPrice)
+              : newLot.lotRetailPrice
           const nextAvailableStock =
             availableStock !== undefined ? availableStock : item.availableStock
           const nextQuantity = clampToAvailable(item.quantity, {
@@ -518,7 +528,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }),
       )
     },
-    [],
+    [saleMode],
   )
 
   const removeItem = useCallback((itemId: string) => {
@@ -543,6 +553,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const toggleSaleMode = useCallback((newMode: SaleMode) => {
     setSaleMode(newMode)
+    setCart((prev) =>
+      prev.map((item) => {
+        const nextPrice =
+          newMode === "WHOLESALE"
+            ? (item.lotWholesalePrice || item.unitPrice)
+            : (item.lotRetailPrice || item.unitPrice)
+        return {
+          ...item,
+          unitPrice: nextPrice,
+          originalUnitPrice: nextPrice,
+        }
+      }),
+    )
   }, [])
 
   return (
@@ -550,7 +573,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       value={{
         cart,
         saleMode,
-        setSaleMode,
+        setSaleMode: toggleSaleMode,
         toggleSaleMode,
         selectedCustomerId,
         setSelectedCustomerId,

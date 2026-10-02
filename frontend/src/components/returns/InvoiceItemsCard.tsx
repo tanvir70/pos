@@ -8,7 +8,7 @@ import {
 } from "lucide-react"
 import type { SaleResponse, SaleItemResponse, StockItem } from "../../types"
 import { formatLotNumber } from "../../utils/lotNumber"
-import { formatQuantityByUnit } from "../../utils/unit"
+import { formatQuantityByUnit, pluralizeUnit } from "../../utils/unit"
 
 export interface InvoiceItemsCardProps {
   foundSale: SaleResponse
@@ -41,6 +41,8 @@ export default function InvoiceItemsCard({
       nameBn: it.productNameBn,
       productNameEn: it.productNameEn || "",
       productNameBn: it.productNameBn,
+      packSize: it.packSize,
+      unitSize: it.unitSize,
       productCode: "",
       lotNumber: it.lotNumber,
       category: "",
@@ -173,6 +175,11 @@ export default function InvoiceItemsCard({
                         <span className="font-mono text-[10px] font-bold bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded border border-slate-200">
                           Lot #{formatLotNumber(it.lotNumber)}
                         </span>
+                        {it.packSize && (
+                          <span className="shrink-0 text-[10px] font-medium text-emerald-800 bg-emerald-100/80 px-1.5 py-0.2 rounded border border-emerald-300">
+                            {it.packSize}
+                          </span>
+                        )}
                         {isSelected && (
                           <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.2 rounded-full flex items-center gap-1">
                             <Check className="w-3 h-3" />
@@ -183,7 +190,7 @@ export default function InvoiceItemsCard({
 
                       <div className="text-[11px] text-slate-600 mt-0.5 flex items-center gap-2 flex-wrap">
                         <span>
-                          Purchased: <strong className="text-slate-900 font-mono">{formatQuantityByUnit(it.totalQuantity, it.baseUnit)} {it.baseUnit || "unit"}</strong>
+                          Purchased: <strong className="text-slate-900 font-mono">{formatQuantityByUnit(it.totalQuantity, it.baseUnit)} {pluralizeUnit(it.baseUnit || "Unit", it.totalQuantity)}</strong>
                         </span>
                         <span>·</span>
                         <span>

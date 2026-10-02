@@ -16,6 +16,7 @@ import {
 import type { Product, StockItem, GroupedProduct } from "../../types"
 import { formatTk } from "../../utils/currency"
 import { formatLotNumber } from "../../utils/lotNumber"
+import { getEffectiveMultiplier, pluralizeUnit } from "../../utils/unit"
 import { focusSidebarMenu, focusFirstTableRow, focusPrimarySearch } from "../../utils/keyboard"
 import Button from "../ui/Button"
 import Input from "../ui/Input"
@@ -333,32 +334,49 @@ export default function InventoryTable({
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                               0 Out of Stock
                             </span>
-                          ) : isLowStock ? (
-                            <span
-                              className="inline-flex items-center gap-1.5 font-mono font-bold text-sm text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200"
-                              title={
-                                activeLots[0]
-                                  ? `Lot: ${formatLotNumber(activeLots[0].lotNumber)} | Expiry: ${activeLots[0].expiryDate || "N/A"}`
-                                  : undefined
-                              }
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                              {item.totalStock}
-                              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-tight">
-                                Low
-                              </span>
-                            </span>
                           ) : (
-                            <span
-                              className="font-mono font-bold text-sm text-slate-900 tabular-nums px-1"
-                              title={
-                                activeLots[0]
-                                  ? `Lot: ${formatLotNumber(activeLots[0].lotNumber)} | Expiry: ${activeLots[0].expiryDate || "N/A"}`
-                                  : undefined
-                              }
-                            >
-                              {item.totalStock}
-                            </span>
+                            <div className="flex flex-col items-center gap-0.5">
+                              {isLowStock ? (
+                                <span
+                                  className="inline-flex items-center gap-1.5 font-mono font-bold text-sm text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200"
+                                  title={
+                                    activeLots[0]
+                                      ? `Lot: ${formatLotNumber(activeLots[0].lotNumber)} | Expiry: ${activeLots[0].expiryDate || "N/A"}`
+                                      : undefined
+                                  }
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                  {item.totalStock}
+                                  <span className="text-[10px] font-bold text-amber-700 uppercase tracking-tight">
+                                    Low
+                                  </span>
+                                </span>
+                              ) : (
+                                <span
+                                  className="font-mono font-bold text-sm text-slate-900 tabular-nums px-1"
+                                  title={
+                                    activeLots[0]
+                                      ? `Lot: ${formatLotNumber(activeLots[0].lotNumber)} | Expiry: ${activeLots[0].expiryDate || "N/A"}`
+                                      : undefined
+                                  }
+                                >
+                                  {item.totalStock}
+                                </span>
+                              )}
+                              {(() => {
+                                const mult = getEffectiveMultiplier(item.cartonMultiplier, item.packSize, item.unitSize)
+                                if (mult <= 1 || item.totalStock <= 0) return null
+                                const ctns = Math.floor(item.totalStock / mult)
+                                const loose = item.totalStock % mult
+                                return (
+                                  <span className="font-mono text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap">
+                                    {ctns > 0 ? `${ctns} ${pluralizeUnit("Carton", ctns)}` : ""}
+                                    {ctns > 0 && loose > 0 ? " + " : ""}
+                                    {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose)}` : ""}
+                                  </span>
+                                )
+                              })()}
+                            </div>
                           )}
 
                           {/* Smart Multi-Lot Tag: only shown when 2 or more distinct active lots exist */}
@@ -563,8 +581,23 @@ export default function InventoryTable({
                                           </td>
 
                                           {/* 3. AVAILABLE QTY */}
-                                          <td className="py-2.5 px-3 text-center font-mono font-bold text-sm text-emerald-800 tabular-nums whitespace-nowrap">
-                                            {lotQty}
+                                          <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                            <div className="font-mono font-bold text-sm text-emerald-800 tabular-nums">
+                                              {lotQty}
+                                            </div>
+                                            {(() => {
+                                              const mult = getEffectiveMultiplier(item.cartonMultiplier, item.packSize, item.unitSize)
+                                              if (mult <= 1 || lotQty <= 0) return null
+                                              const ctns = Math.floor(lotQty / mult)
+                                              const loose = lotQty % mult
+                                              return (
+                                                <span className="font-mono text-[10px] text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200">
+                                                  {ctns > 0 ? `${ctns} ${pluralizeUnit("Carton", ctns)}` : ""}
+                                                  {ctns > 0 && loose > 0 ? " + " : ""}
+                                                  {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose)}` : ""}
+                                                </span>
+                                              )
+                                            })()}
                                           </td>
 
                                           {/* 4. RETAIL PRICE */}

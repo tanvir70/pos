@@ -36,24 +36,7 @@ async def record_lot_entry(db: AsyncSession, request: LotEntryRequest) -> Invent
             detail=f"Product with ID {request.product_id} not found",
         )
 
-    # 2. Check barcode uniqueness
-    existing_lot = (
-        await db.execute(select(InventoryLot).where(InventoryLot.barcode == request.barcode.strip()))
-    ).scalar_one_or_none()
-    if existing_lot:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Barcode '{request.barcode}' is already in use by lot {existing_lot.lot_number}",
-        )
-
-    # 2a. Validate dates
-    if request.expiry_date < request.entry_date:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Lot expiry date ({request.expiry_date}) cannot be earlier than entry date ({request.entry_date})",
-        )
-
-    # 2b. Standardize sequential LOT-01 naming if lot_number is blank or DEFAULT
+    # 2. Standardize sequential LOT-01 naming if lot_number is blank or DEFAULT
     import re
     lot_num = (request.lot_number or "").strip()
     if not lot_num or lot_num.upper() in ("DEFAULT", "INITIAL", ""):
@@ -75,7 +58,34 @@ async def record_lot_entry(db: AsyncSession, request: LotEntryRequest) -> Invent
                     pass
         lot_num = f"LOT-{str(max_n + 1).zfill(2)}"
 
-    # 3. Create lot
+    # 3. Determine barcode (auto-generate clean standard Code 128 barcode if omitted)
+    raw_barcode = (request.barcode or "").strip()
+    if raw_barcode:
+        existing_lot = (
+            await db.execute(select(InventoryLot).where(InventoryLot.barcode == raw_barcode))
+        ).scalar_one_or_none()
+        if existing_lot:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Barcode '{raw_barcode}' is already in use by lot {existing_lot.lot_number}",
+            )
+        final_barcode = raw_barcode
+    else:
+        clean_code = re.sub(r"[^A-Za-z0-9]", "", (product.default_barcode or product.product_code or str(product.id)).strip())
+        clean_lot = re.sub(r"^LOT-?", "", lot_num.strip(), flags=re.IGNORECASE) or "01"
+        base_bc = f"{clean_code}-{clean_lot}"
+        final_barcode = base_bc
+        seq = 1
+        while True:
+            existing = (
+                await db.execute(select(InventoryLot.id).where(InventoryLot.barcode == final_barcode))
+            ).scalar_one_or_none()
+            if not existing:
+                break
+            seq += 1
+            final_barcode = f"{base_bc}-{seq}"
+
+    # 4. Create lot
     lot = InventoryLot(
         product_id=request.product_id,
         lot_number=lot_num,
@@ -84,7 +94,7 @@ async def record_lot_entry(db: AsyncSession, request: LotEntryRequest) -> Invent
         purchase_cost=request.purchase_cost,
         lot_retail_price=request.lot_retail_price,
         lot_wholesale_price=request.lot_wholesale_price,
-        barcode=request.barcode.strip(),
+        barcode=final_barcode,
         supplier_name=request.supplier_name,
         challan_no=request.challan_no,
     )
@@ -165,8 +175,12 @@ async def get_stock_overview(db: AsyncSession, in_stock_only: bool = False) -> l
                 category=p.category,
                 base_unit=p.base_unit,
                 carton_multiplier=p.carton_multiplier,
+                pack_size=p.pack_size,
+                unit_size=p.unit_size,
                 default_barcode=p.default_barcode,
                 buying_price=p.buying_price,
+                carton_wholesale_price=p.carton_wholesale_price,
+                carton_buying_price=p.carton_buying_price,
                 lot_id=lot.id,
                 lot_number=lot.lot_number,
                 entry_date=lot.entry_date,

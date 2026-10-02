@@ -4,10 +4,17 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.core_logging import get_logger
 from app.database import get_db
 from app.models.user import AppUser
-from app.schemas.auth import AuthTokenResponse, LoginRequest, UserProfileResponse
+from app.schemas.auth import (
+    AuthTokenResponse,
+    ChangePasswordRequest,
+    ChangePasswordResponse,
+    LoginRequest,
+    UserProfileResponse,
+)
 from app.services.auth_service import create_access_token, decode_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -78,9 +85,12 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)) -> Au
             detail="This account has been deactivated",
         )
 
-    # Check password (allow "1234" as owner pin shortcut or hashed password)
+    # Check password (allow "1234" as owner pin shortcut only when explicitly enabled in local dev/tests)
+    import os
+    settings = get_settings()
+    allow_dev_pin = settings.ALLOW_DEV_PIN or os.environ.get("ALLOW_DEV_PIN", "").lower() in ("1", "true", "yes")
     is_valid = verify_password(request.password, user.password_hash) or (
-        request.password == "1234" and user.role == "ROLE_OWNER"
+        allow_dev_pin and request.password == "1234" and user.role == "ROLE_OWNER"
     )
     if not is_valid:
         logger.warning("Failed login attempt for user '%s' (wrong password)", username)
@@ -111,3 +121,30 @@ async def get_current_user_profile(
         role=current_user.role,
         active=current_user.active,
     )
+
+@router.post("/change-password", response_model=ChangePasswordResponse)
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: AppUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ChangePasswordResponse:
+    import os
+    settings = get_settings()
+    allow_dev_pin = settings.ALLOW_DEV_PIN or os.environ.get("ALLOW_DEV_PIN", "").lower() in ("1", "true", "yes")
+    is_valid = verify_password(request.current_password, current_user.password_hash) or (
+        allow_dev_pin and request.current_password in ("1234", "owner123") and current_user.role == "ROLE_OWNER"
+    )
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+    if len(request.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 6 characters long",
+        )
+    current_user.password_hash = hash_password(request.new_password)
+    await db.commit()
+    logger.info("Password updated successfully for user '%s'", current_user.username)
+    return ChangePasswordResponse(status="SUCCESS", message="Password updated successfully")

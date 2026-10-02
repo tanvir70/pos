@@ -48,6 +48,10 @@ async def lifespan(app: FastAPI):
             ("customer_ledger", "client_trx_id VARCHAR(64)"),
             ("sale_return", "client_trx_id VARCHAR(64)"),
             ("customer", "land_area VARCHAR(100)"),
+            ("product", "pack_size VARCHAR(50)"),
+            ("product", "unit_size VARCHAR(30)"),
+            ("product", "carton_wholesale_price DECIMAL(12, 2)"),
+            ("product", "carton_buying_price DECIMAL(12, 2)"),
         ]:
             try:
                 await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col}"))
@@ -62,20 +66,22 @@ async def lifespan(app: FastAPI):
             pass
 
     # 2. Seed initial data if empty
+    # 2. Seed initial data if empty
     from app.database import async_session_maker
     async with async_session_maker() as session:
-        # Check if products exist
-        res = await session.execute(select(Product))
-        if not res.scalars().first():
-            # Seed Document Sequences (with 7-digit max_val: 9999999)
+        # Seed Document Sequences (with 7-digit max_val: 9999999) if not existing
+        seq_res = await session.execute(select(DocumentSequence))
+        if not seq_res.scalars().first():
             session.add_all([
                 DocumentSequence(sequence_name="sale_invoice", current_val=0, prefix="INV", max_val=9999999),
                 DocumentSequence(sequence_name="due_invoice", current_val=0, prefix="DUE", max_val=9999999),
                 DocumentSequence(sequence_name="sale_return", current_val=0, prefix="RET", max_val=9999999),
-                DocumentSequence(sequence_name="stock_adjustment", current_val=1000, prefix="ADJ", max_val=9999999),
+                DocumentSequence(sequence_name="stock_adjustment", current_val=0, prefix="ADJ", max_val=9999999),
             ])
 
-            # Seed AppUser: owner / owner123
+        # Seed AppUser: owner / owner123 if not existing
+        user_res = await session.execute(select(AppUser).where(AppUser.username == "owner"))
+        if not user_res.scalars().first():
             owner_user = AppUser(
                 username="owner",
                 password_hash=hash_password("owner123"),
@@ -85,133 +91,59 @@ async def lifespan(app: FastAPI):
             )
             session.add(owner_user)
 
-            # Seed Products matching V1
-            p1 = Product(
-                product_code="SYN-AMI-TOP", name_en="Amistar Top 325 SC", name_bn="Amistar Top 325 SC",
-                company_name="Agro Chem", category="Fungicide", base_unit="Bottle",
-                carton_multiplier=Decimal("20.000"), default_barcode="SYN-AMI-202601",
-                standard_retail_price=Decimal("650.00"), standard_wholesale_price=Decimal("580.00"),
-                buying_price=Decimal("520.00"), min_stock_alert=5, image_path="/images/products/amistar_top.png"
-            )
-            p2 = Product(
-                product_code="SYN-VIR-40WG", name_en="Virtako 40 WG", name_bn="Virtako 40 WG",
-                company_name="Agro Chem", category="Insecticide", base_unit="Packet",
-                carton_multiplier=Decimal("50.000"), default_barcode="SYN-VIR-40WG",
-                standard_retail_price=Decimal("350.00"), standard_wholesale_price=Decimal("310.00"),
-                buying_price=Decimal("275.00"), min_stock_alert=10, image_path="/images/products/virtako.png"
-            )
-            p3 = Product(
-                product_code="SYN-REF-500", name_en="Refit 500 EC", name_bn="Refit 500 EC",
-                company_name="Agro Chem", category="Herbicide", base_unit="Bottle",
-                carton_multiplier=Decimal("20.000"), default_barcode="SYN-REF-500",
-                standard_retail_price=Decimal("480.00"), standard_wholesale_price=Decimal("420.00"),
-                buying_price=Decimal("380.00"), min_stock_alert=5, image_path="/images/products/refit.png"
-            )
-            p4 = Product(
-                product_code="SYN-ISA-BIO", name_en="Isabion", name_bn="Isabion",
-                company_name="Agro Chem", category="Bio-stimulant", base_unit="Bottle",
-                carton_multiplier=Decimal("20.000"), default_barcode="SYN-ISA-BIO",
-                standard_retail_price=Decimal("320.00"), standard_wholesale_price=Decimal("280.00"),
-                buying_price=Decimal("250.00"), min_stock_alert=5, image_path="/images/products/isabion.png"
-            )
-            p5 = Product(
-                product_code="SYN-KAR-25EC", name_en="Karate 2.5 EC", name_bn="Karate 2.5 EC",
-                company_name="Agro Chem", category="Insecticide", base_unit="Bottle",
-                carton_multiplier=Decimal("20.000"), default_barcode="SYN-KAR-25EC",
-                standard_retail_price=Decimal("260.00"), standard_wholesale_price=Decimal("230.00"),
-                buying_price=Decimal("200.00"), min_stock_alert=5, image_path="/images/products/karate.png"
-            )
-            p6 = Product(
-                product_code="SYN-SCO-250EC", name_en="Score 250 EC", name_bn="Score 250 EC",
-                company_name="Agro Chem", category="Fungicide", base_unit="Bottle",
-                carton_multiplier=Decimal("20.000"), default_barcode="SYN-SCO-250EC",
-                standard_retail_price=Decimal("420.00"), standard_wholesale_price=Decimal("380.00"),
-                buying_price=Decimal("320.00"), min_stock_alert=5, image_path="/images/products/score.png"
-            )
-            session.add_all([p1, p2, p3, p4, p5, p6])
-            await session.flush()
+        # Always seed/sync official Syngenta product catalog (117 items)
+        await session.commit()
+        from app.scripts.seed_syngenta_catalog import seed_syngenta_catalog
+        await seed_syngenta_catalog()
 
-            # Seed Lots
-            l1 = InventoryLot(
-                product_id=p1.id, lot_number="LOT-01", entry_date=date(2026, 5, 15), expiry_date=date(2030, 12, 31),
-                purchase_cost=Decimal("500.00"), lot_retail_price=Decimal("650.00"), lot_wholesale_price=Decimal("580.00"),
-                barcode="SYN-AMI-202502"
-            )
-            l2 = InventoryLot(
-                product_id=p1.id, lot_number="LOT-02", entry_date=date(2026, 9, 19), expiry_date=date(2031, 12, 31),
-                purchase_cost=Decimal("590.00"), lot_retail_price=Decimal("720.00"), lot_wholesale_price=Decimal("680.00"),
-                barcode="SYN-AMI-NEW-202609", supplier_name="Agro Chemical Ltd", challan_no="CH-SYN-202609"
-            )
-            l3 = InventoryLot(
-                product_id=p2.id, lot_number="LOT-01", entry_date=date(2026, 8, 10), expiry_date=date(2030, 12, 31),
-                purchase_cost=Decimal("275.00"), lot_retail_price=Decimal("350.00"), lot_wholesale_price=Decimal("310.00"),
-                barcode="SYN-VIR-202601"
-            )
-            l4 = InventoryLot(
-                product_id=p3.id, lot_number="LOT-01", entry_date=date(2026, 8, 15), expiry_date=date(2030, 12, 31),
-                purchase_cost=Decimal("380.00"), lot_retail_price=Decimal("480.00"), lot_wholesale_price=Decimal("420.00"),
-                barcode="SYN-REF-202601"
-            )
-            l5 = InventoryLot(
-                product_id=p4.id, lot_number="LOT-01", entry_date=date(2026, 8, 20), expiry_date=date(2030, 12, 31),
-                purchase_cost=Decimal("250.00"), lot_retail_price=Decimal("320.00"), lot_wholesale_price=Decimal("280.00"),
-                barcode="SYN-ISA-202601"
-            )
-            l6 = InventoryLot(
-                product_id=p5.id, lot_number="LOT-01", entry_date=date(2026, 8, 25), expiry_date=date(2030, 12, 31),
-                purchase_cost=Decimal("200.00"), lot_retail_price=Decimal("260.00"), lot_wholesale_price=Decimal("230.00"),
-                barcode="SYN-KAR-202601"
-            )
-            l7 = InventoryLot(
-                product_id=p6.id, lot_number="LOT-01", entry_date=date(2026, 9, 1), expiry_date=date(2030, 12, 31),
-                purchase_cost=Decimal("320.00"), lot_retail_price=Decimal("420.00"), lot_wholesale_price=Decimal("380.00"),
-                barcode="SYN-SCO-250EC"
-            )
-            session.add_all([l1, l2, l3, l4, l5, l6, l7])
-            await session.flush()
+        # In TEST environment ONLY: provide isolated test fixtures for e2e / audit suites
+        if settings.ENVIRONMENT == "test":
+            lots_check = await session.execute(select(InventoryLot))
+            if not lots_check.scalars().first():
+                # Ensure product with code SYN-AMI-TOP exists for test suite
+                p_ami = (await session.execute(select(Product).where(Product.product_code == "SYN-AMI-TOP"))).scalar_one_or_none()
+                if not p_ami:
+                    p_ami = Product(
+                        product_code="SYN-AMI-TOP", name_en="Amistar Top 325 SC", name_bn="Amistar Top 325 SC",
+                        company_name="Syngenta Bangladesh Limited", category="Fungicide", base_unit="Bottle",
+                        carton_multiplier=Decimal("20.000"), default_barcode="SYN-AMI-TOP",
+                        standard_retail_price=Decimal("650.00"), standard_wholesale_price=Decimal("580.00"),
+                        buying_price=Decimal("520.00"), min_stock_alert=5
+                    )
+                    session.add(p_ami)
+                    await session.flush()
 
-            # Seed Stock
-            session.add_all([
-                StockInventory(lot_id=l1.id, location="DOKAN", quantity=Decimal("40.000")),
-                StockInventory(lot_id=l2.id, location="DOKAN", quantity=Decimal("50.000")),
-                StockInventory(lot_id=l3.id, location="DOKAN", quantity=Decimal("25.000")),
-                StockInventory(lot_id=l4.id, location="DOKAN", quantity=Decimal("10.000")),
-                StockInventory(lot_id=l5.id, location="DOKAN", quantity=Decimal("8.000")),
-                StockInventory(lot_id=l6.id, location="DOKAN", quantity=Decimal("12.000")),
-                StockInventory(lot_id=l7.id, location="DOKAN", quantity=Decimal("90.000")),
-            ])
-
-            # Seed Customers
-            c1 = Customer(
-                name="মো: রফিকুল ইসলাম", father_name="মো: আজহার আলী", business_name="মেসার্স মদিনা ট্রেডার্স",
-                phone="01711000001", whatsapp_number="01711000001", email="modina.traders@example.com",
-                village_address="চকবাজার, শেরপুর সদর, শেরপুর", customer_type="WHOLESALE",
-                credit_limit=Decimal("100000.00"), current_due=Decimal("15000.00"),
-                mfs_type="BKASH", mfs_number="01711000001", bank_name="Islami Bank Bangladesh PLC",
-                bank_branch="Sherpur Branch", bank_account_no="20501234567890"
-            )
-            c2 = Customer(
-                name="করিম মিয়া", father_name="আব্দুল করিম", phone="01811000002",
-                whatsapp_number="01811000002", village_address="চর শেরপুর, শেরপুর",
-                customer_type="RETAIL", credit_limit=Decimal("0.00"), current_due=Decimal("0.00"),
-                mfs_type="NAGAD", mfs_number="01811000002"
-            )
-            session.add_all([c1, c2])
-            await session.flush()
-
-            # Seed opening ledger for c1
-            session.add(
-                CustomerLedger(
-                    customer_id=c1.id,
-                    transaction_date=datetime(2026, 9, 1, 9, 0),
-                    transaction_type="INVOICE_BILL",
-                    debit=Decimal("15000.00"),
-                    credit=Decimal("0.00"),
-                    balance_after=Decimal("15000.00"),
-                    notes="Opening balance prior to system migration",
+                l1 = InventoryLot(
+                    product_id=p_ami.id, lot_number="LOT-01", entry_date=date(2026, 5, 15), expiry_date=date(2030, 12, 31),
+                    purchase_cost=Decimal("500.00"), lot_retail_price=Decimal("650.00"), lot_wholesale_price=Decimal("580.00"),
+                    barcode="SYN-AMI-202502"
                 )
-            )
-            await session.commit()
+                session.add(l1)
+                await session.flush()
+                session.add(StockInventory(lot_id=l1.id, location="DOKAN", quantity=Decimal("100.000")))
+
+                # Also attach lots to initial products so all test lookups succeed
+                all_prods = (await session.execute(select(Product).order_by(Product.id.asc()))).scalars().all()
+                for p in all_prods[:5]:
+                    if p.id != p_ami.id:
+                        lot_p = InventoryLot(
+                            product_id=p.id, lot_number="LOT-01", entry_date=date(2026, 5, 15), expiry_date=date(2030, 12, 31),
+                            purchase_cost=Decimal("200.00"), lot_retail_price=Decimal("300.00"), lot_wholesale_price=Decimal("250.00"),
+                            barcode=f"{p.product_code}-01"
+                        )
+                        session.add(lot_p)
+                        await session.flush()
+                        session.add(StockInventory(lot_id=lot_p.id, location="DOKAN", quantity=Decimal("100.000")))
+
+                # Test customer for e2e audit flows
+                c_check = await session.execute(select(Customer))
+                if not c_check.scalars().first():
+                    c1 = Customer(
+                        name="Audit Test Farmer", phone="01711000001", customer_type="WHOLESALE",
+                        credit_limit=Decimal("100000.00"), current_due=Decimal("15000.00")
+                    )
+                    session.add(c1)
+                await session.commit()
 
     yield
 

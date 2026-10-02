@@ -17,6 +17,8 @@ class Product(Base):
     company_name: Mapped[str] = mapped_column(String(150), default="Agro Chem", nullable=False)
     category: Mapped[str] = mapped_column(String(100), nullable=False)
     base_unit: Mapped[str] = mapped_column(String(30), nullable=False)
+    pack_size: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    unit_size: Mapped[str | None] = mapped_column(String(30), nullable=True)
     carton_multiplier: Mapped[Decimal] = mapped_column(
         Numeric(10, 3), default=Decimal("1.000"), nullable=False
     )
@@ -26,6 +28,8 @@ class Product(Base):
     )
     standard_wholesale_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     buying_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    carton_wholesale_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    carton_buying_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     min_stock_alert: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
     image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

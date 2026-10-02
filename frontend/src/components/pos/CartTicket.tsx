@@ -9,6 +9,7 @@ import {
 import { useCart } from "../../context/CartContext"
 import { useToast } from "../../context/ToastContext"
 import { calcLineTotal, formatTk } from "../../utils/currency"
+import { getEffectiveMultiplier, pluralizeUnit } from "../../utils/unit"
 import Badge from "../ui/Badge"
 import Button from "../ui/Button"
 
@@ -79,7 +80,7 @@ export default function CartTicket() {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto">
-          <div className="sticky top-0 z-10 hidden grid-cols-[minmax(150px,1fr)_124px_84px_96px_32px] items-center gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2 text-[10px] font-bold uppercase text-slate-500 md:grid">
+          <div className="sticky top-0 z-10 hidden grid-cols-[minmax(150px,1fr)_160px_84px_96px_32px] items-center gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2 text-[10px] font-bold uppercase text-slate-500 md:grid">
             <span>Item</span>
             <span className="text-center">Quantity</span>
             <span className="text-right">Unit price</span>
@@ -94,21 +95,40 @@ export default function CartTicket() {
                 ? Math.max(0, Number(item.availableStock))
                 : 0
               const isAtStockLimit = item.quantity >= availableStock
-              const stockLimitMessage = `Only ${availableStock} ${item.baseUnit} available in stock.`
+              const stockLimitMessage = `Only ${availableStock} ${pluralizeUnit(item.baseUnit, availableStock)} available in stock.`
+              const multiplier = getEffectiveMultiplier(item.cartonMultiplier, item.packSize)
+              const hasCartons = multiplier > 1
+              const ctns = hasCartons ? Math.floor(Number(item.quantity) / multiplier) : 0
+              const loose = hasCartons ? Math.round((Number(item.quantity) % multiplier) * 1000) / 1000 : 0
 
               return (
                 <article
                   key={item.id}
-                  className="relative grid gap-3 px-4 py-4 hover:bg-slate-50/70 md:grid-cols-[minmax(150px,1fr)_124px_84px_96px_32px] md:items-center"
+                  className="relative grid gap-3 px-4 py-4 hover:bg-slate-50/70 md:grid-cols-[minmax(150px,1fr)_160px_84px_96px_32px] md:items-center"
                 >
                   <div className="flex min-w-0 items-start gap-3 pr-9 md:pr-0">
                     <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-100 font-mono text-[10px] font-bold text-slate-500">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <div className="min-w-0">
-                      <h3 className="truncate text-sm font-bold text-slate-950">
-                        {item.nameEn || item.nameBn}
-                      </h3>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <h3 className="truncate text-sm font-bold text-slate-950">
+                          {item.nameEn || item.nameBn}
+                        </h3>
+                        {item.packSize && (
+                          <span className="shrink-0 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800 border border-emerald-200">
+                            {item.packSize}
+                          </span>
+                        )}
+                        {hasCartons && (
+                          <span
+                            className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-mono font-medium text-slate-600 border border-slate-200"
+                            title={`1 Carton = ${multiplier} ${pluralizeUnit(item.baseUnit, multiplier)}`}
+                          >
+                            1 Ctn = {multiplier} {pluralizeUnit(item.baseUnit, multiplier)}
+                          </span>
+                        )}
+                      </div>
                       {item.nameBn && item.nameBn !== item.nameEn && (
                         <p className="truncate text-xs text-slate-500">{item.nameBn}</p>
                       )}
@@ -117,7 +137,7 @@ export default function CartTicket() {
                         <span className="h-1 w-1 rounded-full bg-slate-300" />
                         <span>{item.baseUnit}</span>
                         <span className="h-1 w-1 rounded-full bg-slate-300" />
-                        <span>{availableStock} in selected lot</span>
+                        <span>{availableStock} in lot</span>
                         {hasBusinessLot(item.lotNumber) && (
                           <>
                             <span className="h-1 w-1 rounded-full bg-slate-300" />
@@ -130,64 +150,100 @@ export default function CartTicket() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 md:justify-center">
-                    <span className="text-[10px] font-bold uppercase text-slate-400 md:hidden">
-                      Quantity
-                    </span>
-                    <div className="grid h-9 w-[120px] grid-cols-[36px_48px_36px] overflow-hidden rounded-lg border border-slate-300 bg-white">
-                      <button
-                        type="button"
-                        onClick={() => adjustQuantity(item.id, -1)}
-                        className="flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-950 cursor-pointer"
-                        aria-label={`Reduce ${item.nameEn || item.nameBn} quantity`}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <input
-                        type="text"
-                        inputMode="decimal"
-                        value={item.quantity}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(event) => {
-                          const valStr = event.target.value.trim()
-                          if (valStr === "") {
-                            return
-                          }
-                          const value = Number.parseFloat(valStr)
-                          if (Number.isFinite(value) && value > 0) {
-                            if (value > availableStock) {
-                              showWarning(stockLimitMessage, "Stock limit reached")
+                  <div className="flex flex-col items-start gap-1 md:items-center">
+                    <div className="flex items-center justify-between gap-2 w-full md:w-auto">
+                      <span className="text-[10px] font-bold uppercase text-slate-400 md:hidden">
+                        Quantity
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <div className="grid h-8 w-[100px] grid-cols-[30px_40px_30px] overflow-hidden rounded-lg border border-slate-300 bg-white">
+                          <button
+                            type="button"
+                            onClick={() => adjustQuantity(item.id, -1)}
+                            className="flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-950 cursor-pointer"
+                            aria-label={`Reduce ${item.nameEn || item.nameBn} quantity`}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={item.quantity}
+                            onFocus={(e) => e.target.select()}
+                            onChange={(event) => {
+                              const valStr = event.target.value.trim()
+                              if (valStr === "") {
+                                return
+                              }
+                              const value = Number.parseFloat(valStr)
+                              if (Number.isFinite(value) && value > 0) {
+                                if (value > availableStock) {
+                                  showWarning(stockLimitMessage, "Stock limit reached")
+                                }
+                                setQuantity(item.id, value)
+                              }
+                            }}
+                            className="min-w-0 border-x border-slate-200 bg-white text-center font-mono text-xs font-bold text-slate-950 outline-hidden tabular-nums focus:bg-emerald-50/50"
+                            aria-label={`${item.nameEn || item.nameBn} quantity`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isAtStockLimit) {
+                                showWarning(stockLimitMessage, "Stock limit reached")
+                                return
+                              }
+                              adjustQuantity(item.id, 1)
+                            }}
+                            className={`flex items-center justify-center cursor-pointer ${
+                              isAtStockLimit
+                                ? "bg-slate-50 text-slate-300"
+                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+                            }`}
+                            aria-label={`Increase ${item.nameEn || item.nameBn} quantity`}
+                            title={
+                              isAtStockLimit
+                                ? `Only ${availableStock} ${item.baseUnit} in stock`
+                                : undefined
                             }
-                            setQuantity(item.id, value)
-                          }
-                        }}
-                        className="min-w-0 border-x border-slate-200 bg-white text-center font-mono text-xs font-bold text-slate-950 outline-hidden tabular-nums focus:bg-emerald-50/50"
-                        aria-label={`${item.nameEn || item.nameBn} quantity`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (isAtStockLimit) {
-                            showWarning(stockLimitMessage, "Stock limit reached")
-                            return
-                          }
-                          adjustQuantity(item.id, 1)
-                        }}
-                        className={`flex items-center justify-center cursor-pointer ${
-                          isAtStockLimit
-                            ? "bg-slate-50 text-slate-300"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
-                        }`}
-                        aria-label={`Increase ${item.nameEn || item.nameBn} quantity`}
-                        title={
-                          isAtStockLimit
-                            ? `Only ${availableStock} ${item.baseUnit} in stock`
-                            : undefined
-                        }
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                        {hasCartons && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const currQty = Number(item.quantity) || 0
+                              const nextQty = currQty + multiplier
+                              if (nextQty > availableStock) {
+                                showWarning(stockLimitMessage, "Stock limit reached")
+                                return
+                              }
+                              adjustQuantity(item.id, multiplier)
+                            }}
+                            className="h-8 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 px-2 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400 cursor-pointer transition-colors shadow-2xs whitespace-nowrap active:scale-95"
+                            title={`Add 1 full carton (+${multiplier} ${item.baseUnit})`}
+                          >
+                            +1 Ctn
+                          </button>
+                        )}
+                      </div>
                     </div>
+
+                    {hasCartons && (
+                      <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-800 bg-emerald-50/90 px-1.5 py-0.5 rounded border border-emerald-200/80 font-mono">
+                        <span>
+                          {ctns > 0 ? (
+                            loose > 0
+                              ? `${ctns} ${pluralizeUnit("Carton", ctns)} + ${loose} ${pluralizeUnit(item.baseUnit, loose)}`
+                              : `${ctns} ${pluralizeUnit("Carton", ctns)} (${item.quantity} ${pluralizeUnit(item.baseUnit, item.quantity)})`
+                          ) : (
+                            `${loose} ${pluralizeUnit(item.baseUnit, loose)} (Loose)`
+                          )}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between md:block md:text-right">
@@ -197,6 +253,11 @@ export default function CartTicket() {
                     <span className="font-mono text-xs font-bold text-slate-700 tabular-nums">
                       {formatTk(item.unitPrice)}
                     </span>
+                    {hasCartons && (
+                      <div className="text-[10px] text-slate-400 font-mono" title="Rate per carton">
+                        ({formatTk(item.unitPrice * multiplier)}/ctn)
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between md:block md:text-right">

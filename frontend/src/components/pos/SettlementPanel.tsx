@@ -10,6 +10,7 @@ import {
   Percent,
   type LucideIcon,
 } from "lucide-react"
+import { cn } from "../../lib/utils"
 import type { PaymentMethod, SaleMode } from "../../types"
 import { useCart } from "../../context/CartContext"
 import { useToast } from "../../context/ToastContext"
@@ -52,6 +53,7 @@ export default function SettlementPanel({
     roundOffDeficit,
     applyQuickRoundOff,
     finalTotalAmount,
+    selectedCustomerId,
     paymentMethod,
     setPaymentMethod,
     cashPaidInput,
@@ -154,6 +156,22 @@ export default function SettlementPanel({
   const hasAdjustments = computedDiscount > 0 || roundOff > 0
   const selectedPayment = PAYMENT_METHODS.find((method) => method.id === paymentMethod)
   const paymentLabel = selectedPayment?.label || "Payment"
+
+  // Lock "Complete & Print" if cash received has no value
+  const isCashEmpty =
+    paymentMethod === "CASH" &&
+    (cashPaidInput.trim() === "" || isNaN(parseFloat(cashPaidInput)) || parseFloat(cashPaidInput) <= 0)
+
+  const isDigitalEmpty =
+    (paymentMethod === "BKASH" ||
+      paymentMethod === "NAGAD" ||
+      paymentMethod === "BANK_TRANSFER") &&
+    (digitalPaidInput.trim() === "" || isNaN(parseFloat(digitalPaidInput)) || parseFloat(digitalPaidInput) <= 0)
+
+  // Due payment requires a registered customer
+  const isDueWithoutCustomer = paymentMethod === "DUE" && !selectedCustomerId
+
+  const isPaymentLocked = !isCartEmpty && (isCashEmpty || isDigitalEmpty || isDueWithoutCustomer)
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs">
@@ -304,10 +322,19 @@ export default function SettlementPanel({
                 if (e.key === "-" || e.key === "e" || e.key === "E") {
                   e.preventDefault()
                 }
+                if (e.key === "Enter" && !isCartEmpty && !isPaymentLocked && !isSubmitting) {
+                  e.preventDefault()
+                  onSubmitSale()
+                }
               }}
               onFocus={(e) => e.target.select()}
               placeholder="0.00"
-              className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
+              className={cn(
+                "h-12 w-full rounded-lg border bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden transition-colors",
+                isCashEmpty && !isCartEmpty
+                  ? "border-amber-300 focus:border-amber-500 focus:ring-3 focus:ring-amber-500/10"
+                  : "border-slate-300 focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10",
+              )}
             />
           </section>
         )}
@@ -337,10 +364,19 @@ export default function SettlementPanel({
                 if (e.key === "-" || e.key === "e" || e.key === "E") {
                   e.preventDefault()
                 }
+                if (e.key === "Enter" && !isCartEmpty && !isPaymentLocked && !isSubmitting) {
+                  e.preventDefault()
+                  onSubmitSale()
+                }
               }}
               onFocus={(e) => e.target.select()}
               placeholder="0.00"
-              className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10"
+              className={cn(
+                "h-12 w-full rounded-lg border bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden transition-colors",
+                isDigitalEmpty && !isCartEmpty
+                  ? "border-amber-300 focus:border-amber-500 focus:ring-3 focus:ring-amber-500/10"
+                  : "border-slate-300 focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10",
+              )}
             />
 
             <input
@@ -565,16 +601,58 @@ export default function SettlementPanel({
       </div>
 
       <div className="shrink-0 border-t border-slate-200 bg-white p-4 shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
+        {/* Notice when cash/digital received is empty or customer required for due sale */}
+        {(isCashEmpty || isDigitalEmpty || isDueWithoutCustomer) && !isCartEmpty && (
+          <div className="mb-2.5 flex items-center justify-between rounded-lg border border-slate-200/90 bg-slate-50 px-3 py-1.5 text-xs shadow-2xs animate-in fade-in duration-150">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+              </span>
+              <span className="text-[11px] font-semibold text-slate-600">
+                {isDueWithoutCustomer
+                  ? "Select a customer for due sale"
+                  : isCashEmpty
+                    ? "Cash received required"
+                    : `${paymentLabel} received required`}
+              </span>
+            </div>
+            {!isDueWithoutCustomer && (
+              <button
+                type="button"
+                onClick={
+                  isCashEmpty
+                    ? handleSetExactCash
+                    : () => setDigitalPaidInput(String(finalTotalAmount))
+                }
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-700 shadow-2xs transition-all hover:border-emerald-300 hover:bg-emerald-50/60 hover:text-emerald-900 active:scale-[0.98] cursor-pointer"
+              >
+                <span className="text-[10px] font-semibold uppercase tracking-tight text-slate-400">Exact</span>
+                <span className="font-mono font-black text-emerald-700">{formatTk(finalTotalAmount)}</span>
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Complete Sale Action Button */}
         <Button
           type="button"
           variant="primary"
           size="lg"
           fullWidth
-          disabled={isCartEmpty || isSubmitting}
+          disabled={isCartEmpty || isSubmitting || isPaymentLocked}
           isLoading={isSubmitting}
           onClick={onSubmitSale}
-          className="h-[52px] rounded-lg text-sm font-black shadow-sm cursor-pointer"
+          title={
+            isDueWithoutCustomer && !isCartEmpty
+              ? "Please select a registered customer for due sale"
+              : isCashEmpty && !isCartEmpty
+                ? "Please enter cash received amount"
+                : isDigitalEmpty && !isCartEmpty
+                  ? `Please enter ${paymentLabel} received amount`
+                  : undefined
+          }
+          className="h-[52px] rounded-lg text-sm font-black shadow-sm cursor-pointer disabled:opacity-50"
         >
           <div className="flex items-center justify-center gap-2">
             <CheckCircle2 className="w-4 h-4" />

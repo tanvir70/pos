@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     ENV: str = "production"
     ENVIRONMENT: str = "production"
     DEBUG: bool = False
+    ALLOW_DEV_PIN: bool = False  # Strictly False in production; only enabled in local dev/tests
     PORT: int = 8000
     LOG_LEVEL: str = "INFO"
     LOG_DIR: str = "logs"

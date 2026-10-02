@@ -21,12 +21,15 @@ import type {
   PagedResponse,
   AuthTokenResponse,
   LoginRequest,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
   QuarantineStockItem,
   QuarantineDisposalRequest,
   StockMovement,
   StockAdjustmentRequest,
   StockAdjustmentResponse,
   StockValuationSummary,
+  UnitGroup,
 } from "../types"
 
 // ----------------------------------------------------------------------------
@@ -48,6 +51,10 @@ export async function createProduct(
     method: "POST",
     body: JSON.stringify(product),
   })
+}
+
+export async function getSupportedUnits(): Promise<UnitGroup[]> {
+  return apiClient<UnitGroup[]>("/products/units")
 }
 
 // ----------------------------------------------------------------------------
@@ -364,6 +371,15 @@ export async function downloadDatabaseBackup(): Promise<void> {
 
 export async function login(request: LoginRequest): Promise<AuthTokenResponse> {
   return apiClient<AuthTokenResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(request),
+  })
+}
+
+export async function changePassword(
+  request: ChangePasswordRequest,
+): Promise<ChangePasswordResponse> {
+  return apiClient<ChangePasswordResponse>("/auth/change-password", {
     method: "POST",
     body: JSON.stringify(request),
   })

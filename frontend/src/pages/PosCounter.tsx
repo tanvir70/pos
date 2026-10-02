@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { ScanLine } from "lucide-react"
 import type {
   StockItem,
   Customer,
@@ -27,6 +28,14 @@ function normalizeBangladeshPhone(value: string) {
   return digits
 }
 
+function isLotExpired(lot: StockItem): boolean {
+  if (!lot.expiryDate) return false
+  const exp = new Date(lot.expiryDate)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return exp < today
+}
+
 export default function PosCounter({
   isFocusMode = false,
   onToggleFocusMode,
@@ -41,9 +50,12 @@ export default function PosCounter({
     roundOff,
     paymentMethod,
     cashPaid,
+    cashPaidInput,
     digitalPaid,
+    digitalPaidInput,
     digitalMedium,
     digitalTrxId,
+    liveDue,
     finalTotalAmount,
     addToCart,
     clearCart,
@@ -56,6 +68,9 @@ export default function PosCounter({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [isPrintPromptOpen, setIsPrintPromptOpen] = useState(false)
   const [completedCustomer, setCompletedCustomer] = useState<Customer | null>(null)
+  const [isScanActive, setIsScanActive] = useState<boolean>(false)
+  const [lastScannedCode, setLastScannedCode] = useState<string | null>(null)
+  const scanTimerRef = useRef<number | null>(null)
   const checkoutKeyRef = useRef<string | null>(null)
 
   // ─── Fetch Stock and Customers ──────────────────────────────────
@@ -79,6 +94,14 @@ export default function PosCounter({
     loadInitialData()
   }, [loadInitialData])
 
+  useEffect(() => {
+    return () => {
+      if (scanTimerRef.current) {
+        window.clearTimeout(scanTimerRef.current)
+      }
+    }
+  }, [])
+
   // ─── Hardware Barcode Scanner Listener ──────────────────────────
   // Intercepts physical scanner keyboard wedges (<=35ms burst rate)
   useBarcodeScanner(
@@ -86,20 +109,25 @@ export default function PosCounter({
       const q = scannedCode.trim().toLowerCase()
       if (!q) return
 
-      // In-stock lots only
-      const inStockStocks = stocks.filter((s) => {
-        const qty = Number(s.quantity ?? (s as any).totalQuantity ?? 0)
-        return qty > 0
-      })
+      // Visual scan feedback trigger
+      setIsScanActive(true)
+      setLastScannedCode(scannedCode.trim())
+      if (scanTimerRef.current) {
+        window.clearTimeout(scanTimerRef.current)
+      }
+      scanTimerRef.current = window.setTimeout(() => {
+        setIsScanActive(false)
+      }, 1800)
 
-      const matchedLot = inStockStocks.find(
+      // Find candidate match across all stocks (in-stock or out-of-stock)
+      const matchedLot = stocks.find(
         (s) =>
-          ((s as any).lotBarcode && (s as any).lotBarcode.toLowerCase() === q) ||
-          ((s as any).barcode && (s as any).barcode.toLowerCase() === q),
+          (s.lotBarcode && s.lotBarcode.toLowerCase() === q) ||
+          (s.barcode && s.barcode.toLowerCase() === q),
       )
       const matchedStock =
         matchedLot ||
-        inStockStocks
+        stocks
           .filter(
             (s) =>
               (s.defaultBarcode && s.defaultBarcode.toLowerCase() === q) ||
@@ -111,33 +139,33 @@ export default function PosCounter({
           )[0]
 
       if (matchedStock) {
-        addToCart(matchedStock)
-        showSuccess(
-          `Barcode scan successful: ${matchedStock.nameEn || matchedStock.productNameEn}`,
-          undefined,
-          { closePrevious: true },
-        )
-      } else {
-        const outOfStockMatch = stocks.find(
-          (s) =>
-            ((s as any).lotBarcode && (s as any).lotBarcode.toLowerCase() === q) ||
-            ((s as any).barcode && (s as any).barcode.toLowerCase() === q) ||
-            (s.defaultBarcode && s.defaultBarcode.toLowerCase() === q) ||
-            (s.productCode && s.productCode.toLowerCase() === q),
-        )
-        if (outOfStockMatch) {
+        const qty = Number(matchedStock.quantity ?? matchedStock.totalQuantity ?? 0)
+        if (qty <= 0) {
           showWarning(
-            `Product (${outOfStockMatch.nameEn || outOfStockMatch.productNameEn}) is out of stock (0 quantity)!`,
+            `Product (${matchedStock.nameEn || matchedStock.productNameEn}) is out of stock (0 quantity)!`,
             undefined,
             { closePrevious: true },
           )
-        } else {
+        } else if (isLotExpired(matchedStock)) {
           showWarning(
-            `Scanned barcode (${scannedCode}) was not found in the database!`,
+            `Lot #${matchedStock.lotNumber} (${matchedStock.nameEn || matchedStock.productNameEn}) is expired (${matchedStock.expiryDate}) and quarantined under Pesticide Ordinance 1971.`,
+            "Agrochemical Expired",
+            { closePrevious: true },
+          )
+        } else {
+          addToCart(matchedStock)
+          showSuccess(
+            `Barcode scan successful: ${matchedStock.nameEn || matchedStock.productNameEn}`,
             undefined,
             { closePrevious: true },
           )
         }
+      } else {
+        showWarning(
+          `Scanned barcode (${scannedCode}) was not found in the database!`,
+          undefined,
+          { closePrevious: true },
+        )
       }
       window.dispatchEvent(new CustomEvent("pos-barcode-scanned"))
     },
@@ -156,9 +184,38 @@ export default function PosCounter({
       return
     }
 
+    if (
+      paymentMethod === "CASH" &&
+      (cashPaidInput.trim() === "" || isNaN(parseFloat(cashPaidInput)) || parseFloat(cashPaidInput) <= 0)
+    ) {
+      showWarning("Please enter cash received amount (or click Exact) before completing the sale.")
+      return
+    }
+
+    if (
+      (paymentMethod === "BKASH" || paymentMethod === "NAGAD" || paymentMethod === "BANK_TRANSFER") &&
+      (digitalPaidInput.trim() === "" || isNaN(parseFloat(digitalPaidInput)) || parseFloat(digitalPaidInput) <= 0)
+    ) {
+      showWarning(`Please enter ${paymentMethod} received amount before completing the sale.`)
+      return
+    }
+
+    if ((paymentMethod === "DUE" || liveDue > 0) && !selectedCustomer) {
+      showWarning("A registered customer must be selected to record a credit/due sale.")
+      return
+    }
+
     setCompletedCustomer(selectedCustomer)
     setIsPrintPromptOpen(true)
-  }, [cart.length, selectedCustomer, showWarning])
+  }, [
+    cart.length,
+    paymentMethod,
+    cashPaidInput,
+    digitalPaidInput,
+    liveDue,
+    selectedCustomer,
+    showWarning,
+  ])
 
   const resolveCustomerForSale = useCallback(
     async ({ phone, name }: { phone: string; name: string }): Promise<Customer> => {
@@ -277,6 +334,12 @@ export default function PosCounter({
       // Enter inside a text field belongs to that field (search, cash amount…).
       if (e.key === "Enter" && isTypingTarget(e.target)) return
       if (cart.length === 0 || isSubmitting) return
+      if (
+        paymentMethod === "CASH" &&
+        (cashPaidInput.trim() === "" || isNaN(parseFloat(cashPaidInput)) || parseFloat(cashPaidInput) <= 0)
+      ) {
+        return
+      }
 
       e.preventDefault()
       handleCompleteSale()
@@ -284,7 +347,7 @@ export default function PosCounter({
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleCompleteSale, isPrintPromptOpen, cart.length, isSubmitting])
+  }, [handleCompleteSale, isPrintPromptOpen, cart.length, isSubmitting, paymentMethod, cashPaidInput])
 
   return (
     <div
@@ -335,9 +398,31 @@ export default function PosCounter({
                 <span>Settle &amp; Print</span>
               </span>
             </div>
-            <span className="hidden sm:inline-block text-[10px] font-mono text-slate-400">
-              Auto scanner ready
-            </span>
+            <div
+              className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono transition-all duration-200 select-none ${
+                isScanActive
+                  ? "bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs font-semibold scale-102"
+                  : "bg-white text-slate-600 border border-slate-200/90 shadow-2xs"
+              }`}
+              title="Hardware barcode scanner is actively listening on this terminal"
+            >
+              <span className="relative flex h-2 w-2">
+                <span
+                  className={`absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 ${
+                    isScanActive ? "animate-ping" : "animate-pulse"
+                  }`}
+                />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <ScanLine
+                className={`w-3 h-3 transition-colors ${
+                  isScanActive ? "text-emerald-700 animate-pulse" : "text-slate-400"
+                }`}
+              />
+              <span>
+                {isScanActive ? `Scanned: ${lastScannedCode}` : "Auto scanner ready"}
+              </span>
+            </div>
           </div>
         </section>
 

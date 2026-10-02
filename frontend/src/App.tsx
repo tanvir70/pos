@@ -15,6 +15,7 @@ import { ToastProvider } from "./context/ToastContext"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { CartProvider } from "./context/CartContext"
 import { SplashScreen } from "./components/ui"
+import { Separator } from "./components/ui/separator"
 import { isTypingTarget, focusPrimarySearch, focusSidebarMenu, focusFirstTableRow } from "./utils/keyboard"
 
 const SIDEBAR_OPEN_KEY = "pos_sidebar_open"
@@ -216,34 +217,53 @@ function AppShell() {
           className={`flex-1 min-h-0 w-full ${
             isFocusMode ? "p-2 sm:p-2.5" : "px-3 sm:px-6 py-4"
           } ${
-            tab === "pos" ? "overflow-hidden" : "overflow-y-auto"
+            tab === "pos" ? "overflow-hidden" : "overflow-y-auto flex flex-col justify-between"
           }`}
         >
-          {tab === "pos" && (
+          {tab === "pos" ? (
             <PosCounter
               isFocusMode={isFocusMode}
               onToggleFocusMode={toggleFocusMode}
             />
-          )}
-          <Suspense
-            fallback={
-              <div className="flex h-64 items-center justify-center">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+          ) : (
+            <>
+              <div className="flex-1">
+                <Suspense
+                  fallback={
+                    <div className="flex h-64 items-center justify-center">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+                    </div>
+                  }
+                >
+                  {tab === "dashboard" && <Dashboard onNavigate={handleNavigate} />}
+                  {tab === "inventory" && <Inventory onNavigate={handleNavigate} />}
+                  {tab === "bin-card" && (
+                    <StockLedgerPage
+                      initialProductId={ledgerFilter?.productId}
+                      initialLotId={ledgerFilter?.lotId}
+                    />
+                  )}
+                  {tab === "customers" && <Customers />}
+                  {tab === "returns" && <Returns />}
+                  {tab === "settings" && <Settings />}
+                </Suspense>
               </div>
-            }
-          >
-            {tab === "dashboard" && <Dashboard onNavigate={handleNavigate} />}
-            {tab === "inventory" && <Inventory onNavigate={handleNavigate} />}
-            {tab === "bin-card" && (
-              <StockLedgerPage
-                initialProductId={ledgerFilter?.productId}
-                initialLotId={ledgerFilter?.lotId}
-              />
-            )}
-            {tab === "customers" && <Customers />}
-            {tab === "returns" && <Returns />}
-            {tab === "settings" && <Settings />}
-          </Suspense>
+
+              {/* Minimalist Monochrome Footer (All pages except POS) */}
+              <footer className="mt-14 pb-8 flex flex-col items-center gap-3 select-none no-print">
+                <Separator className="w-16 bg-border/60" />
+                <div className="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full border border-border/70 bg-card/60 shadow-2xs backdrop-blur-xs text-[11px] font-sans">
+                  <span className="text-muted-foreground/90 font-normal tracking-wide">
+                    Built and developed by
+                  </span>
+                  <span className="h-2.5 w-px bg-border" />
+                  <span className="font-semibold text-foreground tracking-tight">
+                    Gridmark Labs
+                  </span>
+                </div>
+              </footer>
+            </>
+          )}
         </main>
       </div>
     </div>

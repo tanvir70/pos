@@ -47,6 +47,8 @@ export default function LotEntryModal({
     "Agro Chemical Ltd.",
   )
   const [quantity, setQuantity] = useState<string>("")
+  const [cartons, setCartons] = useState<string>("")
+  const [loosePacks, setLoosePacks] = useState<string>("")
   const [purchaseCost, setPurchaseCost] = useState<string>("")
   const [lotRetailPrice, setLotRetailPrice] = useState<string>("")
   const [barcode, setBarcode] = useState<string>("")
@@ -56,12 +58,48 @@ export default function LotEntryModal({
 
   const selectedProduct = products.find((p) => p.id === selectedProductId)
 
+  const handleCartonsChange = (ctnStr: string) => {
+    setCartons(ctnStr)
+    const m = selectedProduct?.cartonMultiplier || 1
+    const ctn = parseFloat(ctnStr) || 0
+    const loose = parseFloat(loosePacks) || 0
+    const total = (ctn * m) + loose
+    setQuantity(total > 0 ? String(total) : "")
+  }
+
+  const handleLoosePacksChange = (looseStr: string) => {
+    setLoosePacks(looseStr)
+    const m = selectedProduct?.cartonMultiplier || 1
+    const ctn = parseFloat(cartons) || 0
+    const loose = parseFloat(looseStr) || 0
+    const total = (ctn * m) + loose
+    setQuantity(total > 0 ? String(total) : "")
+  }
+
+  const handleQuantityChange = (qtyStr: string) => {
+    setQuantity(qtyStr)
+    const m = selectedProduct?.cartonMultiplier || 1
+    const total = parseFloat(qtyStr) || 0
+    if (m > 1) {
+      const ctn = Math.floor(total / m)
+      const loose = Math.round((total % m) * 1000) / 1000
+      setCartons(ctn > 0 ? String(ctn) : "")
+      setLoosePacks(loose > 0 ? String(loose) : "")
+    }
+  }
+
   // Auto-fill prices and generate a suggested lot number when product changes
   const handleProductChange = (productIdStr: string) => {
     const id = productIdStr ? Number(productIdStr) : ""
     setSelectedProductId(id)
+    setCartons("")
+    setLoosePacks("")
+    setQuantity("")
     const prod = products.find((p) => p.id === id)
     if (prod) {
+      if (prod.companyName) {
+        setSupplierName(prod.companyName)
+      }
       setLotRetailPrice(String(prod.standardRetailPrice || ""))
       if (prod.buyingPrice) {
         setPurchaseCost(String(prod.buyingPrice))
@@ -112,6 +150,11 @@ export default function LotEntryModal({
 
     try {
       setIsSubmitting(true)
+      const selectedProd = products.find((p) => p.id === Number(selectedProductId))
+      const cleanCode = (selectedProd?.productCode || "").replace(/[^A-Za-z0-9]/g, "") || String(selectedProductId)
+      const cleanLot = lotNumber.trim().replace(/^LOT-?/i, "") || "01"
+      const resolvedBarcode = barcode.trim() || `${cleanCode}-${cleanLot}`
+
       const request: LotEntryRequest = {
         productId: Number(selectedProductId),
         lotNumber: lotNumber.trim(),
@@ -120,10 +163,10 @@ export default function LotEntryModal({
         purchaseCost: cost,
         lotRetailPrice: retail,
         lotWholesalePrice: wholesale,
-        barcode: barcode.trim() || undefined,
-        supplierName: supplierName.trim() || "Agro Chemical Ltd.",
+        barcode: resolvedBarcode,
+        supplierName: supplierName.trim() || "Syngenta Bangladesh Limited",
         challanNo: challanNo.trim() || undefined,
-        quantityBaseUnits: parsedQty,
+        quantity: parsedQty,
         location: "DOKAN",
       }
 
@@ -287,9 +330,9 @@ export default function LotEntryModal({
             </div>
           </div>
 
-          {/* Row 4: Quantity Entry */}
-          <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 space-y-2">
-            <div className="flex items-center justify-between">
+          {/* Row 4: Quantity & Packaging Conversion */}
+          <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-1">
               <label
                 htmlFor={quantityId}
                 className="text-xs font-bold text-emerald-900 flex items-center gap-1.5"
@@ -297,27 +340,104 @@ export default function LotEntryModal({
                 <Package className="w-4 h-4 text-emerald-700" />
                 <span>Quantity to Receive *</span>
               </label>
-              <span className="text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200">
-                Packaging: {selectedProduct?.baseUnit || "Unit"}
-              </span>
+              {selectedProduct && (
+                <div className="flex items-center gap-2">
+                  {selectedProduct.packSize && (
+                    <span className="text-[11px] font-medium text-emerald-900 bg-emerald-100/90 px-2 py-0.5 rounded border border-emerald-300">
+                      Formula: {selectedProduct.packSize}
+                    </span>
+                  )}
+                  <span className="text-[11px] font-semibold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                    Base: {selectedProduct.baseUnit}
+                  </span>
+                </div>
+              )}
             </div>
 
-            <div className="relative">
-              <input
-                id={quantityId}
-                type="number"
-                min="0.001"
-                step="any"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder={`e.g. 50 ${selectedProduct?.baseUnit || "units"}`}
-                required
-                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
-              />
-              <span className="absolute right-3.5 top-3 text-xs font-semibold text-slate-500">
-                {selectedProduct?.baseUnit || "units"}
-              </span>
-            </div>
+            {selectedProduct && (selectedProduct.cartonMultiplier || 1) > 1 ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Cartons (কার্টুন) — {selectedProduct.cartonMultiplier} pcs/ctn
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={cartons}
+                      onChange={(e) => handleCartonsChange(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Loose Units (খুচরা {selectedProduct.baseUnit})
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={loosePacks}
+                      onChange={(e) => handleLoosePacksChange(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
+                    />
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <label htmlFor={quantityId} className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Total Base Units (মোট ইউনিট — Inventory Record) *
+                  </label>
+                  <div className="relative">
+                    <input
+                      id={quantityId}
+                      type="number"
+                      min="0.001"
+                      step="any"
+                      value={quantity}
+                      onChange={(e) => handleQuantityChange(e.target.value)}
+                      placeholder={`e.g. 80 ${selectedProduct.baseUnit}`}
+                      required
+                      className="w-full bg-white border-2 border-emerald-600/60 rounded-xl px-3.5 py-2 text-sm font-extrabold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
+                    />
+                    <span className="absolute right-3.5 top-2 text-xs font-semibold text-emerald-800">
+                      {selectedProduct.baseUnit}
+                    </span>
+                  </div>
+                </div>
+
+                {parseFloat(quantity) > 0 && (
+                  <p className="text-xs text-emerald-800 font-medium bg-emerald-100/60 p-2 rounded-lg border border-emerald-200">
+                    📦 Breakdown: <strong className="font-bold">{parseFloat(quantity)} {selectedProduct.baseUnit}</strong> (
+                    {Math.floor(parseFloat(quantity) / (selectedProduct.cartonMultiplier || 1))} Cartons
+                    {parseFloat(quantity) % (selectedProduct.cartonMultiplier || 1) !== 0
+                      ? ` + ${(parseFloat(quantity) % (selectedProduct.cartonMultiplier || 1)).toFixed(0)} Loose ${selectedProduct.baseUnit}`
+                      : ""}
+                    )
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  id={quantityId}
+                  type="number"
+                  min="0.001"
+                  step="any"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder={`e.g. 50 ${selectedProduct?.baseUnit || "units"}`}
+                  required
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden tabular-nums"
+                />
+                <span className="absolute right-3.5 top-3 text-xs font-semibold text-slate-500">
+                  {selectedProduct?.baseUnit || "units"}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Row 5: Pricing (Buying Price & Retail Price) */}
@@ -384,7 +504,7 @@ export default function LotEntryModal({
               type="text"
               value={barcode}
               onChange={(e) => setBarcode(e.target.value)}
-              placeholder="Leave blank to auto-generate SYN-<CODE>-<LOT>"
+              placeholder="Leave blank to auto-generate scannable Code 128 sticker (e.g. 72598-01)"
               className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:border-emerald-600 focus:outline-hidden font-mono"
             />
           </div>
