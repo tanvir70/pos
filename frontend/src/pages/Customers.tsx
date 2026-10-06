@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import type { Customer, SaleResponse } from "../types"
 import { getCustomers } from "../api/endpoints"
+import { useToast } from "../context/ToastContext"
 import CustomerDirectoryTable from "../components/customers/CustomerDirectoryTable"
 import AddCustomerModal from "../components/customers/AddCustomerModal"
 import EditCustomerModal from "../components/customers/EditCustomerModal"
@@ -10,6 +11,7 @@ import ThermalReceipt from "../components/ThermalReceipt"
 import DueCollectionReceipt, { type DueReceiptData } from "../components/DueCollectionReceipt"
 
 export default function Customers() {
+  const { showSuccess, showError } = useToast()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -58,10 +60,13 @@ export default function Customers() {
 
   const handleAddSuccess = () => {
     setSuccessMessage("New customer added successfully.")
+    showSuccess("New customer profile created successfully.", "Customer Added")
     loadCustomers()
   }
 
   const handleEditSuccess = (updated: Customer) => {
+    const summaryMsg = `${updated.name} • Mobile: ${updated.phone} • Type: ${updated.customerType || "RETAIL"}${updated.villageAddress ? ` • ${updated.villageAddress}` : ""}`
+    showSuccess(summaryMsg, "Customer Profile Updated")
     setSuccessMessage("Customer profile updated successfully.")
     setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
     if (selectedCustomer && selectedCustomer.id === updated.id) {
@@ -71,6 +76,8 @@ export default function Customers() {
   }
 
   const handleRepaySuccess = (receiptData: DueReceiptData) => {
+    const summaryMsg = `${receiptData.customer?.name || "Customer"} • Paid: ৳${receiptData.amountPaid.toFixed(2)} • Remaining: ৳${receiptData.remainingDue.toFixed(2)} • MR Voucher: ${receiptData.receiptNo}`
+    showSuccess(summaryMsg, "Payment Recorded Successfully")
     setSuccessMessage(`Payment recorded successfully. MR Voucher: ${receiptData.receiptNo}`)
     setDueReceiptToPrint(receiptData)
     loadCustomers()

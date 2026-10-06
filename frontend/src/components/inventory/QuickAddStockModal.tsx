@@ -243,7 +243,13 @@ export default function QuickAddStockModal({
         challanNo,
       })
 
-      showSuccess(`Added ${qty} ${qty === 1 ? countUnit.singular : countUnit.plural} to ${product.nameEn} as ${lotNumber}`)
+      const unitLabel = qty === 1 ? countUnit.singular : countUnit.plural
+      const cartonBreakdown =
+        hasCartons && parseFloat(cartons) > 0
+          ? ` (${cartons} ctn${parseFloat(loose) > 0 ? ` + ${loose} loose` : ""})`
+          : ""
+      const summaryMsg = `${product.nameEn} • +${qty} ${unitLabel}${cartonBreakdown} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}`
+      showSuccess(summaryMsg, "Stock Lot Inwarded")
       handleClose()
       onSuccess()
     } catch (err) {

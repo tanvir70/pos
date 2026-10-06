@@ -127,11 +127,11 @@ export default function CustomerRepayModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 sm:p-6">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-md w-full p-5 sm:p-6">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <Banknote className="w-5 h-5 text-slate-900" />
-            <h3 className="font-bold text-slate-900 text-base sm:text-lg">
+            <Banknote className="w-5 h-5 text-slate-900 dark:text-emerald-400" />
+            <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg">
               Collect Due & Money Receipt (MR No.)
             </h3>
           </div>
@@ -139,37 +139,37 @@ export default function CustomerRepayModal({
             type="button"
             data-testid="close-repay-modal"
             onClick={onClose}
-            className="text-slate-500 hover:text-slate-900 cursor-pointer p-1"
+            className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 cursor-pointer p-1"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Customer Info Box */}
-        <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center">
+        <div className="mt-3 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-between items-center">
           <div>
-            <p className="font-bold text-slate-900 text-sm">
+            <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">
               {customer.name}
             </p>
             {customer.businessName && (
-              <p className="text-xs text-emerald-800 font-semibold">
+              <p className="text-xs text-emerald-800 dark:text-emerald-400 font-semibold">
                 {customer.businessName}
               </p>
             )}
-            <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1">
               <Phone className="w-3 h-3" /> {customer.phone}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-red-500 font-semibold">Current Due</p>
-            <p className="text-xl font-bold text-red-600 tabular-nums">
+            <p className="text-xs text-red-500 dark:text-red-400 font-semibold">Current Due</p>
+            <p className="text-xl font-bold text-red-600 dark:text-red-400 tabular-nums">
               {tk(customer.currentDue)}
             </p>
           </div>
         </div>
 
         {repayError && (
-          <div className="mt-3 p-2 bg-red-50 border border-red-300 rounded-lg text-red-700 text-xs font-semibold flex items-center gap-1.5">
+          <div className="mt-3 p-2 bg-red-50 dark:bg-rose-950/60 border border-red-300 dark:border-rose-900/80 rounded-lg text-red-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5" /> {repayError}
           </div>
         )}
@@ -177,7 +177,7 @@ export default function CustomerRepayModal({
         <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
           {/* Repay Amount */}
           <div>
-            <label className="block text-xs font-semibold text-slate-900 mb-1">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-200 mb-1">
               Repayment Amount (৳) *
             </label>
             <input
@@ -198,7 +198,7 @@ export default function CustomerRepayModal({
                 setRepayError(null)
               }}
               placeholder="0.00"
-              className="w-full px-3 py-2 border-2 border-emerald-600/40 rounded-lg text-lg font-bold tabular-nums focus:border-emerald-600 focus:outline-hidden"
+              className="w-full px-3 py-2 border-2 border-emerald-600/40 dark:border-emerald-500/50 rounded-lg text-lg font-bold tabular-nums focus:border-emerald-600 focus:outline-hidden bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100"
               autoFocus
             />
 
@@ -210,7 +210,7 @@ export default function CustomerRepayModal({
                   setRepayAmount(Math.round(customer.currentDue * 0.5).toString())
                   setRepayError(null)
                 }}
-                className="py-1 px-2 border border-slate-200 rounded text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+                className="py-1 px-2 border border-slate-200 dark:border-slate-700 rounded text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
               >
                 50% ({tk(Math.round(customer.currentDue * 0.5))})
               </button>
@@ -220,7 +220,7 @@ export default function CustomerRepayModal({
                   setRepayAmount(Math.round(customer.currentDue * 0.75).toString())
                   setRepayError(null)
                 }}
-                className="py-1 px-2 border border-slate-200 rounded text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer"
+                className="py-1 px-2 border border-slate-200 dark:border-slate-700 rounded text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
               >
                 75% ({tk(Math.round(customer.currentDue * 0.75))})
               </button>
@@ -230,7 +230,7 @@ export default function CustomerRepayModal({
                   setRepayAmount(customer.currentDue.toString())
                   setRepayError(null)
                 }}
-                className="py-1 px-2 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-xs font-bold hover:bg-emerald-200 transition-colors cursor-pointer"
+                className="py-1 px-2 bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 rounded text-xs font-bold hover:bg-emerald-200 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
               >
                 Full Due (100%)
               </button>
@@ -239,14 +239,14 @@ export default function CustomerRepayModal({
 
           {/* Payment Method */}
           <div>
-            <label className="block text-xs font-semibold text-slate-900 mb-1">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-200 mb-1">
               Payment Method *
             </label>
             <Select
               value={repayMethod}
               onValueChange={(val) => setRepayMethod(val as PaymentMethod)}
             >
-              <SelectTrigger className="w-full bg-white text-xs sm:text-sm py-2">
+              <SelectTrigger className="w-full bg-white dark:bg-slate-950 text-xs sm:text-sm py-2">
                 <SelectValue placeholder="Select payment method" />
               </SelectTrigger>
               <SelectContent>
@@ -260,7 +260,7 @@ export default function CustomerRepayModal({
 
           {/* Due Invoice */}
           <div>
-            <label className="block text-xs font-semibold text-slate-900 mb-1">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-200 mb-1">
               Due Invoice
             </label>
             <input
@@ -269,16 +269,16 @@ export default function CustomerRepayModal({
               disabled
               readOnly
               placeholder="DUE-YYYYMMDD-XXXXXX"
-              className="w-full px-3 py-2 border border-slate-200 bg-slate-100 text-slate-700 font-mono rounded-lg text-sm cursor-not-allowed select-none"
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-400 font-mono rounded-lg text-sm cursor-not-allowed select-none"
             />
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               Sequential auto-incremented due receipt voucher number.
             </p>
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-slate-900 mb-1">
+            <label className="block text-xs font-semibold text-slate-900 dark:text-slate-200 mb-1">
               Notes
             </label>
             <textarea
@@ -287,22 +287,22 @@ export default function CustomerRepayModal({
               value={repayNotes}
               onChange={(e) => setRepayNotes(e.target.value)}
               placeholder="e.g. Paid from paddy sale proceeds"
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden resize-none h-14 leading-tight"
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-800 rounded-lg text-sm focus:border-emerald-600 focus:outline-hidden resize-none h-14 leading-tight bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100 cursor-pointer"
+              className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800 transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+              className="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-700 text-white hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
             >
               {isSaving ? (
                 <>

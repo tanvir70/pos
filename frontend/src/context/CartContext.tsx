@@ -6,6 +6,7 @@ import React, {
   useLayoutEffect,
   useMemo,
   useCallback,
+  useRef,
 } from "react"
 import type {
   CartItem,
@@ -249,6 +250,55 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const finalTotalAmount = useMemo(() => {
     return Math.max(0, roundAccounting(preRoundTotal - boundedRoundOff))
   }, [preRoundTotal, boundedRoundOff])
+
+  const prevCartLengthRef = useRef<number>(cart.length)
+  const prevTotalRef = useRef<number>(finalTotalAmount)
+
+  // Reactive sync when cart is modified (deletions, quantity reductions, or cart emptied)
+  useLayoutEffect(() => {
+    const prevLength = prevCartLengthRef.current
+    const prevTotal = prevTotalRef.current
+    const isCartEmpty = cart.length === 0
+    const isCartShrunk = cart.length < prevLength
+
+    if (isCartEmpty) {
+      if (roundOff !== 0) setRoundOff(0)
+      if (cashPaidInput !== "") setCashPaidInput("")
+      if (dueAmountInput !== "") setDueAmountInput("")
+      if (digitalPaidInput !== "") setDigitalPaidInput("")
+    } else if (isCartShrunk) {
+      // A product was deleted from the cart:
+      // 1. Refresh Auto Round: if auto-round was applied, recompute with the new roundOffDeficit
+      if (roundOff > 0) {
+        const nextDeficit = roundAccounting(preRoundTotal % 10)
+        setRoundOff(nextDeficit > 0 ? nextDeficit : 0)
+      }
+
+      // 2. Refresh Cash Tender:
+      // If cash input matched the previous total (exact cash mode), sync to new final total!
+      const currentCash = parseFloat(cashPaidInput) || 0
+      if (currentCash === prevTotal && finalTotalAmount > 0) {
+        setCashPaidInput(String(finalTotalAmount))
+      } else if (currentCash > 0) {
+        // Otherwise, refresh cash input so cashier enters clean received tender for new total
+        setCashPaidInput("")
+      }
+
+      // 3. Refresh Due Tender:
+      if (paymentMethod === "DUE") {
+        setDueAmountInput(finalTotalAmount > 0 ? String(finalTotalAmount) : "")
+      }
+    } else if (roundOff > 0 && preRoundTotal > 0) {
+      // Re-evaluate roundOff if total changed so it never over-deducts
+      const currentDeficit = roundAccounting(preRoundTotal % 10)
+      if (roundOff !== currentDeficit) {
+        setRoundOff(currentDeficit > 0 ? currentDeficit : 0)
+      }
+    }
+
+    prevCartLengthRef.current = cart.length
+    prevTotalRef.current = finalTotalAmount
+  }, [cart, preRoundTotal, roundOff, cashPaidInput, finalTotalAmount, paymentMethod, dueAmountInput])
 
   // Auto-sync digital tender when payment method or total changes.
   // Note: cashPaidInput is deliberately NOT pre-filled so cashiers can type
@@ -532,7 +582,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   )
 
   const removeItem = useCallback((itemId: string) => {
-    setCart((prev) => prev.filter((i) => i.id !== itemId))
+    setCart((prev) => {
+      const next = prev.filter((i) => i.id !== itemId)
+      if (next.length === 0) {
+        setRoundOff(0)
+        setCashPaidInput("")
+        setDueAmountInput("")
+        setDigitalPaidInput("")
+      }
+      return next
+    })
   }, [])
 
   const clearCart = useCallback(() => {

@@ -364,7 +364,7 @@ export default function PosCounter({
       >
         {/* Order workspace: search command bar and the live line-item table. */}
         <section
-          className={`relative flex min-h-[560px] flex-col rounded-lg border border-slate-200 bg-white shadow-xs ${
+          className={`relative flex min-h-[560px] flex-col rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs ${
             isFocusMode ? "md:min-h-0" : "xl:min-h-0"
           }`}
         >
@@ -381,20 +381,20 @@ export default function PosCounter({
           <CartTicket />
 
           {/* Ambient keyboard shortcut indicator bar */}
-          <div className="shrink-0 flex items-center justify-between px-4 py-2 border-t border-slate-100 bg-slate-50/80 text-[11px] text-slate-500 rounded-b-lg">
+          <div className="shrink-0 flex items-center justify-between px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 text-[11px] text-slate-500 dark:text-slate-400 rounded-b-lg">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1.5">
-                <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 shadow-2xs">F2</kbd>
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-200 shadow-2xs">F2</kbd>
                 <span>Search</span>
               </span>
-              <span className="text-slate-300">•</span>
+              <span className="text-slate-300 dark:text-slate-600">•</span>
               <span className="flex items-center gap-1.5">
-                <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 shadow-2xs">F8</kbd>
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-200 shadow-2xs">F8</kbd>
                 <span>Full Counter</span>
               </span>
-              <span className="text-slate-300">•</span>
+              <span className="text-slate-300 dark:text-slate-600">•</span>
               <span className="flex items-center gap-1.5">
-                <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 shadow-2xs">Enter / F9</kbd>
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-200 shadow-2xs">Enter / F9</kbd>
                 <span>Settle &amp; Print</span>
               </span>
             </div>
@@ -402,7 +402,7 @@ export default function PosCounter({
               className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono transition-all duration-200 select-none ${
                 isScanActive
                   ? "bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs font-semibold scale-102"
-                  : "bg-white text-slate-600 border border-slate-200/90 shadow-2xs"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/90 dark:border-slate-700 shadow-2xs"
               }`}
               title="Hardware barcode scanner is actively listening on this terminal"
             >
@@ -430,8 +430,8 @@ export default function PosCounter({
         <aside className="flex h-full min-h-0 flex-col gap-3">
           <div className="shrink-0 flex items-center justify-between px-1 pt-1">
             <div>
-              <h2 className="text-sm font-bold text-slate-950">Order processing</h2>
-              <p className="mt-0.5 text-[11px] text-slate-500">
+              <h2 className="text-sm font-bold text-slate-950 dark:text-slate-100">Order processing</h2>
+              <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                 Pricing and payment
               </p>
             </div>

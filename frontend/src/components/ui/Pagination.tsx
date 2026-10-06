@@ -45,7 +45,7 @@ export function Pagination({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-50/80 border-t border-slate-200 text-xs text-slate-600 select-none",
+        "flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-slate-50/80 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 select-none",
         className
       )}
     >
@@ -53,22 +53,22 @@ export function Pagination({
       <div className="flex items-center gap-2">
         <span>
           Showing{" "}
-          <span className="font-bold text-slate-900 tabular-nums">{startItem}</span> to{" "}
-          <span className="font-bold text-slate-900 tabular-nums">{endItem}</span> of{" "}
-          <span className="font-bold text-slate-900 tabular-nums">{totalElements}</span>{" "}
+          <span className="font-bold text-slate-900 dark:text-slate-100 tabular-nums">{startItem}</span> to{" "}
+          <span className="font-bold text-slate-900 dark:text-slate-100 tabular-nums">{endItem}</span> of{" "}
+          <span className="font-bold text-slate-900 dark:text-slate-100 tabular-nums">{totalElements}</span>{" "}
           {itemLabel}
         </span>
 
         {/* Page size dropdown */}
         {onPageSizeChange && pageSizeOptions && pageSizeOptions.length > 1 && (
-          <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 pl-3">
-            <span className="text-slate-500 text-[11px]">Rows:</span>
+          <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <span className="text-slate-500 dark:text-slate-400 text-[11px]">Rows:</span>
             <Select
               value={String(pageSize)}
               disabled={disabled}
               onValueChange={(val) => onPageSizeChange(Number(val))}
             >
-              <SelectTrigger size="sm" className="h-7 w-[96px] bg-white border-slate-300">
+              <SelectTrigger size="sm" className="h-7 w-[96px] bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -95,7 +95,7 @@ export function Pagination({
             className="h-7 w-7 p-0 cursor-pointer"
             title="First page"
           >
-            <ChevronsLeft className="w-3.5 h-3.5 text-slate-600" />
+            <ChevronsLeft className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
           </Button>
         )}
 
@@ -111,7 +111,7 @@ export function Pagination({
           Prev
         </Button>
 
-        <span className="px-2 text-slate-700 font-bold tabular-nums text-xs">
+        <span className="px-2 text-slate-700 dark:text-slate-200 font-bold tabular-nums text-xs">
           Page {page + 1} of {totalPages}
         </span>
 
@@ -137,7 +137,7 @@ export function Pagination({
             className="h-7 w-7 p-0 cursor-pointer"
             title="Last page"
           >
-            <ChevronsRight className="w-3.5 h-3.5 text-slate-600" />
+            <ChevronsRight className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
           </Button>
         )}
       </div>

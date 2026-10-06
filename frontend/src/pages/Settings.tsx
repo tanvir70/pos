@@ -10,6 +10,9 @@ import {
   XCircle,
   Lock,
   KeyRound,
+  Sun,
+  Moon,
+  Laptop,
 } from "lucide-react"
 import {
   getWholesaleSettings,
@@ -20,11 +23,13 @@ import {
 import { downloadDatabaseBackup, changePassword } from "../api/endpoints"
 import { roundAccounting } from "../utils/currency"
 import { useToast } from "../context/ToastContext"
+import { useTheme, type Theme } from "../context/ThemeContext"
 import Button from "../components/ui/Button"
 import Input from "../components/ui/Input"
 
 export default function SettingsPage() {
   const { showSuccess, showError, showWarning } = useToast()
+  const { theme, setTheme } = useTheme()
 
   const [settings, setSettings] = useState<WholesaleSettings>(getWholesaleSettings)
   const [ratioInput, setRatioInput] = useState<string>(() =>
@@ -70,7 +75,10 @@ export default function SettingsPage() {
         enabled: true,
       })
       setSettings(updated)
-      showSuccess(`Wholesale ratio set to ${updated.discountPercentage}%!`)
+      showSuccess(
+        `Default wholesale discount configured to ${updated.discountPercentage}%. Applied immediately across active POS sessions.`,
+        "Wholesale Policy Saved",
+      )
     } catch (err) {
       showError(err, "Failed to save wholesale settings")
     } finally {
@@ -85,7 +93,10 @@ export default function SettingsPage() {
       enabled: true,
     })
     setSettings(updated)
-    showSuccess("Reset wholesale ratio to 5% default.")
+    showSuccess(
+      `Wholesale discount restored to system default (${DEFAULT_WHOLESALE_SETTINGS.discountPercentage}%).`,
+      "Wholesale Policy Reset",
+    )
   }
 
   const handleBackup = async () => {
@@ -120,6 +131,7 @@ export default function SettingsPage() {
       showWarning("New password and confirmation do not match.")
       return
     }
+
     try {
       setIsChangingPassword(true)
       await changePassword({ currentPassword, newPassword })
@@ -137,35 +149,92 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 py-2">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <SettingsIcon className="w-5 h-5 text-slate-700" />
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <SettingsIcon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
             <span>System & Store Settings</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Store configuration, wholesale discount ratios, and counter business preferences
           </p>
         </div>
 
         <div className="text-left sm:text-right">
           <span className="text-[11px] font-semibold text-slate-400 block">Active Wholesale Discount</span>
-          <span className="text-base font-bold font-mono text-purple-700">
+          <span className="text-base font-bold font-mono text-purple-700 dark:text-purple-400">
             {settings.discountPercentage}% Off
           </span>
         </div>
       </div>
 
-      {/* Wholesale Ratio Setting Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-        <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-          <Percent className="w-4 h-4 text-purple-700" />
+      {/* 1. Appearance & Theme Selection Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-bold text-sm">
+            <Sun className="w-4 h-4 text-amber-500" />
+            <span>Display Theme & Appearance</span>
+          </div>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 capitalize">
+            {theme} mode
+          </span>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Choose a visual theme designed for prolonged counter checkouts and glare reduction.
+        </p>
+
+        <div className="grid grid-cols-3 gap-2.5 pt-1">
+          <button
+            type="button"
+            onClick={() => setTheme("light")}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+              theme === "light"
+                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 shadow-xs ring-1 ring-emerald-400"
+                : "bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
+          >
+            <Sun className="w-4 h-4 text-amber-500" />
+            <span>Light</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTheme("dark")}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+              theme === "dark"
+                ? "bg-slate-900 dark:bg-slate-800 text-white border-slate-700 shadow-xs ring-1 ring-slate-600"
+                : "bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
+          >
+            <Moon className="w-4 h-4 text-indigo-400" />
+            <span>Dark</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setTheme("system")}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+              theme === "system"
+                ? "bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 border-teal-300 dark:border-teal-700 shadow-xs ring-1 ring-teal-400"
+                : "bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+            }`}
+          >
+            <Laptop className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <span>System</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Wholesale Ratio Setting Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+        <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-bold text-sm">
+          <Percent className="w-4 h-4 text-purple-700 dark:text-purple-400" />
           <span>Wholesale Price Ratio</span>
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
           <div>
-            <label htmlFor="ratioInput" className="block text-xs text-slate-600 font-medium mb-1.5">
+            <label htmlFor="ratioInput" className="block text-xs text-slate-600 dark:text-slate-400 font-medium mb-1.5">
               Wholesale Discount Ratio from Retail Price (%)
             </label>
             <div className="flex items-center gap-2">
@@ -179,7 +248,7 @@ export default function SettingsPage() {
                   value={ratioInput}
                   onChange={(e) => setRatioInput(e.target.value)}
                   placeholder="5"
-                  className="w-full pl-3 pr-8 py-2 border border-slate-300 rounded-xl font-mono font-bold text-base text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-purple-600"
+                  className="w-full pl-3 pr-8 py-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 rounded-xl font-mono font-bold text-base text-slate-900 dark:text-slate-100 focus:outline-hidden focus:ring-2 focus:ring-purple-600"
                 />
                 <span className="absolute right-3 top-2.5 text-slate-400 font-bold text-sm">%</span>
               </div>
@@ -203,18 +272,18 @@ export default function SettingsPage() {
                 Reset (5%)
               </Button>
             </div>
-            <p className="text-[11px] text-slate-500 mt-1.5">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
               When counter staff clicks Wholesale on an order, this ratio is deducted from the retail price.
             </p>
           </div>
         </form>
       </div>
 
-      {/* Database Backup Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex items-center justify-between gap-4">
+      {/* 3. Database Backup Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-sm font-bold text-slate-900">Database Backup</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Database Backup</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Download complete 1-click SQL backup of store inventory and orders.
           </p>
         </div>
@@ -239,15 +308,15 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      {/* Account Security & Password Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+      {/* 4. Account Security & Password Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-700 dark:text-slate-300">
             <Lock className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Account Security</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Account Security</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Change your password for secure access to the POS terminal and inventory.
             </p>
           </div>

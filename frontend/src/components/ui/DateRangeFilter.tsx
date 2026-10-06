@@ -96,15 +96,15 @@ export function DateRangeFilter({
   return (
     <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
       {/* Preset Pills */}
-      <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100/90 border border-slate-200">
+      <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100/90 border border-slate-200 dark:bg-slate-800/80 dark:border-slate-700">
         <button
           type="button"
           onClick={() => handlePresetSelect("ALL")}
           className={cn(
             "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
             value.preset === "ALL"
-              ? "bg-white text-slate-900 shadow-2xs font-bold"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+              ? "bg-white text-slate-900 shadow-2xs font-bold dark:bg-slate-900 dark:text-slate-100"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700/50"
           )}
         >
           All Time
@@ -117,7 +117,7 @@ export function DateRangeFilter({
             "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
             value.preset === "TODAY"
               ? "bg-emerald-600 text-white shadow-xs font-bold"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700/50"
           )}
         >
           Today
@@ -130,7 +130,7 @@ export function DateRangeFilter({
             "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
             value.preset === "7_DAYS"
               ? "bg-emerald-600 text-white shadow-xs font-bold"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700/50"
           )}
         >
           7 Days
@@ -143,7 +143,7 @@ export function DateRangeFilter({
             "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer",
             value.preset === "THIS_MONTH"
               ? "bg-emerald-600 text-white shadow-xs font-bold"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700/50"
           )}
         >
           This Month
@@ -156,7 +156,7 @@ export function DateRangeFilter({
             "px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1",
             value.preset === "CUSTOM"
               ? "bg-emerald-600 text-white shadow-xs font-bold"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700/50"
           )}
         >
           <Calendar className="w-3 h-3" />
@@ -166,7 +166,7 @@ export function DateRangeFilter({
 
       {/* Expandable Custom Date Inputs */}
       {value.preset === "CUSTOM" && (
-        <div className="flex items-center gap-1.5 p-1 rounded-lg bg-emerald-50/70 border border-emerald-200 text-xs">
+        <div className="flex items-center gap-1.5 p-1 rounded-lg bg-emerald-50/70 border border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800 text-xs">
           <input
             type="date"
             value={customStart}
@@ -176,7 +176,7 @@ export function DateRangeFilter({
                 onChange({ preset: "CUSTOM", startDate: e.target.value, endDate: customEnd })
               }
             }}
-            className="h-7 px-2 py-0.5 rounded border border-slate-300 bg-white font-mono text-[11px] text-slate-800 focus:border-emerald-600 focus:outline-hidden"
+            className="h-7 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono text-[11px] text-slate-800 dark:text-slate-200 focus:border-emerald-600 focus:outline-hidden"
           />
           <span className="text-slate-400 font-bold">to</span>
           <input
@@ -188,7 +188,7 @@ export function DateRangeFilter({
                 onChange({ preset: "CUSTOM", startDate: customStart, endDate: e.target.value })
               }
             }}
-            className="h-7 px-2 py-0.5 rounded border border-slate-300 bg-white font-mono text-[11px] text-slate-800 focus:border-emerald-600 focus:outline-hidden"
+            className="h-7 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono text-[11px] text-slate-800 dark:text-slate-200 focus:border-emerald-600 focus:outline-hidden"
           />
         </div>
       )}
@@ -198,7 +198,7 @@ export function DateRangeFilter({
         <button
           type="button"
           onClick={handleClear}
-          className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2 py-1 rounded-md transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 hover:text-rose-800 dark:text-rose-300 dark:hover:text-rose-100 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900/60 px-2 py-1 rounded-md transition-colors cursor-pointer"
           title="Reset date filter to All Time"
         >
           <X className="w-3 h-3" />

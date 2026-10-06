@@ -20,6 +20,8 @@ import { isTypingTarget, focusPrimarySearch, focusSidebarMenu, focusFirstTableRo
 
 const SIDEBAR_OPEN_KEY = "pos_sidebar_open"
 
+import { ThemeProvider } from "./context/ThemeContext"
+
 function AppShell() {
   const [tab, setTab] = useState<NavigationTab>("pos")
   const [ledgerFilter, setLedgerFilter] = useState<{ productId?: number; lotId?: number } | undefined>(undefined)
@@ -193,7 +195,7 @@ function AppShell() {
   }
 
   return (
-    <div className="h-screen flex bg-slate-50 overflow-hidden">
+    <div className="h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden">
       {!isFocusMode && (
         <Sidebar
           isOpen={isSidebarOpen}
@@ -272,12 +274,14 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <CartProvider>
-          <AppShell />
-        </CartProvider>
-      </AuthProvider>
-    </ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <CartProvider>
+            <AppShell />
+          </CartProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   )
 }

@@ -1,5 +1,6 @@
-import { PanelLeftClose, PanelLeftOpen, Sprout } from "lucide-react"
+import { PanelLeftClose, PanelLeftOpen, Sprout, Sun, Moon } from "lucide-react"
 import type { NavigationTab } from "../types"
+import { useTheme } from "../context/ThemeContext"
 import NetworkStatusBadge from "./NetworkStatusBadge"
 import Button from "./ui/Button"
 import Badge from "./ui/Badge"
@@ -22,15 +23,17 @@ const TAB_LABELS: Record<NavigationTab, string> = {
 }
 
 export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: TopBarProps) {
+  const { resolvedTheme, toggleTheme } = useTheme()
+
   return (
-    <header className="h-16 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between gap-3 px-3 sm:px-4 shadow-xs">
+    <header className="h-16 shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 px-3 sm:px-4 shadow-xs transition-colors duration-200">
       <div className="flex items-center gap-3 min-w-0">
         <Button
           type="button"
           variant="ghost"
           size="icon"
           onClick={onToggleSidebar}
-          className="h-9 w-9 -ml-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer shrink-0"
+          className="h-9 w-9 -ml-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer shrink-0"
           aria-label={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
           title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
@@ -45,25 +48,45 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
             on desktop the collapsed sidebar stays visible as an icon rail with its own brand mark. */}
         {!isSidebarOpen && (
           <div className="flex items-center gap-2 min-w-0 shrink-0 md:hidden">
-            <div className="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-2xs">
               <Sprout className="w-4 h-4" />
             </div>
-            <span className="font-bold text-slate-900 text-sm truncate">
+            <span className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate">
               Rajib Enterprise
             </span>
           </div>
         )}
 
-        <Separator orientation="vertical" className="h-5" />
+        <Separator orientation="vertical" className="h-5 bg-slate-200 dark:bg-slate-800" />
 
-        <span className="text-sm font-bold text-slate-900 truncate">
+        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
           {TAB_LABELS[activeTab]}
         </span>
       </div>
-      <div className="flex items-center gap-3 shrink-0">
+
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Dark/Light Theme Quick Toggle */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="h-8.5 w-8.5 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-all cursor-pointer shadow-2xs"
+          title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label="Toggle color theme"
+        >
+          {resolvedTheme === "dark" ? (
+            <Sun className="w-4 h-4 text-amber-400 hover:rotate-45 transition-transform" />
+          ) : (
+            <Moon className="w-4 h-4 text-slate-600 hover:-rotate-12 transition-transform" />
+          )}
+        </button>
+
+        <Separator orientation="vertical" className="h-4 bg-slate-200 dark:bg-slate-800" />
         <NetworkStatusBadge />
-        <Separator orientation="vertical" className="h-4" />
-        <Badge variant="outline" className="text-[11px] font-semibold text-slate-600 bg-slate-50">
+        <Separator orientation="vertical" className="h-4 bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+        <Badge
+          variant="outline"
+          className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 hidden sm:inline-flex"
+        >
           Full access
         </Badge>
       </div>

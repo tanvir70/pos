@@ -12,6 +12,7 @@ import {
   History,
   ShieldAlert,
   Tag,
+  Edit,
 } from "lucide-react"
 import type { Product, StockItem, GroupedProduct } from "../../types"
 import { formatTk } from "../../utils/currency"
@@ -51,6 +52,7 @@ export interface InventoryTableProps {
   expandedProductIds: Set<number>
   toggleLotsExpanded: (productId: number) => void
   openAddStockModal: (item: GroupedProduct) => void
+  onOpenEditProduct?: (item: GroupedProduct) => void
   onOpenLedger: (item: GroupedProduct, lot?: StockItem) => void
   onOpenAdjustment: (productId: number, lotId?: number) => void
   onOpenSticker: (item: StockItem, lots: StockItem[]) => void
@@ -77,6 +79,7 @@ export default function InventoryTable({
   expandedProductIds,
   toggleLotsExpanded,
   openAddStockModal,
+  onOpenEditProduct,
   onOpenLedger,
   onOpenAdjustment,
   onOpenSticker,
@@ -91,7 +94,7 @@ export default function InventoryTable({
   return (
     <div className="space-y-4">
       {/* Search & Category Filter Bar */}
-      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex-1 max-w-md">
           <Input
             data-primary-search="true"
@@ -112,7 +115,7 @@ export default function InventoryTable({
             }}
             onClear={() => onSearchChange("")}
             placeholder="Search by product name or code..."
-            leftAdornment={<Search className="w-4 h-4 text-slate-400" />}
+            leftAdornment={<Search className="w-4 h-4 text-slate-400 dark:text-slate-500" />}
             inputSize="sm"
           />
         </div>
@@ -124,8 +127,8 @@ export default function InventoryTable({
             onClick={() => onFilterClick("ALL")}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all ${
               activeFilter === "ALL"
-                ? "bg-slate-900 text-white shadow-xs"
-                : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200"
+                ? "bg-slate-900 dark:bg-emerald-600 text-white shadow-xs"
+                : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
             }`}
           >
             All ({products.length})
@@ -139,8 +142,8 @@ export default function InventoryTable({
               onClick={() => onFilterClick(cat)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap transition-all ${
                 activeFilter === cat
-                  ? "bg-emerald-700 text-white shadow-xs ring-1 ring-emerald-800"
-                  : "bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200"
+                  ? "bg-emerald-700 dark:bg-emerald-600 text-white shadow-xs ring-1 ring-emerald-800 dark:ring-emerald-500"
+                  : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
               }`}
             >
               {cat}
@@ -155,18 +158,18 @@ export default function InventoryTable({
               activeFilter === "LOW_STOCK"
                 ? "bg-amber-600 text-white border-amber-700 shadow-xs ring-1 ring-amber-700"
                 : lowStockCount > 0
-                ? "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
-                : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                ? "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/60"
+                : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
           >
-            <AlertTriangle className={`w-3.5 h-3.5 ${activeFilter === "LOW_STOCK" ? "text-white" : "text-amber-600"}`} />
+            <AlertTriangle className={`w-3.5 h-3.5 ${activeFilter === "LOW_STOCK" ? "text-white" : "text-amber-600 dark:text-amber-400"}`} />
             <span>Low Stock</span>
             {lowStockCount > 0 && (
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                   activeFilter === "LOW_STOCK"
                     ? "bg-amber-800 text-white"
-                    : "bg-amber-200 text-amber-900"
+                    : "bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100"
                 }`}
               >
                 {lowStockCount}
@@ -182,18 +185,18 @@ export default function InventoryTable({
               activeFilter === "EXPIRING"
                 ? "bg-rose-600 text-white border-rose-700 shadow-xs ring-1 ring-rose-700"
                 : expiringLotsCount > 0
-                ? "bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100"
-                : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                ? "bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-800 hover:bg-rose-100 dark:hover:bg-rose-900/60"
+                : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
           >
-            <Hourglass className={`w-3.5 h-3.5 ${activeFilter === "EXPIRING" ? "text-white" : "text-rose-600"}`} />
+            <Hourglass className={`w-3.5 h-3.5 ${activeFilter === "EXPIRING" ? "text-white" : "text-rose-600 dark:text-rose-400"}`} />
             <span>Expiring (&lt; 30d)</span>
             {expiringLotsCount > 0 && (
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
                   activeFilter === "EXPIRING"
                     ? "bg-rose-800 text-white"
-                    : "bg-rose-200 text-rose-900"
+                    : "bg-rose-200 dark:bg-rose-800 text-rose-900 dark:text-rose-100"
                 }`}
               >
                 {expiringLotsCount}
@@ -205,24 +208,24 @@ export default function InventoryTable({
 
       {/* Active Filter Status Banner */}
       {activeFilter !== "ALL" && (
-        <div className="flex items-center justify-between px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 animate-in fade-in duration-150">
+        <div className="flex items-center justify-between px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 animate-in fade-in duration-150">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-500">Filtered by:</span>
-            <span className="px-2 py-0.5 rounded-md font-bold bg-white border border-slate-300 text-slate-900 shadow-2xs">
+            <span className="font-semibold text-slate-500 dark:text-slate-400">Filtered by:</span>
+            <span className="px-2 py-0.5 rounded-md font-bold bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 shadow-2xs">
               {activeFilter === "LOW_STOCK"
                 ? "Low Stock Alert"
                 : activeFilter === "EXPIRING"
                 ? "Expiring Lots (< 30 Days)"
                 : activeFilter}
             </span>
-            <span className="text-slate-500 font-medium">
+            <span className="text-slate-500 dark:text-slate-400 font-medium">
               ({filteredProducts.length} {filteredProducts.length === 1 ? "product found" : "products found"})
             </span>
           </div>
           <button
             type="button"
             onClick={() => onFilterClick("ALL")}
-            className="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer hover:underline"
+            className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1 cursor-pointer hover:underline"
           >
             <X className="w-3.5 h-3.5" />
             <span>Reset to All</span>
@@ -231,7 +234,7 @@ export default function InventoryTable({
       )}
 
       {/* Dokan Stock Inventory Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -294,18 +297,18 @@ export default function InventoryTable({
                           }
                         }
                       }}
-                      className={`focus:outline-none focus:bg-emerald-50 focus:ring-2 focus:ring-emerald-600 cursor-default ${
-                        isLowStock ? "bg-amber-50/30" : ""
+                      className={`focus:outline-none focus:bg-emerald-50 dark:focus:bg-emerald-950/40 focus:ring-2 focus:ring-emerald-600 cursor-default ${
+                        isLowStock ? "bg-amber-50/30 dark:bg-amber-950/20" : ""
                       }`}
                     >
                       {/* Product Info */}
                       <TableCell>
                         <div>
-                          <div className="font-bold text-slate-900 text-sm">
+                          <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
                             {item.nameEn}
                           </div>
-                          <div className="text-[11px] text-slate-500 flex items-center gap-2">
-                            <span className="font-mono text-emerald-800 font-semibold">
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                            <span className="font-mono text-emerald-800 dark:text-emerald-400 font-semibold">
                               #{item.productCode}
                             </span>
                           </div>
@@ -314,14 +317,14 @@ export default function InventoryTable({
 
                       {/* Category */}
                       <TableCell>
-                        <span className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 font-semibold text-slate-900 border border-slate-200">
+                        <span className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 dark:bg-slate-800 font-semibold text-slate-900 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
                           {item.category}
                         </span>
                       </TableCell>
 
                       {/* Packaging */}
                       <TableCell>
-                        <span className="text-xs font-semibold text-slate-900 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                        <span className="text-xs font-semibold text-slate-900 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                           {item.baseUnit}
                         </span>
                       </TableCell>
@@ -338,7 +341,7 @@ export default function InventoryTable({
                             <div className="flex flex-col items-center gap-0.5">
                               {isLowStock ? (
                                 <span
-                                  className="inline-flex items-center gap-1.5 font-mono font-bold text-sm text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200"
+                                  className="inline-flex items-center gap-1.5 font-mono font-bold text-sm text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800"
                                   title={
                                     activeLots[0]
                                       ? `Lot: ${formatLotNumber(activeLots[0].lotNumber)} | Expiry: ${activeLots[0].expiryDate || "N/A"}`
@@ -347,13 +350,13 @@ export default function InventoryTable({
                                 >
                                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                                   {item.totalStock}
-                                  <span className="text-[10px] font-bold text-amber-700 uppercase tracking-tight">
+                                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tight">
                                     Low
                                   </span>
                                 </span>
                               ) : (
                                 <span
-                                  className="font-mono font-bold text-sm text-slate-900 tabular-nums px-1"
+                                  className="font-mono font-bold text-sm text-slate-900 dark:text-slate-100 tabular-nums px-1"
                                   title={
                                     activeLots[0]
                                       ? `Lot: ${formatLotNumber(activeLots[0].lotNumber)} | Expiry: ${activeLots[0].expiryDate || "N/A"}`
@@ -369,7 +372,7 @@ export default function InventoryTable({
                                 const ctns = Math.floor(item.totalStock / mult)
                                 const loose = item.totalStock % mult
                                 return (
-                                  <span className="font-mono text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap">
+                                  <span className="font-mono text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">
                                     {ctns > 0 ? `${ctns} ${pluralizeUnit("Carton", ctns)}` : ""}
                                     {ctns > 0 && loose > 0 ? " + " : ""}
                                     {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose)}` : ""}
@@ -387,7 +390,7 @@ export default function InventoryTable({
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border transition-all cursor-pointer ${
                                 isExpanded
                                   ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
-                                  : "bg-emerald-50 text-emerald-800 border-emerald-200/80 hover:bg-emerald-100 hover:border-emerald-300"
+                                  : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:border-emerald-300"
                               }`}
                               title={
                                 isExpanded
@@ -408,13 +411,13 @@ export default function InventoryTable({
                       </TableCell>
 
                       {/* Retail Price */}
-                      <TableCell align="right" isMonospace className="font-bold text-slate-900">
+                      <TableCell align="right" isMonospace className="font-bold text-slate-900 dark:text-slate-100">
                         {formatTk(item.retailPrice)}
                       </TableCell>
 
                       {/* Buying Price */}
                       <TableCell align="right" isMonospace>
-                        <span className="text-amber-800 font-bold">
+                        <span className="text-amber-800 dark:text-amber-400 font-bold">
                           {formatTk(item.buyingPrice)}
                         </span>
                       </TableCell>
@@ -428,17 +431,29 @@ export default function InventoryTable({
                             onClick={() => openAddStockModal(item)}
                             title="Add stock to this product"
                             leftIcon={<Plus className="w-3.5 h-3.5" />}
-                            className="text-xs px-2 py-1 bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                            className="text-xs px-2 py-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
                           >
                             Stock
                           </Button>
+                          {onOpenEditProduct && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onOpenEditProduct(item)}
+                              title={`Edit product details and pricing for ${item.nameEn}`}
+                              leftIcon={<Edit className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />}
+                              className="text-xs px-2 py-1 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                            >
+                              Edit
+                            </Button>
+                          )}
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => onOpenLedger(item)}
                             title={`View stock ledger for ${item.nameEn}`}
-                            leftIcon={<History className="w-3.5 h-3.5 text-teal-600" />}
-                            className="text-xs px-2 py-1 border-slate-200 hover:bg-teal-50 text-slate-700 hover:text-teal-900"
+                            leftIcon={<History className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />}
+                            className="text-xs px-2 py-1 border-slate-200 dark:border-slate-700 hover:bg-teal-50 dark:hover:bg-teal-950/60 text-slate-700 dark:text-slate-300 hover:text-teal-900 dark:hover:text-teal-300"
                           >
                             Stock Ledger
                           </Button>
@@ -447,8 +462,8 @@ export default function InventoryTable({
                             size="sm"
                             onClick={() => onOpenAdjustment(item.productId)}
                             title={`Record breakage, damage, or adjustment for ${item.nameEn}`}
-                            leftIcon={<ShieldAlert className="w-3.5 h-3.5 text-amber-600" />}
-                            className="text-xs px-2 py-1 bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
+                            leftIcon={<ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />}
+                            className="text-xs px-2 py-1 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/60"
                           >
                             Adjust
                           </Button>
@@ -475,21 +490,21 @@ export default function InventoryTable({
                                   <ChevronDown
                                     className={`w-3 h-3 transition-transform ${
                                       lotDropdownProductId === item.productId
-                                        ? "rotate-180 text-emerald-700"
-                                        : "text-slate-400"
+                                        ? "rotate-180 text-emerald-700 dark:text-emerald-400"
+                                        : "text-slate-400 dark:text-slate-500"
                                     }`}
                                   />
                                 ) : undefined
                               }
                               className={`text-xs px-2 py-1 transition-all ${
                                 lotDropdownProductId === item.productId
-                                  ? "bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-400"
-                                  : ""
+                                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-400 dark:ring-emerald-500"
+                                  : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                               }`}
                             >
                               <span>Sticker</span>
                               {activeLots.length > 1 && (
-                                <span className="text-[10px] px-1 py-0.2 bg-slate-100 rounded text-slate-600 font-bold ml-0.5">
+                                <span className="text-[10px] px-1 py-0.2 bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-300 font-bold ml-0.5">
                                   {activeLots.length}
                                 </span>
                               )}
@@ -501,26 +516,26 @@ export default function InventoryTable({
 
                     {/* Expandable Active Lots Sub-Table */}
                     {isExpanded && activeLots.length > 0 && (
-                      <TableRow className="bg-slate-50/60 hover:bg-slate-50/60 border-t border-b border-slate-200">
+                      <TableRow className="bg-slate-50/60 dark:bg-slate-950/60 hover:bg-slate-50/60 dark:hover:bg-slate-950/60 border-t border-b border-slate-200 dark:border-slate-800">
                         <TableCell colSpan={7} className="p-3 sm:p-4">
-                          <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
+                          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
                             {/* Header bar */}
-                            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800">
                               <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-emerald-100 text-emerald-800">
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300">
                                   <Layers className="w-3.5 h-3.5" />
                                 </span>
-                                <span className="text-xs font-bold text-slate-900">
+                                <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                                   Active Lots for {item.nameEn}
                                 </span>
-                                <span className="text-[11px] font-medium text-slate-500">
+                                <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                                   ({activeLots.length} {activeLots.length === 1 ? "batch" : "batches"} in stock • Zero-stock lots hidden)
                                 </span>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => toggleLotsExpanded(item.productId)}
-                                className="text-xs text-slate-500 hover:text-slate-800 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                                className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
                               >
                                 Close ✕
                               </button>
@@ -529,7 +544,7 @@ export default function InventoryTable({
                             {/* Lots sub-table */}
                             <div className="overflow-x-auto">
                               <table className="w-full text-left text-xs">
-                                <thead className="bg-slate-50 text-slate-500 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                                   <tr>
                                     <th className="py-2.5 px-3 text-left">LOT NUMBER</th>
                                     <th className="py-2.5 px-3 text-left">BARCODE</th>
@@ -541,7 +556,7 @@ export default function InventoryTable({
                                     <th className="py-2.5 px-3 text-center">ACTION</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                   {[...activeLots]
                                     .sort(
                                       (a, b) =>
@@ -563,17 +578,17 @@ export default function InventoryTable({
                                       return (
                                         <tr
                                           key={lot.lotId}
-                                          className="hover:bg-slate-50/70 transition-colors"
+                                          className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors"
                                         >
                                           {/* 1. LOT NUMBER */}
                                           <td className="py-2.5 px-3 text-left whitespace-nowrap">
-                                            <span className="font-mono font-bold text-xs text-slate-900 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
+                                            <span className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 shadow-2xs">
                                               {formatLotNumber(lot.lotNumber, idx)}
                                             </span>
                                           </td>
 
                                           {/* 2. BARCODE */}
-                                          <td className="py-2.5 px-3 text-left font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                                          <td className="py-2.5 px-3 text-left font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
                                             {lot.lotBarcode ||
                                               lot.barcode ||
                                               lot.defaultBarcode ||
@@ -582,7 +597,7 @@ export default function InventoryTable({
 
                                           {/* 3. AVAILABLE QTY */}
                                           <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                                            <div className="font-mono font-bold text-sm text-emerald-800 tabular-nums">
+                                            <div className="font-mono font-bold text-sm text-emerald-800 dark:text-emerald-400 tabular-nums">
                                               {lotQty}
                                             </div>
                                             {(() => {
@@ -591,7 +606,7 @@ export default function InventoryTable({
                                               const ctns = Math.floor(lotQty / mult)
                                               const loose = lotQty % mult
                                               return (
-                                                <span className="font-mono text-[10px] text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200">
+                                                <span className="font-mono text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
                                                   {ctns > 0 ? `${ctns} ${pluralizeUnit("Carton", ctns)}` : ""}
                                                   {ctns > 0 && loose > 0 ? " + " : ""}
                                                   {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose)}` : ""}
@@ -601,12 +616,12 @@ export default function InventoryTable({
                                           </td>
 
                                           {/* 4. RETAIL PRICE */}
-                                          <td className="py-2.5 px-3 text-center font-mono font-bold text-xs text-slate-900 tabular-nums whitespace-nowrap">
+                                          <td className="py-2.5 px-3 text-center font-mono font-bold text-xs text-slate-900 dark:text-slate-100 tabular-nums whitespace-nowrap">
                                             {formatTk(lot.lotRetailPrice ?? item.retailPrice)}
                                           </td>
 
                                           {/* 5. WHOLESALE PRICE */}
-                                          <td className="py-2.5 px-3 text-center font-mono text-xs text-slate-600 tabular-nums whitespace-nowrap">
+                                          <td className="py-2.5 px-3 text-center font-mono text-xs text-slate-600 dark:text-slate-300 tabular-nums whitespace-nowrap">
                                             {formatTk(
                                               lot.lotWholesalePrice ??
                                                 item.wholesalePrice ??
@@ -615,7 +630,7 @@ export default function InventoryTable({
                                           </td>
 
                                           {/* 6. COST PRICE */}
-                                          <td className="py-2.5 px-3 text-center font-mono font-semibold text-xs text-amber-800 tabular-nums whitespace-nowrap">
+                                          <td className="py-2.5 px-3 text-center font-mono font-semibold text-xs text-amber-800 dark:text-amber-400 tabular-nums whitespace-nowrap">
                                             {formatTk(lot.purchaseCost ?? item.buyingPrice)}
                                           </td>
 
@@ -625,10 +640,10 @@ export default function InventoryTable({
                                               <span
                                                 className={
                                                   isExpired
-                                                    ? "text-rose-600 font-bold"
+                                                    ? "text-rose-600 dark:text-rose-400 font-bold"
                                                     : isCritical
-                                                    ? "text-amber-700 font-semibold"
-                                                    : "text-slate-600"
+                                                    ? "text-amber-700 dark:text-amber-400 font-semibold"
+                                                    : "text-slate-600 dark:text-slate-400"
                                                 }
                                               >
                                                 {lot.expiryDate || "Not set"}

@@ -116,27 +116,27 @@ export default function EditCustomerModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 my-8">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-xl w-full p-6 my-8">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h3 className="font-semibold text-slate-900 text-base">
+            <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-base">
               Edit Customer Profile
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Update customer details, contact number, and cultivated land area.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 text-sm font-medium px-2 py-1 rounded"
+            className="text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 text-sm font-medium px-2 py-1 rounded cursor-pointer"
           >
             Close
           </button>
         </div>
 
         {formError && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-medium">
+          <div className="mt-3 p-3 bg-red-50 dark:bg-rose-950/60 border border-red-200 dark:border-rose-900/80 rounded-lg text-red-700 dark:text-rose-300 text-xs font-medium">
             {formError}
           </div>
         )}
@@ -145,7 +145,7 @@ export default function EditCustomerModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {/* Customer Name */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Customer Name *
               </label>
               <input
@@ -154,13 +154,13 @@ export default function EditCustomerModal({
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Full Name"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="w-full h-9 px-3 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-950"
               />
             </div>
 
             {/* Mobile Number */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Mobile Number *
               </label>
               <input
@@ -176,13 +176,13 @@ export default function EditCustomerModal({
                   })
                 }
                 placeholder="017XXXXXXXX"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="w-full h-9 px-3 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-950"
               />
             </div>
 
             {/* Land Area */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Land Area
               </label>
               <input
@@ -190,14 +190,14 @@ export default function EditCustomerModal({
                 value={form.landArea || ""}
                 onChange={(e) => setForm({ ...form, landArea: e.target.value })}
                 placeholder="e.g. 5 Bigha / 1.5 Acre / 80 Decimal"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="w-full h-9 px-3 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-950"
               />
             </div>
 
 
             {/* Business / Shop Name */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Business Name
               </label>
               <input
@@ -205,13 +205,13 @@ export default function EditCustomerModal({
                 value={form.businessName || ""}
                 onChange={(e) => setForm({ ...form, businessName: e.target.value })}
                 placeholder="Business / Farm Name"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="w-full h-9 px-3 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-950"
               />
             </div>
 
             {/* Customer Type with shadcn Select */}
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Customer Type
               </label>
               <Select
@@ -220,7 +220,7 @@ export default function EditCustomerModal({
                   setForm({ ...form, customerType: val as CustomerType })
                 }
               >
-                <SelectTrigger className="w-full bg-white text-sm h-9">
+                <SelectTrigger className="w-full bg-white dark:bg-slate-950 text-sm h-9">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -232,7 +232,7 @@ export default function EditCustomerModal({
 
             {/* Village / Address */}
             <div className="sm:col-span-2">
-              <label className="block text-xs font-medium text-slate-700 mb-1">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Village / Address
               </label>
               <input
@@ -240,23 +240,23 @@ export default function EditCustomerModal({
                 value={form.villageAddress || ""}
                 onChange={(e) => setForm({ ...form, villageAddress: e.target.value })}
                 placeholder="Village / Union / Sub-district"
-                className="w-full h-9 px-3 border border-slate-200 rounded-md text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="w-full h-9 px-3 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-950"
               />
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-md transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving || !isChanged}
-              className="px-4 py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-md transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-md transition-colors cursor-pointer"
             >
               {isSaving ? "Saving..." : "Save Changes"}
             </button>

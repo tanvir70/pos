@@ -174,8 +174,8 @@ export default function SettlementPanel({
   const isPaymentLocked = !isCartEmpty && (isCashEmpty || isDigitalEmpty || isDueWithoutCustomer)
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs">
-      <div className="shrink-0 border-b border-slate-200 bg-slate-950 px-4 py-4 text-white">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+      <div className="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-slate-950 px-4 py-4 text-white">
         <div className="flex items-start justify-between gap-3">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-300">
@@ -226,18 +226,18 @@ export default function SettlementPanel({
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 pb-3">
         <section className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <label className="text-xs font-black uppercase text-slate-500">
+            <label className="text-xs font-black uppercase text-slate-500 dark:text-slate-400">
               Payment
             </label>
             {customerDue > 0 && (
-              <span className="text-[11px] font-semibold text-slate-500">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                 Previous due:{" "}
-                <span className="font-mono text-slate-900">{formatTk(customerDue)}</span>
+                <span className="font-mono text-slate-900 dark:text-slate-100">{formatTk(customerDue)}</span>
               </span>
             )}
           </div>
 
-          <div className="grid grid-cols-5 gap-1 rounded-lg bg-slate-100 p-1">
+          <div className="grid grid-cols-5 gap-1 rounded-lg bg-slate-100 dark:bg-slate-800 p-1">
             {PAYMENT_METHODS.map((m) => {
               const isSelected = paymentMethod === m.id
               const Icon = m.icon
@@ -248,8 +248,8 @@ export default function SettlementPanel({
                   onClick={() => handlePaymentMethodChange(m.id)}
                   className={`flex h-12 flex-col items-center justify-center rounded-md text-[10px] font-bold transition-colors cursor-pointer ${
                     isSelected
-                      ? "bg-white text-emerald-800 shadow-xs ring-1 ring-slate-200"
-                      : "text-slate-500 hover:bg-white/70 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-emerald-800 dark:text-emerald-400 shadow-xs ring-1 ring-slate-200 dark:ring-slate-700"
+                      : "text-slate-500 dark:text-slate-400 hover:bg-white/70 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
                   <Icon className="mb-0.5 h-3.5 w-3.5" />
@@ -264,7 +264,7 @@ export default function SettlementPanel({
         {paymentMethod === "CASH" && (
           <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <label className="text-[11px] font-black uppercase text-slate-500">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400">
                 Cash received
               </label>
               <div className="flex items-center gap-1">
@@ -273,7 +273,7 @@ export default function SettlementPanel({
                   variant="outline"
                   size="sm"
                   onClick={handleSetExactCash}
-                  className="h-6 px-2 text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="h-6 px-2 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 dark:border-slate-700 cursor-pointer"
                 >
                   Exact
                 </Button>
@@ -282,7 +282,7 @@ export default function SettlementPanel({
                   variant="outline"
                   size="sm"
                   onClick={() => handleQuickCashAdd(100)}
-                  className="h-6 px-1.5 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="h-6 px-1.5 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 dark:border-slate-700 cursor-pointer"
                 >
                   +100
                 </Button>
@@ -291,7 +291,7 @@ export default function SettlementPanel({
                   variant="outline"
                   size="sm"
                   onClick={() => handleQuickCashAdd(500)}
-                  className="h-6 px-1.5 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="h-6 px-1.5 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 dark:border-slate-700 cursor-pointer"
                 >
                   +500
                 </Button>
@@ -300,7 +300,7 @@ export default function SettlementPanel({
                   variant="outline"
                   size="sm"
                   onClick={() => handleQuickCashAdd(1000)}
-                  className="h-6 px-1.5 font-mono text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  className="h-6 px-1.5 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 dark:border-slate-700 cursor-pointer"
                 >
                   +1000
                 </Button>
@@ -330,10 +330,10 @@ export default function SettlementPanel({
               onFocus={(e) => e.target.select()}
               placeholder="0.00"
               className={cn(
-                "h-12 w-full rounded-lg border bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden transition-colors",
+                "h-12 w-full rounded-lg border bg-white dark:bg-slate-950 px-3 text-right font-mono text-2xl font-black text-slate-950 dark:text-slate-50 tabular-nums outline-hidden transition-colors",
                 isCashEmpty && !isCartEmpty
-                  ? "border-amber-300 focus:border-amber-500 focus:ring-3 focus:ring-amber-500/10"
-                  : "border-slate-300 focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10",
+                  ? "border-amber-300 dark:border-amber-600 focus:border-amber-500 focus:ring-3 focus:ring-amber-500/10"
+                  : "border-slate-300 dark:border-slate-700 focus:border-emerald-700 dark:focus:border-emerald-500 focus:ring-4 focus:ring-emerald-700/10",
               )}
             />
           </section>
@@ -344,7 +344,7 @@ export default function SettlementPanel({
           paymentMethod === "BANK_TRANSFER") && (
           <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <label className="text-[11px] font-black uppercase text-slate-500">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400">
                 {paymentLabel} received
               </label>
             </div>
@@ -372,10 +372,10 @@ export default function SettlementPanel({
               onFocus={(e) => e.target.select()}
               placeholder="0.00"
               className={cn(
-                "h-12 w-full rounded-lg border bg-white px-3 text-right font-mono text-2xl font-black text-slate-950 tabular-nums outline-hidden transition-colors",
+                "h-12 w-full rounded-lg border bg-white dark:bg-slate-950 px-3 text-right font-mono text-2xl font-black text-slate-950 dark:text-slate-50 tabular-nums outline-hidden transition-colors",
                 isDigitalEmpty && !isCartEmpty
-                  ? "border-amber-300 focus:border-amber-500 focus:ring-3 focus:ring-amber-500/10"
-                  : "border-slate-300 focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10",
+                  ? "border-amber-300 dark:border-amber-600 focus:border-amber-500 focus:ring-3 focus:ring-amber-500/10"
+                  : "border-slate-300 dark:border-slate-700 focus:border-emerald-700 dark:focus:border-emerald-500 focus:ring-4 focus:ring-emerald-700/10",
               )}
             />
 
@@ -385,7 +385,7 @@ export default function SettlementPanel({
               onChange={(e) => setDigitalTrxId(e.target.value)}
               onFocus={(e) => e.target.select()}
               placeholder="Transaction ID / TrxID (optional)"
-              className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 font-mono text-xs outline-hidden focus:border-emerald-700 focus:bg-white"
+              className="h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 font-mono text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-700 dark:focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-900"
             />
           </section>
         )}
@@ -393,8 +393,8 @@ export default function SettlementPanel({
         {paymentMethod === "DUE" && (
           <section className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <label className="text-[11px] font-black uppercase text-amber-800 flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+              <label className="text-[11px] font-black uppercase text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 Due amount (to ledger)
               </label>
               <div className="flex items-center gap-1">
@@ -403,7 +403,7 @@ export default function SettlementPanel({
                   variant="outline"
                   size="sm"
                   onClick={handleSetFullDue}
-                  className="h-6 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 text-[10px] font-bold cursor-pointer px-2"
+                  className="h-6 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-[10px] font-bold cursor-pointer px-2"
                 >
                   Full Due
                 </Button>
@@ -424,29 +424,29 @@ export default function SettlementPanel({
               }}
               onFocus={(e) => e.target.select()}
               placeholder={finalTotalAmount > 0 ? String(finalTotalAmount) : "0.00"}
-              className="h-12 w-full rounded-lg border border-amber-300 bg-white px-3 text-right font-mono text-2xl font-black text-amber-950 tabular-nums outline-hidden focus:border-amber-600 focus:ring-4 focus:ring-amber-500/15"
+              className="h-12 w-full rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-950 px-3 text-right font-mono text-2xl font-black text-amber-950 dark:text-amber-200 tabular-nums outline-hidden focus:border-amber-600 dark:focus:border-amber-500 focus:ring-4 focus:ring-amber-500/15"
             />
 
             {/* Live due vs cash down payment breakdown */}
-            <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs space-y-2">
+            <div className="rounded-xl border border-amber-200 dark:border-amber-800/80 bg-amber-50/70 dark:bg-amber-950/40 p-3 text-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-slate-600 font-medium">Customer Due (Ledger):</span>
-                <span className="font-mono font-bold text-amber-900 text-sm">
+                <span className="text-slate-600 dark:text-slate-300 font-medium">Customer Due (Ledger):</span>
+                <span className="font-mono font-bold text-amber-900 dark:text-amber-300 text-sm">
                   {formatTk(dueAmount)}
                 </span>
               </div>
               {cashPaid > 0 ? (
-                <div className="flex items-center justify-between border-t border-amber-200/80 pt-2">
-                  <span className="text-emerald-800 font-bold flex items-center gap-1.5">
-                    <Banknote className="w-4 h-4 text-emerald-600" />
+                <div className="flex items-center justify-between border-t border-amber-200/80 dark:border-amber-800/60 pt-2">
+                  <span className="text-emerald-800 dark:text-emerald-300 font-bold flex items-center gap-1.5">
+                    <Banknote className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     Cash to collect now:
                   </span>
-                  <span className="font-mono font-black text-emerald-700 text-base">
+                  <span className="font-mono font-black text-emerald-700 dark:text-emerald-400 text-base">
                     {formatTk(cashPaid)}
                   </span>
                 </div>
               ) : (
-                <div className="text-[11px] text-amber-800 border-t border-amber-200/80 pt-1.5">
+                <div className="text-[11px] text-amber-800 dark:text-amber-300 border-t border-amber-200/80 dark:border-amber-800/60 pt-1.5">
                   100% full amount will be added to the customer's credit ledger.
                 </div>
               )}
@@ -454,14 +454,14 @@ export default function SettlementPanel({
           </section>
         )}
 
-        <section className="rounded-lg border border-slate-200 bg-slate-50/70">
+        <section className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40">
           <button
             type="button"
             onClick={() => setShowAdjustments((current) => !current)}
-            className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold text-slate-700 cursor-pointer"
+            className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
           >
             <span className="inline-flex items-center gap-2">
-              <Percent className="h-3.5 w-3.5 text-slate-500" />
+              <Percent className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
               Adjustments
               {hasAdjustments && (
                 <Badge variant="success" className="text-[10px] py-0 px-1.5">
@@ -469,16 +469,16 @@ export default function SettlementPanel({
                 </Badge>
               )}
             </span>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">
               {showAdjustments ? "Hide" : "Edit"}
             </span>
           </button>
 
           <Collapse show={showAdjustments}>
-            <div className="space-y-2 border-t border-slate-200 px-3 py-2.5">
+            <div className="space-y-2 border-t border-slate-200 dark:border-slate-800 px-3 py-2.5">
               <div className="grid grid-cols-[1fr_112px] items-end gap-2">
                 <label className="space-y-1">
-                  <span className="block text-[11px] font-bold text-slate-500">
+                  <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
                     Discount
                   </span>
                   <input
@@ -496,17 +496,17 @@ export default function SettlementPanel({
                     }}
                     onFocus={(e) => e.target.select()}
                     placeholder="0"
-                    className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-right font-mono text-sm font-bold outline-hidden focus:border-emerald-700"
+                    className="h-9 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-right font-mono text-sm font-bold text-slate-900 dark:text-slate-100 outline-hidden focus:border-emerald-700 dark:focus:border-emerald-500"
                   />
                 </label>
-                <div className="grid h-9 grid-cols-2 overflow-hidden rounded-md border border-slate-200 bg-white">
+                <div className="grid h-9 grid-cols-2 overflow-hidden rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
                   <button
                     type="button"
                     onClick={() => setDiscountType("flat")}
                     className={`text-xs font-black cursor-pointer ${
                       discountType === "flat"
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-500 hover:bg-slate-50"
+                        ? "bg-slate-900 dark:bg-emerald-600 text-white"
+                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
                     }`}
                   >
                     ৳
@@ -514,10 +514,10 @@ export default function SettlementPanel({
                   <button
                     type="button"
                     onClick={() => setDiscountType("percent")}
-                    className={`border-l border-slate-200 text-xs font-black cursor-pointer ${
+                    className={`border-l border-slate-200 dark:border-slate-700 text-xs font-black cursor-pointer ${
                       discountType === "percent"
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-500 hover:bg-slate-50"
+                        ? "bg-slate-900 dark:bg-emerald-600 text-white"
+                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
                     }`}
                   >
                     %
@@ -526,12 +526,12 @@ export default function SettlementPanel({
               </div>
 
               {saleMode === "WHOLESALE" && (
-                <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-2.5 py-1.5">
+                <div className="flex items-center justify-between rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 py-1.5">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold leading-tight text-slate-700">
+                    <p className="text-[11px] font-bold leading-tight text-slate-700 dark:text-slate-200">
                       Wholesale percentage
                     </p>
-                    <p className="text-[10px] leading-tight text-slate-500">
+                    <p className="text-[10px] leading-tight text-slate-500 dark:text-slate-400">
                       Default: {wholesaleSettings.discountPercentage}%. Edit this sale directly when needed.
                     </p>
                   </div>
@@ -540,7 +540,7 @@ export default function SettlementPanel({
 
               <div className="grid grid-cols-[1fr_112px] items-end gap-2">
                 <label className="space-y-1">
-                  <span className="block text-[11px] font-bold text-slate-500">
+                  <span className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
                     Round off (Max 50)
                   </span>
                   <input
@@ -559,14 +559,14 @@ export default function SettlementPanel({
                     }}
                     onFocus={(e) => e.target.select()}
                     placeholder="0"
-                    className="h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-right font-mono text-sm font-bold outline-hidden focus:border-emerald-700"
+                    className="h-9 w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 text-right font-mono text-sm font-bold text-slate-900 dark:text-slate-100 outline-hidden focus:border-emerald-700 dark:focus:border-emerald-500"
                   />
                 </label>
                 <button
                   type="button"
                   onClick={applyQuickRoundOff}
                   disabled={roundOffDeficit <= 0}
-                  className="h-9 rounded-md border border-slate-200 bg-white px-2 text-[11px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-300 cursor-pointer"
+                  className="h-9 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:text-slate-300 dark:disabled:text-slate-600 cursor-pointer"
                 >
                   Auto round
                 </button>
@@ -577,22 +577,22 @@ export default function SettlementPanel({
 
         {/* Change Return / Live Due Badges */}
         <Collapse show={changeToReturn > 0}>
-          <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
-            <span className="text-xs font-bold text-emerald-900">
+          <div className="flex items-center justify-between rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-2.5">
+            <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
               Return to customer
             </span>
-            <span className="font-mono text-lg font-black text-emerald-800 tabular-nums">
+            <span className="font-mono text-lg font-black text-emerald-800 dark:text-emerald-400 tabular-nums">
               {formatTk(changeToReturn)}
             </span>
           </div>
         </Collapse>
 
         <Collapse show={liveDue > 0 && paymentMethod !== "DUE"}>
-          <div className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5">
-            <span className="text-xs font-bold text-rose-900">
+          <div className="flex items-center justify-between rounded-lg border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/60 px-3 py-2.5">
+            <span className="text-xs font-bold text-rose-900 dark:text-rose-200">
               Remaining due
             </span>
-            <span className="font-mono text-base font-black text-rose-700 tabular-nums">
+            <span className="font-mono text-base font-black text-rose-700 dark:text-rose-400 tabular-nums">
               {formatTk(liveDue)}
             </span>
           </div>
@@ -600,16 +600,16 @@ export default function SettlementPanel({
 
       </div>
 
-      <div className="shrink-0 border-t border-slate-200 bg-white p-4 shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
+      <div className="shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-[0_-10px_24px_rgba(15,23,42,0.08)] dark:shadow-[0_-10px_24px_rgba(0,0,0,0.5)]">
         {/* Notice when cash/digital received is empty or customer required for due sale */}
         {(isCashEmpty || isDigitalEmpty || isDueWithoutCustomer) && !isCartEmpty && (
-          <div className="mb-2.5 flex items-center justify-between rounded-lg border border-slate-200/90 bg-slate-50 px-3 py-1.5 text-xs shadow-2xs animate-in fade-in duration-150">
+          <div className="mb-2.5 flex items-center justify-between rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-3 py-1.5 text-xs shadow-2xs animate-in fade-in duration-150">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2 shrink-0">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
               </span>
-              <span className="text-[11px] font-semibold text-slate-600">
+              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                 {isDueWithoutCustomer
                   ? "Select a customer for due sale"
                   : isCashEmpty
@@ -625,10 +625,10 @@ export default function SettlementPanel({
                     ? handleSetExactCash
                     : () => setDigitalPaidInput(String(finalTotalAmount))
                 }
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-700 shadow-2xs transition-all hover:border-emerald-300 hover:bg-emerald-50/60 hover:text-emerald-900 active:scale-[0.98] cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 shadow-2xs transition-all hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/60 dark:hover:bg-slate-700 hover:text-emerald-900 dark:hover:text-emerald-300 active:scale-[0.98] cursor-pointer"
               >
-                <span className="text-[10px] font-semibold uppercase tracking-tight text-slate-400">Exact</span>
-                <span className="font-mono font-black text-emerald-700">{formatTk(finalTotalAmount)}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-tight text-slate-400 dark:text-slate-500">Exact</span>
+                <span className="font-mono font-black text-emerald-700 dark:text-emerald-400">{formatTk(finalTotalAmount)}</span>
               </button>
             )}
           </div>

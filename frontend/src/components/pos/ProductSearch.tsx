@@ -265,7 +265,7 @@ export default function ProductSearch({
   return (
     <div
       ref={searchRootRef}
-      className={`relative z-30 border-b border-slate-200 bg-white px-4 py-3 ${className || ""}`}
+      className={`relative z-30 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 ${className || ""}`}
     >
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
@@ -287,22 +287,22 @@ export default function ProductSearch({
             leftAdornment={<Search className="h-4 w-4" />}
             inputSize="lg"
             autoComplete="off"
-            className="border-slate-300 bg-slate-50/40 shadow-xs focus:bg-white"
+            className="border-slate-300 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-800/60 shadow-xs focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-slate-100"
           />
 
           {showResults && (
-            <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[430px] overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-2xl shadow-slate-950/15">
+            <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[430px] overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl shadow-slate-950/15 dark:shadow-slate-950/50">
               {isLoading ? (
-                <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-slate-500">
+                <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-slate-500 dark:text-slate-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading stock
                 </div>
               ) : results.length === 0 ? (
                 <div className="px-5 py-8 text-center">
-                  <p className="text-sm font-bold text-slate-900">
+                  <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     {allowZeroStock ? "No matching product found" : "No matching in-stock product"}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     {allowZeroStock
                       ? "Check the name, code, lot, or scan a barcode."
                       : "Check the name, code, or barcode. Products with 0 stock are hidden."}
@@ -331,42 +331,42 @@ export default function ProductSearch({
                           isOutOfStock
                             ? "cursor-not-allowed opacity-55"
                             : isActive
-                              ? "bg-emerald-50"
-                              : "hover:bg-slate-50"
+                              ? "bg-emerald-50 dark:bg-emerald-950/50"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
                         }`}
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="truncate text-sm font-bold text-slate-950">
+                            <span className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">
                               {productName(item)}
                             </span>
                             {item.packSize && (
-                              <span className="shrink-0 text-[10px] font-medium text-emerald-800 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-300">
+                              <span className="shrink-0 text-[10px] font-medium text-emerald-800 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800">
                                 {item.packSize}
                               </span>
                             )}
                             {Number(item.cartonMultiplier) > 1 && (
-                              <span className="shrink-0 text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                              <span className="shrink-0 text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                                 {Number(item.cartonMultiplier)} {item.baseUnit}/ctn
                               </span>
                             )}
                             {isActive && (
-                              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-700" />
+                              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-700 dark:text-emerald-400" />
                             )}
                           </div>
                           {(item.productNameBn || item.nameBn) &&
                             (item.productNameBn || item.nameBn) !== productName(item) && (
-                            <p className="truncate text-xs text-slate-500">
+                            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                               {item.productNameBn || item.nameBn}
                             </p>
                           )}
-                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
                             <span className="inline-flex items-center gap-1 font-mono">
                               <Barcode className="h-3.5 w-3.5" />
                               {item.productCode}
                             </span>
                             {hasBusinessLot(item) && (
-                              <span className="font-semibold text-slate-700">
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">
                                 Selling lot #{formatLotNumber(item.lotNumber)}
                               </span>
                             )}
@@ -383,24 +383,24 @@ export default function ProductSearch({
                         </div>
 
                         <div className="flex shrink-0 min-w-[140px] max-w-[220px] flex-col items-end justify-center text-right overflow-hidden">
-                          <span className="font-mono text-base font-black text-emerald-800 tabular-nums">
+                          <span className="font-mono text-base font-black text-emerald-800 dark:text-emerald-400 tabular-nums">
                             {formatTk(retailPrice)}
                           </span>
                           {saleMode === "WHOLESALE" && (
-                            <span className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">
+                            <span className="mt-0.5 truncate text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                               {item.lotWholesalePrice ? `Wholesale: ${formatTk(item.lotWholesalePrice)}` : "Wholesale adjusted at checkout"}
                             </span>
                           )}
                           <span
                             className={`mt-1 inline-flex items-center gap-1 text-[11px] font-bold ${
-                              selectedLotQuantity > 0 ? "text-emerald-700" : "text-red-600"
+                              selectedLotQuantity > 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
                             }`}
                           >
                             <PackageCheck className="h-3.5 w-3.5 shrink-0" />
                             <span className="truncate">
                               {formatQuantity(selectedLotQuantity)} {item.baseUnit}
                               {Number(item.cartonMultiplier) > 1 && selectedLotQuantity > 0 && (
-                                <span className="font-normal text-slate-500 ml-1">
+                                <span className="font-normal text-slate-500 dark:text-slate-400 ml-1">
                                   ({Math.floor(selectedLotQuantity / Number(item.cartonMultiplier))} Ctn
                                   {selectedLotQuantity % Number(item.cartonMultiplier) !== 0
                                     ? ` + ${selectedLotQuantity % Number(item.cartonMultiplier)}`
@@ -411,7 +411,7 @@ export default function ProductSearch({
                             </span>
                           </span>
                           {result.productLotCount > 1 && (
-                            <span className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">
+                            <span className="mt-0.5 truncate text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                               {formatQuantity(result.productTotalQuantity)} total across lots
                             </span>
                           )}
@@ -425,10 +425,10 @@ export default function ProductSearch({
           )}
         </div>
 
-        <div className="hidden h-11 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs text-slate-500 sm:flex">
-          <Barcode className="h-4 w-4 text-emerald-700" />
+        <div className="hidden h-11 items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-3 text-xs text-slate-500 dark:text-slate-400 sm:flex">
+          <Barcode className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
           <span>Scanner ready</span>
-          <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700">
+          <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-200">
             F2
           </kbd>
         </div>
@@ -448,7 +448,7 @@ export default function ProductSearch({
             variant="outline"
             size="icon"
             onClick={onToggleFocusMode}
-            className="h-11 w-11 shrink-0 rounded-lg text-slate-500 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 cursor-pointer"
+            className="h-11 w-11 shrink-0 rounded-lg text-slate-500 dark:text-slate-400 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-800 dark:hover:text-emerald-300 cursor-pointer"
             title={isFocusMode ? "Exit full page mode (F8)" : "Full page mode (F8)"}
           >
             {isFocusMode ? (

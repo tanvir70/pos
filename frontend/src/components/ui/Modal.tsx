@@ -57,7 +57,7 @@ export function Modal({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "w-full max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden rounded-xl border border-border bg-white shadow-2xl duration-150 sm:max-w-none",
+          "w-full max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden rounded-xl border border-border dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl duration-150 sm:max-w-none",
           sizeClasses[size],
           className,
         )}
@@ -82,8 +82,8 @@ export function Modal({
             className={cn(
               "px-6 py-4 flex items-center justify-between shrink-0",
               headerVariant === "light"
-                ? "bg-white border-b border-border text-slate-900"
-                : "bg-slate-900 text-white",
+                ? "bg-white dark:bg-slate-900 border-b border-border dark:border-slate-800 text-slate-900 dark:text-slate-100"
+                : "bg-slate-900 dark:bg-slate-950 text-white border-b border-slate-800",
               headerClassName,
             )}
           >
@@ -93,7 +93,7 @@ export function Modal({
                   className={cn(
                     "shrink-0 flex items-center justify-center",
                     headerVariant === "light"
-                      ? "size-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-2xs"
+                      ? "size-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800 shadow-2xs"
                       : "text-emerald-400",
                   )}
                 >
@@ -104,7 +104,7 @@ export function Modal({
                 <h2
                   className={cn(
                     "font-bold text-base sm:text-lg leading-tight truncate",
-                    headerVariant === "light" ? "text-slate-900" : "text-white",
+                    headerVariant === "light" ? "text-slate-900 dark:text-slate-100" : "text-white",
                   )}
                 >
                   {title}
@@ -113,7 +113,7 @@ export function Modal({
                   <p
                     className={cn(
                       "text-xs mt-0.5 truncate",
-                      headerVariant === "light" ? "text-slate-500 font-normal" : "text-slate-300",
+                      headerVariant === "light" ? "text-slate-500 dark:text-slate-400 font-normal" : "text-slate-300 dark:text-slate-400",
                     )}
                   >
                     {subtitle}
@@ -128,7 +128,7 @@ export function Modal({
               className={cn(
                 "p-1.5 rounded-lg cursor-pointer transition-colors",
                 headerVariant === "light"
-                  ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                  ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                   : "text-slate-300 hover:text-white hover:bg-white/10",
               )}
               title="Close (Esc)"
@@ -143,7 +143,7 @@ export function Modal({
 
         {/* Modal Footer */}
         {footer && (
-          <div className="px-6 py-3.5 bg-slate-50 border-t border-border flex items-center justify-end gap-2.5 shrink-0">
+          <div className="px-6 py-3.5 bg-slate-50 dark:bg-slate-900/90 border-t border-border dark:border-slate-800 flex items-center justify-end gap-2.5 shrink-0">
             {footer}
           </div>
         )}

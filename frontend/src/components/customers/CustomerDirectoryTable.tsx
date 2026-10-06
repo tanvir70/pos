@@ -95,10 +95,10 @@ export default function CustomerDirectoryTable({
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
             Customer Directory & Ledgers
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Manage customer accounts, purchase history, land records, and ledger balances.
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function CustomerDirectoryTable({
             type="button"
             data-testid="btn-add-customer"
             onClick={onOpenAddCustomer}
-            className="px-3.5 py-1.5 rounded-md text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white transition-colors"
+            className="px-3.5 py-1.5 rounded-md text-xs font-medium bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white transition-colors cursor-pointer"
           >
             Add Customer
           </button>
@@ -128,7 +128,7 @@ export default function CustomerDirectoryTable({
           subtitle={`${customersWithDueCount} customer(s) with dues`}
           theme="rose"
           icon={<BadgeAlert className="w-5 h-5" />}
-          valueColor="text-rose-600"
+          valueColor="text-rose-600 dark:text-rose-400"
           onClick={() => setFilterType("HAS_DUE")}
           className={`cursor-pointer transition-all ${
             filterType === "HAS_DUE" ? "ring-2 ring-rose-500 shadow-sm" : ""
@@ -143,7 +143,7 @@ export default function CustomerDirectoryTable({
           icon={<Users className="w-5 h-5" />}
           onClick={() => setFilterType("ALL")}
           className={`cursor-pointer transition-all ${
-            filterType === "ALL" ? "ring-2 ring-slate-800 shadow-sm" : ""
+            filterType === "ALL" ? "ring-2 ring-slate-800 dark:ring-emerald-500 shadow-sm" : ""
           }`}
         />
 
@@ -174,11 +174,11 @@ export default function CustomerDirectoryTable({
 
       {/* Feedback Alerts */}
       {successMessage && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs font-medium flex items-center justify-between">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-300 rounded-lg text-emerald-800 text-xs font-medium flex items-center justify-between">
           <span>{successMessage}</span>
           <button
             onClick={onClearSuccessMessage}
-            className="text-xs text-emerald-700 hover:text-emerald-900 font-bold"
+            className="text-xs text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-100 font-bold cursor-pointer"
           >
             Dismiss
           </button>
@@ -186,11 +186,11 @@ export default function CustomerDirectoryTable({
       )}
 
       {errorMessage && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-xs font-medium flex items-center justify-between">
+        <div className="p-3 bg-red-50 border border-red-200 dark:bg-rose-950/60 dark:border-rose-900/80 dark:text-rose-300 rounded-lg text-red-800 text-xs font-medium flex items-center justify-between">
           <span>{errorMessage}</span>
           <button
             onClick={onClearErrorMessage}
-            className="text-xs text-red-700 hover:text-red-900 font-bold"
+            className="text-xs text-red-700 hover:text-red-900 dark:text-rose-300 dark:hover:text-rose-100 font-bold cursor-pointer"
           >
             Dismiss
           </button>
@@ -198,7 +198,7 @@ export default function CustomerDirectoryTable({
       )}
 
       {/* Search and Filters */}
-      <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between shadow-xs">
+      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl p-3 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between shadow-xs">
         <div className="relative flex-1">
           <input
             data-primary-search="true"
@@ -219,12 +219,12 @@ export default function CustomerDirectoryTable({
               }
             }}
             placeholder="Search by name, phone, village, land area, or business..."
-            className="w-full h-9 px-3 border border-slate-200 rounded-md text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 bg-white"
+            className="w-full h-9 px-3 border border-slate-200 dark:border-slate-800 rounded-md text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-950 dark:text-slate-100"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 hover:text-slate-700"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer"
             >
               Clear
             </button>
@@ -232,43 +232,43 @@ export default function CustomerDirectoryTable({
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-lg">
           <button
             onClick={() => setFilterType("ALL")}
-            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
               filterType === "ALL"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-slate-100"
+                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
             All ({customers.length})
           </button>
           <button
             onClick={() => setFilterType("HAS_DUE")}
-            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
               filterType === "HAS_DUE"
                 ? "bg-red-600 text-white shadow-xs"
-                : "text-red-600 hover:bg-red-50"
+                : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
             }`}
           >
             Has Due ({customersWithDueCount})
           </button>
           <button
             onClick={() => setFilterType("WHOLESALE")}
-            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
               filterType === "WHOLESALE"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-slate-100"
+                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
             Wholesale ({wholesaleCount})
           </button>
           <button
             onClick={() => setFilterType("RETAIL")}
-            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
               filterType === "RETAIL"
-                ? "bg-white text-slate-900 shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-slate-100"
+                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
             Retail ({retailCount})
@@ -277,20 +277,20 @@ export default function CustomerDirectoryTable({
       </div>
 
       {/* Main Customers Table */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+      <div className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
         {isLoading ? (
-          <div className="py-16 text-center text-xs text-slate-500">
+          <div className="py-16 text-center text-xs text-slate-500 dark:text-slate-400">
             Loading customer accounts...
           </div>
         ) : filteredCustomers.length === 0 ? (
-          <div className="py-16 text-center text-xs text-slate-500">
+          <div className="py-16 text-center text-xs text-slate-500 dark:text-slate-400">
             No customers found matching the selected criteria.
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-medium">
+                <thead className="bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-medium">
                   <tr>
                     <th className="px-4 py-2.5">Customer & Profile</th>
                     <th className="px-3 py-2.5">Type</th>
@@ -302,7 +302,7 @@ export default function CustomerDirectoryTable({
                     <th className="px-4 py-2.5 text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {paginatedCustomers.map((c) => {
                     const due = Number(c.currentDue) || 0
 
@@ -333,17 +333,17 @@ export default function CustomerDirectoryTable({
                             onOpenDetail(c)
                           }
                         }}
-                        className={`hover:bg-slate-50/80 cursor-pointer transition-colors focus:outline-none focus:bg-slate-100 ${
-                          due > 0 ? "bg-red-50/20" : due < 0 ? "bg-emerald-50/20" : ""
+                        className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/60 cursor-pointer transition-colors focus:outline-none focus:bg-slate-100 dark:focus:bg-slate-800 ${
+                          due > 0 ? "bg-red-50/20 dark:bg-red-950/20" : due < 0 ? "bg-emerald-50/20 dark:bg-emerald-950/20" : ""
                         }`}
                       >
                         {/* Name & Subtitle */}
                         <td className="px-4 py-3">
-                          <div className="font-semibold text-slate-900 text-sm">
+                          <div className="font-semibold text-slate-900 dark:text-slate-100 text-sm">
                             {c.name}
                           </div>
                           {c.businessName && (
-                            <div className="text-[11px] text-slate-600 mt-0.5">
+                            <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                               {c.businessName}
                             </div>
                           )}
@@ -351,7 +351,7 @@ export default function CustomerDirectoryTable({
 
                         {/* Customer Type Badge */}
                         <td className="px-3 py-3">
-                          <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium border border-slate-200 bg-slate-100 text-slate-800">
+                          <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300">
                             {c.customerType === "WHOLESALE" ? "Wholesale" : "Retail"}
                           </span>
                         </td>
@@ -359,46 +359,46 @@ export default function CustomerDirectoryTable({
                         {/* Land Area */}
                         <td className="px-3 py-3">
                           {c.landArea ? (
-                            <span className="font-medium text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px] border border-slate-200">
+                            <span className="font-medium text-slate-900 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[11px] border border-slate-200 dark:border-slate-700">
                               {c.landArea}
                             </span>
                           ) : (
-                            <span className="text-slate-400">—</span>
+                            <span className="text-slate-400 dark:text-slate-500">—</span>
                           )}
                         </td>
 
                         {/* Address */}
-                        <td className="px-3 py-3 text-slate-600">
-                          {c.villageAddress || c.address || <span className="text-slate-400">—</span>}
+                        <td className="px-3 py-3 text-slate-600 dark:text-slate-400">
+                          {c.villageAddress || c.address || <span className="text-slate-400 dark:text-slate-500">—</span>}
                         </td>
 
                         {/* Phone */}
                         <td className="px-3 py-3">
-                          <div className="tabular-nums font-medium text-slate-900">
+                          <div className="tabular-nums font-medium text-slate-900 dark:text-slate-200">
                             {c.phone}
                           </div>
                         </td>
 
                         {/* Lifetime Purchases */}
-                        <td className="px-4 py-3 text-right tabular-nums font-medium text-slate-900">
+                        <td className="px-4 py-3 text-right tabular-nums font-medium text-slate-900 dark:text-slate-200">
                           {tk(c.totalPurchases || 0)}
                         </td>
 
                         {/* Current Due */}
                         <td className="px-4 py-3 text-right">
                           {due > 0 ? (
-                            <span className="tabular-nums font-semibold text-red-600">
+                            <span className="tabular-nums font-semibold text-red-600 dark:text-red-400">
                               {tk(due)}
                             </span>
                           ) : due < 0 ? (
                             <span
-                              className="tabular-nums font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]"
+                              className="tabular-nums font-semibold text-emerald-700 bg-emerald-50 dark:text-emerald-300 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 text-[11px]"
                               title="Customer store credit / advance balance from returns or overpayment"
                             >
                               +{tk(Math.abs(due))} (Cr)
                             </span>
                           ) : (
-                            <span className="tabular-nums font-medium text-slate-500">
+                            <span className="tabular-nums font-medium text-slate-500 dark:text-slate-400">
                               {tk(0)}
                             </span>
                           )}
@@ -414,7 +414,7 @@ export default function CustomerDirectoryTable({
                                 e.stopPropagation()
                                 onOpenDetail(c)
                               }}
-                              className="px-2.5 py-1 rounded text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 transition-colors"
+                              className="px-2.5 py-1 rounded text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
                             >
                               Ledger & Details
                             </button>
@@ -426,7 +426,7 @@ export default function CustomerDirectoryTable({
                                 e.stopPropagation()
                                 onOpenEdit(c)
                               }}
-                              className="px-2 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                              className="px-2 py-1 rounded text-xs font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             >
                               Edit
                             </button>
@@ -439,7 +439,7 @@ export default function CustomerDirectoryTable({
                                 onOpenRepayModal(c)
                               }}
                               disabled={due <= 0}
-                              className="px-2.5 py-1 rounded text-xs font-medium bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                              className="px-2.5 py-1 rounded text-xs font-medium bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
                             >
                               Collect Due
                             </button>

@@ -50,7 +50,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-semibold text-slate-700 mb-1.5"
+            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
           >
             {label}
           </label>
@@ -58,7 +58,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative flex items-center">
           {leftAdornment && (
-            <div className="absolute left-3 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute left-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
               {leftAdornment}
             </div>
           )}
@@ -72,12 +72,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             data-slot="input"
             aria-invalid={!!error}
             className={cn(
-              "w-full rounded-lg border bg-white transition-all outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:bg-slate-100 disabled:opacity-50",
+              "w-full rounded-lg border bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-all outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:opacity-50",
               sizeClasses,
               isMonospace && "tabular-nums font-mono font-medium",
               error
-                ? "border-destructive text-destructive focus-visible:ring-destructive/20 bg-rose-50/30"
-                : "border-input text-slate-900 focus-visible:border-ring",
+                ? "border-destructive text-destructive focus-visible:ring-destructive/20 bg-rose-50/30 dark:bg-rose-950/20"
+                : "border-input dark:border-slate-700 text-slate-900 dark:text-slate-100 focus-visible:border-ring",
               leftAdornment ? "pl-9" : "",
               rightAdornment || onClear ? "pr-9" : "",
               className,
@@ -89,7 +89,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               onClick={onClear}
-              className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+              className="absolute right-2.5 p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               aria-label="Clear input"
             >
               <X className="size-3.5" />
@@ -97,7 +97,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
 
           {rightAdornment && (!onClear || !hasValue) && (
-            <div className="absolute right-3 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute right-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
               {rightAdornment}
             </div>
           )}
@@ -108,7 +108,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
 
         {helperText && !error && (
-          <p className="mt-1 text-xs text-slate-500">{helperText}</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{helperText}</p>
         )}
       </div>
     )

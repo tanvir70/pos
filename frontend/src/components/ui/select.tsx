@@ -41,7 +41,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-1.5 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 focus:bg-white py-2 px-3 text-xs font-semibold text-slate-800 transition-colors outline-hidden select-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 cursor-pointer",
+        "flex w-full items-center justify-between gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 py-2 px-3 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors outline-hidden select-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-slate-400 dark:data-placeholder:text-slate-500 [&_svg]:pointer-events-none [&_svg]:shrink-0 cursor-pointer",
         size === "sm" && "py-1 px-2.5 h-7 rounded-lg text-[11px]",
         className
       )}
@@ -68,7 +68,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "relative z-[100] max-h-72 min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 text-slate-900 shadow-xl duration-150 animate-in fade-in-0 zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "relative z-[100] max-h-72 min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1 text-slate-900 dark:text-slate-100 shadow-xl duration-150 animate-in fade-in-0 zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           position === "popper" && "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className
         )}
@@ -114,14 +114,14 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-2 pr-8 pl-2.5 text-xs font-semibold text-slate-700 outline-hidden select-none hover:bg-slate-100 focus:bg-teal-50 focus:text-teal-900 data-disabled:pointer-events-none data-disabled:opacity-50 transition-colors [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-2 pr-8 pl-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 outline-hidden select-none hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-teal-50 dark:focus:bg-emerald-950/60 focus:text-teal-900 dark:focus:text-emerald-300 data-disabled:pointer-events-none data-disabled:opacity-50 transition-colors [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}
     >
       <span className="pointer-events-none absolute right-2 flex size-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="pointer-events-none size-3.5 text-teal-700 font-bold" />
+          <CheckIcon className="pointer-events-none size-3.5 text-teal-700 dark:text-emerald-400 font-bold" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

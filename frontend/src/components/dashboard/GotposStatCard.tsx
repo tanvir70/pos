@@ -93,20 +93,20 @@ export const GotposStatCard: React.FC<GotposStatCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`group bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs hover:shadow-sm transition-all duration-200 flex flex-col justify-between ${
-        onClick ? "cursor-pointer hover:border-slate-300" : ""
+      className={`group bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs hover:shadow-sm transition-all duration-200 flex flex-col justify-between ${
+        onClick ? "cursor-pointer hover:border-slate-300 dark:hover:border-slate-700" : ""
       } ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-xs sm:text-sm font-semibold text-slate-500 leading-snug" title={typeof title === "string" ? title : undefined}>
+          <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 leading-snug" title={typeof title === "string" ? title : undefined}>
             {title}
           </p>
 
           <div className="my-1.5 flex items-center gap-2">
             <h3
               className={`text-2xl sm:text-3xl font-bold tracking-tight ${
-                valueColor || "text-slate-900"
+                valueColor || "text-slate-900 dark:text-slate-100"
               }`}
             >
               {value}
@@ -133,7 +133,7 @@ export const GotposStatCard: React.FC<GotposStatCardProps> = ({
           <>
             <span
               className={`inline-flex items-center gap-0.5 font-bold ${
-                isPositive ? "text-emerald-600" : "text-rose-600"
+                isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
               }`}
             >
               {isPositive ? (
@@ -143,12 +143,12 @@ export const GotposStatCard: React.FC<GotposStatCardProps> = ({
               )}
               <span>{Math.abs(trendPercent)}%</span>
             </span>
-            <span className="text-slate-400 font-normal">{trendLabel}</span>
+            <span className="text-slate-400 dark:text-slate-500 font-normal">{trendLabel}</span>
           </>
         ) : subtitle ? (
-          <span className="text-slate-500 text-xs font-normal">{subtitle}</span>
+          <span className="text-slate-500 dark:text-slate-400 text-xs font-normal">{subtitle}</span>
         ) : (
-          <span className="text-slate-400 text-xs font-normal">Real-time update</span>
+          <span className="text-slate-400 dark:text-slate-500 text-xs font-normal">Real-time update</span>
         )}
       </div>
     </div>

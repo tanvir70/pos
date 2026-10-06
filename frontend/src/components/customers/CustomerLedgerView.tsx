@@ -288,22 +288,22 @@ export default function CustomerLedgerView({
   return (
     <div className="space-y-4">
       {/* ─── Unified Customer Master Header Card ──────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
         {/* Navigation Breadcrumb & Account Switcher Strip */}
-        <div className="px-4 py-2.5 bg-slate-50/80 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+        <div className="px-4 py-2.5 bg-slate-50/80 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
           {/* Breadcrumb Navigation */}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onBack}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-2xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 rounded-lg shadow-2xs transition-colors cursor-pointer"
               title="Return to customer accounts directory (Esc)"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>All Customers</span>
             </button>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-            <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 shrink-0" />
+            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-slate-400" />
               <span className="truncate max-w-[200px] sm:max-w-none">{customer.name}</span>
             </span>
@@ -311,13 +311,13 @@ export default function CustomerLedgerView({
 
           {/* Quick Account Switcher */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 font-medium hidden sm:inline">Switch Account:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium hidden sm:inline">Switch Account:</span>
             <div className="w-60 sm:w-72">
               <Select
                 value={String(customer.id)}
                 onValueChange={handleCustomerSwitch}
               >
-                <SelectTrigger className="w-full h-8 text-xs bg-white border-slate-200/90 font-medium">
+                <SelectTrigger className="w-full h-8 text-xs bg-white dark:bg-slate-950 border-slate-200/90 dark:border-slate-800 font-medium">
                   <SelectValue placeholder="Select Customer" />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
@@ -326,14 +326,14 @@ export default function CustomerLedgerView({
                     return (
                       <SelectItem key={c.id} value={String(c.id)} className="text-xs">
                         <div className="flex items-center justify-between gap-2 w-full">
-                          <span className="font-medium text-slate-800 truncate">{c.name}</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{c.name}</span>
                           <span className="text-[11px] text-slate-400 shrink-0">({c.phone})</span>
                           {cDue > 0 ? (
-                            <span className="ml-auto text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded shrink-0">
+                            <span className="ml-auto text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded shrink-0">
                               Due: {tk(cDue)}
                             </span>
                           ) : cDue < 0 ? (
-                            <span className="ml-auto text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded shrink-0">
+                            <span className="ml-auto text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded shrink-0">
                               Credit: {tk(Math.abs(cDue))}
                             </span>
                           ) : null}
@@ -352,8 +352,8 @@ export default function CustomerLedgerView({
           {/* Left: Avatar + Identity + Metadata */}
           <div className="flex items-start sm:items-center gap-3.5">
             {/* Initials Avatar */}
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-50 to-slate-100 border border-indigo-100/90 flex items-center justify-center shrink-0 shadow-2xs">
-              <span className="text-base font-bold text-indigo-700 tracking-tight">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border border-indigo-100/90 dark:border-slate-700 flex items-center justify-center shrink-0 shadow-2xs">
+              <span className="text-base font-bold text-indigo-700 dark:text-indigo-300 tracking-tight">
                 {getInitials(customer.name)}
               </span>
             </div>
@@ -361,14 +361,14 @@ export default function CustomerLedgerView({
             <div className="space-y-1">
               {/* Name & Type */}
               <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                   {customer.name}
                 </h1>
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
                     customer.customerType === "WHOLESALE"
-                      ? "bg-blue-50 text-blue-700 border-blue-200"
-                      : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                      ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
+                      : "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
                   }`}
                 >
                   {customer.customerType === "WHOLESALE" ? "Wholesale Dealer" : "Retail Farmer"}
@@ -376,10 +376,10 @@ export default function CustomerLedgerView({
               </div>
 
               {/* Clean Metadata Strip */}
-              <div className="flex items-center gap-2.5 flex-wrap text-xs text-slate-500">
+              <div className="flex items-center gap-2.5 flex-wrap text-xs text-slate-500 dark:text-slate-400">
                 <a
                   href={`tel:${customer.phone}`}
-                  className="inline-flex items-center gap-1.5 font-medium text-slate-700 hover:text-slate-900 tabular-nums transition-colors"
+                  className="inline-flex items-center gap-1.5 font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100 tabular-nums transition-colors"
                   title="Click to call customer phone"
                 >
                   <Phone className="w-3.5 h-3.5 text-slate-400" />
@@ -388,9 +388,9 @@ export default function CustomerLedgerView({
 
                 {customer.landArea && (
                   <>
-                    <span className="text-slate-300">•</span>
-                    <div className="inline-flex items-center gap-1.5 text-slate-600 font-medium">
-                      <Sprout className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-slate-300 dark:text-slate-600">•</span>
+                    <div className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
+                      <Sprout className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>{customer.landArea} Farm</span>
                     </div>
                   </>
@@ -398,8 +398,8 @@ export default function CustomerLedgerView({
 
                 {customer.villageAddress && (
                   <>
-                    <span className="text-slate-300">•</span>
-                    <div className="inline-flex items-center gap-1.5 text-slate-600">
+                    <span className="text-slate-300 dark:text-slate-600">•</span>
+                    <div className="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
                       <MapPin className="w-3.5 h-3.5 text-slate-400" />
                       <span>{customer.villageAddress}</span>
                     </div>
@@ -415,14 +415,14 @@ export default function CustomerLedgerView({
             <div
               className={`px-3.5 py-2 rounded-xl border flex flex-col justify-center min-w-[130px] ${
                 due > 0
-                  ? "bg-rose-50/90 border-rose-200/90 text-rose-900"
+                  ? "bg-rose-50/90 border-rose-200/90 text-rose-900 dark:bg-rose-950/40 dark:border-rose-900/60 dark:text-rose-200"
                   : due < 0
-                  ? "bg-emerald-50/90 border-emerald-200/90 text-emerald-950"
-                  : "bg-slate-50/80 border-slate-200/80 text-slate-800"
+                  ? "bg-emerald-50/90 border-emerald-200/90 text-emerald-950 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-200"
+                  : "bg-slate-50/80 border-slate-200/80 text-slate-800 dark:bg-slate-850 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-200"
               }`}
             >
               <div className="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wider">
-                <span className={due > 0 ? "text-rose-600" : due < 0 ? "text-emerald-700" : "text-slate-600"}>
+                <span className={due > 0 ? "text-rose-600 dark:text-rose-400" : due < 0 ? "text-emerald-700 dark:text-emerald-400" : "text-slate-600 dark:text-slate-400"}>
                   {due > 0 ? "Outstanding Due" : due < 0 ? "Advance / Store Credit" : "Ledger Status"}
                 </span>
                 {due > 0 ? (
@@ -435,7 +435,7 @@ export default function CustomerLedgerView({
               </div>
               <div
                 className={`text-base sm:text-lg font-black font-mono tracking-tight mt-0.5 ${
-                  due > 0 ? "text-rose-700" : "text-emerald-700"
+                  due > 0 ? "text-rose-700 dark:text-rose-400" : "text-emerald-700 dark:text-emerald-400"
                 }`}
               >
                 {due > 0 ? tk(due) : due < 0 ? `+${tk(Math.abs(due))}` : "Settled (৳0.00)"}
@@ -444,17 +444,17 @@ export default function CustomerLedgerView({
 
             {/* KPI 2: Lifetime Purchases (Unbound Monetary Metric) */}
             <div
-              className="px-3.5 py-2 rounded-xl border border-slate-200/90 bg-slate-50/90 flex flex-col justify-center min-w-[130px]"
+              className="px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/60 flex flex-col justify-center min-w-[130px]"
               title="Total cumulative purchase volume billed to this customer"
             >
-              <div className="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <span>Lifetime Buy</span>
                 <TrendingUp className="w-3 h-3 text-slate-400" />
               </div>
-              <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-slate-900 mt-0.5">
+              <div className="text-base sm:text-lg font-bold font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-0.5">
                 {tk(lifetimeBuy)}
               </div>
-              <span className="text-[10px] text-slate-500 font-medium">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                 {totalOrdersCount > 0 ? `Avg: ${tk(averageOrderValue)} / order` : "Gross billed"}
               </span>
             </div>
@@ -465,26 +465,26 @@ export default function CustomerLedgerView({
               onClick={() => setActiveTab("PURCHASES")}
               className={`px-3.5 py-2 rounded-xl border text-left flex flex-col justify-center min-w-[125px] transition-all cursor-pointer group ${
                 activeTab === "PURCHASES"
-                  ? "bg-blue-50/90 border-blue-300 ring-2 ring-blue-500/20 shadow-2xs"
-                  : "bg-slate-50/90 border-slate-200/90 hover:bg-white hover:border-blue-300 shadow-2xs"
+                  ? "bg-blue-50/90 border-blue-300 ring-2 ring-blue-500/20 shadow-2xs dark:bg-blue-950/50 dark:border-blue-700"
+                  : "bg-slate-50/90 border-slate-200/90 hover:bg-white hover:border-blue-300 shadow-2xs dark:bg-slate-800/60 dark:border-slate-700 dark:hover:bg-slate-800"
               }`}
               title={`Click to view all ${totalOrdersCount} customer orders`}
             >
-              <div className="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-blue-700 transition-colors">
+              <div className="flex items-center justify-between gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                 <span>Total Orders</span>
                 <ShoppingCart
                   className={`w-3 h-3 ${
-                    activeTab === "PURCHASES" ? "text-blue-600" : "text-slate-400 group-hover:text-blue-600"
+                    activeTab === "PURCHASES" ? "text-blue-600 dark:text-blue-400" : "text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"
                   }`}
                 />
               </div>
-              <div className="text-base sm:text-lg font-black font-mono tracking-tight text-slate-900 mt-0.5 flex items-baseline gap-1">
+              <div className="text-base sm:text-lg font-black font-mono tracking-tight text-slate-900 dark:text-slate-100 mt-0.5 flex items-baseline gap-1">
                 <span>{totalOrdersCount}</span>
-                <span className="text-xs font-semibold text-slate-500">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                   {totalOrdersCount === 1 ? "Order" : "Orders"}
                 </span>
               </div>
-              <span className="text-[10px] text-blue-700 font-semibold group-hover:underline flex items-center gap-0.5">
+              <span className="text-[10px] text-blue-700 dark:text-blue-400 font-semibold group-hover:underline flex items-center gap-0.5">
                 {activeTab === "PURCHASES" ? "Viewing orders" : "View orders →"}
               </span>
             </button>
@@ -504,7 +504,7 @@ export default function CustomerLedgerView({
                 </Button>
               ) : due < 0 ? (
                 <div
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-300 shadow-2xs select-none"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 shadow-2xs select-none"
                   title="Customer has store credit / advance balance from returns or overpayment"
                 >
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
@@ -512,7 +512,7 @@ export default function CustomerLedgerView({
                 </div>
               ) : (
                 <div
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-2xs select-none"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 shadow-2xs select-none"
                   title="All customer dues have been cleared"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -525,7 +525,7 @@ export default function CustomerLedgerView({
                 size="sm"
                 onClick={() => onOpenEdit(customer)}
                 leftIcon={<Edit2 className="w-3.5 h-3.5 text-slate-400" />}
-                className="bg-white hover:bg-slate-50 text-slate-700 border-slate-200/90 font-semibold shadow-xs cursor-pointer h-9 px-3 rounded-xl transition-all"
+                className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-200/90 dark:border-slate-700 font-semibold shadow-xs cursor-pointer h-9 px-3 rounded-xl transition-all"
                 title="Edit customer account details"
               >
                 Edit
@@ -546,17 +546,17 @@ export default function CustomerLedgerView({
 
 
       {/* ─── Filter & Navigation Toolbar ────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
         {/* Primary Segmented Strip */}
-        <div className="px-3.5 py-2 bg-slate-50/70 border-b border-slate-200/80 flex items-center justify-between gap-2 overflow-x-auto">
+        <div className="px-3.5 py-2 bg-slate-50/70 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 overflow-x-auto">
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab("ALL")}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                 activeTab === "ALL"
-                  ? "bg-slate-900 text-white shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                  ? "bg-slate-900 dark:bg-emerald-600 text-white shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"
               }`}
             >
               <History className="w-3.5 h-3.5" />
@@ -569,7 +569,7 @@ export default function CustomerLedgerView({
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                 activeTab === "INVOICES"
                   ? "bg-blue-700 text-white shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"
               }`}
             >
               <ShoppingCart className="w-3.5 h-3.5 text-blue-500" />
@@ -582,7 +582,7 @@ export default function CustomerLedgerView({
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                 activeTab === "PAYMENTS"
                   ? "bg-emerald-700 text-white shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"
               }`}
             >
               <Receipt className="w-3.5 h-3.5 text-emerald-500" />
@@ -594,8 +594,8 @@ export default function CustomerLedgerView({
               onClick={() => setActiveTab("PURCHASES")}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                 activeTab === "PURCHASES"
-                  ? "bg-slate-900 text-white shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                  ? "bg-slate-900 dark:bg-slate-700 text-white shadow-xs font-bold"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"
               }`}
             >
               <ShoppingCart className="w-3.5 h-3.5 text-blue-500" />
@@ -607,7 +607,7 @@ export default function CustomerLedgerView({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="text-xs font-bold text-rose-600 hover:text-rose-800 hover:underline cursor-pointer flex items-center gap-1 shrink-0 ml-auto pl-2"
+              className="text-xs font-bold text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-300 hover:underline cursor-pointer flex items-center gap-1 shrink-0 ml-auto pl-2"
               title="Reset all filters"
             >
               <X className="w-3.5 h-3.5" />
@@ -621,7 +621,7 @@ export default function CustomerLedgerView({
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
             {/* Search Bar */}
             <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
@@ -631,13 +631,13 @@ export default function CustomerLedgerView({
                     ? "Search invoice number or product name..."
                     : "Search by voucher, invoice number, or note..."
                 }
-                className="w-full h-9 pl-9 pr-3 border border-slate-200 rounded-lg text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 bg-white"
+                className="w-full h-9 pl-9 pr-3 border border-slate-200 dark:border-slate-800 rounded-lg text-xs placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-950 dark:text-slate-100"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-xs text-slate-400 hover:text-slate-700"
+                  className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-xs text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -665,29 +665,29 @@ export default function CustomerLedgerView({
         /* Itemized Purchases History List */
         <div className="space-y-3">
           {isPurchasesLoading ? (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-xs text-slate-500">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center text-xs text-slate-500 dark:text-slate-400">
               Loading purchase records...
             </div>
           ) : filteredPurchases.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-xs text-slate-500">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center text-xs text-slate-500 dark:text-slate-400">
               No invoice records found matching criteria.
             </div>
           ) : (
             <div className="space-y-3">
               {/* Order History Summary Banner */}
-              <div className="bg-white rounded-xl border border-slate-200/90 p-3.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/90 dark:border-slate-800 p-3.5 shadow-2xs flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0">
                     <ShoppingCart className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                    <div className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm flex items-center gap-2">
                       <span>Order History</span>
-                      <span className="text-[11px] font-semibold bg-blue-100 text-blue-800 px-2 py-0.2 rounded-full">
+                      <span className="text-[11px] font-semibold bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 px-2 py-0.2 rounded-full border border-blue-200 dark:border-blue-800">
                         {totalOrdersCount} {totalOrdersCount === 1 ? "Order" : "Orders"} Recorded
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                       Showing detailed counter invoices and line item bills for <strong>{customer.name}</strong>
                     </div>
                   </div>
@@ -695,13 +695,13 @@ export default function CustomerLedgerView({
 
                 <div className="flex items-center gap-3 text-xs font-mono">
                   <div className="text-right">
-                    <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">Lifetime Total</span>
-                    <span className="font-black text-slate-900">{tk(lifetimeBuy)}</span>
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 block uppercase font-bold tracking-wider">Lifetime Total</span>
+                    <span className="font-black text-slate-900 dark:text-slate-100">{tk(lifetimeBuy)}</span>
                   </div>
                   {totalOrdersCount > 0 && (
-                    <div className="text-right border-l border-slate-200 pl-3">
-                      <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">Average / Order</span>
-                      <span className="font-bold text-slate-700">{tk(averageOrderValue)}</span>
+                    <div className="text-right border-l border-slate-200 dark:border-slate-800 pl-3">
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 block uppercase font-bold tracking-wider">Average / Order</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300">{tk(averageOrderValue)}</span>
                     </div>
                   )}
                 </div>
@@ -712,25 +712,25 @@ export default function CustomerLedgerView({
                 return (
                   <div
                     key={sale.id}
-                    className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs hover:border-slate-300 transition-colors"
+                    className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2 text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-2 text-xs">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-slate-900 text-sm">
+                        <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
                           Invoice #{sale.invoiceNo}
                         </span>
-                        <span className="text-slate-500">
+                        <span className="text-slate-500 dark:text-slate-400">
                           {formatDate(sale.saleDate)}
                         </span>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-800 border border-slate-200">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
                           {sale.saleMode || "RETAIL"}
                         </span>
                         {saleDue > 0 ? (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                             Due: {tk(saleDue)}
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                             Paid in Full
                           </span>
                         )}
@@ -738,10 +738,10 @@ export default function CustomerLedgerView({
 
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <span className="font-bold text-slate-900 text-sm tabular-nums block">
+                          <span className="font-bold text-slate-900 dark:text-slate-100 text-sm tabular-nums block">
                             {tk(sale.totalAmount)}
                           </span>
-                          <span className="text-[11px] text-slate-500 block">
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
                             Paid: {tk((sale.cashPaid || 0) + (sale.digitalPaid || 0))}
                           </span>
                         </div>
@@ -760,7 +760,7 @@ export default function CustomerLedgerView({
                     {/* Item details */}
                     <div className="pt-2.5 overflow-x-auto">
                       <table className="w-full text-xs text-left">
-                        <thead className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">
+                        <thead className="text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-bold">
                           <tr>
                             <th className="py-1">Product Description</th>
                             <th className="py-1">Batch / Lot</th>
@@ -769,22 +769,22 @@ export default function CustomerLedgerView({
                             <th className="py-1 text-right">Line Subtotal</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                           {sale.items?.map((it, idx) => (
-                            <tr key={idx} className="text-slate-800">
+                            <tr key={idx} className="text-slate-800 dark:text-slate-200">
                               <td className="py-1.5 font-medium">
                                 {it.productNameEn || it.productNameBn || "Item"}
                               </td>
-                              <td className="py-1.5 font-mono text-slate-500 text-[11px]">
+                              <td className="py-1.5 font-mono text-slate-500 dark:text-slate-400 text-[11px]">
                                 {it.lotNumber || "LOT-01"}
                               </td>
-                              <td className="py-1.5 text-right tabular-nums text-slate-600">
+                              <td className="py-1.5 text-right tabular-nums text-slate-600 dark:text-slate-400">
                                 {tk(it.unitPrice)}
                               </td>
-                              <td className="py-1.5 text-right tabular-nums font-semibold text-slate-900">
+                              <td className="py-1.5 text-right tabular-nums font-semibold text-slate-900 dark:text-slate-100">
                                 {it.totalQuantity}
                               </td>
-                              <td className="py-1.5 text-right tabular-nums font-bold text-slate-900">
+                              <td className="py-1.5 text-right tabular-nums font-bold text-slate-900 dark:text-slate-100">
                                 {tk(it.subtotal)}
                               </td>
                             </tr>
@@ -890,21 +890,21 @@ export default function CustomerLedgerView({
                         {(() => {
                           const bal = Number(row.balanceAfter) || 0
                           if (bal > 0) {
-                            return <span className="text-slate-900">{tk(bal)}</span>
+                            return <span className="text-slate-900 dark:text-slate-100">{tk(bal)}</span>
                           }
                           if (bal < 0) {
                             return (
-                              <span className="text-emerald-700 font-semibold" title="Store Credit / Advance">
+                              <span className="text-emerald-700 dark:text-emerald-400 font-semibold" title="Store Credit / Advance">
                                 +{tk(Math.abs(bal))} (Cr)
                               </span>
                             )
                           }
-                          return <span className="text-slate-600">{tk(0)}</span>
+                          return <span className="text-slate-600 dark:text-slate-400">{tk(0)}</span>
                         })()}
                       </TableCell>
 
                       {/* Notes */}
-                      <TableCell className="text-slate-500 max-w-[200px] truncate py-3 text-xs">
+                      <TableCell className="text-slate-500 dark:text-slate-400 max-w-[200px] truncate py-3 text-xs">
                         {row.notes || "—"}
                       </TableCell>
                     </TableRow>

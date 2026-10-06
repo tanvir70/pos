@@ -40,7 +40,7 @@ export function CardHeader({
       <div
         data-slot="card-header"
         className={cn(
-          "flex flex-col gap-1.5 p-5 border-b border-border bg-slate-50/50",
+          "flex flex-col gap-1.5 p-5 border-b border-border bg-slate-50/50 dark:bg-slate-800/50",
           className,
         )}
         {...props}
@@ -54,21 +54,21 @@ export function CardHeader({
     <div
       data-slot="card-header"
       className={cn(
-        "flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border bg-slate-50/60",
+        "flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border bg-slate-50/60 dark:bg-slate-800/60",
         className,
       )}
       {...props}
     >
       <div className="flex items-center gap-2.5 min-w-0">
-        {icon && <span className="text-slate-500 shrink-0 flex items-center">{icon}</span>}
+        {icon && <span className="text-slate-500 dark:text-slate-400 shrink-0 flex items-center">{icon}</span>}
         <div className="min-w-0">
           {title && (
-            <h3 className="font-semibold text-sm text-slate-900 leading-tight truncate">
+            <h3 className="font-semibold text-sm text-slate-900 dark:text-slate-100 leading-tight truncate">
               {title}
             </h3>
           )}
           {subtitle && (
-            <p className="text-xs text-slate-500 leading-tight mt-0.5 truncate">
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight mt-0.5 truncate">
               {subtitle}
             </p>
           )}
@@ -83,7 +83,7 @@ export function CardTitle({ className, ...props }: React.ComponentProps<"div">) 
   return (
     <div
       data-slot="card-title"
-      className={cn("text-base font-semibold text-slate-900 leading-snug", className)}
+      className={cn("text-base font-semibold text-slate-900 dark:text-slate-100 leading-snug", className)}
       {...props}
     />
   )
@@ -93,7 +93,7 @@ export function CardDescription({ className, ...props }: React.ComponentProps<"d
   return (
     <div
       data-slot="card-description"
-      className={cn("text-xs text-slate-500", className)}
+      className={cn("text-xs text-slate-500 dark:text-slate-400", className)}
       {...props}
     />
   )
@@ -117,7 +117,7 @@ export function CardFooter({ className, ...props }: React.ComponentProps<"div">)
     <div
       data-slot="card-footer"
       className={cn(
-        "flex items-center justify-between gap-3 border-t border-border bg-slate-50/40 px-5 py-3.5",
+        "flex items-center justify-between gap-3 border-t border-border bg-slate-50/40 dark:bg-slate-800/40 px-5 py-3.5",
         className,
       )}
       {...props}

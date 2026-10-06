@@ -11,7 +11,7 @@ function Table({ className, containerClassName, ...props }: TableProps) {
     <div
       data-slot="table-container"
       className={cn(
-        "relative w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs",
+        "relative w-full overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs",
         containerClassName
       )}
     >
@@ -29,7 +29,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
     <thead
       data-slot="table-header"
       className={cn(
-        "bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold select-none [&_tr]:border-b",
+        "bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold select-none [&_tr]:border-b dark:[&_tr]:border-slate-800",
         className
       )}
       {...props}
@@ -41,7 +41,7 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("divide-y divide-slate-200/50 [&_tr:last-child]:border-0", className)}
+      className={cn("divide-y divide-slate-200/50 dark:divide-slate-800/60 [&_tr:last-child]:border-0", className)}
       {...props}
     />
   )
@@ -52,7 +52,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0",
+        "border-t border-slate-200 dark:border-slate-800 bg-muted/50 font-medium [&>tr]:last:border-b-0",
         className
       )}
       {...props}
@@ -75,9 +75,9 @@ function TableRow({
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b transition-colors data-[state=selected]:bg-muted",
-        isHoverable && "hover:bg-slate-50/60",
-        isSelected && "bg-emerald-50/60",
+        "border-b border-slate-200/80 dark:border-slate-800/80 transition-colors data-[state=selected]:bg-muted",
+        isHoverable && "hover:bg-slate-50/60 dark:hover:bg-slate-800/50",
+        isSelected && "bg-emerald-50/60 dark:bg-emerald-950/40",
         className
       )}
       {...props}
@@ -104,7 +104,7 @@ function TableHead({
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 px-3.5 py-3 text-xs font-bold text-slate-900 whitespace-nowrap align-middle text-foreground [&:has([role=checkbox])]:pr-0",
+        "h-10 px-3.5 py-3 text-xs font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap align-middle [&:has([role=checkbox])]:pr-0",
         alignClass,
         className
       )}
@@ -134,7 +134,7 @@ function TableCell({
     <td
       data-slot="table-cell"
       className={cn(
-        "px-3.5 py-3 text-xs text-slate-900 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "px-3.5 py-3 text-xs text-slate-900 dark:text-slate-100 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
         alignClass,
         isMonospace && "font-mono tabular-nums font-semibold",
         className
@@ -184,11 +184,11 @@ export function TableEmptyState({
 
   return (
     <tr>
-      <td colSpan={colSpan} className="py-12 text-center text-slate-500">
-        <span className="inline-block text-slate-400">{icon}</span>
-        <p className="mt-2 text-sm font-bold text-slate-900">{displayTitle}</p>
+      <td colSpan={colSpan} className="py-12 text-center text-slate-500 dark:text-slate-400">
+        <span className="inline-block text-slate-400 dark:text-slate-500">{icon}</span>
+        <p className="mt-2 text-sm font-bold text-slate-900 dark:text-slate-100">{displayTitle}</p>
         {displaySubtitle && (
-          <p className="text-xs text-slate-500 mt-0.5">{displaySubtitle}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{displaySubtitle}</p>
         )}
         {action && <div className="mt-4 flex justify-center">{action}</div>}
       </td>
@@ -205,9 +205,9 @@ export function TableLoadingState({
 }) {
   return (
     <tr>
-      <td colSpan={colSpan} className="py-12 text-center text-slate-500">
-        <Loader2 className="w-6 h-6 animate-spin inline-block text-emerald-600" />
-        <p className="mt-2 text-xs font-semibold text-slate-500">{text}</p>
+      <td colSpan={colSpan} className="py-12 text-center text-slate-500 dark:text-slate-400">
+        <Loader2 className="w-6 h-6 animate-spin inline-block text-emerald-600 dark:text-emerald-500" />
+        <p className="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400">{text}</p>
       </td>
     </tr>
   )

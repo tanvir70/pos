@@ -26,9 +26,9 @@ export default function RefreshButton({
       disabled={isLoading}
       title={title}
       aria-label={title}
-      className={`inline-flex items-center justify-center border border-slate-200/90 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-700 hover:text-slate-900 transition-all cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${sizeClasses} ${className}`}
+      className={`inline-flex items-center justify-center border border-slate-200/90 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:bg-slate-200 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-all cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed shrink-0 ${sizeClasses} ${className}`}
     >
-      <RefreshCw className={`${iconSize} text-slate-700 transition-transform ${isLoading ? "animate-spin" : ""}`} />
+      <RefreshCw className={`${iconSize} text-slate-700 dark:text-slate-300 transition-transform ${isLoading ? "animate-spin" : ""}`} />
     </button>
   )
 }

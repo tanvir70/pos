@@ -16,6 +16,7 @@ import Button from "../components/ui/Button"
 import RefreshButton from "../components/ui/RefreshButton"
 import InventoryStatCards from "../components/inventory/InventoryStatCards"
 import AddProductModal from "../components/inventory/AddProductModal"
+import EditProductModal from "../components/inventory/EditProductModal"
 import QuickAddStockModal, { type StockModalProduct } from "../components/inventory/QuickAddStockModal"
 import ProductLotsPopover, { type LotDropdownProduct } from "../components/inventory/ProductLotsPopover"
 import InventoryTable from "../components/inventory/InventoryTable"
@@ -68,6 +69,7 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   const [isStickerOpen, setIsStickerOpen] = useState<boolean>(false)
   const [lotDropdownProduct, setLotDropdownProduct] = useState<LotDropdownProduct | null>(null)
   const [showAddProduct, setShowAddProduct] = useState<boolean>(false)
+  const [editProduct, setEditProduct] = useState<GroupedProduct | null>(null)
 
   // ─── Expanded Product Lots State ──────────────────────────────
   const [expandedProductIds, setExpandedProductIds] = useState<Set<number>>(new Set())
@@ -234,8 +236,9 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
     })
   }
 
-  const handleAdjustmentSuccess = (_adj: StockAdjustmentResponse) => {
-    showSuccess("Stock adjustment recorded successfully!")
+  const handleAdjustmentSuccess = (adj: StockAdjustmentResponse) => {
+    const summaryMsg = `${adj.productNameEn || "Product"} • Lot #${adj.lotNumber} • -${adj.quantity} ${adj.unit || "units"} (${adj.adjustmentType}) • Voucher: ${adj.adjustmentNo}`
+    showSuccess(summaryMsg, "Stock Adjustment Recorded")
     loadData()
   }
 
@@ -312,6 +315,14 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
         }}
       />
 
+      {/* Edit Product Master Modal */}
+      <EditProductModal
+        isOpen={!!editProduct}
+        product={editProduct}
+        onClose={() => setEditProduct(null)}
+        onSuccess={() => loadData()}
+      />
+
       {/* Dokan Stock Inventory Table */}
       <InventoryTable
         products={products}
@@ -335,6 +346,7 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
         expandedProductIds={expandedProductIds}
         toggleLotsExpanded={toggleLotsExpanded}
         openAddStockModal={openAddStockModal}
+        onOpenEditProduct={(prod) => setEditProduct(prod)}
         onOpenLedger={(item, lot) => {
           if (onNavigate) {
             onNavigate("bin-card", {

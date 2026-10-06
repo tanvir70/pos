@@ -44,53 +44,53 @@ interface TabTheme {
 
 const TAB_THEMES: Record<NavigationTab, TabTheme> = {
   pos: {
-    activeBg: "bg-emerald-50/90",
-    activeText: "text-emerald-950 font-bold",
-    activeBorder: "border-emerald-200/90 shadow-xs shadow-emerald-600/5",
+    activeBg: "bg-emerald-50/90 dark:bg-emerald-950/40",
+    activeText: "text-emerald-950 dark:text-emerald-200 font-bold",
+    activeBorder: "border-emerald-200/90 dark:border-emerald-800/60 shadow-xs shadow-emerald-600/5",
     activeBadge: "bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-700/25",
-    inactiveBadge: "bg-emerald-50 text-emerald-700 border-emerald-200/70 group-hover:bg-emerald-100 group-hover:border-emerald-300",
+    inactiveBadge: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/70 dark:border-emerald-800/60 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/60 group-hover:border-emerald-300",
   },
   dashboard: {
-    activeBg: "bg-blue-50/90",
-    activeText: "text-blue-950 font-bold",
-    activeBorder: "border-blue-200/90 shadow-xs shadow-blue-600/5",
+    activeBg: "bg-blue-50/90 dark:bg-blue-950/40",
+    activeText: "text-blue-950 dark:text-blue-200 font-bold",
+    activeBorder: "border-blue-200/90 dark:border-blue-800/60 shadow-xs shadow-blue-600/5",
     activeBadge: "bg-blue-600 text-white border-blue-500 shadow-sm shadow-blue-700/25",
-    inactiveBadge: "bg-blue-50 text-blue-700 border-blue-200/70 group-hover:bg-blue-100 group-hover:border-blue-300",
+    inactiveBadge: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200/70 dark:border-blue-800/60 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/60 group-hover:border-blue-300",
   },
   inventory: {
-    activeBg: "bg-amber-50/90",
-    activeText: "text-amber-950 font-bold",
-    activeBorder: "border-amber-200/90 shadow-xs shadow-amber-600/5",
+    activeBg: "bg-amber-50/90 dark:bg-amber-950/40",
+    activeText: "text-amber-950 dark:text-amber-200 font-bold",
+    activeBorder: "border-amber-200/90 dark:border-amber-800/60 shadow-xs shadow-amber-600/5",
     activeBadge: "bg-amber-600 text-white border-amber-500 shadow-sm shadow-amber-700/25",
-    inactiveBadge: "bg-amber-50 text-amber-700 border-amber-200/70 group-hover:bg-amber-100 group-hover:border-amber-300",
+    inactiveBadge: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200/70 dark:border-amber-800/60 group-hover:bg-amber-100 dark:group-hover:bg-amber-900/60 group-hover:border-amber-300",
   },
   customers: {
-    activeBg: "bg-indigo-50/90",
-    activeText: "text-indigo-950 font-bold",
-    activeBorder: "border-indigo-200/90 shadow-xs shadow-indigo-600/5",
+    activeBg: "bg-indigo-50/90 dark:bg-indigo-950/40",
+    activeText: "text-indigo-950 dark:text-indigo-200 font-bold",
+    activeBorder: "border-indigo-200/90 dark:border-indigo-800/60 shadow-xs shadow-indigo-600/5",
     activeBadge: "bg-indigo-600 text-white border-indigo-500 shadow-sm shadow-indigo-700/25",
-    inactiveBadge: "bg-indigo-50 text-indigo-700 border-indigo-200/70 group-hover:bg-indigo-100 group-hover:border-indigo-300",
+    inactiveBadge: "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200/70 dark:border-indigo-800/60 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/60 group-hover:border-indigo-300",
   },
   returns: {
-    activeBg: "bg-rose-50/90",
-    activeText: "text-rose-950 font-bold",
-    activeBorder: "border-rose-200/90 shadow-xs shadow-rose-600/5",
+    activeBg: "bg-rose-50/90 dark:bg-rose-950/40",
+    activeText: "text-rose-950 dark:text-rose-200 font-bold",
+    activeBorder: "border-rose-200/90 dark:border-rose-800/60 shadow-xs shadow-rose-600/5",
     activeBadge: "bg-rose-600 text-white border-rose-500 shadow-sm shadow-rose-700/25",
-    inactiveBadge: "bg-rose-50 text-rose-700 border-rose-200/70 group-hover:bg-rose-100 group-hover:border-rose-300",
+    inactiveBadge: "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200/70 dark:border-rose-800/60 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/60 group-hover:border-rose-300",
   },
   settings: {
-    activeBg: "bg-purple-50/90",
-    activeText: "text-purple-950 font-bold",
-    activeBorder: "border-purple-200/90 shadow-xs shadow-purple-600/5",
+    activeBg: "bg-purple-50/90 dark:bg-purple-950/40",
+    activeText: "text-purple-950 dark:text-purple-200 font-bold",
+    activeBorder: "border-purple-200/90 dark:border-purple-800/60 shadow-xs shadow-purple-600/5",
     activeBadge: "bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-700/25",
-    inactiveBadge: "bg-purple-50 text-purple-700 border-purple-200/70 group-hover:bg-purple-100 group-hover:border-purple-300",
+    inactiveBadge: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200/70 dark:border-purple-800/60 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/60 group-hover:border-purple-300",
   },
   "bin-card": {
-    activeBg: "bg-teal-50/90",
-    activeText: "text-teal-950 font-bold",
-    activeBorder: "border-teal-200/90 shadow-xs shadow-teal-600/5",
+    activeBg: "bg-teal-50/90 dark:bg-teal-950/40",
+    activeText: "text-teal-950 dark:text-teal-200 font-bold",
+    activeBorder: "border-teal-200/90 dark:border-teal-800/60 shadow-xs shadow-teal-600/5",
     activeBadge: "bg-teal-600 text-white border-teal-500 shadow-sm shadow-teal-700/25",
-    inactiveBadge: "bg-teal-50 text-teal-700 border-teal-200/70 group-hover:bg-teal-100 group-hover:border-teal-300",
+    inactiveBadge: "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border-teal-200/70 dark:border-teal-800/60 group-hover:bg-teal-100 dark:group-hover:bg-teal-900/60 group-hover:border-teal-300",
   },
 }
 
@@ -191,10 +191,10 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
         }`}
         aria-hidden={!isOpen}
       >
-        <div className="w-72 md:w-full h-full bg-white border-r border-slate-200 shadow-2xl md:shadow-none flex flex-col overflow-hidden">
+        <div className="w-72 md:w-full h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl md:shadow-none flex flex-col overflow-hidden transition-colors duration-200">
           {/* Brand */}
           <div
-            className={`flex items-center justify-between px-4 h-16 border-b border-slate-200/80 shrink-0 gap-2.5 bg-gradient-to-r from-slate-50/70 via-white to-slate-50/20 ${
+            className={`flex items-center justify-between px-4 h-16 border-b border-slate-200/80 dark:border-slate-800 shrink-0 gap-2.5 bg-gradient-to-r from-slate-50/70 via-white to-slate-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800/40 ${
               isRail ? "md:justify-center md:px-0" : ""
             }`}
           >
@@ -204,12 +204,12 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
               </div>
               <div className={`truncate ${isRail ? "md:hidden" : ""}`}>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-900 text-sm leading-tight truncate">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight truncate">
                     Rajib Enterprise
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title="System Online" />
                 </div>
-                <p className="text-[11px] text-slate-500 leading-none mt-0.5 truncate font-medium">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-none mt-0.5 truncate font-medium">
                   Agrochemical Cockpit
                 </p>
               </div>
@@ -217,7 +217,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer md:hidden"
+              className="shrink-0 p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer md:hidden"
               aria-label="Close menu"
             >
               <X className="w-4 h-4" />
@@ -271,12 +271,12 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                     }
                   }}
                   title={isRail ? tab.label : undefined}
-                  className={`group relative w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold cursor-pointer border focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-slate-100 ${
+                  className={`group relative w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold cursor-pointer border focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-slate-100 dark:focus:bg-slate-800 ${
                     isRail ? "md:justify-center md:px-0" : ""
                   } ${
                     isActive
                       ? `${theme.activeBg} ${theme.activeText} ${theme.activeBorder}`
-                      : "border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      : "border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
                   <div
@@ -297,24 +297,24 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
           </nav>
 
           {/* Footer */}
-          <div className={`border-t border-slate-200/80 p-3 space-y-2 shrink-0 bg-slate-50/40 ${isRail ? "md:px-2" : ""}`}>
+          <div className={`border-t border-slate-200/80 dark:border-slate-800 p-3 space-y-2 shrink-0 bg-slate-50/40 dark:bg-slate-900/60 ${isRail ? "md:px-2" : ""}`}>
             {/* Perfectly Aligned Logout Button */}
             <button
               type="button"
               onClick={confirmLogout}
               title={isRail ? "Logout" : undefined}
-              className={`group w-full flex items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white hover:bg-rose-50/80 hover:border-rose-200/90 text-slate-700 hover:text-rose-700 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-2xs ${
+              className={`group w-full flex items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/70 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 hover:border-rose-200/90 dark:hover:border-rose-800 text-slate-700 dark:text-slate-300 hover:text-rose-700 dark:hover:text-rose-400 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-2xs ${
                 isRail ? "md:justify-center md:px-0 px-2.5 py-2" : "px-2.5 py-2"
               }`}
             >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-slate-200/80 bg-slate-50 text-slate-500 shadow-2xs group-hover:bg-rose-100 group-hover:border-rose-200 group-hover:text-rose-600 group-hover:scale-105 transition-all duration-200">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-2xs group-hover:bg-rose-100 dark:group-hover:bg-rose-900/50 group-hover:border-rose-200 dark:group-hover:border-rose-700 group-hover:text-rose-600 dark:group-hover:text-rose-300 group-hover:scale-105 transition-all duration-200">
                 <LogOut className="w-4 h-4" />
               </div>
               <div className={`min-w-0 flex-1 text-left ${isRail ? "md:hidden" : ""}`}>
                 <div className="text-xs font-bold leading-tight truncate">
                   Logout
                 </div>
-                <div className="text-[10px] text-slate-400 group-hover:text-rose-600 font-medium truncate mt-0.5">
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 group-hover:text-rose-600 dark:group-hover:text-rose-400 font-medium truncate mt-0.5">
                   End active session
                 </div>
               </div>

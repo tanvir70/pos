@@ -53,6 +53,16 @@ export async function createProduct(
   })
 }
 
+export async function updateProduct(
+  productId: number,
+  product: Partial<Product>,
+): Promise<Product> {
+  return apiClient<Product>(`/products/${productId}`, {
+    method: "PUT",
+    body: JSON.stringify(product),
+  })
+}
+
 export async function getSupportedUnits(): Promise<UnitGroup[]> {
   return apiClient<UnitGroup[]>("/products/units")
 }

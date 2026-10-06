@@ -11,14 +11,14 @@ export const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/95 shadow-xs",
         primary: "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/95 shadow-xs",
-        secondary: "border-border bg-white text-slate-800 hover:bg-slate-50 active:bg-slate-100 shadow-xs",
-        outline: "border-border bg-background hover:bg-muted hover:text-foreground",
+        secondary: "border-border dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700 active:bg-slate-100 dark:active:bg-slate-600 shadow-xs",
+        outline: "border-border dark:border-slate-700 bg-background hover:bg-muted hover:text-foreground",
         ghost: "hover:bg-muted hover:text-foreground",
         destructive: "bg-destructive text-white hover:bg-destructive/90 shadow-xs",
         danger: "bg-destructive text-white hover:bg-destructive/90 shadow-xs",
         warning: "bg-amber-600 text-white hover:bg-amber-700 shadow-xs",
         link: "text-primary underline-offset-4 hover:underline",
-        numpad: "bg-white hover:bg-emerald-50 active:bg-emerald-100 text-slate-900 border-border shadow-xs font-mono font-bold text-lg active:scale-[0.98] transition-transform",
+        numpad: "bg-white dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 active:bg-emerald-100 dark:active:bg-emerald-900 text-slate-900 dark:text-slate-100 border-border dark:border-slate-700 shadow-xs font-mono font-bold text-lg active:scale-[0.98] transition-transform",
       },
       size: {
         default: "h-9 px-3.5 py-2 text-sm gap-2",

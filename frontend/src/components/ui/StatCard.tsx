@@ -15,40 +15,40 @@ export interface StatCardProps {
 
 const colorThemes = {
   emerald: {
-    bg: "bg-emerald-50/70",
-    border: "border-emerald-200",
-    iconBg: "bg-emerald-100 text-emerald-800",
-    text: "text-emerald-900",
+    bg: "bg-emerald-50/70 dark:bg-emerald-950/40",
+    border: "border-emerald-200 dark:border-emerald-800",
+    iconBg: "bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300",
+    text: "text-emerald-900 dark:text-emerald-200",
   },
   blue: {
-    bg: "bg-blue-50/70",
-    border: "border-blue-200",
-    iconBg: "bg-blue-100 text-blue-800",
-    text: "text-blue-900",
+    bg: "bg-blue-50/70 dark:bg-blue-950/40",
+    border: "border-blue-200 dark:border-blue-800",
+    iconBg: "bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300",
+    text: "text-blue-900 dark:text-blue-200",
   },
   amber: {
-    bg: "bg-amber-50/70",
-    border: "border-amber-200",
-    iconBg: "bg-amber-100 text-amber-800",
-    text: "text-amber-900",
+    bg: "bg-amber-50/70 dark:bg-amber-950/40",
+    border: "border-amber-200 dark:border-amber-800",
+    iconBg: "bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300",
+    text: "text-amber-900 dark:text-amber-200",
   },
   red: {
-    bg: "bg-red-50/70",
-    border: "border-red-200",
-    iconBg: "bg-red-100 text-red-800",
-    text: "text-red-900",
+    bg: "bg-red-50/70 dark:bg-red-950/40",
+    border: "border-red-200 dark:border-red-800",
+    iconBg: "bg-red-100 dark:bg-red-900/60 text-red-800 dark:text-red-300",
+    text: "text-red-900 dark:text-red-200",
   },
   purple: {
-    bg: "bg-purple-50/70",
-    border: "border-purple-200",
-    iconBg: "bg-purple-100 text-purple-800",
-    text: "text-purple-900",
+    bg: "bg-purple-50/70 dark:bg-purple-950/40",
+    border: "border-purple-200 dark:border-purple-800",
+    iconBg: "bg-purple-100 dark:bg-purple-900/60 text-purple-800 dark:text-purple-300",
+    text: "text-purple-900 dark:text-purple-200",
   },
   neutral: {
-    bg: "bg-white",
-    border: "border-slate-200",
-    iconBg: "bg-slate-50 text-slate-900",
-    text: "text-slate-900",
+    bg: "bg-white dark:bg-slate-900",
+    border: "border-slate-200 dark:border-slate-800",
+    iconBg: "bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100",
+    text: "text-slate-900 dark:text-slate-100",
   },
 }
 
@@ -69,7 +69,7 @@ export function StatCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-slate-500 truncate uppercase tracking-wider">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate uppercase tracking-wider">
             {title}
           </p>
 
@@ -94,7 +94,7 @@ export function StatCard({
                   {trend.isPositive ? "▲" : "▼"} {trend.value}
                 </span>
               )}
-              {subtitle && <span className="text-slate-500">{subtitle}</span>}
+              {subtitle && <span className="text-slate-500 dark:text-slate-400">{subtitle}</span>}
             </div>
           )}
         </div>
