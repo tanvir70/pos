@@ -83,29 +83,29 @@ const getMovementBadge = (type: string) => {
     case "LOT_INWARD":
       return {
         label: "Lot Inward",
-        bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
-        icon: <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600" />,
+        bg: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        icon: <ArrowUpRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />,
         isAddition: true,
       }
     case "SALE":
       return {
         label: "POS Sale",
-        bg: "bg-blue-50 text-blue-700 border-blue-200",
-        icon: <ArrowDownRight className="w-3.5 h-3.5 text-blue-600" />,
+        bg: "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />,
         isAddition: false,
       }
     case "RETURN_RESTOCKED":
       return {
         label: "Return Restock",
-        bg: "bg-purple-50 text-purple-700 border-purple-200",
-        icon: <ArrowUpRight className="w-3.5 h-3.5 text-purple-600" />,
+        bg: "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800",
+        icon: <ArrowUpRight className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />,
         isAddition: true,
       }
     case "RETURN_QUARANTINED":
       return {
         label: "Damaged Return",
-        bg: "bg-orange-50 text-orange-700 border-orange-200",
-        icon: <ArrowUpRight className="w-3.5 h-3.5 text-orange-600" />,
+        bg: "bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800",
+        icon: <ArrowUpRight className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />,
         isAddition: true,
       }
     case "BREAKAGE_LEAKAGE":
@@ -113,78 +113,78 @@ const getMovementBadge = (type: string) => {
     case "DAMAGE_WRITEOFF":
       return {
         label: "Damage Write-Off",
-        bg: "bg-rose-50 text-rose-700 border-rose-200",
-        icon: <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />,
+        bg: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />,
         isAddition: false,
       }
     case "DAMAGE_SPOILAGE":
       return {
         label: "Moisture Spoilage",
-        bg: "bg-rose-50 text-rose-700 border-rose-200",
-        icon: <ArrowDownRight className="w-3.5 h-3.5 text-rose-600" />,
+        bg: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />,
         isAddition: false,
       }
     case "EXPIRED_SCRAP":
       return {
         label: "Expired Scrap",
-        bg: "bg-red-50 text-red-700 border-red-200",
-        icon: <ArrowDownRight className="w-3.5 h-3.5 text-red-600" />,
+        bg: "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />,
         isAddition: false,
       }
     case "PHYSICAL_AUDIT_VARIANCE":
       return {
         label: "Audit Variance",
-        bg: "bg-amber-50 text-amber-700 border-amber-200",
-        icon: <Filter className="w-3.5 h-3.5 text-amber-600" />,
+        bg: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        icon: <Filter className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />,
         isAddition: false,
       }
     case "PROMOTIONAL_SAMPLE":
       return {
         label: "Demo Sample",
-        bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
-        icon: <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600" />,
+        bg: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />,
         isAddition: false,
       }
     case "ADJUSTMENT":
       return {
         label: "Adjustment",
-        bg: "bg-amber-50 text-amber-700 border-amber-200",
-        icon: <ArrowDownRight className="w-3.5 h-3.5 text-amber-600" />,
+        bg: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />,
         isAddition: false,
       }
     case "DAMAGE_TO_QUARANTINE":
       return {
         label: "To Quarantine",
-        bg: "bg-amber-50 text-amber-700 border-amber-200",
-        icon: <ArrowDownRight className="w-3.5 h-3.5 text-amber-600" />,
+        bg: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />,
         isAddition: false,
       }
     case "DAMAGE_RECEIVED_QUARANTINE":
       return {
         label: "Quarantine Hold",
-        bg: "bg-violet-50 text-violet-700 border-violet-200",
-        icon: <ArrowUpRight className="w-3.5 h-3.5 text-violet-600" />,
+        bg: "bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800",
+        icon: <ArrowUpRight className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />,
         isAddition: true,
       }
     case "QUARANTINE_DISPOSAL":
       return {
         label: "Hazard Disposal",
-        bg: "bg-slate-100 text-slate-700 border-slate-300",
-        icon: <ArrowDownRight className="w-3.5 h-3.5 text-slate-500" />,
+        bg: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700",
+        icon: <ArrowDownRight className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />,
         isAddition: false,
       }
     case "OPENING_BALANCE":
       return {
         label: "Opening Balance",
-        bg: "bg-teal-50 text-teal-700 border-teal-200",
-        icon: <Package className="w-3.5 h-3.5 text-teal-600" />,
+        bg: "bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800",
+        icon: <Package className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />,
         isAddition: true,
       }
     default:
       return {
         label: type.replace(/_/g, " "),
-        bg: "bg-slate-50 text-slate-600 border-slate-200",
-        icon: <Filter className="w-3.5 h-3.5 text-slate-500" />,
+        bg: "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700",
+        icon: <Filter className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />,
         isAddition: false,
       }
   }
@@ -388,13 +388,13 @@ export default function StockLedgerPage({
   return (
     <div className="space-y-4">
       {/* ─── Top Header Toolbar ────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <History className="w-5 h-5 text-slate-700" />
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <History className="w-5 h-5 text-slate-700 dark:text-slate-300" />
             <span>Stock Ledger & Bin Card</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Complete chronological store inventory transaction log and document audit trails
           </p>
         </div>
@@ -444,7 +444,7 @@ export default function StockLedgerPage({
         <GotposStatCard
           title="Damage / Scrap Write-Offs"
           value={`${metrics.damageLossUnits} units`}
-          valueColor={metrics.damageLossUnits > 0 ? "text-rose-600" : "text-slate-900"}
+          valueColor={metrics.damageLossUnits > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-slate-100"}
           subtitle="Breakage, moisture, expired write-offs"
           theme={metrics.damageLossUnits > 0 ? "rose" : "amber"}
           icon={<Flame className="w-5 h-5" />}
@@ -452,9 +452,9 @@ export default function StockLedgerPage({
       </div>
 
       {/* ─── Filter & Scope Toolbar ───────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
         {/* 1. Category Segmented Navigation Strip */}
-        <div className="px-3.5 py-2 bg-slate-50/70 border-b border-slate-200/80 flex items-center justify-between gap-2 overflow-x-auto">
+        <div className="px-3.5 py-2 bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-2 overflow-x-auto">
           <div className="flex items-center gap-1 shrink-0">
             {MOVEMENT_CATEGORIES.map((cat) => {
               const isSelected = selectedType === cat.id
@@ -467,7 +467,7 @@ export default function StockLedgerPage({
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                     isSelected
                       ? "bg-teal-700 text-white shadow-xs font-bold"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/60"
                   }`}
                 >
                   <IconComponent className={`w-3.5 h-3.5 ${isSelected ? "text-white" : cat.color || "text-slate-400"}`} />
@@ -481,7 +481,7 @@ export default function StockLedgerPage({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="text-xs font-bold text-rose-600 hover:text-rose-800 hover:underline cursor-pointer flex items-center gap-1 shrink-0 ml-auto pl-2"
+              className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 hover:underline cursor-pointer flex items-center gap-1 shrink-0 ml-auto pl-2"
               title="Reset all filters"
             >
               <X className="w-3.5 h-3.5" />
@@ -515,13 +515,13 @@ export default function StockLedgerPage({
                   }
                 }}
                 placeholder="Search reference #INV, #ADJ, batch, or notes..."
-                className="w-full text-xs pl-9 pr-8 py-2 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:border-teal-600 focus:outline-hidden transition-all placeholder:text-slate-400"
+                className="w-full text-xs pl-9 pr-8 py-2 bg-slate-50/60 dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-teal-600 dark:focus:border-teal-500 focus:outline-hidden transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 cursor-pointer"
                   title="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -540,7 +540,7 @@ export default function StockLedgerPage({
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <div className="flex items-center gap-2 truncate text-slate-800">
+                  <div className="flex items-center gap-2 truncate text-slate-800 dark:text-slate-200">
                     <Package className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <SelectValue placeholder="All Products" />
                   </div>
@@ -569,7 +569,7 @@ export default function StockLedgerPage({
                 disabled={availableLots.length === 0}
               >
                 <SelectTrigger className="w-full font-mono">
-                  <div className="flex items-center gap-2 truncate text-slate-800">
+                  <div className="flex items-center gap-2 truncate text-slate-800 dark:text-slate-200">
                     <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <SelectValue placeholder="All Batches / Lots" />
                   </div>
@@ -601,14 +601,14 @@ export default function StockLedgerPage({
 
           {/* 3. Active Filter Chips & Context Bar */}
           {hasActiveFilters && (
-            <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 text-xs">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">
+            <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-1">
                 Active Filters:
               </span>
 
               {currentProduct && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200 text-xs font-medium">
-                  <Package className="w-3 h-3 text-teal-600" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800 text-xs font-medium">
+                  <Package className="w-3 h-3 text-teal-600 dark:text-teal-400" />
                   <span>{currentProduct.nameEn}</span>
                   <button
                     type="button"
@@ -617,7 +617,7 @@ export default function StockLedgerPage({
                       setSelectedLotId(undefined)
                       setPage(0)
                     }}
-                    className="hover:text-teal-950 cursor-pointer p-0.5 ml-0.5"
+                    className="hover:text-teal-950 dark:hover:text-teal-100 cursor-pointer p-0.5 ml-0.5"
                     title="Remove product filter"
                   >
                     <X className="w-3 h-3" />
@@ -626,8 +626,8 @@ export default function StockLedgerPage({
               )}
 
               {selectedLot && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 text-violet-800 border border-violet-200 text-xs font-medium font-mono">
-                  <Layers className="w-3 h-3 text-violet-600" />
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-950/60 text-violet-800 dark:text-violet-300 border border-violet-200 dark:border-violet-800 text-xs font-medium font-mono">
+                  <Layers className="w-3 h-3 text-violet-600 dark:text-violet-400" />
                   <span>{formatLotNumber(selectedLot.lotNumber)}</span>
                   <button
                     type="button"
@@ -635,7 +635,7 @@ export default function StockLedgerPage({
                       setSelectedLotId(undefined)
                       setPage(0)
                     }}
-                    className="hover:text-violet-950 cursor-pointer p-0.5 ml-0.5"
+                    className="hover:text-violet-950 dark:hover:text-violet-100 cursor-pointer p-0.5 ml-0.5"
                     title="Remove batch filter"
                   >
                     <X className="w-3 h-3" />
@@ -644,12 +644,12 @@ export default function StockLedgerPage({
               )}
 
               {selectedType !== "ALL" && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200 text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-medium">
                   <span>Category: {MOVEMENT_CATEGORIES.find((c) => c.id === selectedType)?.label || selectedType}</span>
                   <button
                     type="button"
                     onClick={() => setSelectedType("ALL")}
-                    className="hover:text-slate-900 cursor-pointer p-0.5 ml-0.5"
+                    className="hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer p-0.5 ml-0.5"
                     title="Reset category"
                   >
                     <X className="w-3 h-3" />
@@ -658,12 +658,12 @@ export default function StockLedgerPage({
               )}
 
               {dateRange.preset !== "ALL" && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-medium">
                   <span>Date: {dateRange.preset.replace(/_/g, " ")}</span>
                   <button
                     type="button"
                     onClick={() => setDateRange(defaultDateRange)}
-                    className="hover:text-emerald-950 cursor-pointer p-0.5 ml-0.5"
+                    className="hover:text-emerald-950 dark:hover:text-emerald-100 cursor-pointer p-0.5 ml-0.5"
                     title="Reset date filter"
                   >
                     <X className="w-3 h-3" />
@@ -672,12 +672,12 @@ export default function StockLedgerPage({
               )}
 
               {searchQuery.trim() && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200 text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-medium">
                   <span>Search: &ldquo;{searchQuery.trim()}&rdquo;</span>
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="hover:text-blue-950 cursor-pointer p-0.5 ml-0.5"
+                    className="hover:text-blue-950 dark:hover:text-blue-100 cursor-pointer p-0.5 ml-0.5"
                     title="Clear search query"
                   >
                     <X className="w-3 h-3" />
@@ -688,7 +688,7 @@ export default function StockLedgerPage({
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="ml-auto text-xs font-bold text-rose-600 hover:text-rose-800 hover:underline cursor-pointer flex items-center gap-1"
+                className="ml-auto text-xs font-bold text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 hover:underline cursor-pointer flex items-center gap-1"
               >
                 <X className="w-3 h-3" />
                 <span>Clear All</span>
@@ -699,7 +699,7 @@ export default function StockLedgerPage({
       </div>
 
       {/* ─── High-Density Full-Width Bin Card Table ───────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -754,10 +754,10 @@ export default function StockLedgerPage({
                         focusSidebarMenu()
                       }
                     }}
-                      className="hover:bg-slate-50/80 transition-colors border-b border-slate-100 text-xs focus:outline-none focus:bg-teal-50 focus:ring-2 focus:ring-teal-600 cursor-default"
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors border-b border-slate-100 dark:border-slate-800 text-xs focus:outline-none focus:bg-teal-50 dark:focus:bg-teal-950/50 focus:ring-2 focus:ring-teal-600 cursor-default"
                   >
                     {/* 1. Date & Time */}
-                    <td className="py-3 px-4 whitespace-nowrap font-mono text-[11px] text-slate-600">
+                    <td className="py-3 px-4 whitespace-nowrap font-mono text-[11px] text-slate-600 dark:text-slate-400">
                       {formatDate(m.movementTime)}
                     </td>
 
@@ -773,11 +773,11 @@ export default function StockLedgerPage({
 
                     {/* 3. Product & Code */}
                     <td className="py-3 px-4">
-                      <div className="font-bold text-slate-900 leading-tight">
+                      <div className="font-bold text-slate-900 dark:text-slate-100 leading-tight">
                         {m.productNameEn || `Product #${m.productId}`}
                       </div>
                       {m.productCode && (
-                        <div className="font-mono text-[10px] text-slate-500 mt-0.5">
+                        <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                           #{m.productCode}
                         </div>
                       )}
@@ -785,7 +785,7 @@ export default function StockLedgerPage({
 
                     {/* 4. Batch / Lot Number */}
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="font-mono font-bold text-[11px] text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 shadow-2xs">
+                      <span className="font-mono font-bold text-[11px] text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 shadow-2xs">
                         {m.lotNumber || `Lot #${m.lotId}`}
                       </span>
                     </td>
@@ -793,12 +793,12 @@ export default function StockLedgerPage({
                     {/* 5. Document Reference */}
                     <td className="py-3 px-4 whitespace-nowrap">
                       {m.referenceDocNo ? (
-                        <span className="inline-flex items-center gap-1 font-mono text-xs font-bold text-slate-800 bg-slate-50 px-2 py-0.5 rounded border border-slate-300 shadow-2xs">
-                          <FileText className="w-3 h-3 text-slate-500" />
+                        <span className="inline-flex items-center gap-1 font-mono text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/80 px-2 py-0.5 rounded border border-slate-300 dark:border-slate-700 shadow-2xs">
+                          <FileText className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                           <span>{m.referenceDocNo}</span>
                         </span>
                       ) : (
-                        <span className="text-slate-400 font-mono text-[11px]">—</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-mono text-[11px]">—</span>
                       )}
                     </td>
 
@@ -807,24 +807,24 @@ export default function StockLedgerPage({
                       <span
                         className={`font-mono font-bold text-xs ${
                           isAdd
-                            ? "text-emerald-700"
+                            ? "text-emerald-700 dark:text-emerald-400"
                             : isDeduction
-                            ? "text-rose-700"
-                            : "text-slate-500"
+                            ? "text-rose-700 dark:text-rose-400"
+                            : "text-slate-500 dark:text-slate-400"
                         }`}
                       >
                         {m.quantityChange > 0 ? `+${m.quantityChange}` : m.quantityChange}{" "}
-                        <span className="text-[10px] font-normal text-slate-500">{m.unit}</span>
+                        <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400">{m.unit}</span>
                       </span>
                     </td>
 
                     {/* Remarks & Operator */}
-                    <td className="py-3 px-4 text-slate-600 max-w-xs">
-                      <div className="text-xs truncate font-medium" title={m.remarks || ""}>
+                    <td className="py-3 px-4 text-slate-600 dark:text-slate-400 max-w-xs">
+                      <div className="text-xs truncate font-medium text-slate-700 dark:text-slate-300" title={m.remarks || ""}>
                         {m.remarks || "—"}
                       </div>
                       {m.performedBy && (
-                        <div className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
                           By: {m.performedBy}
                         </div>
                       )}

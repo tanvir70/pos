@@ -246,26 +246,26 @@ export default function CustomerLedgerView({
       case "INVOICE_BILL":
         return {
           label: "Sales Invoice",
-          bg: "bg-blue-50 text-blue-700 border-blue-200",
-          icon: <ShoppingCart className="w-3 h-3 text-blue-600" />,
+          bg: "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+          icon: <ShoppingCart className="w-3 h-3 text-blue-600 dark:text-blue-400" />,
         }
       case "CASH_PAYMENT":
         return {
           label: "Due Repayment",
-          bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
-          icon: <CheckCircle2 className="w-3 h-3 text-emerald-600" />,
+          bg: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+          icon: <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />,
         }
       case "RETURN_CREDIT":
         return {
           label: "Return Credit",
-          bg: "bg-purple-50 text-purple-700 border-purple-200",
-          icon: <RotateCcw className="w-3 h-3 text-purple-600" />,
+          bg: "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800",
+          icon: <RotateCcw className="w-3 h-3 text-purple-600 dark:text-purple-400" />,
         }
       default:
         return {
           label: type,
-          bg: "bg-slate-100 text-slate-700 border-slate-200",
-          icon: <Receipt className="w-3 h-3 text-slate-500" />,
+          bg: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700",
+          icon: <Receipt className="w-3 h-3 text-slate-500 dark:text-slate-400" />,
         }
     }
   }
@@ -815,27 +815,27 @@ export default function CustomerLedgerView({
         /* ─── Standard Ledger Table ────────────────────────────────── */
         <div className="space-y-3">
           <Table containerClassName="overflow-hidden">
-            <TableHeader className="bg-slate-50/80 border-b border-slate-200 select-none">
+            <TableHeader className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 select-none">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="font-bold text-slate-500 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
+                <TableHead className="font-bold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
                   Transaction Date
                 </TableHead>
-                <TableHead className="font-bold text-slate-500 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
+                <TableHead className="font-bold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
                   Transaction Type
                 </TableHead>
-                <TableHead className="font-bold text-slate-500 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
+                <TableHead className="font-bold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
                   Ref / Voucher No.
                 </TableHead>
-                <TableHead align="right" className="font-bold text-slate-500 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
+                <TableHead align="right" className="font-bold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
                   Billed (+Debit)
                 </TableHead>
-                <TableHead align="right" className="font-bold text-slate-500 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
+                <TableHead align="right" className="font-bold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
                   Paid (-Credit)
                 </TableHead>
-                <TableHead align="right" className="font-bold text-slate-500 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
+                <TableHead align="right" className="font-bold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider py-3 whitespace-nowrap">
                   Balance After
                 </TableHead>
-                <TableHead className="font-bold text-slate-500 text-[11px] uppercase tracking-wider py-3">
+                <TableHead className="font-bold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider py-3">
                   Notes
                 </TableHead>
               </TableRow>
@@ -854,9 +854,9 @@ export default function CustomerLedgerView({
                 paginatedLedger.map((row) => {
                   const badge = getTransactionBadge(row.transactionType)
                   return (
-                    <TableRow key={row.id} className="hover:bg-slate-50/60 transition-colors">
+                    <TableRow key={row.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
                       {/* Date */}
-                      <TableCell className="tabular-nums text-slate-700 whitespace-nowrap py-3 font-medium">
+                      <TableCell className="tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap py-3 font-medium">
                         {formatDate(row.transactionDate)}
                       </TableCell>
 
@@ -871,17 +871,17 @@ export default function CustomerLedgerView({
                       </TableCell>
 
                       {/* Ref / Voucher No */}
-                      <TableCell className="tabular-nums text-slate-700 font-mono text-xs whitespace-nowrap py-3">
+                      <TableCell className="tabular-nums text-slate-700 dark:text-slate-300 font-mono text-xs whitespace-nowrap py-3">
                         {row.moneyReceiptNo || (row.saleId ? `INV-${row.saleId}` : "—")}
                       </TableCell>
 
                       {/* Debit (+Bill) */}
-                      <TableCell align="right" className="tabular-nums font-semibold whitespace-nowrap py-3 text-rose-600">
+                      <TableCell align="right" className="tabular-nums font-semibold whitespace-nowrap py-3 text-rose-600 dark:text-rose-400">
                         {row.debit > 0 ? tk(row.debit) : "—"}
                       </TableCell>
 
                       {/* Credit (-Paid) */}
-                      <TableCell align="right" className="tabular-nums font-semibold whitespace-nowrap py-3 text-emerald-700">
+                      <TableCell align="right" className="tabular-nums font-semibold whitespace-nowrap py-3 text-emerald-700 dark:text-emerald-400">
                         {row.credit > 0 ? tk(row.credit) : "—"}
                       </TableCell>
 

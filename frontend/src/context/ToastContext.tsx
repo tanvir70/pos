@@ -348,7 +348,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             isClosing
               ? "opacity-0 -translate-y-2 scale-95 pointer-events-none"
               : isConfirmation
-                ? "fixed left-1/2 top-1/2 z-[2] -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm bg-white text-slate-900 border-red-200 shadow-2xl shadow-slate-950/30"
+                ? "fixed left-1/2 top-1/2 z-[2] -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-red-200 dark:border-rose-900/60 shadow-2xl shadow-slate-950/30"
                 : isTopCenter
                   ? "w-full animate-in slide-in-from-top-4 fade-in duration-250 shadow-2xl backdrop-blur-md rounded-2xl border-2"
                   : isCenter
@@ -367,7 +367,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           }`}
         >
           {/* Semantic Icon */}
-          <div className={`shrink-0 mt-0.5 select-none ${isConfirmation ? "text-red-600" : ""}`}>
+          <div className={`shrink-0 mt-0.5 select-none ${isConfirmation ? "text-red-600 dark:text-rose-400" : ""}`}>
             {isSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-300" />}
             {isError && <XCircle className="w-5 h-5 text-rose-300" />}
             {isWarning && <AlertTriangle className="w-5 h-5 text-amber-300" />}
@@ -383,7 +383,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             )}
             <p
               className={`text-xs leading-relaxed font-normal break-words ${
-                isConfirmation ? "text-slate-600" : "text-white/90"
+                isConfirmation ? "text-slate-600 dark:text-slate-300" : "text-white/90"
               }`}
             >
               {toast.message}
@@ -399,7 +399,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                       action.intent === "danger"
                         ? "bg-rose-600 border-rose-500 text-white hover:bg-rose-500"
                         : isConfirmation
-                          ? "bg-white border-red-300 text-red-700 hover:bg-red-50"
+                          ? "bg-white dark:bg-slate-800 border-red-300 dark:border-rose-900/80 text-red-700 dark:text-rose-300 hover:bg-red-50 dark:hover:bg-slate-700"
                           : "bg-white/10 border-white/25 text-white hover:bg-white/20"
                     }`}
                   >
@@ -416,7 +416,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             onClick={() => dismissToast(toast.id)}
             className={`shrink-0 rounded-md p-1 transition-colors leading-none cursor-pointer ${
               isConfirmation
-                ? "text-slate-400 hover:text-red-600 hover:bg-red-50"
+                ? "text-slate-400 hover:text-red-600 dark:hover:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/50"
                 : "text-white/70 hover:text-white hover:bg-white/10"
             }`}
             aria-label="Dismiss alert"

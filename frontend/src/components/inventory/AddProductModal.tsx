@@ -366,18 +366,18 @@ export default function AddProductModal({
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xl mb-6 animate-in fade-in slide-in-from-top-3 duration-200">
+    <div className="w-full max-w-4xl mx-auto bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xl mb-6 animate-in fade-in slide-in-from-top-3 duration-200">
       {/* ─── Header ─── */}
-      <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
+      <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 shadow-2xs">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 shadow-2xs">
             <Plus className="w-5 h-5 stroke-[2.5]" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900 tracking-tight">
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Add New Product
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Quick product catalog entry with packaging breakdown and pricing matrix
             </p>
           </div>
@@ -385,7 +385,7 @@ export default function AddProductModal({
         <button
           type="button"
           onClick={handleClose}
-          className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-2 transition-colors cursor-pointer"
+          className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg p-2 transition-colors cursor-pointer"
           title="Close (Esc)"
         >
           <X className="w-5 h-5" />
@@ -394,13 +394,13 @@ export default function AddProductModal({
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* ─── 1. Basic Product Information ─── */}
-        <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 space-y-3.5">
+        <div className="bg-slate-50/70 border border-slate-200/80 dark:bg-slate-800/40 dark:border-slate-800 rounded-xl p-4 space-y-3.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-              <Package className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+              <Package className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               1. Product Details
             </span>
-            <span className="text-[11px] text-slate-400 font-medium">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
               * Required fields
             </span>
           </div>
@@ -420,13 +420,13 @@ export default function AddProductModal({
 
             <div className="sm:col-span-4">
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-slate-700">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Product Code / SKU *
                 </label>
                 <button
                   type="button"
                   onClick={handleAutoGenerateCode}
-                  className="text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                  className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 hover:underline cursor-pointer"
                   title="Generate a unique system SKU"
                 >
                   Auto-gen SKU
@@ -442,14 +442,14 @@ export default function AddProductModal({
             </div>
 
             <div className="sm:col-span-3">
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Category *
               </label>
               <Select
                 value={newProdCategory}
                 onValueChange={(val) => handleCategoryChange(val)}
               >
-                <SelectTrigger className="w-full bg-white font-medium text-xs h-9 rounded-lg">
+                <SelectTrigger className="w-full bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 font-medium text-xs h-9 rounded-lg">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -468,14 +468,14 @@ export default function AddProductModal({
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 pt-0.5 items-start">
             {/* Discrete Container / Selling Unit Selector */}
             <div className="sm:col-span-4">
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Container / Selling Unit *
               </label>
               <Select
                 value={newProdBaseUnit}
                 onValueChange={(val) => setNewProdBaseUnit(val)}
               >
-                <SelectTrigger className="w-full bg-white font-medium text-xs h-9 rounded-lg">
+                <SelectTrigger className="w-full bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 font-medium text-xs h-9 rounded-lg">
                   <SelectValue placeholder="Select container unit" />
                 </SelectTrigger>
                 <SelectContent>
@@ -507,7 +507,7 @@ export default function AddProductModal({
               />
               {/* Quick suggestion chips */}
               <div className="flex items-center gap-1 flex-wrap pt-1.5">
-                <span className="text-[10px] text-slate-400 font-medium">Quick:</span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Quick:</span>
                 {COMMON_PACK_SIZES.map((size) => (
                   <button
                     key={size}
@@ -524,8 +524,8 @@ export default function AddProductModal({
                     className={cn(
                       "px-1.5 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer",
                       newProdUnitSize === size
-                        ? "bg-emerald-700 text-white shadow-2xs"
-                        : "bg-slate-200/70 hover:bg-slate-300/80 text-slate-700"
+                        ? "bg-emerald-700 dark:bg-emerald-600 text-white shadow-2xs"
+                        : "bg-slate-200/70 hover:bg-slate-300/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
                     )}
                   >
                     {size}
@@ -536,18 +536,18 @@ export default function AddProductModal({
 
             {/* Packaging Type Segmented Control */}
             <div className="sm:col-span-3">
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Packaging Type
               </label>
-              <div className="grid grid-cols-2 bg-slate-200/70 p-1 rounded-lg border border-slate-200 h-9">
+              <div className="grid grid-cols-2 bg-slate-200/70 dark:bg-slate-800/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700 h-9">
                 <button
                   type="button"
                   onClick={() => setHasCartons(false)}
                   className={cn(
                     "rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1",
                     !hasCartons
-                      ? "bg-white text-slate-900 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   )}
                 >
                   Single
@@ -558,8 +558,8 @@ export default function AddProductModal({
                   className={cn(
                     "rounded-md text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1",
                     hasCartons
-                      ? "bg-emerald-700 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-emerald-700 dark:bg-emerald-600 text-white shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   )}
                 >
                   <Box className="w-3.5 h-3.5" />
@@ -572,10 +572,10 @@ export default function AddProductModal({
 
         {/* ─── 2. Packaging Configuration (when Carton Pack) ─── */}
         {hasCartons && (
-          <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="bg-emerald-50/70 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-850/40 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-emerald-950 font-bold text-xs uppercase tracking-wider">
-                <Box className="w-4 h-4 text-emerald-700" />
+              <div className="flex items-center gap-1.5 text-emerald-950 dark:text-emerald-300 font-bold text-xs uppercase tracking-wider">
+                <Box className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                 <span>Packs per Carton:</span>
               </div>
               <div className="w-28">
@@ -595,10 +595,10 @@ export default function AddProductModal({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-emerald-800 bg-white/90 border border-emerald-300 px-3 py-1.5 rounded-lg shadow-2xs">
+              <span className="text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300 bg-white/90 dark:bg-slate-900/90 border border-emerald-300 dark:border-emerald-800 px-3 py-1.5 rounded-lg shadow-2xs">
                 1 Carton = {multiplierNum} {newProdBaseUnit}s
                 {parsedPack && (
-                  <span className="text-emerald-700 ml-1.5 font-sans font-semibold">
+                  <span className="text-emerald-700 dark:text-emerald-400 ml-1.5 font-sans font-semibold">
                     · {parsedPack.formatTotal(multiplierNum).combinedText}
                   </span>
                 )}
@@ -608,49 +608,49 @@ export default function AddProductModal({
         )}
 
         {/* ─── 3. 2-Way Synchronized Pricing Matrix ─── */}
-        <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs">
-          <div className="bg-slate-50/80 px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-teal-600" />
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+          <div className="bg-slate-50/80 dark:bg-slate-800/50 px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
               3. Pricing Matrix (2-Way Synchronized)
             </span>
-            <span className="text-[11px] text-slate-400 font-medium">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
               Auto-calculates carton & unit values
             </span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
-              <thead className="bg-slate-50/40 border-b border-slate-100 text-slate-600 font-bold">
+              <thead className="bg-slate-50/40 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold">
                 <tr>
                   <th className="py-2.5 px-4 text-left font-bold w-48">Pricing Tier</th>
                   <th className="py-2.5 px-4 text-left font-bold w-40">
                     Per {newProdBaseUnit}
                     {newProdUnitSize.trim() && (
-                      <span className="block text-[10px] font-normal text-slate-500 font-sans">
+                      <span className="block text-[10px] font-normal text-slate-500 dark:text-slate-400 font-sans">
                         ({newProdUnitSize.trim()})
                       </span>
                     )}
                   </th>
                   {hasCartons && (
-                    <th className="py-2.5 px-4 text-left font-bold w-48 bg-emerald-50/30 text-emerald-950">
+                    <th className="py-2.5 px-4 text-left font-bold w-48 bg-emerald-50/30 dark:bg-emerald-950/20 text-emerald-950 dark:text-emerald-300">
                       Per Carton ({multiplierNum} {newProdBaseUnit}s)
                       {parsedPack && (
-                        <span className="block text-[10px] font-normal text-emerald-700 font-sans">
+                        <span className="block text-[10px] font-normal text-emerald-700 dark:text-emerald-400 font-sans">
                           Total {parsedPack.formatTotal(multiplierNum).combinedText}
                         </span>
                       )}
                     </th>
                   )}
-                  <th className="py-2.5 px-4 text-left font-bold text-slate-400">
+                  <th className="py-2.5 px-4 text-left font-bold text-slate-400 dark:text-slate-500">
                     Economics / Margin
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {/* 1. Retail MRP */}
-                <tr className="hover:bg-slate-50/40 transition-colors">
-                  <td className="py-2.5 px-4 font-semibold text-slate-900">
+                <tr className="hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
+                  <td className="py-2.5 px-4 font-semibold text-slate-900 dark:text-slate-200">
                     Retail Price (MRP) *
                   </td>
                   <td className="py-2 px-4">
@@ -665,13 +665,13 @@ export default function AddProductModal({
                         placeholder="0.00"
                         isMonospace
                         inputSize="sm"
-                        leftAdornment={<span className="text-xs font-bold text-slate-400">৳</span>}
+                        leftAdornment={<span className="text-xs font-bold text-slate-400 dark:text-slate-500">৳</span>}
                         className="text-right font-semibold"
                       />
                     </div>
                   </td>
                   {hasCartons && (
-                    <td className="py-2 px-4 bg-emerald-50/20">
+                    <td className="py-2 px-4 bg-emerald-50/20 dark:bg-emerald-950/10">
                       <div className="w-36">
                         <Input
                           type="number"
@@ -682,7 +682,7 @@ export default function AddProductModal({
                           placeholder="0.00"
                           isMonospace
                           inputSize="sm"
-                          leftAdornment={<span className="text-xs font-bold text-emerald-600">৳</span>}
+                          leftAdornment={<span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">৳</span>}
                           className="text-right font-semibold"
                         />
                       </div>
@@ -694,22 +694,22 @@ export default function AddProductModal({
                         className={cn(
                           "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold font-mono",
                           retailMargin.isPositive
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : "bg-rose-50 text-rose-700 border border-rose-200"
+                            ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                            : "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800"
                         )}
                       >
                         <TrendingUp className="w-3 h-3" />
                         {retailMargin.pct} margin (৳{retailMargin.profit}/unit)
                       </span>
                     ) : (
-                      <span className="text-slate-400 text-[11px]">—</span>
+                      <span className="text-slate-400 dark:text-slate-500 text-[11px]">—</span>
                     )}
                   </td>
                 </tr>
 
                 {/* 2. Wholesale Rate */}
-                <tr className="hover:bg-slate-50/40 transition-colors">
-                  <td className="py-2.5 px-4 font-semibold text-slate-900">
+                <tr className="hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
+                  <td className="py-2.5 px-4 font-semibold text-slate-900 dark:text-slate-200">
                     Wholesale Price
                   </td>
                   <td className="py-2 px-4">
@@ -723,13 +723,13 @@ export default function AddProductModal({
                         placeholder="0.00"
                         isMonospace
                         inputSize="sm"
-                        leftAdornment={<span className="text-xs font-bold text-slate-400">৳</span>}
+                        leftAdornment={<span className="text-xs font-bold text-slate-400 dark:text-slate-500">৳</span>}
                         className="text-right font-semibold"
                       />
                     </div>
                   </td>
                   {hasCartons && (
-                    <td className="py-2 px-4 bg-emerald-50/20">
+                    <td className="py-2 px-4 bg-emerald-50/20 dark:bg-emerald-950/10">
                       <div className="w-36">
                         <Input
                           type="number"
@@ -740,7 +740,7 @@ export default function AddProductModal({
                           placeholder="0.00"
                           isMonospace
                           inputSize="sm"
-                          leftAdornment={<span className="text-xs font-bold text-emerald-600">৳</span>}
+                          leftAdornment={<span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">৳</span>}
                           className="text-right font-semibold"
                         />
                       </div>
@@ -748,18 +748,18 @@ export default function AddProductModal({
                   )}
                   <td className="py-2 px-4">
                     {wholesaleNum > 0 && retailNum > 0 ? (
-                      <span className="text-slate-500 font-mono text-[11px]">
+                      <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                         {(((retailNum - wholesaleNum) / retailNum) * 100).toFixed(1)}% trade discount
                       </span>
                     ) : (
-                      <span className="text-slate-400 text-[11px]">—</span>
+                      <span className="text-slate-400 dark:text-slate-500 text-[11px]">—</span>
                     )}
                   </td>
                 </tr>
 
                 {/* 3. Buying Cost */}
-                <tr className="hover:bg-slate-50/40 transition-colors">
-                  <td className="py-2.5 px-4 font-semibold text-slate-900">
+                <tr className="hover:bg-slate-50/40 dark:hover:bg-slate-800/40 transition-colors">
+                  <td className="py-2.5 px-4 font-semibold text-slate-900 dark:text-slate-200">
                     Purchase Cost *
                   </td>
                   <td className="py-2 px-4">
@@ -774,13 +774,13 @@ export default function AddProductModal({
                         placeholder="0.00"
                         isMonospace
                         inputSize="sm"
-                        leftAdornment={<span className="text-xs font-bold text-slate-400">৳</span>}
+                        leftAdornment={<span className="text-xs font-bold text-slate-400 dark:text-slate-500">৳</span>}
                         className="text-right font-semibold"
                       />
                     </div>
                   </td>
                   {hasCartons && (
-                    <td className="py-2 px-4 bg-emerald-50/20">
+                    <td className="py-2 px-4 bg-emerald-50/20 dark:bg-emerald-950/10">
                       <div className="w-36">
                         <Input
                           type="number"
@@ -791,14 +791,14 @@ export default function AddProductModal({
                           placeholder="0.00"
                           isMonospace
                           inputSize="sm"
-                          leftAdornment={<span className="text-xs font-bold text-emerald-600">৳</span>}
+                          leftAdornment={<span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">৳</span>}
                           className="text-right font-semibold"
                         />
                       </div>
                     </td>
                   )}
                   <td className="py-2 px-4">
-                    <span className="text-slate-400 text-[11px]">Inwarding inventory cost</span>
+                    <span className="text-slate-400 dark:text-slate-500 text-[11px]">Inwarding inventory cost</span>
                   </td>
                 </tr>
               </tbody>
@@ -807,17 +807,18 @@ export default function AddProductModal({
         </div>
 
         {/* ─── 4. Initial Stock on Hand (Proportional & Compact) ─── */}
-        <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 space-y-3">
+        {/* ─── 4. Initial Stock on Hand (Proportional & Compact) ─── */}
+        <div className="bg-slate-50/70 border border-slate-200/80 dark:bg-slate-800/40 dark:border-slate-800 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <Warehouse className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Warehouse className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               4. Initial Stock on Hand (Optional)
             </span>
             {totalCalculatedStock > 0 && (
-              <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-md border border-emerald-300 shadow-2xs">
+              <span className="text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md border border-emerald-300 dark:border-emerald-800 shadow-2xs">
                 Total: {totalCalculatedStock} {newProdBaseUnit}s
                 {parsedPack && (
-                  <span className="font-sans font-semibold text-emerald-900 ml-1.5">
+                  <span className="font-sans font-semibold text-emerald-900 dark:text-emerald-200 ml-1.5">
                     ({parsedPack.formatTotal(totalCalculatedStock).combinedText} net)
                   </span>
                 )}
@@ -838,10 +839,10 @@ export default function AddProductModal({
                   placeholder="0"
                   isMonospace
                   inputSize="sm"
-                  rightAdornment={<span className="text-xs text-slate-400 font-medium">ctn</span>}
+                  rightAdornment={<span className="text-xs text-slate-400 dark:text-slate-500 font-medium">ctn</span>}
                 />
               </div>
-              <span className="text-slate-400 font-bold text-base pt-5">+</span>
+              <span className="text-slate-400 dark:text-slate-500 font-bold text-base pt-5">+</span>
               <div className="w-36">
                 <Input
                   label="Loose Units"
@@ -853,14 +854,14 @@ export default function AddProductModal({
                   placeholder="0"
                   isMonospace
                   inputSize="sm"
-                  rightAdornment={<span className="text-xs text-slate-400 font-medium">units</span>}
+                  rightAdornment={<span className="text-xs text-slate-400 dark:text-slate-500 font-medium">units</span>}
                 />
               </div>
-              <span className="text-slate-400 font-bold text-base pt-5">=</span>
+              <span className="text-slate-400 dark:text-slate-500 font-bold text-base pt-5">=</span>
               <div className="pt-5">
-                <div className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5 shadow-2xs">
-                  <span className="text-slate-500 font-medium">LOT-01:</span>
-                  <span className="font-bold text-slate-900 font-mono">
+                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs flex items-center gap-1.5 shadow-2xs">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">LOT-01:</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">
                     {totalCalculatedStock} {newProdBaseUnit}s
                   </span>
                 </div>
@@ -878,16 +879,16 @@ export default function AddProductModal({
                 placeholder="0"
                 isMonospace
                 inputSize="sm"
-                rightAdornment={<span className="text-xs text-slate-400 font-medium">units</span>}
+                rightAdornment={<span className="text-xs text-slate-400 dark:text-slate-500 font-medium">units</span>}
               />
             </div>
           )}
         </div>
 
         {/* ─── 5. Safety Stock & Reorder Alerts ─── */}
-        <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 space-y-3">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-700">
-            <Hash className="w-3.5 h-3.5 text-slate-500" />
+        <div className="bg-slate-50/70 border border-slate-200/80 dark:bg-slate-800/40 dark:border-slate-800 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <Hash className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
             <span>5. Inventory Alerts & Safety Stock</span>
           </div>
 
@@ -902,17 +903,17 @@ export default function AddProductModal({
                 placeholder="5"
                 isMonospace
                 inputSize="sm"
-                rightAdornment={<span className="text-xs text-slate-400 font-medium">units</span>}
+                rightAdornment={<span className="text-xs text-slate-400 dark:text-slate-500 font-medium">units</span>}
               />
             </div>
-            <p className="text-xs text-slate-500 max-w-md pt-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md pt-3">
               Low-stock alerts will trigger in the POS counter when counter inventory reaches or drops below this count.
             </p>
           </div>
         </div>
 
         {/* ─── Footer Action Buttons ─── */}
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
           <Button
             type="button"
             variant="ghost"
@@ -927,7 +928,7 @@ export default function AddProductModal({
             variant="primary"
             size="md"
             isLoading={isSavingProd}
-            className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 shadow-sm cursor-pointer"
+            className="bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold px-6 shadow-sm cursor-pointer"
           >
             Save Product
           </Button>

@@ -19,11 +19,11 @@ UNIT_GROUPS: List[Dict[str, Any]] = [
         "groupId": "container",
         "label": "Physical Containers (Inventory Units)",
         "units": [
-            {"value": "Bottle", "label": "Bottle (বোতল) - Liquids, Suspensions", "isDiscrete": True, "category": "container"},
-            {"value": "Packet", "label": "Packet (প্যাকেট) - Powders, Granules", "isDiscrete": True, "category": "container"},
-            {"value": "Piece", "label": "Piece / Unit (পিস) - Sprayers, Equipment", "isDiscrete": True, "category": "container"},
-            {"value": "Bag", "label": "Bag (ব্যাগ) - Bulk Seed, Fertilizer", "isDiscrete": True, "category": "container"},
-            {"value": "Can", "label": "Can / Drum (ক্যান) - Bulk Containers", "isDiscrete": True, "category": "container"},
+            {"value": "Bottle", "label": "Bottle - Liquids, Suspensions", "isDiscrete": True, "category": "container"},
+            {"value": "Packet", "label": "Packet - Powders, Granules", "isDiscrete": True, "category": "container"},
+            {"value": "Piece", "label": "Piece / Unit - Sprayers, Equipment", "isDiscrete": True, "category": "container"},
+            {"value": "Bag", "label": "Bag - Bulk Seed, Fertilizer", "isDiscrete": True, "category": "container"},
+            {"value": "Can", "label": "Can / Drum - Bulk Containers", "isDiscrete": True, "category": "container"},
         ],
     },
     {

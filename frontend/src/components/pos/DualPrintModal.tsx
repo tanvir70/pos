@@ -304,7 +304,7 @@ export default function DualPrintModal({
             size="md"
             onClick={handleModalClose}
             disabled={isRegistering}
-            className="text-slate-500 hover:text-slate-900 font-semibold"
+            className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 font-semibold"
           >
             {requiresRegistration ? "Cancel" : "Done (Esc)"}
           </Button>
@@ -314,8 +314,8 @@ export default function DualPrintModal({
               size="md"
               onClick={() => void handleSkipPrint()}
               disabled={isRegistering}
-              className="text-slate-600 hover:text-slate-900 font-semibold"
-              leftIcon={<Check className="w-4 h-4 text-slate-500" />}
+              className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 font-semibold"
+              leftIcon={<Check className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
             >
               Skip Print
             </Button>
@@ -324,8 +324,8 @@ export default function DualPrintModal({
               size="md"
               onClick={() => void openA4Invoice()}
               disabled={isRegistering}
-              leftIcon={<FileText className="w-4 h-4 text-slate-600" />}
-              className="border-slate-300 font-semibold hover:bg-slate-50"
+              leftIcon={<FileText className="w-4 h-4 text-slate-600 dark:text-slate-400" />}
+              className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
             >
               A4 Invoice
             </Button>
@@ -437,17 +437,17 @@ export default function DualPrintModal({
 
         {/* Customer Ledger Configuration Card */}
         {requiresRegistration && (
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs transition-all">
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs transition-all">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800">
                   <UserRound className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-slate-900">
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     Customer Ledger
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Auto-matches existing customer or registers new account
                   </p>
                 </div>
@@ -456,22 +456,22 @@ export default function DualPrintModal({
               <span
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold transition-colors ${
                   customerState === "found"
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-800 shadow-2xs"
+                    ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 shadow-2xs"
                     : customerState === "new"
-                      ? "border-sky-200 bg-sky-50 text-sky-800 shadow-2xs"
+                      ? "border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 shadow-2xs"
                       : customerState === "required"
-                        ? "border-rose-200 bg-rose-50 text-rose-700 shadow-2xs animate-pulse"
-                        : "border-slate-200 bg-slate-50 text-slate-600"
+                        ? "border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 shadow-2xs animate-pulse"
+                        : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
                 {customerState === "found" ? (
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                 ) : customerState === "new" ? (
-                  <UserPlus className="h-3.5 w-3.5 text-sky-600" />
+                  <UserPlus className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
                 ) : customerState === "required" ? (
-                  <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
+                  <AlertCircle className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400" />
                 ) : (
-                  <UserRound className="h-3.5 w-3.5 text-slate-500" />
+                  <UserRound className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
                 )}
                 {customerState === "found"
                   ? "Matched Customer"
@@ -486,17 +486,17 @@ export default function DualPrintModal({
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-700">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Phone Number
                   </label>
                   {remainingDue > 0 && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
                       Required
                     </span>
                   )}
                 </div>
                 <div className="relative">
-                  <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                   <input
                     type="tel"
                     inputMode="numeric"
@@ -515,24 +515,24 @@ export default function DualPrintModal({
                       }
                     }}
                     placeholder="01XXXXXXXXX"
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-3 font-mono text-sm font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-3 focus:ring-emerald-500/15"
+                    className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 pl-10 pr-3 font-mono text-sm font-bold text-slate-900 dark:text-slate-100 placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-emerald-500/15"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-700">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                     Customer Name
                   </label>
                   {shouldCreateCustomer && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-600">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
                       Required for New
                     </span>
                   )}
                 </div>
                 <div className="relative">
-                  <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                   <input
                     type="text"
                     value={matchedCustomer ? matchedCustomer.name : customerName}
@@ -554,12 +554,12 @@ export default function DualPrintModal({
                     }
                     className={`h-11 w-full rounded-xl border pl-10 pr-9 text-sm font-bold outline-none transition ${
                       matchedCustomer
-                        ? "border-emerald-200 bg-emerald-50/70 text-emerald-950 font-bold select-none cursor-default"
-                        : "border-slate-200 bg-slate-50/50 text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-emerald-600 focus:bg-white focus:ring-3 focus:ring-emerald-500/15"
+                        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/50 text-emerald-950 dark:text-emerald-200 font-bold select-none cursor-default"
+                        : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-emerald-500/15"
                     }`}
                   />
                   {matchedCustomer && (
-                    <CheckCircle2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+                    <CheckCircle2 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600 dark:text-emerald-400" />
                   )}
                 </div>
               </div>
@@ -567,58 +567,58 @@ export default function DualPrintModal({
 
             {/* Contextual feedback callout */}
             {matchedCustomer ? (
-              <div className="mt-3 flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-900">
+              <div className="mt-3 flex items-start justify-between gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 p-3 text-xs text-emerald-900 dark:text-emerald-300">
                 <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <div>
-                    <div className="font-bold text-emerald-950">
+                    <div className="font-bold text-emerald-950 dark:text-emerald-100">
                       {matchedCustomer.name}
-                      <span className="ml-1.5 font-mono font-normal text-emerald-700">
+                      <span className="ml-1.5 font-mono font-normal text-emerald-700 dark:text-emerald-400">
                         ({matchedCustomer.phone})
                       </span>
                     </div>
-                    <p className="mt-0.5 text-[11px] text-emerald-800/90">
+                    <p className="mt-0.5 text-[11px] text-emerald-800/90 dark:text-emerald-300">
                       Customer found in directory. This invoice will link to their account ledger.
                     </p>
                   </div>
                 </div>
                 {Number(matchedCustomer.currentDue || 0) > 0 ? (
-                  <div className="shrink-0 rounded-lg border border-rose-200/80 bg-white/90 px-2.5 py-1 text-right">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-rose-600">
+                  <div className="shrink-0 rounded-lg border border-rose-200/80 dark:border-rose-800 bg-white/90 dark:bg-slate-900 px-2.5 py-1 text-right">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
                       Current Due
                     </span>
-                    <span className="font-mono text-xs font-black text-rose-700">
+                    <span className="font-mono text-xs font-black text-rose-700 dark:text-rose-300">
                       {formatTk(matchedCustomer.currentDue)}
                     </span>
                   </div>
                 ) : Number(matchedCustomer.currentDue || 0) < 0 ? (
-                  <div className="shrink-0 rounded-lg border border-emerald-200/80 bg-white/90 px-2.5 py-1 text-right">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                  <div className="shrink-0 rounded-lg border border-emerald-200/80 dark:border-emerald-800 bg-white/90 dark:bg-slate-900 px-2.5 py-1 text-right">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                       Store Credit
                     </span>
-                    <span className="font-mono text-xs font-black text-emerald-700">
+                    <span className="font-mono text-xs font-black text-emerald-700 dark:text-emerald-300">
                       +{formatTk(Math.abs(Number(matchedCustomer.currentDue)))}
                     </span>
                   </div>
                 ) : null}
               </div>
             ) : shouldCreateCustomer ? (
-              <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-sky-200 bg-sky-50/80 p-3 text-xs text-sky-900">
-                <UserPlus className="h-4 w-4 shrink-0 text-sky-600" />
+              <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/80 dark:bg-sky-950/40 p-3 text-xs text-sky-900 dark:text-sky-300">
+                <UserPlus className="h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400" />
                 <span>
                   New customer profile will be created and saved to your directory upon registration.
                 </span>
               </div>
             ) : customerState === "required" ? (
-              <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-xs text-rose-800">
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+              <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50/80 dark:bg-rose-950/40 p-3 text-xs text-rose-800 dark:text-rose-300">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
                 <span>
                   Credit sale requires a customer phone to track remaining due of{" "}
                   <strong className="font-mono">{formatTk(remainingDue)}</strong> in the ledger.
                 </span>
               </div>
             ) : (
-              <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 text-xs text-slate-500">
+              <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 p-2.5 text-xs text-slate-500 dark:text-slate-400">
                 <UserRound className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                 <span>
                   Walk-in cash sale. You can leave phone blank, or enter a number to record points.

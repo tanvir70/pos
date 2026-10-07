@@ -333,7 +333,7 @@ export default function InventoryTable({
                       <TableCell align="center">
                         <div className="flex items-center justify-center gap-2">
                           {item.totalStock <= 0 ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                               0 Out of Stock
                             </span>
@@ -389,7 +389,7 @@ export default function InventoryTable({
                               onClick={() => toggleLotsExpanded(item.productId)}
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border transition-all cursor-pointer ${
                                 isExpanded
-                                  ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                                  ? "bg-slate-900 dark:bg-emerald-600 text-white border-slate-900 dark:border-emerald-600 shadow-2xs"
                                   : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:border-emerald-300"
                               }`}
                               title={
@@ -649,11 +649,11 @@ export default function InventoryTable({
                                                 {lot.expiryDate || "Not set"}
                                               </span>
                                               {isExpired ? (
-                                                <span className="px-1.5 py-0.2 rounded bg-rose-100 text-rose-700 text-[10px] font-bold">
+                                                <span className="px-1.5 py-0.2 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-[10px] font-bold">
                                                   Expired
                                                 </span>
                                               ) : isCritical ? (
-                                                <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
+                                                <span className="px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
                                                   Expiring
                                                 </span>
                                               ) : null}
@@ -668,8 +668,8 @@ export default function InventoryTable({
                                                 size="sm"
                                                 onClick={() => onOpenLedger(item, lot)}
                                                 title={`View stock ledger for Lot #${lot.lotNumber}`}
-                                                leftIcon={<History className="w-3 h-3 text-teal-600" />}
-                                                className="text-xs px-2 py-1 border-slate-200 hover:bg-teal-50 text-slate-700 hover:text-teal-900"
+                                                leftIcon={<History className="w-3 h-3 text-teal-600 dark:text-teal-400" />}
+                                                className="text-xs px-2 py-1 border-slate-200 dark:border-slate-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-slate-700 dark:text-slate-300 hover:text-teal-900 dark:hover:text-teal-200"
                                               >
                                                 Stock Ledger
                                               </Button>
@@ -678,8 +678,8 @@ export default function InventoryTable({
                                                 size="sm"
                                                 onClick={() => onOpenAdjustment(item.productId, lot.lotId)}
                                                 title={`Adjust or write off stock from Lot #${lot.lotNumber}`}
-                                                leftIcon={<ShieldAlert className="w-3 h-3 text-amber-600" />}
-                                                className="text-xs px-2 py-1 bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
+                                                leftIcon={<ShieldAlert className="w-3 h-3 text-amber-600 dark:text-amber-400" />}
+                                                className="text-xs px-2 py-1 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/60"
                                               >
                                                 Adjust
                                               </Button>
@@ -687,8 +687,8 @@ export default function InventoryTable({
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => onOpenSticker(lot, activeLots)}
-                                                leftIcon={<Tag className="w-3 h-3 text-slate-500" />}
-                                                className="text-xs px-2 py-1 border-slate-300 hover:bg-slate-100"
+                                                leftIcon={<Tag className="w-3 h-3 text-slate-500 dark:text-slate-400" />}
+                                                className="text-xs px-2 py-1 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                                               >
                                                 Sticker
                                               </Button>

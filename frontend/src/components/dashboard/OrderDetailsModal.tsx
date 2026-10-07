@@ -96,43 +96,43 @@ export default function OrderDetailsModal({
     >
       <div className="space-y-4">
         {/* Customer & Basic Meta Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700 text-xs">
           <div className="flex items-start gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
               <User className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
                 Customer Profile
               </span>
-              <span className="font-bold text-slate-900 text-sm block">
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm block">
                 {sale.customerName || "Walk-in Retail Customer"}
               </span>
               {sale.customerPhone && (
-                <span className="font-mono text-slate-500">{sale.customerPhone}</span>
+                <span className="font-mono text-slate-500 dark:text-slate-400">{sale.customerPhone}</span>
               )}
             </div>
           </div>
 
           <div className="flex items-start gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0">
               <Calendar className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
                 Order Timestamp & Cashier
               </span>
-              <span className="font-semibold text-slate-900 block">{formattedDate}</span>
-              <span className="text-slate-500">Cashier: {sale.cashierName || "Rajib"}</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100 block">{formattedDate}</span>
+              <span className="text-slate-500 dark:text-slate-400">Cashier: {sale.cashierName || "Rajib"}</span>
             </div>
           </div>
         </div>
 
         {/* Ordered Items Table */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="px-3.5 py-2 bg-slate-100/70 border-b border-slate-200 text-xs font-bold text-slate-700 flex items-center justify-between">
+        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/20">
+          <div className="px-3.5 py-2 bg-slate-100/70 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
             <span>Ordered Items ({sale.items?.length || 0})</span>
-            <span className="font-mono text-[11px] text-slate-500">
+            <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
               Total Qty:{" "}
               {(sale.items ?? []).reduce((acc, it) => acc + (Number(it.totalQuantity) || 0), 0)}
             </span>
@@ -140,7 +140,7 @@ export default function OrderDetailsModal({
 
           <div className="overflow-x-auto max-h-56 overflow-y-auto">
             <table className="w-full text-left text-xs whitespace-nowrap">
-              <thead className="bg-slate-50 text-slate-500 text-[11px] font-semibold border-b border-slate-200 uppercase tracking-wider">
+              <thead className="bg-slate-50 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 text-[11px] font-semibold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider">
                 <tr>
                   <th className="py-2 px-3">#</th>
                   <th className="py-2 px-3">Product Description</th>
@@ -150,32 +150,32 @@ export default function OrderDetailsModal({
                   <th className="py-2 px-3 text-right">Amount</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {(sale.items ?? []).map((item, idx) => (
-                  <tr key={item.id || idx} className="hover:bg-slate-50/50">
-                    <td className="py-2 px-3 text-slate-400 font-mono text-[11px]">
+                  <tr key={item.id || idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                    <td className="py-2 px-3 text-slate-400 dark:text-slate-500 font-mono text-[11px]">
                       {idx + 1}
                     </td>
                     <td className="py-2 px-3">
-                      <div className="font-bold text-slate-900">
+                      <div className="font-bold text-slate-900 dark:text-slate-100">
                         {item.productNameBn || item.productNameEn}
                       </div>
                       {item.productNameBn && item.productNameEn && (
-                        <div className="text-[10px] text-slate-500">
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
                           {item.productNameEn}
                         </div>
                       )}
                     </td>
-                    <td className="py-2 px-3 text-center font-mono text-slate-600 text-[11px]">
+                    <td className="py-2 px-3 text-center font-mono text-slate-600 dark:text-slate-300 text-[11px]">
                       #{item.lotNumber}
                     </td>
-                    <td className="py-2 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
+                    <td className="py-2 px-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
                       {item.totalQuantity} {item.baseUnit || ""}
                     </td>
-                    <td className="py-2 px-3 text-right font-mono text-slate-600 tabular-nums">
+                    <td className="py-2 px-3 text-right font-mono text-slate-600 dark:text-slate-300 tabular-nums">
                       {formatTk(item.unitPrice)}
                     </td>
-                    <td className="py-2 px-3 text-right font-mono font-bold text-slate-900 tabular-nums">
+                    <td className="py-2 px-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
                       {formatTk(item.subtotal || item.unitPrice * item.totalQuantity)}
                     </td>
                   </tr>
@@ -186,25 +186,25 @@ export default function OrderDetailsModal({
         </div>
 
         {/* Financial & Settlement Breakdown Card */}
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
-            <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-              <CreditCard className="w-3.5 h-3.5 text-slate-500" />
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/30 p-4 space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-200/80 dark:border-slate-700">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
               Settlement & Payment Details
             </span>
             <span
               className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${
                 isDue
                   ? isPartial
-                    ? "bg-amber-50 text-amber-800 border-amber-200"
-                    : "bg-rose-50 text-rose-800 border-rose-200"
-                  : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                    ? "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+                    : "bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-400 border-rose-200 dark:border-rose-800"
+                  : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
               }`}
             >
               {isDue ? (
                 <AlertCircle className="w-3 h-3" />
               ) : (
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
               )}
               <span>
                 {isDue ? (isPartial ? "Partial Due" : "Full Due") : "Settled (Paid)"}
@@ -214,16 +214,16 @@ export default function OrderDetailsModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             {/* Left: Financial Ledger Math */}
-            <div className="space-y-1.5 bg-white p-3 rounded-xl border border-slate-200/80">
-              <div className="flex justify-between text-slate-600">
+            <div className="space-y-1.5 bg-white dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700">
+              <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>Gross Subtotal:</span>
-                <span className="font-mono font-semibold text-slate-900 tabular-nums">
+                <span className="font-mono font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
                   {formatTk(subtotal)}
                 </span>
               </div>
 
               {discountAmount > 0 && (
-                <div className="flex justify-between text-emerald-700 font-semibold">
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-semibold">
                   <span className="flex items-center gap-1">
                     <Percent className="w-3 h-3" />
                     <span>Discount {discountPercent ? `(${discountPercent}%)` : ""}:</span>
@@ -233,64 +233,64 @@ export default function OrderDetailsModal({
               )}
 
               {sale.roundOff !== 0 && (
-                <div className="flex justify-between text-slate-500 text-[11px]">
+                <div className="flex justify-between text-slate-500 dark:text-slate-400 text-[11px]">
                   <span>Round-off Adjustment:</span>
                   <span className="font-mono tabular-nums">{formatTk(sale.roundOff)}</span>
                 </div>
               )}
 
-              <div className="pt-1.5 border-t border-slate-200 flex justify-between font-bold text-sm text-slate-900">
+              <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700 flex justify-between font-bold text-sm text-slate-900 dark:text-slate-100">
                 <span>Net Total Bill:</span>
-                <span className="font-mono text-base font-black text-slate-950 tabular-nums">
+                <span className="font-mono text-base font-black text-slate-950 dark:text-white tabular-nums">
                   {formatTk(sale.totalAmount)}
                 </span>
               </div>
             </div>
 
             {/* Right: Payment Channels & Dues */}
-            <div className="space-y-1.5 bg-white p-3 rounded-xl border border-slate-200/80">
-              <div className="flex justify-between text-slate-600">
+            <div className="space-y-1.5 bg-white dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700">
+              <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>Payment Method:</span>
-                <span className="font-bold text-slate-900 uppercase">
+                <span className="font-bold text-slate-900 dark:text-slate-100 uppercase">
                   {sale.paymentMethod || "Cash"}
                 </span>
               </div>
 
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-slate-600 dark:text-slate-400">
                 <span>Cash Paid:</span>
-                <span className="font-mono font-semibold text-slate-900 tabular-nums">
+                <span className="font-mono font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
                   {formatTk(sale.cashPaid)}
                 </span>
               </div>
 
               {sale.digitalPaid > 0 && (
-                <div className="flex justify-between text-slate-600">
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
                   <span>Digital Paid ({sale.digitalMedium || "MFS"}):</span>
-                  <span className="font-mono font-semibold text-slate-900 tabular-nums">
+                  <span className="font-mono font-semibold text-slate-900 dark:text-slate-100 tabular-nums">
                     {formatTk(sale.digitalPaid)}
                   </span>
                 </div>
               )}
 
               {sale.digitalTrxId && (
-                <div className="flex justify-between text-[11px] text-slate-500">
+                <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Trx ID:</span>
-                  <span className="font-mono font-bold text-slate-700">
+                  <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
                     {sale.digitalTrxId}
                   </span>
                 </div>
               )}
 
               {changeAmount > 0 && (
-                <div className="flex justify-between text-emerald-700 font-semibold pt-1 border-t border-slate-100">
+                <div className="flex justify-between text-emerald-700 dark:text-emerald-400 font-semibold pt-1 border-t border-slate-100 dark:border-slate-700">
                   <span>Change Returned:</span>
                   <span className="font-mono tabular-nums">{formatTk(changeAmount)}</span>
                 </div>
               )}
 
               <div
-                className={`pt-1.5 border-t border-slate-200 flex justify-between font-bold ${
-                  sale.dueAmount > 0 ? "text-rose-700" : "text-slate-600"
+                className={`pt-1.5 border-t border-slate-200 dark:border-slate-700 flex justify-between font-bold ${
+                  sale.dueAmount > 0 ? "text-rose-700 dark:text-rose-400" : "text-slate-600 dark:text-slate-300"
                 }`}
               >
                 <span>Balance Due:</span>

@@ -94,23 +94,23 @@ export default function ReturnProcessingForm({
   const selectedLotIds = returnItems.map((it) => it.lotId)
 
   return (
-    <div className="lg:col-span-7 bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+    <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <ClipboardEdit className="w-5 h-5 text-emerald-700" />
-          <h2 className="font-bold text-slate-900 text-base sm:text-lg">
+          <ClipboardEdit className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+          <h2 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg">
             Return Form
           </h2>
         </div>
         {returnItems.length > 0 && (
-          <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+          <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full">
             {returnItems.length} {returnItems.length === 1 ? "item" : "items"} queued
           </span>
         )}
       </div>
 
       {formError && (
-        <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs font-semibold flex items-center gap-2">
+        <div className="p-3 bg-red-50 dark:bg-rose-950/40 border border-red-300 dark:border-rose-900/60 rounded-xl text-red-800 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{formError}</span>
         </div>
@@ -161,15 +161,15 @@ export default function ReturnProcessingForm({
 
         {/* ── Full Width: Direct Selected Product Banner (without invoice) ── */}
         {!foundSale && selectedStockItem && (
-          <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-center justify-between animate-in fade-in duration-100">
+          <div className="p-3 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-emerald-950 dark:text-emerald-200 flex items-center justify-between animate-in fade-in duration-100">
             <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div>
-                <div className="font-bold text-slate-900 text-sm">
+                <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
                   {selectedStockItem.nameBn || selectedStockItem.productNameBn} ({selectedStockItem.nameEn || selectedStockItem.productNameEn})
                 </div>
-                <div className="text-[11px] text-slate-600 mt-0.5 flex flex-wrap items-center gap-2">
-                  <span className="font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
+                  <span className="font-mono font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.5 rounded">
                     Lot #{formatLotNumber(selectedStockItem.lotNumber)}
                   </span>
                   <span>·</span>
@@ -183,10 +183,10 @@ export default function ReturnProcessingForm({
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <div className="text-right">
-                <div className="text-xs font-bold text-slate-900 font-mono tabular-nums">
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 font-mono tabular-nums">
                   Rate: {tk(selectedStockItem.lotRetailPrice)}
                 </div>
-                <div className="text-[10px] text-slate-500 font-mono">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                   Current Stock: {selectedStockItem.quantity ?? (selectedStockItem as any).totalQuantity ?? 0} {selectedStockItem.baseUnit}
                 </div>
               </div>
@@ -194,7 +194,7 @@ export default function ReturnProcessingForm({
                 <button
                   type="button"
                   onClick={onClearSelectedStock}
-                  className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                  className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors cursor-pointer"
                   title="Remove selected product"
                 >
                   <X className="w-4 h-4" />
@@ -206,10 +206,10 @@ export default function ReturnProcessingForm({
 
         {/* 3. Multi-Item Return Table / Cart */}
         <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-1.5">
-              <Package className="w-4 h-4 text-emerald-700" />
-              <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              <Package className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                 Selected Return Items ({returnItems.length})
               </span>
             </div>
@@ -217,7 +217,7 @@ export default function ReturnProcessingForm({
               <button
                 type="button"
                 onClick={onClearAllReturnItems}
-                className="text-[11px] font-semibold text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
+                className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
               >
                 Clear All
               </button>
@@ -225,10 +225,10 @@ export default function ReturnProcessingForm({
           </div>
 
           {returnItems.length === 0 ? (
-            <div className="p-5 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-center text-xs text-slate-500">
+            <div className="p-5 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-center text-xs text-slate-500 dark:text-slate-400">
               <Package className="w-6 h-6 text-slate-400 mx-auto mb-1.5 opacity-60" />
-              <p className="font-bold text-slate-700">No items queued for return</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="font-bold text-slate-700 dark:text-slate-300">No items queued for return</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 Search memo / invoice above and select items, or search product barcode to return.
               </p>
             </div>
@@ -242,24 +242,24 @@ export default function ReturnProcessingForm({
                 return (
                   <div
                     key={item.lotId}
-                    className="p-3 bg-white border border-slate-200/90 rounded-xl shadow-2xs space-y-2 hover:border-slate-300 transition-colors"
+                    className="p-3 bg-white dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700/80 rounded-xl shadow-2xs space-y-2 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
                   >
                     {/* Item Heading */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <div className="font-bold text-slate-900 text-xs sm:text-sm">
+                        <div className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm">
                           {item.productNameBn || item.productName}
                           {item.productNameEn && item.productNameBn ? ` (${item.productNameEn})` : ""}
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5 flex-wrap">
-                          <span className="font-mono font-bold bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded border border-slate-200">
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
+                          <span className="font-mono font-bold bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-300 px-1.5 py-0.2 rounded border border-slate-200 dark:border-slate-600">
                             Lot #{formatLotNumber(item.lotNumber)}
                           </span>
                           {item.barcode && (
-                            <span className="font-mono text-slate-400">#{item.barcode}</span>
+                            <span className="font-mono text-slate-400 dark:text-slate-500">#{item.barcode}</span>
                           )}
                           {item.purchasedQuantity != null && (
-                            <span className="text-emerald-700 font-medium">
+                            <span className="text-emerald-700 dark:text-emerald-400 font-medium">
                               Purchased: <strong>{formatQuantityByUnit(item.purchasedQuantity, item.baseUnit)} {item.baseUnit}</strong>
                             </span>
                           )}
@@ -268,15 +268,15 @@ export default function ReturnProcessingForm({
 
                       <div className="flex items-center gap-2 shrink-0">
                         <div className="text-right">
-                          <span className="text-[10px] text-slate-400 block uppercase font-bold">Subtotal</span>
-                          <span className="text-xs sm:text-sm font-bold font-mono text-slate-900 tabular-nums">
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 block uppercase font-bold">Subtotal</span>
+                          <span className="text-xs sm:text-sm font-bold font-mono text-slate-900 dark:text-slate-100 tabular-nums">
                             {tk(lineTotal)}
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => onRemoveReturnItem(item.lotId)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-colors cursor-pointer"
                           title="Remove item"
                         >
                           <X className="w-4 h-4" />
@@ -285,14 +285,14 @@ export default function ReturnProcessingForm({
                     </div>
 
                     {/* Inputs Row: Quantity, Refund Rate, Quarantine Damaged Toggle */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/80">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <label className="text-[11px] font-semibold text-slate-700">
+                          <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                             Return Qty ({item.baseUnit}) *
                           </label>
                           {isDiscreteUnit(item.baseUnit) && (
-                            <span className="text-[10px] text-slate-400 font-medium">Whole unit</span>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Whole unit</span>
                           )}
                         </div>
                         <input
@@ -310,12 +310,12 @@ export default function ReturnProcessingForm({
                             onUpdateReturnItem(item.lotId, "quantity", val)
                           }}
                           placeholder={isDiscreteUnit(item.baseUnit) ? "1" : "1.000"}
-                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold font-mono text-slate-900 tabular-nums focus:border-emerald-600 focus:outline-hidden"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-slate-100 tabular-nums focus:border-emerald-600 dark:focus:border-emerald-500 focus:outline-hidden"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
                           Refund Rate (৳) *
                         </label>
                         <input
@@ -326,7 +326,7 @@ export default function ReturnProcessingForm({
                           value={item.refundPrice}
                           onChange={(e) => onUpdateReturnItem(item.lotId, "refundPrice", e.target.value)}
                           placeholder="0.00"
-                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg text-xs font-bold font-mono text-slate-900 tabular-nums focus:border-emerald-600 focus:outline-hidden"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-slate-100 tabular-nums focus:border-emerald-600 dark:focus:border-emerald-500 focus:outline-hidden"
                         />
                       </div>
 
@@ -334,8 +334,8 @@ export default function ReturnProcessingForm({
                         <label
                           className={`flex items-center gap-2 p-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
                             item.isDamaged
-                              ? "bg-amber-50 border-amber-300 text-amber-900"
-                              : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                              ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200"
+                              : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                           }`}
                         >
                           <input
@@ -346,7 +346,7 @@ export default function ReturnProcessingForm({
                           />
                           <span className="text-[11px]">Damaged / Leaked</span>
                           {item.isDamaged && (
-                            <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded ml-auto">
+                            <span className="text-[10px] font-bold bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 px-1.5 py-0.2 rounded ml-auto">
                               Quarantine
                             </span>
                           )}
@@ -362,20 +362,20 @@ export default function ReturnProcessingForm({
 
         {/* 4. Refund Method */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
             Refund Method *
           </label>
-          <div className="grid grid-cols-2 gap-2 bg-slate-100/80 p-1 rounded-xl">
+          <div className="grid grid-cols-2 gap-2 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl">
             <button
               type="button"
               onClick={() => onRefundTypeChange("CASH_REFUND")}
               className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 refundType === "CASH_REFUND"
-                  ? "bg-white text-slate-950 shadow-xs border border-slate-200/80"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-slate-700 text-slate-950 dark:text-slate-100 shadow-xs border border-slate-200/80 dark:border-slate-600"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
-              <Banknote className="w-4 h-4 text-emerald-600" />
+              <Banknote className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Cash Refund (Till)</span>
             </button>
             <button
@@ -383,11 +383,11 @@ export default function ReturnProcessingForm({
               onClick={() => onRefundTypeChange("DUE_ADJUSTMENT")}
               className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 refundType === "DUE_ADJUSTMENT"
-                  ? "bg-white text-indigo-950 shadow-xs border border-slate-200/80"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-slate-700 text-indigo-950 dark:text-indigo-200 shadow-xs border border-slate-200/80 dark:border-slate-600"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
-              <User className="w-4 h-4 text-indigo-600" />
+              <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               <span>Due Adjustment (Ledger)</span>
             </button>
           </div>
@@ -395,7 +395,7 @@ export default function ReturnProcessingForm({
 
         {/* 5. Return Reason */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
             Reason for Return
           </label>
           <input
@@ -403,18 +403,18 @@ export default function ReturnProcessingForm({
             value={reason}
             onChange={(e) => onReasonChange(e.target.value)}
             placeholder="e.g. Unopened leftover after spraying season"
-            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs sm:text-sm focus:border-emerald-600 focus:outline-hidden"
+            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl text-xs sm:text-sm focus:border-emerald-600 dark:focus:border-emerald-500 focus:outline-hidden"
           />
         </div>
 
         {/* 6. Total Summary & Submit Action */}
-        <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-semibold text-slate-500 block">Total Refund Payable</span>
-            <div className="text-2xl font-black font-mono text-slate-900 tabular-nums">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Total Refund Payable</span>
+            <div className="text-2xl font-black font-mono text-slate-900 dark:text-slate-100 tabular-nums">
               {tk(calculatedTotalRefund)}
             </div>
-            <span className="text-[11px] font-semibold text-emerald-700">
+            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
               {refundType === "CASH_REFUND"
                 ? "Cash paid directly from till"
                 : "Credited to customer ledger (store credit if exceeds due)"}
@@ -424,7 +424,7 @@ export default function ReturnProcessingForm({
           <button
             type="submit"
             disabled={isSubmitting || returnItems.length === 0}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-white bg-slate-950 hover:bg-slate-800 transition-all shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-white bg-slate-950 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 transition-all shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>

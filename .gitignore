@@ -48,5 +48,4 @@ __pycache__/
 *.db-shm
 *.db.backup*
 deploy.zip
-
-
+/pos.db

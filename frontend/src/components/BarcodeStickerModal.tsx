@@ -218,14 +218,14 @@ export default function BarcodeStickerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full my-auto overflow-hidden animate-in fade-in duration-150">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-lg w-full my-auto overflow-hidden animate-in fade-in duration-150">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-800 to-teal-800 text-white px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-emerald-800 to-teal-800 dark:from-emerald-950 dark:to-teal-900 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Tag className="w-6 h-6" />
             <div>
               <h2 className="font-bold text-lg leading-tight">Barcode Sticker Print</h2>
-              <p className="text-xs text-emerald-100 mt-0.5">
+              <p className="text-xs text-emerald-100 dark:text-emerald-200 mt-0.5">
                 50mm × 25mm thermal label roll printer preview
               </p>
             </div>
@@ -244,13 +244,13 @@ export default function BarcodeStickerModal({
         <div className="p-6 space-y-5">
           {/* Multiple Lots Selector Dropdown */}
           {lots && lots.length > 1 && (
-            <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200/80 space-y-1.5 animate-in fade-in duration-150">
+            <div className="bg-emerald-50/70 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-200/80 dark:border-emerald-850/40 space-y-1.5 animate-in fade-in duration-150">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-emerald-700" />
+                <label className="text-xs font-bold text-emerald-950 dark:text-emerald-300 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                   <span>Selected Product Lot / ব্যাচ</span>
                 </label>
-                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/70 px-2 py-0.5 rounded-full">
                   {lots.length} Lots Available
                 </span>
               </div>
@@ -263,7 +263,7 @@ export default function BarcodeStickerModal({
                   }
                 }}
               >
-                <SelectTrigger className="w-full bg-white border-emerald-300 font-mono text-xs">
+                <SelectTrigger className="w-full bg-white dark:bg-slate-800 border-emerald-300 dark:border-emerald-800 text-slate-900 dark:text-slate-100 font-mono text-xs">
                   <SelectValue placeholder="Select lot" />
                 </SelectTrigger>
                 <SelectContent>
@@ -281,8 +281,8 @@ export default function BarcodeStickerModal({
           )}
 
           {/* Visual Sticker Preview Box */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col items-center">
-            <p className="text-xs font-semibold text-slate-500 mb-2.5 self-start">
+          <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col items-center">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2.5 self-start">
               Print Preview (50mm × 25mm Actual Thermal Label)
             </p>
 
@@ -345,7 +345,7 @@ export default function BarcodeStickerModal({
 
           {/* Sticker Quantity Selector */}
           <div>
-            <label className="block text-xs font-bold text-slate-900 mb-1.5">
+            <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1.5">
               Number of Labels
             </label>
             <div className="grid grid-cols-5 gap-2 mb-2">
@@ -356,8 +356,8 @@ export default function BarcodeStickerModal({
                   onClick={() => setStickerCount(num)}
                   className={`py-2 rounded-xl text-xs font-bold transition-all cursor-pointer tabular-nums ${
                     stickerCount === num
-                      ? "bg-emerald-700 text-white shadow-xs"
-                      : "bg-white border border-slate-200 text-slate-900 hover:bg-slate-100"
+                      ? "bg-emerald-700 dark:bg-emerald-600 text-white shadow-xs"
+                      : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                   }`}
                 >
                   {num}
@@ -366,7 +366,7 @@ export default function BarcodeStickerModal({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">Custom count:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Custom count:</span>
               <input
                 id={customStickersId}
                 aria-label="Custom sticker count"
@@ -377,18 +377,18 @@ export default function BarcodeStickerModal({
                 onChange={(e) =>
                   setStickerCount(Math.max(1, parseInt(e.target.value) || 1))
                 }
-                className="w-24 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-bold text-slate-900 tabular-nums focus:border-emerald-600 focus:outline-hidden"
+                className="w-24 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-sm font-bold text-slate-900 dark:text-slate-100 tabular-nums focus:border-emerald-600 focus:outline-hidden"
               />
-              <span className="text-xs text-slate-500">labels will be generated</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">labels will be generated</span>
             </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 cursor-pointer transition-colors"
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer transition-colors"
             >
               Cancel
             </button>
@@ -396,7 +396,7 @@ export default function BarcodeStickerModal({
               type="button"
               onClick={handlePrint}
               disabled={isPrinting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-700 text-white hover:bg-emerald-800 cursor-pointer transition-colors shadow-sm disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white cursor-pointer transition-colors shadow-sm disabled:opacity-50"
             >
               <Printer className="w-4 h-4" />
               <span>

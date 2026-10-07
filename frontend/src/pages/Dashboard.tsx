@@ -91,13 +91,13 @@ export default function Dashboard({
   return (
     <div className="space-y-6 pb-12">
       {/* ─── Top Header & Refresh / Actions ───────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-slate-700" />
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-slate-700 dark:text-slate-300" />
             <span>Executive Business Dashboard</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Real-time daily sales performance, gross profit, inventory valuation, and customer receivables
           </p>
         </div>

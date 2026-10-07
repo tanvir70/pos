@@ -266,18 +266,18 @@ export default function QuickAddStockModal({
       size="lg"
       headerVariant="light"
       icon={
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 shadow-2xs">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 shadow-2xs">
           <Package className="w-5 h-5 stroke-[2.5]" />
         </div>
       }
       title={
         <div className="flex items-center gap-2 flex-wrap">
           <span>Add Stock Lot</span>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
             {product.nameEn}
           </span>
           {effectivePackStr && (
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
               {effectivePackStr}
             </span>
           )}
@@ -287,24 +287,24 @@ export default function QuickAddStockModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* ─── 1. Quantity & Packaging Setup ─── */}
-        <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 space-y-3">
+        <div className="bg-slate-50/70 border border-slate-200/80 dark:bg-slate-800/40 dark:border-slate-800 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <Box className="w-3.5 h-3.5 text-emerald-700" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Box className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               1. Inwarding Quantity & Packaging
             </span>
 
             <div className="flex items-center gap-2.5">
               {/* Packaging Mode Segmented Toggle (Same as Add Product) */}
-              <div className="inline-flex bg-slate-200/70 p-0.5 rounded-lg border border-slate-200 text-xs">
+              <div className="inline-flex bg-slate-200/70 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
                 <button
                   type="button"
                   onClick={() => handleTogglePackaging(false)}
                   className={cn(
                     "px-2.5 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer",
                     !hasCartons
-                      ? "bg-white text-slate-900 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900",
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
                   )}
                 >
                   Single
@@ -315,8 +315,8 @@ export default function QuickAddStockModal({
                   className={cn(
                     "px-2.5 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1",
                     hasCartons
-                      ? "bg-emerald-700 text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900",
+                      ? "bg-emerald-700 dark:bg-emerald-600 text-white shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200",
                   )}
                 >
                   <Box className="w-3 h-3" />
@@ -326,10 +326,10 @@ export default function QuickAddStockModal({
 
               {/* Total Units & Net Mass/Volume Badge (No "mls" or invalid plurals) */}
               {totalQtyNum > 0 && (
-                <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-md border border-emerald-300 shadow-2xs">
+                <span className="text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-800 shadow-2xs">
                   Total: {totalQtyNum} {totalQtyNum === 1 ? countUnit.singular : countUnit.plural}
                   {parsedPack && (
-                    <span className="font-sans font-semibold text-emerald-900 ml-1.5">
+                    <span className="font-sans font-semibold text-emerald-900 dark:text-emerald-200 ml-1.5">
                       ({parsedPack.formatTotal(totalQtyNum).combinedText} net)
                     </span>
                   )}
@@ -341,9 +341,9 @@ export default function QuickAddStockModal({
           {hasCartons ? (
             <div className="space-y-2.5">
               {/* Known Carton Multiplier Banner (Editable) */}
-              <div className="text-xs font-semibold text-emerald-900 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center justify-between flex-wrap gap-2">
+              <div className="text-xs font-semibold text-emerald-900 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-850/40 px-3 py-1.5 rounded-lg flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-emerald-800 font-medium">Packaging: 1 Carton =</span>
+                  <span className="text-emerald-800 dark:text-emerald-300 font-medium">Packaging: 1 Carton =</span>
                   <div className="w-20">
                     <Input
                       type="number"
@@ -354,15 +354,15 @@ export default function QuickAddStockModal({
                       placeholder="20"
                       isMonospace
                       inputSize="sm"
-                      className="font-bold text-center h-7 py-0 text-xs bg-white"
+                      className="font-bold text-center h-7 py-0 text-xs bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
                     />
                   </div>
-                  <span className="text-xs font-semibold text-emerald-800">
+                  <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
                     {multiplierNum === 1 ? countUnit.singular : countUnit.plural}
                   </span>
                 </div>
                 {parsedPack && (
-                  <span className="font-mono text-[11px] font-bold text-emerald-700">
+                  <span className="font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
                     {parsedPack.formatTotal(multiplierNum).combinedText} / carton
                   </span>
                 )}
@@ -454,10 +454,10 @@ export default function QuickAddStockModal({
         </div>
 
         {/* ─── 2. Lot Financials & Pricing Matrix ─── */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-4 space-y-3 shadow-2xs">
+        <div className="bg-white border border-slate-200/90 dark:bg-slate-800/50 dark:border-slate-800 rounded-xl p-4 space-y-3 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-teal-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-teal-600 dark:text-emerald-400" />
               2. Lot Pricing & Economics
             </span>
             {retailMargin && (
@@ -465,8 +465,8 @@ export default function QuickAddStockModal({
                 className={cn(
                   "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold font-mono",
                   retailMargin.isPositive
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    : "bg-rose-50 text-rose-700 border border-rose-200",
+                    ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                    : "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800",
                 )}
               >
                 <TrendingUp className="w-3 h-3" />
@@ -488,11 +488,11 @@ export default function QuickAddStockModal({
                 placeholder={String(product.buyingPrice || "0.00")}
                 isMonospace
                 inputSize="sm"
-                leftAdornment={<span className="text-xs font-bold text-slate-400">৳</span>}
+                leftAdornment={<span className="text-xs font-bold text-slate-400 dark:text-slate-500">৳</span>}
                 className="font-semibold"
               />
               {hasCartons && multiplierNum > 1 && buyingNum > 0 && (
-                <div className="text-[11px] font-mono text-slate-500 pt-1">
+                <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 pt-1">
                   ৳{(buyingNum * multiplierNum).toFixed(2)} / carton
                 </div>
               )}
@@ -511,11 +511,11 @@ export default function QuickAddStockModal({
                 placeholder={String(product.retailPrice || "0.00")}
                 isMonospace
                 inputSize="sm"
-                leftAdornment={<span className="text-xs font-bold text-slate-400">৳</span>}
+                leftAdornment={<span className="text-xs font-bold text-slate-400 dark:text-slate-500">৳</span>}
                 className="font-semibold"
               />
               {hasCartons && multiplierNum > 1 && retailNum > 0 && (
-                <div className="text-[11px] font-mono text-emerald-700 font-semibold pt-1">
+                <div className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold pt-1">
                   ৳{(retailNum * multiplierNum).toFixed(2)} / carton
                 </div>
               )}
@@ -534,11 +534,11 @@ export default function QuickAddStockModal({
                 placeholder={String(product.wholesalePrice || product.retailPrice || "0.00")}
                 isMonospace
                 inputSize="sm"
-                leftAdornment={<span className="text-xs font-bold text-slate-400">৳</span>}
+                leftAdornment={<span className="text-xs font-bold text-slate-400 dark:text-slate-500">৳</span>}
                 className="font-semibold"
               />
               {hasCartons && multiplierNum > 1 && wholesaleNum > 0 && (
-                <div className="text-[11px] font-mono text-slate-500 pt-1">
+                <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 pt-1">
                   ৳{(wholesaleNum * multiplierNum).toFixed(2)} / carton
                 </div>
               )}
@@ -547,9 +547,9 @@ export default function QuickAddStockModal({
         </div>
 
         {/* ─── 3. Traceability & Supplier Metadata ─── */}
-        <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 space-y-3">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-            <Warehouse className="w-3.5 h-3.5 text-indigo-600" />
+        <div className="bg-slate-50/70 border border-slate-200/80 dark:bg-slate-800/40 dark:border-slate-800 rounded-xl p-4 space-y-3">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <Warehouse className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             3. Batch Traceability & Vendor
           </span>
 
@@ -605,7 +605,7 @@ export default function QuickAddStockModal({
         </div>
 
         {/* ─── Footer Action Buttons ─── */}
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
           <Button
             type="button"
             variant="ghost"
@@ -621,7 +621,7 @@ export default function QuickAddStockModal({
             size="md"
             isLoading={isAddingStock}
             disabled={!addStockQty || parseFloat(addStockQty) <= 0}
-            className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 shadow-sm cursor-pointer"
+            className="bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold px-6 shadow-sm cursor-pointer"
           >
             Add Stock
           </Button>

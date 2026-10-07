@@ -168,18 +168,18 @@ export default function StockAdjustmentModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 flex items-center justify-center shadow-xs">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
                 Stock Adjustment & Damage Write-Off
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Reconcile physical variance, bottle leakage, or stock write-off
               </p>
             </div>
@@ -188,7 +188,7 @@ export default function StockAdjustmentModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -197,7 +197,7 @@ export default function StockAdjustmentModal({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {errorMessage && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs font-semibold text-red-700 flex items-center gap-2">
+            <div className="p-3 bg-red-50 dark:bg-rose-950/60 border border-red-200 dark:border-rose-800 rounded-xl text-xs font-semibold text-red-700 dark:text-rose-300 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -206,7 +206,7 @@ export default function StockAdjustmentModal({
           {/* 1. Product Selection */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Product *
               </label>
               <Select
@@ -217,7 +217,7 @@ export default function StockAdjustmentModal({
                   setSelectedLotId(undefined)
                 }}
               >
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
                   <SelectValue placeholder="-- Select Product --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -232,7 +232,7 @@ export default function StockAdjustmentModal({
 
             {/* 2. Lot Selection */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Batch / Lot *
               </label>
               <Select
@@ -240,7 +240,7 @@ export default function StockAdjustmentModal({
                 onValueChange={(val) => setSelectedLotId(Number(val))}
                 disabled={!selectedProductId || productLots.length === 0}
               >
-                <SelectTrigger className="w-full bg-white font-mono">
+                <SelectTrigger className="w-full bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 font-mono">
                   <SelectValue placeholder="-- Select Batch / Lot --" />
                 </SelectTrigger>
                 <SelectContent>
@@ -256,7 +256,7 @@ export default function StockAdjustmentModal({
 
           {/* 3. Reason Selector */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Adjustment Reason *
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -269,16 +269,16 @@ export default function StockAdjustmentModal({
                     onClick={() => setAdjustmentType(r.type)}
                     className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-slate-900 border-slate-900 text-white shadow-xs"
-                        : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                        ? "bg-slate-900 dark:bg-emerald-600 border-slate-900 dark:border-emerald-600 text-white shadow-xs"
+                        : "bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
                     }`}
                   >
                     <div className="mt-0.5 shrink-0">{r.icon}</div>
                     <div className="min-w-0 flex-1">
-                      <p className={`text-xs font-bold ${isSelected ? "text-white" : "text-slate-900"}`}>
+                      <p className={`text-xs font-bold ${isSelected ? "text-white" : "text-slate-900 dark:text-slate-100"}`}>
                         {r.label}
                       </p>
-                      <p className={`text-[10px] mt-0.5 line-clamp-2 ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
+                      <p className={`text-[10px] mt-0.5 line-clamp-2 ${isSelected ? "text-slate-300 dark:text-emerald-100" : "text-slate-500 dark:text-slate-400"}`}>
                         {r.desc}
                       </p>
                     </div>
@@ -290,12 +290,12 @@ export default function StockAdjustmentModal({
 
           {/* 4. Quantity & Conversion */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Quantity to Deduct *
             </label>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <span className="text-[11px] text-slate-500 font-medium mb-1 block">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-1 block">
                   Cartons ({cartonMultiplier} {currentProduct?.baseUnit || "units"}/ctn)
                 </span>
                 <input
@@ -305,12 +305,12 @@ export default function StockAdjustmentModal({
                   value={cartons}
                   onChange={(e) => setCartons(e.target.value)}
                   placeholder="0"
-                  className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full text-xs font-semibold px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div>
-                <span className="text-[11px] text-slate-500 font-medium mb-1 block">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-1 block">
                   Loose {currentProduct?.baseUnit || "Units"}
                 </span>
                 <input
@@ -320,25 +320,25 @@ export default function StockAdjustmentModal({
                   value={looseUnits}
                   onChange={(e) => setLooseUnits(e.target.value)}
                   placeholder="0"
-                  className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full text-xs font-semibold px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
                 />
               </div>
             </div>
 
             {/* Live Financial Calculation Box */}
-            <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+            <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-slate-400" />
-                <span className="text-slate-600">
+                <Layers className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                <span className="text-slate-600 dark:text-slate-300">
                   Total Deducted:{" "}
-                  <strong className="text-slate-900">
+                  <strong className="text-slate-900 dark:text-slate-100">
                     {totalBaseUnits} {currentProduct?.baseUnit || "units"}
                   </strong>
                 </span>
               </div>
               <div className="text-right">
                 <span className="text-[11px] text-slate-400 block">Calculated Loss Value:</span>
-                <span className="font-bold text-rose-600 text-sm tabular-nums">
+                <span className="font-bold text-rose-600 dark:text-rose-400 text-sm tabular-nums">
                   {formatTk(totalLossValue)}
                 </span>
               </div>
@@ -347,7 +347,7 @@ export default function StockAdjustmentModal({
 
           {/* 6. Remarks / Reason Details */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Reason / Inspection Notes *
             </label>
             <textarea
@@ -355,24 +355,24 @@ export default function StockAdjustmentModal({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g., 1 bottle cracked during shelf cleaning; lid shattered; safely neutralized"
-              className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-emerald-500"
+              className="w-full text-xs px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
               required
             />
           </div>
 
           {/* Submit Buttons */}
-          <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100">
+          <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>{isSubmitting ? "Recording..." : "Record Adjustment"}</span>

@@ -370,13 +370,13 @@ export default function Returns() {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <RotateCcw className="w-5 h-5 text-slate-700" />
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <RotateCcw className="w-5 h-5 text-slate-700 dark:text-slate-300" />
             <span>Sales Return Counter</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Process customer returns, multi-item restocking, and invoice refunds or due credit adjustments
           </p>
         </div>
@@ -392,24 +392,24 @@ export default function Returns() {
 
       {/* Feedback Alerts */}
       {successMessage && (
-        <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-800 text-xs sm:text-sm font-semibold flex items-center justify-between shadow-xs">
+        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm font-semibold flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4" />
             <span>{successMessage}</span>
           </div>
-          <button onClick={() => setSuccessMessage(null)} className="cursor-pointer text-emerald-600 hover:text-emerald-900">
+          <button onClick={() => setSuccessMessage(null)} className="cursor-pointer text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {errorMessage && (
-        <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-800 text-xs sm:text-sm font-semibold flex items-center justify-between shadow-xs">
+        <div className="p-3 bg-red-50 dark:bg-rose-950/40 border border-red-300 dark:border-rose-800 rounded-xl text-red-800 dark:text-rose-300 text-xs sm:text-sm font-semibold flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" />
             <span>{errorMessage}</span>
           </div>
-          <button onClick={() => setErrorMessage(null)} className="cursor-pointer text-red-600 hover:text-red-900">
+          <button onClick={() => setErrorMessage(null)} className="cursor-pointer text-red-600 dark:text-rose-400 hover:text-red-900 dark:hover:text-rose-200">
             <X className="w-4 h-4" />
           </button>
         </div>

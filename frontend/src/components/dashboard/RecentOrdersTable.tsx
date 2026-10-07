@@ -116,15 +116,15 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
   const totalElements = pagedData?.totalElements || 0
 
   return (
-    <Card className="rounded-2xl border-slate-200/90 shadow-xs flex flex-col justify-between h-full overflow-hidden">
+    <Card className="rounded-2xl border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between h-full overflow-hidden bg-white dark:bg-slate-900">
       {/* Card Header & Controls */}
       <CardHeader className="p-5 pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
+            <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
               Recent Orders
             </CardTitle>
-            <Badge variant="outline" className="font-mono text-[11px] font-bold text-slate-700 bg-slate-50">
+            <Badge variant="outline" className="font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 dark:border-slate-700">
               {totalElements} total
             </Badge>
           </div>
@@ -132,7 +132,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
           {/* Filter Pills */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Timeframe selector */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl text-xs font-semibold text-slate-600">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300">
               {(["today", "week", "month", "all"] as const).map((t) => (
                 <button
                   key={t}
@@ -140,8 +140,8 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                   onClick={() => handleTabChange(t)}
                   className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer capitalize text-xs ${
                     period === t
-                      ? "bg-white text-slate-900 shadow-xs font-bold"
-                      : "text-slate-500 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
                   {t === "today" ? "Today" : t === "week" ? "This Week" : t === "month" ? "This Month" : "All"}
@@ -158,7 +158,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
               className={`h-7 px-2.5 rounded-xl text-xs font-bold cursor-pointer ${
                 saleMode === "WHOLESALE"
                   ? "bg-indigo-600 hover:bg-indigo-700 text-white border-transparent"
-                  : "text-slate-600 hover:bg-slate-50"
+                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700"
               }`}
             >
               {saleMode === "WHOLESALE" ? "✓ Wholesale Only" : "Wholesale"}
@@ -173,7 +173,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
       <CardContent className="p-0 overflow-x-auto min-h-[420px] flex-1">
         <Table containerClassName="border-0 shadow-none rounded-none w-full overflow-x-auto" className="w-full whitespace-nowrap border-0 shadow-none rounded-none">
           <TableHeader>
-            <TableRow className="border-b border-slate-100 hover:bg-transparent text-xs">
+            <TableRow className="border-b border-slate-100 dark:border-slate-800 hover:bg-transparent text-xs">
               <TableHead className="py-2.5 px-2.5 sm:px-3 text-left">Order ID</TableHead>
               <TableHead className="py-2.5 px-2 text-left">Date & Time</TableHead>
               <TableHead className="py-2.5 px-2.5 sm:px-3 text-left">Customer</TableHead>
@@ -188,37 +188,37 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
             {isLoading ? (
               // Skeleton rows
               [...Array(pageSize)].map((_, i) => (
-                <TableRow key={i} className="animate-pulse">
+                <TableRow key={i} className="animate-pulse border-b border-slate-100 dark:border-slate-800/60">
                   <TableCell className="py-2.5 px-2.5 sm:px-3">
-                    <div className="w-24 h-4 bg-slate-100 rounded" />
+                    <div className="w-24 h-4 bg-slate-100 dark:bg-slate-800 rounded" />
                   </TableCell>
                   <TableCell className="py-2.5 px-2">
-                    <div className="w-20 h-4 bg-slate-100 rounded" />
+                    <div className="w-20 h-4 bg-slate-100 dark:bg-slate-800 rounded" />
                   </TableCell>
                   <TableCell className="py-2.5 px-2.5 sm:px-3">
-                    <div className="w-28 h-4 bg-slate-100 rounded" />
+                    <div className="w-28 h-4 bg-slate-100 dark:bg-slate-800 rounded" />
                   </TableCell>
                   <TableCell align="center" className="py-2.5 px-1.5 text-center">
-                    <div className="w-6 h-4 bg-slate-100 rounded mx-auto" />
+                    <div className="w-6 h-4 bg-slate-100 dark:bg-slate-800 rounded mx-auto" />
                   </TableCell>
                   <TableCell align="center" className="py-2.5 px-1.5 text-center">
-                    <div className="w-8 h-4 bg-slate-100 rounded mx-auto" />
+                    <div className="w-8 h-4 bg-slate-100 dark:bg-slate-800 rounded mx-auto" />
                   </TableCell>
                   <TableCell align="center" className="py-2.5 px-2.5 sm:px-3 text-center">
-                    <div className="w-16 h-4 bg-slate-100 rounded mx-auto" />
+                    <div className="w-16 h-4 bg-slate-100 dark:bg-slate-800 rounded mx-auto" />
                   </TableCell>
                   <TableCell align="center" className="py-2.5 px-2 text-center">
-                    <div className="w-14 h-4 bg-slate-100 rounded mx-auto" />
+                    <div className="w-14 h-4 bg-slate-100 dark:bg-slate-800 rounded mx-auto" />
                   </TableCell>
                   <TableCell align="center" className="py-2.5 px-1.5 text-center">
-                    <div className="w-7 h-7 bg-slate-100 rounded-lg mx-auto" />
+                    <div className="w-7 h-7 bg-slate-100 dark:bg-slate-800 rounded-lg mx-auto" />
                   </TableCell>
                 </TableRow>
               ))
             ) : sales.length === 0 ? (
               <TableEmptyState
                 colSpan={8}
-                icon={<ShoppingBag className="w-8 h-8 stroke-1 text-slate-300 mx-auto" />}
+                icon={<ShoppingBag className="w-8 h-8 stroke-1 text-slate-300 dark:text-slate-600 mx-auto" />}
                 message="No orders found in this selection"
                 submessage="Try selecting a different timeframe or record a new sale in POS Counter"
                 action={
@@ -246,11 +246,11 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                 return (
                   <TableRow
                     key={sale.id}
-                    className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/60 transition-colors group cursor-pointer"
                     onClick={() => handleViewDetails(sale)}
                   >
                     {/* Invoice No & Mode */}
-                    <TableCell className="py-2.5 px-2.5 sm:px-3 font-mono font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                    <TableCell className="py-2.5 px-2.5 sm:px-3 font-mono font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
@@ -261,7 +261,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                           className="flex items-center gap-1 hover:underline cursor-pointer"
                           title="View order details"
                         >
-                          <FileText className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600" />
+                          <FileText className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
                           <span>#{sale.invoiceNo}</span>
                         </button>
                         {sale.saleMode === "WHOLESALE" && (
@@ -273,22 +273,22 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                     </TableCell>
 
                     {/* Date */}
-                    <TableCell className="py-2.5 px-2 text-slate-500 tabular-nums">
+                    <TableCell className="py-2.5 px-2 text-slate-500 dark:text-slate-400 tabular-nums">
                       {formatDate(sale.saleDate)}
                     </TableCell>
 
                     {/* Customer */}
                     <TableCell className="py-2.5 px-2.5 sm:px-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold shrink-0">
-                          {sale.customerName ? sale.customerName[0].toUpperCase() : <User className="w-3 h-3 text-slate-400" />}
+                        <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center text-[10px] font-bold shrink-0">
+                          {sale.customerName ? sale.customerName[0].toUpperCase() : <User className="w-3 h-3 text-slate-400 dark:text-slate-500" />}
                         </div>
                         <div className="min-w-0">
-                          <span className="font-bold text-slate-800 block truncate max-w-[130px] lg:max-w-[150px] xl:max-w-[180px]">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 block truncate max-w-[130px] lg:max-w-[150px] xl:max-w-[180px]">
                             {sale.customerName || "Walk-in Retail"}
                           </span>
                           {sale.customerPhone && (
-                            <span className="text-[10px] text-slate-400 font-mono block">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono block">
                               {sale.customerPhone}
                             </span>
                           )}
@@ -297,17 +297,17 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                     </TableCell>
 
                     {/* Items count */}
-                    <TableCell align="center" isMonospace className="py-2.5 px-1.5 text-slate-800 text-center">
+                    <TableCell align="center" isMonospace className="py-2.5 px-1.5 text-slate-800 dark:text-slate-200 text-center">
                       {itemsCount}
                     </TableCell>
 
                     {/* Total Quantity */}
-                    <TableCell align="center" isMonospace className="py-2.5 px-1.5 text-slate-900 text-center">
+                    <TableCell align="center" isMonospace className="py-2.5 px-1.5 text-slate-900 dark:text-slate-100 text-center">
                       {formatQuantity(unitsCount)}
                     </TableCell>
 
                     {/* Total Price */}
-                    <TableCell align="center" className="py-2.5 px-2.5 sm:px-3 font-bold text-slate-900 tabular-nums text-center">
+                    <TableCell align="center" className="py-2.5 px-2.5 sm:px-3 font-bold text-slate-900 dark:text-slate-100 tabular-nums text-center">
                       {tk(sale.totalAmount)}
                     </TableCell>
 
@@ -326,7 +326,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                           variant="success"
                           className="inline-flex items-center gap-1 text-[10px]"
                         >
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                           <span>Paid ({sale.paymentMethod || "Cash"})</span>
                         </Badge>
                       )}
@@ -339,7 +339,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
                         variant="ghost"
                         size="icon"
                         onClick={() => handlePrintReceipt(sale)}
-                        className="h-8 w-8 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 cursor-pointer"
+                        className="h-8 w-8 text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
                         title="Print Receipt / Challan"
                       >
                         <Printer className="w-4 h-4" />
@@ -356,10 +356,10 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
       <Separator />
 
       {/* Pagination Footer */}
-      <CardFooter className="p-4 py-3 flex items-center justify-between text-xs text-slate-500">
+      <CardFooter className="p-4 py-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <div>
-          Showing <span className="font-semibold text-slate-900">{sales.length}</span> of{" "}
-          <span className="font-semibold text-slate-900">{totalElements}</span> orders
+          Showing <span className="font-semibold text-slate-900 dark:text-slate-100">{sales.length}</span> of{" "}
+          <span className="font-semibold text-slate-900 dark:text-slate-100">{totalElements}</span> orders
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -375,7 +375,7 @@ export const RecentOrdersTable: React.FC<RecentOrdersTableProps> = ({
             Prev
           </Button>
 
-          <span className="px-2 text-slate-600 font-medium tabular-nums">
+          <span className="px-2 text-slate-600 dark:text-slate-300 font-medium tabular-nums">
             {page + 1} / {totalPages}
           </span>
 

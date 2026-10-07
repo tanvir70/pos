@@ -48,7 +48,7 @@ export function TouchNumpad({
             <button
               type="button"
               onClick={() => onQuickCash(exactPayable)}
-              className="py-2 px-1 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 text-emerald-900 font-black text-xs border border-emerald-300 shadow-xs cursor-pointer transition-colors text-center"
+              className="py-2 px-1 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 dark:bg-emerald-950/70 dark:hover:bg-emerald-900 dark:active:bg-emerald-850 text-emerald-900 dark:text-emerald-300 font-black text-xs border border-emerald-300 dark:border-emerald-800 shadow-xs cursor-pointer transition-colors text-center"
               title="Pay exact amount"
             >
               Exact
@@ -60,7 +60,7 @@ export function TouchNumpad({
               key={amt}
               type="button"
               onClick={() => onQuickCash(amt)}
-              className="py-2 px-1 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 text-slate-900 font-mono font-bold text-xs tabular-nums border border-slate-200 shadow-xs cursor-pointer transition-colors text-center"
+              className="py-2 px-1 rounded-xl bg-slate-50 hover:bg-slate-100 active:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:active:bg-slate-600 text-slate-900 dark:text-slate-100 font-mono font-bold text-xs tabular-nums border border-slate-200 dark:border-slate-700 shadow-xs cursor-pointer transition-colors text-center"
             >
               +{amt}
             </button>
@@ -89,7 +89,7 @@ export function TouchNumpad({
           variant="secondary"
           size="md"
           onClick={onClear}
-          className="text-red-700 bg-red-50 hover:bg-red-100 border-red-200 font-bold"
+          className="text-red-700 dark:text-rose-300 bg-red-50 dark:bg-rose-950/60 hover:bg-red-100 dark:hover:bg-rose-900/60 border-red-200 dark:border-rose-800 font-bold"
         >
           <span>Clear</span>
         </Button>

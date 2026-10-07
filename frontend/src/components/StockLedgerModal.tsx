@@ -50,29 +50,29 @@ const getMovementBadge = (type: string) => {
     case "LOT_INWARD":
       return {
         label: "Lot Inward",
-        bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
-        icon: <ArrowUpRight className="w-3 h-3 text-emerald-600" />,
+        bg: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        icon: <ArrowUpRight className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />,
         isAddition: true,
       }
     case "SALE":
       return {
         label: "POS Sale",
-        bg: "bg-blue-50 text-blue-700 border-blue-200",
-        icon: <ArrowDownRight className="w-3 h-3 text-blue-600" />,
+        bg: "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        icon: <ArrowDownRight className="w-3 h-3 text-blue-600 dark:text-blue-400" />,
         isAddition: false,
       }
     case "RETURN_RESTOCKED":
       return {
         label: "Return Restock",
-        bg: "bg-purple-50 text-purple-700 border-purple-200",
-        icon: <ArrowUpRight className="w-3 h-3 text-purple-600" />,
+        bg: "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800",
+        icon: <ArrowUpRight className="w-3 h-3 text-purple-600 dark:text-purple-400" />,
         isAddition: true,
       }
     case "RETURN_QUARANTINED":
       return {
         label: "Damaged Return",
-        bg: "bg-orange-50 text-orange-700 border-orange-200",
-        icon: <ArrowUpRight className="w-3 h-3 text-orange-600" />,
+        bg: "bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800",
+        icon: <ArrowUpRight className="w-3 h-3 text-orange-600 dark:text-orange-400" />,
         isAddition: true,
       }
     case "BREAKAGE_LEAKAGE":
@@ -80,77 +80,77 @@ const getMovementBadge = (type: string) => {
     case "DAMAGE_WRITEOFF":
       return {
         label: "Damage Write-Off",
-        bg: "bg-rose-50 text-rose-700 border-rose-200",
-        icon: <ArrowDownRight className="w-3 h-3 text-rose-600" />,
+        bg: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800",
+        icon: <ArrowDownRight className="w-3 h-3 text-rose-600 dark:text-rose-400" />,
         isAddition: false,
       }
     case "DAMAGE_SPOILAGE":
       return {
         label: "Moisture Spoilage",
-        bg: "bg-rose-50 text-rose-700 border-rose-200",
-        icon: <ArrowDownRight className="w-3 h-3 text-rose-600" />,
+        bg: "bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800",
+        icon: <ArrowDownRight className="w-3 h-3 text-rose-600 dark:text-rose-400" />,
         isAddition: false,
       }
     case "EXPIRED_SCRAP":
       return {
         label: "Expired Scrap",
-        bg: "bg-red-50 text-red-700 border-red-200",
-        icon: <ArrowDownRight className="w-3 h-3 text-red-600" />,
+        bg: "bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
+        icon: <ArrowDownRight className="w-3 h-3 text-red-600 dark:text-red-400" />,
         isAddition: false,
       }
     case "PHYSICAL_AUDIT_VARIANCE":
       return {
         label: "Audit Variance",
-        bg: "bg-amber-50 text-amber-700 border-amber-200",
-        icon: <Filter className="w-3 h-3 text-amber-600" />,
+        bg: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        icon: <Filter className="w-3 h-3 text-amber-600 dark:text-amber-400" />,
         isAddition: false,
       }
     case "PROMOTIONAL_SAMPLE":
       return {
         label: "Demo Sample",
-        bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
-        icon: <ArrowDownRight className="w-3 h-3 text-emerald-600" />,
+        bg: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        icon: <ArrowDownRight className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />,
         isAddition: false,
       }
     case "ADJUSTMENT":
       return {
         label: "Adjustment",
-        bg: "bg-amber-50 text-amber-700 border-amber-200",
-        icon: <ArrowDownRight className="w-3 h-3 text-amber-600" />,
+        bg: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        icon: <ArrowDownRight className="w-3 h-3 text-amber-600 dark:text-amber-400" />,
         isAddition: false,
       }
     case "DAMAGE_TO_QUARANTINE":
       return {
         label: "To Quarantine",
-        bg: "bg-amber-50 text-amber-700 border-amber-200",
-        icon: <ArrowDownRight className="w-3 h-3 text-amber-600" />,
+        bg: "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+        icon: <ArrowDownRight className="w-3 h-3 text-amber-600 dark:text-amber-400" />,
         isAddition: false,
       }
     case "DAMAGE_RECEIVED_QUARANTINE":
       return {
         label: "Quarantine Hold",
-        bg: "bg-violet-50 text-violet-700 border-violet-200",
-        icon: <ArrowUpRight className="w-3 h-3 text-violet-600" />,
+        bg: "bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800",
+        icon: <ArrowUpRight className="w-3 h-3 text-violet-600 dark:text-violet-400" />,
         isAddition: true,
       }
     case "QUARANTINE_DISPOSAL":
       return {
         label: "Hazard Disposal",
-        bg: "bg-slate-100 text-slate-700 border-slate-300",
-        icon: <ArrowDownRight className="w-3 h-3 text-slate-500" />,
+        bg: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700",
+        icon: <ArrowDownRight className="w-3 h-3 text-slate-500 dark:text-slate-400" />,
         isAddition: false,
       }
     case "OPENING_BALANCE":
       return {
         label: "Opening Balance",
-        bg: "bg-teal-50 text-teal-700 border-teal-200",
-        icon: <Package className="w-3 h-3 text-teal-600" />,
+        bg: "bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800",
+        icon: <Package className="w-3 h-3 text-teal-600 dark:text-teal-400" />,
         isAddition: true,
       }
     default:
       return {
         label: type.replace(/_/g, " "),
-        bg: "bg-slate-50 text-slate-600 border-slate-200",
+        bg: "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700",
         icon: <History className="w-3 h-3" />,
         isAddition: false,
       }
@@ -208,29 +208,29 @@ export default function StockLedgerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 flex items-center justify-center shadow-xs">
               <History className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
                   Stock Movement Ledger (Bin Card)
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   Immutable Audit
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {productName ? (
                   <>
-                    <span className="font-semibold text-slate-800">{productName}</span>
-                    {productCode && <span className="font-mono text-slate-400"> ({productCode})</span>}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{productName}</span>
+                    {productCode && <span className="font-mono text-slate-400 dark:text-slate-500"> ({productCode})</span>}
                     {lotNumber && (
-                      <span className="ml-1.5 px-1.5 py-0.5 rounded bg-slate-200/80 text-[10px] font-mono text-slate-700">
+                      <span className="ml-1.5 px-1.5 py-0.5 rounded bg-slate-200/80 dark:bg-slate-800 text-[10px] font-mono text-slate-700 dark:text-slate-300">
                         Lot: {lotNumber}
                       </span>
                     )}
@@ -252,7 +252,7 @@ export default function StockLedgerModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -260,9 +260,9 @@ export default function StockLedgerModal({
         </div>
 
         {/* Filter Toolbar */}
-        <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="px-5 py-2.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-1.5 overflow-x-auto shrink-0">
-            <span className="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">Filter:</span>
+            <span className="text-slate-400 dark:text-slate-500 font-semibold text-[11px] uppercase tracking-wider">Filter:</span>
             {["ALL", "SALE", "LOT_ENTRY", "BREAKAGE_LEAKAGE", "RETURN_RESTOCKED"].map((type) => (
               <button
                 key={type}
@@ -270,8 +270,8 @@ export default function StockLedgerModal({
                 onClick={() => setSelectedType(type)}
                 className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
                   selectedType === type
-                    ? "bg-white text-slate-900 shadow-xs border border-slate-200"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-xs border border-slate-200 dark:border-slate-600"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                 }`}
               >
                 {type === "ALL" ? "All Logs" : getMovementBadge(type).label}
@@ -288,8 +288,8 @@ export default function StockLedgerModal({
               }}
             />
             {pagedData && (
-              <span className="text-[11px] text-slate-400 shrink-0">
-                Total <span className="font-semibold text-slate-700">{pagedData.totalElements}</span> entries
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
+                Total <span className="font-semibold text-slate-700 dark:text-slate-300">{pagedData.totalElements}</span> entries
               </span>
             )}
           </div>
@@ -300,20 +300,20 @@ export default function StockLedgerModal({
           {isLoading ? (
             <div className="space-y-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 animate-pulse">
-                  <div className="w-28 h-4 bg-slate-200 rounded" />
-                  <div className="w-24 h-5 bg-slate-200 rounded-full" />
-                  <div className="w-32 h-4 bg-slate-200 rounded" />
+                <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 animate-pulse">
+                  <div className="w-28 h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+                  <div className="w-24 h-5 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                  <div className="w-32 h-4 bg-slate-200 dark:bg-slate-700 rounded" />
                   <div className="flex-1" />
-                  <div className="w-20 h-4 bg-slate-200 rounded" />
+                  <div className="w-20 h-4 bg-slate-200 dark:bg-slate-700 rounded" />
                 </div>
               ))}
             </div>
           ) : filteredMovements.length === 0 ? (
-            <div className="py-16 text-center text-slate-400">
-              <History className="w-10 h-10 stroke-1 text-slate-300 mx-auto mb-2" />
-              <p className="font-semibold text-slate-600">No stock movements recorded</p>
-              <p className="text-xs text-slate-400 mt-1">
+            <div className="py-16 text-center text-slate-400 dark:text-slate-500">
+              <History className="w-10 h-10 stroke-1 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+              <p className="font-semibold text-slate-600 dark:text-slate-400">No stock movements recorded</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                 Stock changes from purchases, sales, returns, and write-offs will populate automatically
               </p>
             </div>
@@ -321,7 +321,7 @@ export default function StockLedgerModal({
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs whitespace-nowrap">
                 <thead>
-                  <tr className="text-slate-400 border-b border-slate-100 uppercase tracking-wider text-[11px] font-semibold">
+                  <tr className="text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800 uppercase tracking-wider text-[11px] font-semibold">
                     <th className="pb-3 px-2">Date & Time</th>
                     <th className="pb-3 px-2">Type</th>
                     <th className="pb-3 px-2">Lot / Batch</th>
@@ -331,13 +331,13 @@ export default function StockLedgerModal({
                     <th className="pb-3 px-2">User</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {filteredMovements.map((m) => {
                     const badge = getMovementBadge(m.movementType)
                     const isPositive = m.quantityChange > 0
                     return (
-                      <tr key={m.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3 px-2 font-mono text-slate-600">
+                      <tr key={m.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="py-3 px-2 font-mono text-slate-600 dark:text-slate-400">
                           {formatDate(m.movementTime)}
                         </td>
                         <td className="py-3 px-2">
@@ -349,14 +349,14 @@ export default function StockLedgerModal({
                           </span>
                         </td>
                         <td className="py-3 px-2">
-                          <span className="font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
+                          <span className="font-mono text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[11px]">
                             {formatLotNumber(m.lotNumber)}
                           </span>
                         </td>
-                        <td className="py-3 px-2 font-mono text-slate-600 text-[11px]">
+                        <td className="py-3 px-2 font-mono text-slate-600 dark:text-slate-400 text-[11px]">
                           {m.referenceDocNo ? (
-                            <span className="inline-flex items-center gap-1 font-semibold text-slate-800">
-                              <FileText className="w-3 h-3 text-slate-400" />
+                            <span className="inline-flex items-center gap-1 font-semibold text-slate-800 dark:text-slate-200">
+                              <FileText className="w-3 h-3 text-slate-400 dark:text-slate-500" />
                               <span>{m.referenceDocNo}</span>
                             </span>
                           ) : (
@@ -364,14 +364,14 @@ export default function StockLedgerModal({
                           )}
                         </td>
                         <td className="py-3 px-2 text-right font-mono font-bold tabular-nums">
-                          <span className={isPositive ? "text-emerald-700" : "text-rose-600"}>
+                          <span className={isPositive ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
                             {isPositive ? `+${m.quantityChange}` : m.quantityChange} {m.unit}
                           </span>
                         </td>
-                        <td className="py-3 px-2 text-slate-600 max-w-[200px] truncate" title={m.remarks}>
+                        <td className="py-3 px-2 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={m.remarks}>
                           {m.remarks || "-"}
                         </td>
-                        <td className="py-3 px-2 text-slate-500 text-[11px]">
+                        <td className="py-3 px-2 text-slate-500 dark:text-slate-400 text-[11px]">
                           {m.performedBy || "System"}
                         </td>
                       </tr>

@@ -245,13 +245,13 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   return (
     <div className="space-y-5">
       {/* Top Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <Package className="w-5 h-5 text-slate-700" />
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Package className="w-5 h-5 text-slate-700 dark:text-slate-300" />
             <span>Master Inventory Catalog</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Dokan stock availability, priced batches (FEFO), and barcode thermal printing
           </p>
         </div>
@@ -268,10 +268,10 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
                 setShowLedgerModal(true)
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
             title="View entire immutable stock movement history on dedicated Stock Ledger page"
           >
-            <History className="w-3.5 h-3.5 text-teal-700" />
+            <History className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />
             <span>Stock Ledger</span>
           </button>
 

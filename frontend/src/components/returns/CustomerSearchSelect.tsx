@@ -186,15 +186,15 @@ export default function CustomerSearchSelect({
     <div ref={containerRef} className="space-y-1.5">
       {/* Label and Quick Actions */}
       <div className="flex items-center justify-between">
-        <label className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-          <User className="w-3.5 h-3.5 text-emerald-700" />
+        <label className="text-xs font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+          <User className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
           <span>Customer Account</span>
           {refundType === "DUE_ADJUSTMENT" ? (
-            <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.2 rounded">
+            <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 px-1.5 py-0.2 rounded">
               * Required for Due Refund
             </span>
           ) : (
-            <span className="text-[11px] text-slate-400 font-normal">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-normal">
               (Optional for Cash)
             </span>
           )}
@@ -205,14 +205,14 @@ export default function CustomerSearchSelect({
             <button
               type="button"
               onClick={() => setIsChanging(true)}
-              className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded cursor-pointer transition-colors"
+              className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-200 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 px-2 py-0.5 rounded cursor-pointer transition-colors"
             >
               Change
             </button>
             <button
               type="button"
               onClick={() => handleSelect(null)}
-              className="text-[11px] font-semibold text-slate-500 hover:text-rose-600 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded cursor-pointer transition-colors"
+              className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-0.5 rounded cursor-pointer transition-colors"
             >
               Walk-in
             </button>
@@ -222,7 +222,7 @@ export default function CustomerSearchSelect({
             <button
               type="button"
               onClick={() => handleSelect(null)}
-              className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full cursor-pointer hover:bg-emerald-100 transition-colors"
+              className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-colors"
             >
               Walk-in Active
             </button>
@@ -232,23 +232,23 @@ export default function CustomerSearchSelect({
 
       {/* Mode 1: Selected Customer Card Display */}
       {selectedCustomer && !isChanging ? (
-        <div className="p-3 bg-slate-50/90 border border-slate-200 rounded-xl space-y-2 shadow-2xs">
+        <div className="p-3 bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl space-y-2 shadow-2xs">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 font-bold text-xs">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 flex items-center justify-center shrink-0 font-bold text-xs">
                 {selectedCustomer.name ? selectedCustomer.name.charAt(0).toUpperCase() : <UserCheck className="w-4 h-4" />}
               </div>
               <div className="min-w-0">
-                <div className="font-bold text-slate-900 text-xs sm:text-sm truncate">
+                <div className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm truncate">
                   {selectedCustomer.name}
                   {selectedCustomer.businessName && (
-                    <span className="text-[11px] font-medium text-slate-500 ml-1.5 font-normal">
+                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 ml-1.5 font-normal">
                       ({selectedCustomer.businessName})
                     </span>
                   )}
                 </div>
-                <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className="font-mono text-slate-700">{selectedCustomer.phone}</span>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5 flex-wrap">
+                  <span className="font-mono text-slate-700 dark:text-slate-300">{selectedCustomer.phone}</span>
                   {selectedCustomer.villageAddress && (
                     <>
                       <span>·</span>
@@ -260,13 +260,13 @@ export default function CustomerSearchSelect({
             </div>
 
             <div className="text-right shrink-0">
-              <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider">Ledger Debt</span>
+              <span className="text-[9px] text-slate-400 dark:text-slate-500 block uppercase font-bold tracking-wider">Ledger Debt</span>
               {Number(selectedCustomer.currentDue || 0) > 0 ? (
-                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                <span className="inline-block px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
                   {tk(selectedCustomer.currentDue)}
                 </span>
               ) : (
-                <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   Settled (৳0.00)
                 </span>
               )}
@@ -274,20 +274,20 @@ export default function CustomerSearchSelect({
           </div>
 
           {/* Contextual Due Impact Strip */}
-          <div className="pt-1.5 border-t border-slate-200/70 flex items-center justify-between text-[11px]">
+          <div className="pt-1.5 border-t border-slate-200/70 dark:border-slate-700/70 flex items-center justify-between text-[11px]">
             {refundType === "DUE_ADJUSTMENT" ? (
               dueAdjustmentMath ? (
-                <span className="font-semibold text-emerald-700 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                   <span>{dueAdjustmentMath.label}</span>
                 </span>
               ) : (
-                <span className="text-amber-800 font-medium">
+                <span className="text-amber-800 dark:text-amber-300 font-medium">
                   Refund will credit against this customer's due balance
                 </span>
               )
             ) : (
-              <span className="text-slate-500">
+              <span className="text-slate-500 dark:text-slate-400">
                 Cash payout · Customer ledger balance will not change
               </span>
             )}
@@ -295,7 +295,7 @@ export default function CustomerSearchSelect({
             <button
               type="button"
               onClick={() => setIsChanging(true)}
-              className="text-[10px] font-bold text-slate-600 hover:text-slate-900 underline cursor-pointer"
+              className="text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 underline cursor-pointer"
             >
               Switch Account
             </button>
@@ -306,7 +306,7 @@ export default function CustomerSearchSelect({
         <div className="relative">
           <div className="relative flex items-center">
             <div className="absolute left-3 text-slate-400 pointer-events-none flex items-center">
-              <Search className="w-4 h-4 text-emerald-700" />
+              <Search className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             </div>
 
             <input
@@ -322,10 +322,10 @@ export default function CustomerSearchSelect({
               onFocus={() => setIsOpen(true)}
               onKeyDown={handleKeyDown}
               placeholder="Search customer by name, phone (01...), village..."
-              className={`w-full pl-9 pr-18 py-2.5 bg-slate-50/60 focus:bg-white border rounded-xl text-xs sm:text-sm font-medium transition-all shadow-2xs focus:outline-hidden ${
+              className={`w-full pl-9 pr-18 py-2.5 bg-slate-50/60 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-850 border rounded-xl text-xs sm:text-sm font-medium transition-all shadow-2xs focus:outline-hidden text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 ${
                 isDueAdjustmentMissing
-                  ? "border-rose-400 bg-rose-50/30 focus:border-rose-500"
-                  : "border-slate-200 focus:border-emerald-600"
+                  ? "border-rose-400 dark:border-rose-600 bg-rose-50/30 dark:bg-rose-950/30 focus:border-rose-500"
+                  : "border-slate-200 dark:border-slate-700 focus:border-emerald-600 dark:focus:border-emerald-500"
               }`}
             />
 
@@ -337,7 +337,7 @@ export default function CustomerSearchSelect({
                     setQuery("")
                     inputRef.current?.focus()
                   }}
-                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                   title="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -347,7 +347,7 @@ export default function CustomerSearchSelect({
                 <button
                   type="button"
                   onClick={() => setIsChanging(false)}
-                  className="px-2 py-0.5 text-[11px] font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 rounded-md cursor-pointer transition-colors"
+                  className="px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-slate-700 rounded-md cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
@@ -356,7 +356,7 @@ export default function CustomerSearchSelect({
                 <button
                   type="button"
                   onClick={() => setIsOpen(!isOpen)}
-                  className="p-1 text-slate-400 hover:text-slate-700 rounded-md cursor-pointer transition-colors"
+                  className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-md cursor-pointer transition-colors"
                   title={isOpen ? "Close list" : "Browse all customers"}
                 >
                   <ChevronDown className={`w-4 h-4 transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`} />
@@ -367,25 +367,25 @@ export default function CustomerSearchSelect({
 
           {/* Autocomplete Dropdown */}
           {isOpen && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden divide-y divide-slate-100 animate-in fade-in duration-100 max-h-72 overflow-y-auto">
+            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in duration-100 max-h-72 overflow-y-auto">
               {/* Option 0: Walk-in Retail Customer */}
               <div
                 onClick={() => handleSelect(null)}
                 className={`p-2.5 text-xs transition-colors cursor-pointer flex items-center justify-between ${
-                  activeIndex === 0 ? "bg-emerald-50/90 text-emerald-950 font-semibold" : "hover:bg-slate-50 text-slate-800"
+                  activeIndex === 0 ? "bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-200 font-semibold" : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0">
                     <User className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <span className="font-bold block">Walk-in / Cash Buyer (No Ledger Profile)</span>
-                    <span className="text-[10px] text-slate-500 font-normal">Immediate cash return · No account debt adjustment</span>
+                    <span className="font-bold block text-slate-900 dark:text-slate-100">Walk-in / Cash Buyer (No Ledger Profile)</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">Immediate cash return · No account debt adjustment</span>
                   </div>
                 </div>
                 {!selectedCustomerId && (
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full shrink-0">
                     Active
                   </span>
                 )}
@@ -403,26 +403,26 @@ export default function CustomerSearchSelect({
                       key={c.id}
                       onClick={() => handleSelect(c)}
                       className={`p-2.5 text-xs transition-colors cursor-pointer flex items-center justify-between ${
-                        isHighlighted ? "bg-emerald-50/90" : "hover:bg-slate-50"
+                        isHighlighted ? "bg-emerald-50/90 dark:bg-emerald-950/40" : "hover:bg-slate-50 dark:hover:bg-slate-800"
                       }`}
                     >
                       <div className="min-w-0 flex-1 pr-3">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-slate-900">{c.name}</span>
+                          <span className="font-bold text-slate-900 dark:text-slate-100">{c.name}</span>
                           {c.businessName && (
-                            <span className="text-[11px] font-medium text-slate-500">
+                            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
                               ({c.businessName})
                             </span>
                           )}
                           {isCurrent && (
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
+                            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
                               <Check className="w-2.5 h-2.5" />
                               <span>Selected</span>
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className="font-mono text-slate-700">{c.phone}</span>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="font-mono text-slate-700 dark:text-slate-300">{c.phone}</span>
                           {c.villageAddress && (
                             <>
                               <span>·</span>
@@ -434,11 +434,11 @@ export default function CustomerSearchSelect({
 
                       <div className="text-right shrink-0">
                         {Number(c.currentDue || 0) > 0 ? (
-                          <span className="font-mono font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md text-[11px]">
+                          <span className="font-mono font-bold text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md text-[11px]">
                             Due: {tk(c.currentDue)}
                           </span>
                         ) : (
-                          <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                          <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md">
                             Settled
                           </span>
                         )}
@@ -447,12 +447,12 @@ export default function CustomerSearchSelect({
                   )
                 })
               ) : (
-                <div className="p-4 text-center text-xs text-slate-500">
+                <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
                   <p>No registered customer matches "{query}".</p>
                   <button
                     type="button"
                     onClick={() => handleSelect(null)}
-                    className="mt-1.5 text-[11px] font-bold text-emerald-700 hover:text-emerald-900 underline cursor-pointer"
+                    className="mt-1.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 underline cursor-pointer"
                   >
                     Select Walk-in Buyer
                   </button>
@@ -464,7 +464,7 @@ export default function CustomerSearchSelect({
       )}
 
       {isDueAdjustmentMissing && (
-        <p className="text-[11px] text-rose-600 font-semibold mt-1 flex items-center gap-1">
+        <p className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold mt-1 flex items-center gap-1">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
           <span>Due adjustment requires a customer ledger profile to deduct from.</span>
         </p>
