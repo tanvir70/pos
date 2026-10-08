@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Package,
   Search,
+  Lock,
 } from "lucide-react"
 import {
   Select,
@@ -130,8 +131,36 @@ export default function StockAdjustmentModal({
         currentProduct.unitSize,
       ) || 20
       setCartonMultiplier(String(detected))
+    } else {
+      setCartonMultiplier("20")
     }
   }, [currentProduct])
+
+  // Clear product and refresh all associated fields
+  const handleClearProduct = () => {
+    setSelectedProductId(undefined)
+    setSelectedLotId(undefined)
+    setCartons("")
+    setLooseUnits("1")
+    setCartonMultiplier("20")
+    setReason("")
+    setErrorMessage(null)
+    setProductSearchQuery("")
+    setIsProductDropdownOpen(true)
+  }
+
+  // Select product and reset quantities/errors
+  const handleSelectProduct = (p: Product) => {
+    const availLots = lots.filter((l) => l.productId === p.id)
+    setSelectedProductId(p.id)
+    setSelectedLotId(availLots[0]?.id)
+    setCartons("")
+    setLooseUnits("1")
+    setReason("")
+    setErrorMessage(null)
+    setProductSearchQuery("")
+    setIsProductDropdownOpen(false)
+  }
 
   // Filtered products for search
   const filteredProducts = useMemo(() => {
@@ -214,17 +243,22 @@ export default function StockAdjustmentModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
       <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/60">
+        <div className="p-4 sm:p-5 border-b border-amber-200/90 dark:border-amber-900/60 bg-gradient-to-r from-amber-100/90 via-amber-50 to-orange-50/70 dark:from-amber-950/75 dark:via-amber-950/50 dark:to-slate-900 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 flex items-center justify-center shadow-xs">
-              <ShieldAlert className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60 flex items-center justify-center shadow-xs">
+              <ShieldAlert className="w-5 h-5 text-amber-800 dark:text-amber-300 stroke-[2.2]" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-                Stock Adjustment & Damage Write-Off
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Reconcile physical variance, bottle leakage, or stock write-off
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+                  Stock Adjustment &amp; Damage Write-Off
+                </h2>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60 shadow-2xs">
+                  Inventory Scrap
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                Reconcile physical variance, bottle leakage, or quarantine stock write-off
               </p>
             </div>
           </div>
@@ -232,7 +266,8 @@ export default function StockAdjustmentModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -278,14 +313,9 @@ export default function StockAdjustmentModal({
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setSelectedProductId(undefined)
-                      setSelectedLotId(undefined)
-                      setProductSearchQuery("")
-                      setIsProductDropdownOpen(true)
-                    }}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
-                    title="Clear product selection and select another"
+                    onClick={handleClearProduct}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer shrink-0"
+                    title="Clear product and refresh all info"
                     aria-label="Clear product selection"
                   >
                     <X className="w-4 h-4" />
@@ -332,12 +362,7 @@ export default function StockAdjustmentModal({
                             <button
                               key={p.id}
                               type="button"
-                              onClick={() => {
-                                setSelectedProductId(p.id)
-                                setSelectedLotId(availLots[0]?.id)
-                                setIsProductDropdownOpen(false)
-                                setProductSearchQuery("")
-                              }}
+                              onClick={() => handleSelectProduct(p)}
                               className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors flex items-center justify-between gap-2 cursor-pointer"
                             >
                               <div className="min-w-0">
@@ -437,20 +462,31 @@ export default function StockAdjustmentModal({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1 flex items-center justify-between">
-                  <span>Carton Multiplier</span>
+                  <span className="flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                    <span>Carton Multiplier</span>
+                  </span>
                   <span className="text-[10px] text-slate-400 font-normal">
                     {currentProduct?.baseUnit || "pcs"}/ctn
                   </span>
                 </label>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={cartonMultiplier}
-                  onChange={(e) => setCartonMultiplier(e.target.value)}
-                  placeholder="20"
-                  className="w-full text-xs font-bold font-mono px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
-                />
+                <div className="relative">
+                  <input
+                    type="number"
+                    readOnly
+                    tabIndex={-1}
+                    value={cartonMultiplier}
+                    placeholder="20"
+                    className="w-full text-xs font-bold font-mono px-3 py-2 pr-8 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 text-slate-700 dark:text-slate-300 cursor-not-allowed select-none focus:outline-none"
+                    title="Carton multiplier is locked to product master definition"
+                  />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <Lock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                  </div>
+                </div>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 block">
+                  Product master default (locked)
+                </span>
               </div>
 
               <div>
