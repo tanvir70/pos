@@ -32,38 +32,39 @@ def test_calculate_next_val_boundaries():
 @pytest.mark.asyncio
 async def test_get_next_sequence_integration():
     """Integration test get_next_sequence with real database session."""
-    test_seq_name = f"test_seq_{id(test_get_next_sequence_integration)}"
-    async with engine.begin() as conn:
-        # 1. First retrieval seeds default sequence record
-        from sqlalchemy.ext.asyncio import AsyncSession
-        session = AsyncSession(bind=conn)
+    async with lifespan(app):
+        test_seq_name = f"test_seq_{id(test_get_next_sequence_integration)}"
+        async with engine.begin() as conn:
+            # 1. First retrieval seeds default sequence record
+            from sqlalchemy.ext.asyncio import AsyncSession
+            session = AsyncSession(bind=conn)
 
-        code1 = await get_next_sequence(session, test_seq_name)
-        assert code1.startswith("TES-")  # First 3 uppercase chars of test_seq
-        assert code1.endswith("-0000001")
+            code1 = await get_next_sequence(session, test_seq_name)
+            assert code1.startswith("TES-")  # First 3 uppercase chars of test_seq
+            assert code1.endswith("-0000001")
 
-        # 2. Second retrieval increments to 2
-        code2 = await get_next_sequence(session, test_seq_name)
-        assert code2.endswith("-0000002")
+            # 2. Second retrieval increments to 2
+            code2 = await get_next_sequence(session, test_seq_name)
+            assert code2.endswith("-0000002")
 
-        # 3. Known predefined sequence names
-        inv_code = await get_next_sequence(session, "sale_invoice")
-        assert inv_code.startswith("INV-")
+            # 3. Known predefined sequence names
+            inv_code = await get_next_sequence(session, "sale_invoice")
+            assert inv_code.startswith("INV-")
 
-        due_code = await get_next_sequence(session, "due_invoice")
-        assert due_code.startswith("DUE-")
+            due_code = await get_next_sequence(session, "due_invoice")
+            assert due_code.startswith("DUE-")
 
-        ret_code = await get_next_sequence(session, "sale_return")
-        assert ret_code.startswith("RET-")
+            ret_code = await get_next_sequence(session, "sale_return")
+            assert ret_code.startswith("RET-")
 
-        adj_code = await get_next_sequence(session, "stock_adjustment")
-        assert adj_code.startswith("ADJ-")
+            adj_code = await get_next_sequence(session, "stock_adjustment")
+            assert adj_code.startswith("ADJ-")
 
-        # Cleanup test sequence record
-        await conn.execute(
-            text("DELETE FROM document_sequences WHERE sequence_name = :sname"),
-            {"sname": test_seq_name},
-        )
+            # Cleanup test sequence record
+            await conn.execute(
+                text("DELETE FROM document_sequences WHERE sequence_name = :sname"),
+                {"sname": test_seq_name},
+            )
 
 # ==============================================================================
 # 2. BARCODE SERVICE TESTS
@@ -108,21 +109,22 @@ def test_get_backup_filename():
 @pytest.mark.asyncio
 async def test_stream_sql_backup():
     """Integration test streaming SQL backup generator."""
-    async with engine.connect() as conn:
-        chunks = []
-        async for chunk in stream_sql_backup(conn):
-            chunks.append(chunk)
+    async with lifespan(app):
+        async with engine.connect() as conn:
+            chunks = []
+            async for chunk in stream_sql_backup(conn):
+                chunks.append(chunk)
 
-        full_sql = "".join(chunks)
+            full_sql = "".join(chunks)
 
-        # 1. Header checks
-        assert "-- Al-Amin POS & Inventory Management System - Database Backup" in full_sql
-        assert "-- Target Host: cPanel / MySQL / MariaDB / SQLite" in full_sql
+            # 1. Header checks
+            assert "-- Al-Amin POS & Inventory Management System - Database Backup" in full_sql
+            assert "-- Target Host: cPanel / MySQL / MariaDB / SQLite" in full_sql
 
-        # 2. Foreign key toggle lines
-        assert "SET FOREIGN_KEY_CHECKS = 0;" in full_sql
-        assert "SET FOREIGN_KEY_CHECKS = 1;" in full_sql
-        assert "-- Backup Complete" in full_sql
+            # 2. Foreign key toggle lines
+            assert "SET FOREIGN_KEY_CHECKS = 0;" in full_sql
+            assert "SET FOREIGN_KEY_CHECKS = 1;" in full_sql
+            assert "-- Backup Complete" in full_sql
 
-        # 3. Data tables present (product, app_user, etc.)
-        assert "INSERT INTO `product`" in full_sql or "INSERT INTO `app_user`" in full_sql
+            # 3. Data tables present (product, app_user, etc.)
+            assert "INSERT INTO `product`" in full_sql or "INSERT INTO `app_user`" in full_sql

@@ -41,25 +41,9 @@ async def lifespan(app: FastAPI):
     # 1. Ensure all tables exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        # Auto-upgrade existing database schema for client_trx_id column
-        from sqlalchemy import text
-        for table, col in [
-            ("sale", "client_trx_id VARCHAR(64)"),
-            ("customer_ledger", "client_trx_id VARCHAR(64)"),
-            ("sale_return", "client_trx_id VARCHAR(64)"),
-            ("customer", "land_area VARCHAR(100)"),
-            ("product", "pack_size VARCHAR(50)"),
-            ("product", "unit_size VARCHAR(30)"),
-            ("product", "carton_wholesale_price DECIMAL(12, 2)"),
-            ("product", "carton_buying_price DECIMAL(12, 2)"),
-        ]:
-            try:
-                await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col}"))
-            except Exception:
-                pass  # column already exists
-
         # Standardize lot numbers: migrate legacy 'DEFAULT' or empty to 'LOT-01'
         try:
+            from sqlalchemy import text
             await conn.execute(text("UPDATE inventory_lot SET lot_number = 'LOT-01' WHERE UPPER(lot_number) IN ('DEFAULT', 'INITIAL', '') OR lot_number IS NULL"))
             await conn.execute(text("UPDATE stock_movement SET remarks = REPLACE(REPLACE(remarks, 'DEFAULT', 'LOT-01'), 'default', 'LOT-01') WHERE remarks LIKE '%DEFAULT%' OR remarks LIKE '%default%'"))
         except Exception:
@@ -91,10 +75,10 @@ async def lifespan(app: FastAPI):
             )
             session.add(owner_user)
 
-        # Always seed/sync official Syngenta product catalog (117 items)
+        # Seed/sync official Syngenta product catalog (preserves custom user prices on reboots)
         await session.commit()
         from app.scripts.seed_syngenta_catalog import seed_syngenta_catalog
-        await seed_syngenta_catalog()
+        await seed_syngenta_catalog(force_price_reset=False)
 
         # In TEST environment ONLY: provide isolated test fixtures for e2e / audit suites
         if settings.ENVIRONMENT == "test":
@@ -145,7 +129,19 @@ async def lifespan(app: FastAPI):
                     session.add(c1)
                 await session.commit()
 
-    yield
+    try:
+        yield
+    finally:
+        logger.info("Gracefully shutting down %s...", settings.APP_NAME)
+        if "sqlite" in settings.DATABASE_URL:
+            try:
+                from sqlalchemy import text
+                async with engine.begin() as conn:
+                    await conn.execute(text("PRAGMA wal_checkpoint(TRUNCATE)"))
+                logger.info("SQLite WAL checkpoint (TRUNCATE) successfully executed.")
+            except Exception as e:
+                logger.warning("Could not execute SQLite WAL checkpoint on shutdown: %s", e)
+        await engine.dispose()
 
 app = FastAPI(
     title=settings.APP_NAME,

@@ -36,12 +36,12 @@ import type {
 // 1. Products
 // ----------------------------------------------------------------------------
 
-export async function getProducts(query?: string): Promise<Product[]> {
+export async function getProducts(query?: string, forceRefresh = false): Promise<Product[]> {
   const url =
     query && query.trim()
       ? `/products?query=${encodeURIComponent(query.trim())}`
       : "/products"
-  return apiClient<Product[]>(url)
+  return apiClient<Product[]>(url, { forceRefresh })
 }
 
 export async function createProduct(
@@ -71,15 +71,17 @@ export async function getSupportedUnits(): Promise<UnitGroup[]> {
 // 2. Inventory & Lots
 // ----------------------------------------------------------------------------
 
-export async function getStock(inStockOnly = false): Promise<StockItem[]> {
+export async function getStock(inStockOnly = false, forceRefresh = false): Promise<StockItem[]> {
   return apiClient<StockItem[]>(
     inStockOnly ? "/inventory/stock?inStockOnly=true" : "/inventory/stock",
+    { forceRefresh },
   )
 }
 
 export async function getLots(
   productId?: number,
   fefo = false,
+  forceRefresh = false,
 ): Promise<InventoryLot[]> {
   const params = new URLSearchParams()
   if (productId != null) {
@@ -89,7 +91,7 @@ export async function getLots(
     params.set("fefo", "true")
   }
   const qs = params.toString()
-  return apiClient<InventoryLot[]>(`/inventory/lots${qs ? `?${qs}` : ""}`)
+  return apiClient<InventoryLot[]>(`/inventory/lots${qs ? `?${qs}` : ""}`, { forceRefresh })
 }
 
 export async function createLot(data: LotEntryRequest): Promise<InventoryLot> {

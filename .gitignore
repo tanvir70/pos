@@ -49,3 +49,5 @@ __pycache__/
 *.db.backup*
 deploy.zip
 /pos.db
+test_pos.db
+*.db

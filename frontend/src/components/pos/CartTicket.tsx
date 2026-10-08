@@ -1,82 +1,244 @@
+import { useState } from "react"
 import {
+  Clock,
   Minus,
   PackageOpen,
+  PauseCircle,
+  PlayCircle,
   Plus,
   ReceiptText,
   Trash2,
   X,
 } from "lucide-react"
-import { useCart } from "../../context/CartContext"
+import { useCart, MAX_PARKED_CARTS, type ParkedCart } from "../../context/CartContext"
 import { useToast } from "../../context/ToastContext"
+import type { Customer } from "../../types"
 import { calcLineTotal, formatTk } from "../../utils/currency"
 import { getEffectiveMultiplier, pluralizeUnit } from "../../utils/unit"
 import Badge from "../ui/Badge"
 import Button from "../ui/Button"
+import { Modal } from "../ui/Modal"
 
 function hasBusinessLot(lotNumber?: string) {
   return !!lotNumber
 }
 
-export default function CartTicket() {
-  const { showWarning } = useToast()
+function formatParkedAge(timestamp: number): string {
+  const diffSec = Math.max(0, Math.floor((Date.now() - timestamp) / 1000))
+  if (diffSec < 60) return "Just now"
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHr = Math.floor(diffMin / 60)
+  return `${diffHr}h ago`
+}
+
+export interface CartTicketProps {
+  customers?: Customer[]
+}
+
+export default function CartTicket({ customers }: CartTicketProps = {}) {
+  const { showSuccess, showWarning } = useToast()
   const {
     cart,
+    selectedCustomerId,
     adjustQuantity,
     setQuantity,
     removeItem,
     clearCart,
+    parkedCarts,
+    parkCurrentCart,
+    recallParkedCart,
+    deleteParkedCart,
     totalItemsCount,
     totalUnitsCount,
   } = useCart()
 
+  const [isParkedModalOpen, setIsParkedModalOpen] = useState(false)
+
+  const handleHoldCurrentCart = () => {
+    if (cart.length === 0) return
+    const activeCustomer = customers?.find((c) => c.id === selectedCustomerId)
+    const label =
+      activeCustomer?.name ||
+      (selectedCustomerId ? `Customer #${selectedCustomerId}` : "Walk-in")
+
+    const success = parkCurrentCart(label)
+    if (success) {
+      showSuccess(
+        `Order held for ${label}. Counter is ready for the next customer.`,
+        "Order Held",
+      )
+    } else {
+      showWarning(
+        `Maximum ${MAX_PARKED_CARTS} held orders reached. Please resume or clear an existing one first.`,
+        "Hold limit reached",
+      )
+    }
+  }
+
+  const handleRecallOrder = (parked: ParkedCart) => {
+    if (cart.length > 0) {
+      if (parkedCarts.length >= MAX_PARKED_CARTS) {
+        showWarning(
+          "Cannot hold active cart because all hold slots are full. Clear active cart or discard a held ticket first.",
+        )
+        return
+      }
+      const activeCustomer = customers?.find((c) => c.id === selectedCustomerId)
+      const label =
+        activeCustomer?.name ||
+        (selectedCustomerId ? `Customer #${selectedCustomerId}` : "Walk-in")
+      parkCurrentCart(label)
+    }
+
+    const ok = recallParkedCart(parked.id)
+    if (ok) {
+      showSuccess(
+        `Resumed order for ${parked.customerName || "Walk-in"} (${parked.itemCount} items, ${formatTk(parked.totalAmount)})`,
+        "Order Resumed",
+      )
+      setIsParkedModalOpen(false)
+    }
+  }
+
   return (
     <section className="flex min-h-0 flex-1 flex-col bg-white dark:bg-slate-900">
-      <header className="flex min-h-[66px] items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 px-4 py-3 sm:px-5">
+      <header className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 px-4 py-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 dark:bg-slate-800 text-white">
             <ReceiptText className="h-4 w-4" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">Current order</h2>
+              <h2 className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">
+                Current order
+              </h2>
               <Badge variant="emerald" className="px-1.5 py-0 text-[10px] font-bold uppercase">
                 Live
               </Badge>
             </div>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{totalItemsCount}</span>{" "}
+              <span className="font-mono font-bold text-slate-700 dark:text-slate-200">
+                {totalItemsCount}
+              </span>{" "}
               items /{" "}
-              <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{totalUnitsCount}</span>{" "}
+              <span className="font-mono font-bold text-slate-700 dark:text-slate-200">
+                {totalUnitsCount}
+              </span>{" "}
               units
             </p>
           </div>
         </div>
 
-        {cart.length > 0 && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={clearCart}
-            leftIcon={<Trash2 className="h-3.5 w-3.5 text-slate-400 group-hover:text-red-600 dark:group-hover:text-red-400" />}
-            className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300 cursor-pointer h-8 px-2.5"
-            title="Clear the current order"
-          >
-            <span className="hidden sm:inline">Clear order</span>
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {parkedCarts.length > 0 && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsParkedModalOpen(true)}
+              leftIcon={<Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />}
+              className="text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 hover:bg-amber-100 dark:hover:bg-amber-900/60 cursor-pointer h-8 px-2.5"
+              title="View held tickets waiting to be resumed"
+            >
+              <span>Held ({parkedCarts.length})</span>
+            </Button>
+          )}
+
+          {cart.length > 0 && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleHoldCurrentCart}
+                leftIcon={<PauseCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />}
+                className="text-xs font-semibold text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-300 dark:hover:border-amber-800 cursor-pointer h-8 px-2.5"
+                title="Hold this order to serve the next customer in line (F4)"
+              >
+                <span className="hidden sm:inline">Hold order</span>
+                <span className="sm:hidden">Hold</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearCart}
+                leftIcon={<Trash2 className="h-3.5 w-3.5 text-slate-400 group-hover:text-red-600 dark:group-hover:text-red-400" />}
+                className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-700 dark:hover:text-red-300 cursor-pointer h-8 px-2.5"
+                title="Clear the current order"
+              >
+                <span className="hidden sm:inline">Clear</span>
+              </Button>
+            </>
+          )}
+        </div>
       </header>
 
       {cart.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 text-center sm:px-6">
           <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500">
             <PackageOpen className="h-6 w-6" />
           </div>
-          <h3 className="mt-4 text-sm font-bold text-slate-900 dark:text-slate-100">Ready for a new order</h3>
+          <h3 className="mt-4 text-sm font-bold text-slate-950 dark:text-slate-100">
+            Ready for a new order
+          </h3>
           <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500 dark:text-slate-400">
-            Scan a product barcode or search above. Selected items will appear here
-            immediately.
+            Scan a product barcode or search above. Selected items will appear here immediately.
           </p>
+
+          {parkedCarts.length > 0 && (
+            <div className="mt-6 w-full max-w-md rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/30 p-4 text-left shadow-2xs">
+              <div className="flex items-center justify-between pb-2 border-b border-amber-200/80 dark:border-amber-900/60">
+                <div className="flex items-center gap-1.5 font-bold text-xs text-amber-900 dark:text-amber-200">
+                  <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                  <span>Held Orders Waiting ({parkedCarts.length}/{MAX_PARKED_CARTS})</span>
+                </div>
+                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                  Click to resume
+                </span>
+              </div>
+              <div className="mt-2.5 divide-y divide-amber-200/60 dark:divide-amber-900/40">
+                {parkedCarts.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between py-2.5 gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                          {p.customerName || "Walk-in"}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                          {formatParkedAge(p.parkedAt)}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 dark:text-slate-300 font-mono mt-0.5">
+                        {p.itemCount} item{p.itemCount === 1 ? "" : "s"} • {formatTk(p.totalAmount)}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleRecallOrder(p)}
+                        leftIcon={<PlayCircle className="h-3.5 w-3.5" />}
+                        className="h-7 px-2.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-2xs"
+                      >
+                        Resume
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => deleteParkedCart(p.id)}
+                        className="h-7 w-7 flex items-center justify-center rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                        title="Discard held order"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-auto">
@@ -284,6 +446,84 @@ export default function CartTicket() {
           </div>
         </div>
       )}
+
+      {/* Held Orders Modal */}
+      <Modal
+        isOpen={isParkedModalOpen}
+        onClose={() => setIsParkedModalOpen(false)}
+        title="Held Orders (Parked Tickets)"
+        subtitle={`Select a held ticket to resume counter checkout (${parkedCarts.length}/${MAX_PARKED_CARTS} slots used)`}
+        icon={<Clock className="h-5 w-5 text-amber-500" />}
+        size="md"
+        headerVariant="dark"
+      >
+        <div className="p-4 sm:p-5">
+          {parkedCarts.length === 0 ? (
+            <div className="py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+              No orders currently on hold.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {parkedCarts.map((p, idx) => (
+                <div
+                  key={p.id}
+                  className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 p-4 transition-all hover:border-slate-300 dark:hover:border-slate-700"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                          {p.customerName || "Walk-in Customer"}
+                        </span>
+                        <Badge variant="warning" className="text-[10px] px-1.5 py-0">
+                          Ticket #{idx + 1}
+                        </Badge>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                          {formatParkedAge(p.parkedAt)}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                        <span className="font-mono font-bold">{p.itemCount}</span> items •{" "}
+                        <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                          {formatTk(p.totalAmount)}
+                        </span>
+                      </div>
+                      {/* Item Preview */}
+                      <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-sm">
+                        {p.state.cart
+                          .map((ci) => `${ci.nameEn || ci.nameBn} (${ci.quantity})`)
+                          .join(", ")}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleRecallOrder(p)}
+                        leftIcon={<PlayCircle className="h-4 w-4" />}
+                        className="h-8 px-3 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-2xs"
+                      >
+                        Resume
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteParkedCart(p.id)}
+                        className="h-8 w-8 p-0 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                        title="Discard held order"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
     </section>
   )
 }

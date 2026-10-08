@@ -24,7 +24,34 @@ import {
 } from "../utils/currency"
 import { formatLotNumber } from "../utils/lotNumber"
 
-const STORAGE_KEY = "pos_active_cart_v1"
+const ACTIVE_CART_STORAGE_KEY = "pos_active_cart_v2"
+const PARKED_CARTS_STORAGE_KEY = "pos_parked_carts_v1"
+const CART_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+export const MAX_PARKED_CARTS = 3
+
+export interface SavedCartState {
+  cart: CartItem[]
+  saleMode: SaleMode
+  selectedCustomerId: number | null
+  discountType: "flat" | "percent"
+  discountValue: string
+  roundOff: number
+  paymentMethod: PaymentMethod
+  cashPaidInput: string
+  dueAmountInput: string
+  digitalPaidInput: string
+  digitalMedium: string
+  digitalTrxId: string
+}
+
+export interface ParkedCart {
+  id: string
+  parkedAt: number
+  customerName?: string
+  totalAmount: number
+  itemCount: number
+  state: SavedCartState
+}
 
 export interface CartContextType {
   cart: CartItem[]
@@ -70,6 +97,12 @@ export interface CartContextType {
   removeItem: (itemId: string) => void
   clearCart: () => void
 
+  // Parked (Hold) Carts
+  parkedCarts: ParkedCart[]
+  parkCurrentCart: (customerName?: string) => boolean
+  recallParkedCart: (id: string) => boolean
+  deleteParkedCart: (id: string) => void
+
   // Financial Totals
   subtotal: number
   computedDiscount: number
@@ -101,45 +134,14 @@ function clampToAvailable(quantity: number, item: Pick<CartItem, "availableStock
   return roundAccounting(Math.min(quantity, stock))
 }
 
-interface SavedCartState {
-  cart: CartItem[]
-  saleMode: SaleMode
-  selectedCustomerId: number | null
-  discountType: "flat" | "percent"
-  discountValue: string
-  roundOff: number
-  paymentMethod: PaymentMethod
-  cashPaidInput: string
-  dueAmountInput: string
-  digitalPaidInput: string
-  digitalMedium: string
-  digitalTrxId: string
+interface StoredActiveCartPayload {
+  version: 2
+  updatedAt: number
+  state: SavedCartState
 }
 
 function loadInitialState(): SavedCartState {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      return {
-        cart: Array.isArray(parsed.cart) ? parsed.cart : [],
-        saleMode: parsed.saleMode || "RETAIL",
-        selectedCustomerId: parsed.selectedCustomerId ?? null,
-        discountType: parsed.discountType || "flat",
-        discountValue: parsed.discountValue || "",
-        roundOff: typeof parsed.roundOff === "number" ? parsed.roundOff : 0,
-        paymentMethod: parsed.paymentMethod || "CASH",
-        cashPaidInput: parsed.cashPaidInput || "",
-        dueAmountInput: parsed.dueAmountInput || "",
-        digitalPaidInput: parsed.digitalPaidInput || "",
-        digitalMedium: parsed.digitalMedium || "BKASH",
-        digitalTrxId: parsed.digitalTrxId || "",
-      }
-    }
-  } catch {
-    // Ignore parse errors, fallback to empty
-  }
-  return {
+  const emptyState: SavedCartState = {
     cart: [],
     saleMode: "RETAIL",
     selectedCustomerId: null,
@@ -153,6 +155,86 @@ function loadInitialState(): SavedCartState {
     digitalMedium: "BKASH",
     digitalTrxId: "",
   }
+
+  try {
+    // 1. Check v2 in localStorage
+    const rawV2 = localStorage.getItem(ACTIVE_CART_STORAGE_KEY)
+    if (rawV2) {
+      const parsed: StoredActiveCartPayload = JSON.parse(rawV2)
+      if (
+        parsed &&
+        typeof parsed.updatedAt === "number" &&
+        Date.now() - parsed.updatedAt <= CART_TTL_MS &&
+        parsed.state
+      ) {
+        const s = parsed.state
+        return {
+          cart: Array.isArray(s.cart) ? s.cart : [],
+          saleMode: s.saleMode || "RETAIL",
+          selectedCustomerId: s.selectedCustomerId ?? null,
+          discountType: s.discountType || "flat",
+          discountValue: s.discountValue || "",
+          roundOff: typeof s.roundOff === "number" ? s.roundOff : 0,
+          paymentMethod: s.paymentMethod || "CASH",
+          cashPaidInput: s.cashPaidInput || "",
+          dueAmountInput: s.dueAmountInput || "",
+          digitalPaidInput: s.digitalPaidInput || "",
+          digitalMedium: s.digitalMedium || "BKASH",
+          digitalTrxId: s.digitalTrxId || "",
+        }
+      } else {
+        localStorage.removeItem(ACTIVE_CART_STORAGE_KEY)
+      }
+    }
+
+    // 2. Fallback check legacy v1 in sessionStorage and migrate
+    const rawV1 = sessionStorage.getItem("pos_active_cart_v1")
+    if (rawV1) {
+      const parsed = JSON.parse(rawV1)
+      sessionStorage.removeItem("pos_active_cart_v1")
+      if (parsed && Array.isArray(parsed.cart) && parsed.cart.length > 0) {
+        return {
+          cart: parsed.cart,
+          saleMode: parsed.saleMode || "RETAIL",
+          selectedCustomerId: parsed.selectedCustomerId ?? null,
+          discountType: parsed.discountType || "flat",
+          discountValue: parsed.discountValue || "",
+          roundOff: typeof parsed.roundOff === "number" ? parsed.roundOff : 0,
+          paymentMethod: parsed.paymentMethod || "CASH",
+          cashPaidInput: parsed.cashPaidInput || "",
+          dueAmountInput: parsed.dueAmountInput || "",
+          digitalPaidInput: parsed.digitalPaidInput || "",
+          digitalMedium: parsed.digitalMedium || "BKASH",
+          digitalTrxId: parsed.digitalTrxId || "",
+        }
+      }
+    }
+  } catch {
+    // Ignore parse errors, fallback to empty
+  }
+  return emptyState
+}
+
+function loadInitialParkedCarts(): ParkedCart[] {
+  try {
+    const raw = localStorage.getItem(PARKED_CARTS_STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        // Discard expired parked carts older than 24 hours
+        const valid = parsed.filter(
+          (p) =>
+            p &&
+            typeof p.parkedAt === "number" &&
+            Date.now() - p.parkedAt <= CART_TTL_MS,
+        )
+        return valid.slice(0, MAX_PARKED_CARTS)
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return []
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
@@ -178,25 +260,35 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   )
   const [digitalMedium, setDigitalMedium] = useState<string>(initial.digitalMedium)
   const [digitalTrxId, setDigitalTrxId] = useState<string>(initial.digitalTrxId)
+  const [parkedCarts, setParkedCarts] = useState<ParkedCart[]>(loadInitialParkedCarts)
 
-  // ─── Continuous Session Auto-Save ──────────────────────────────────
+  // ─── Continuous Active Cart Auto-Save ─────────────────────────────
   useEffect(() => {
     try {
-      const stateToSave: SavedCartState = {
-        cart,
-        saleMode,
-        selectedCustomerId,
-        discountType,
-        discountValue,
-        roundOff,
-        paymentMethod,
-        cashPaidInput,
-        dueAmountInput,
-        digitalPaidInput,
-        digitalMedium,
-        digitalTrxId,
+      if (cart.length > 0) {
+        const stateToSave: SavedCartState = {
+          cart,
+          saleMode,
+          selectedCustomerId,
+          discountType,
+          discountValue,
+          roundOff,
+          paymentMethod,
+          cashPaidInput,
+          dueAmountInput,
+          digitalPaidInput,
+          digitalMedium,
+          digitalTrxId,
+        }
+        const payload: StoredActiveCartPayload = {
+          version: 2,
+          updatedAt: Date.now(),
+          state: stateToSave,
+        }
+        localStorage.setItem(ACTIVE_CART_STORAGE_KEY, JSON.stringify(payload))
+      } else {
+        localStorage.removeItem(ACTIVE_CART_STORAGE_KEY)
       }
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave))
     } catch {
       // Ignore quota exceeded or storage failure
     }
@@ -214,6 +306,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     digitalMedium,
     digitalTrxId,
   ])
+
+  // ─── Parked Carts Auto-Save ─────────────────────────────────────────
+  useEffect(() => {
+    try {
+      if (parkedCarts.length > 0) {
+        localStorage.setItem(PARKED_CARTS_STORAGE_KEY, JSON.stringify(parkedCarts))
+      } else {
+        localStorage.removeItem(PARKED_CARTS_STORAGE_KEY)
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }, [parkedCarts])
 
   // ─── Financial Calculations ────────────────────────────────────────
   const subtotal = useMemo(() => {
@@ -604,10 +709,95 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setDigitalTrxId("")
     setSelectedCustomerId(null)
     try {
-      sessionStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(ACTIVE_CART_STORAGE_KEY)
+      sessionStorage.removeItem("pos_active_cart_v1")
     } catch {
       // Ignore
     }
+  }, [])
+
+  const parkCurrentCart = useCallback(
+    (customerName?: string): boolean => {
+      if (cart.length === 0) return false
+      if (parkedCarts.length >= MAX_PARKED_CARTS) return false
+
+      const currentState: SavedCartState = {
+        cart,
+        saleMode,
+        selectedCustomerId,
+        discountType,
+        discountValue,
+        roundOff,
+        paymentMethod,
+        cashPaidInput,
+        dueAmountInput,
+        digitalPaidInput,
+        digitalMedium,
+        digitalTrxId,
+      }
+
+      const newParked: ParkedCart = {
+        id: `parked-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        parkedAt: Date.now(),
+        customerName:
+          customerName ||
+          (selectedCustomerId ? `Customer #${selectedCustomerId}` : undefined),
+        totalAmount: finalTotalAmount,
+        itemCount: totalItemsCount,
+        state: currentState,
+      }
+
+      setParkedCarts((prev) => [newParked, ...prev].slice(0, MAX_PARKED_CARTS))
+      clearCart()
+      return true
+    },
+    [
+      cart,
+      parkedCarts.length,
+      saleMode,
+      selectedCustomerId,
+      discountType,
+      discountValue,
+      roundOff,
+      paymentMethod,
+      cashPaidInput,
+      dueAmountInput,
+      digitalPaidInput,
+      digitalMedium,
+      digitalTrxId,
+      finalTotalAmount,
+      totalItemsCount,
+      clearCart,
+    ],
+  )
+
+  const recallParkedCart = useCallback(
+    (id: string): boolean => {
+      const target = parkedCarts.find((p) => p.id === id)
+      if (!target) return false
+
+      const s = target.state
+      setCart(s.cart || [])
+      setSaleMode(s.saleMode || "RETAIL")
+      setSelectedCustomerId(s.selectedCustomerId ?? null)
+      setDiscountType(s.discountType || "flat")
+      setDiscountValue(s.discountValue || "")
+      setRoundOff(s.roundOff || 0)
+      setPaymentMethod(s.paymentMethod || "CASH")
+      setCashPaidInput(s.cashPaidInput || "")
+      setDueAmountInput(s.dueAmountInput || "")
+      setDigitalPaidInput(s.digitalPaidInput || "")
+      setDigitalMedium(s.digitalMedium || "BKASH")
+      setDigitalTrxId(s.digitalTrxId || "")
+
+      setParkedCarts((prev) => prev.filter((p) => p.id !== id))
+      return true
+    },
+    [parkedCarts],
+  )
+
+  const deleteParkedCart = useCallback((id: string) => {
+    setParkedCarts((prev) => prev.filter((p) => p.id !== id))
   }, [])
 
   const toggleSaleMode = useCallback((newMode: SaleMode) => {
@@ -663,6 +853,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         selectLot,
         removeItem,
         clearCart,
+        parkedCarts,
+        parkCurrentCart,
+        recallParkedCart,
+        deleteParkedCart,
         subtotal,
         computedDiscount,
         preRoundTotal,

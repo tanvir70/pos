@@ -9,6 +9,13 @@ interface CacheEntry<T> {
   ttlMs: number
 }
 
+function normalizeCachePath(path: string): string {
+  // Strip protocol and domain (e.g. http://localhost:8000/api/... -> /api/...)
+  // and strip leading /api prefix if present (e.g. /api/inventory -> /inventory)
+  const withoutOrigin = path.replace(/^(?:https?:\/\/[^/]+)?(?:\/api)?/, "")
+  return withoutOrigin.startsWith("/") ? withoutOrigin : `/${withoutOrigin}`
+}
+
 class ApiCache {
   private cache = new Map<string, CacheEntry<unknown>>()
 
@@ -55,6 +62,7 @@ class ApiCache {
 
   /**
    * Invalidate cache entries by exact key, prefix, or regular expression.
+   * Handles /api prefix differences between client URLs and resource targets.
    */
   invalidate(target?: string | RegExp): void {
     if (!target) {
@@ -62,12 +70,25 @@ class ApiCache {
       return
     }
 
-    for (const key of this.cache.keys()) {
-      if (typeof target === "string") {
-        if (key === target || key.startsWith(target)) {
+    if (target instanceof RegExp) {
+      for (const key of this.cache.keys()) {
+        const cleanKey = normalizeCachePath(key)
+        if (target.test(key) || target.test(cleanKey)) {
           this.cache.delete(key)
         }
-      } else if (target.test(key)) {
+      }
+      return
+    }
+
+    const cleanTarget = normalizeCachePath(target).toLowerCase()
+    for (const key of this.cache.keys()) {
+      const cleanKey = normalizeCachePath(key).toLowerCase()
+      if (
+        key === target ||
+        key.startsWith(target) ||
+        cleanKey === cleanTarget ||
+        cleanKey.startsWith(cleanTarget)
+      ) {
         this.cache.delete(key)
       }
     }
@@ -77,23 +98,30 @@ class ApiCache {
    * Automatically invalidate dependent resource caches based on mutation endpoints.
    */
   invalidateOnMutation(mutationUrl: string): void {
-    const cleanUrl = mutationUrl.toLowerCase()
+    const cleanUrl = normalizeCachePath(mutationUrl).toLowerCase()
 
-    if (cleanUrl.includes("/sales")) {
+    if (cleanUrl.includes("/sales") || cleanUrl.includes("/checkout")) {
       this.invalidate("/sales")
       this.invalidate("/inventory")
       this.invalidate("/dashboard")
       this.invalidate("/customers")
+      this.invalidate("/products")
     } else if (cleanUrl.includes("/returns")) {
       this.invalidate("/returns")
       this.invalidate("/sales")
       this.invalidate("/inventory")
       this.invalidate("/dashboard")
       this.invalidate("/customers")
+      this.invalidate("/products")
     } else if (cleanUrl.includes("/customers")) {
       this.invalidate("/customers")
       this.invalidate("/dashboard")
-    } else if (cleanUrl.includes("/inventory") || cleanUrl.includes("/products")) {
+      this.invalidate("/sales")
+    } else if (
+      cleanUrl.includes("/inventory") ||
+      cleanUrl.includes("/products") ||
+      cleanUrl.includes("/stock")
+    ) {
       this.invalidate("/inventory")
       this.invalidate("/products")
       this.invalidate("/dashboard")

@@ -1723,9 +1723,14 @@ SYNGENTA_PRODUCTS = [
 ]
 
 
-async def seed_syngenta_catalog() -> dict:
+async def seed_syngenta_catalog(force_price_reset: bool = False) -> dict:
     """
     Idempotently seeds all 117 Syngenta products into the database.
+
+    If a product already exists, descriptive metadata is updated but active customized
+    prices (retail, wholesale, buying) are preserved to prevent wiping operator price
+    adjustments on application restart.
+    Pass force_price_reset=True to forcibly overwrite prices to official July 2026 catalog rates.
     """
     created_count = 0
     updated_count = 0
@@ -1768,11 +1773,18 @@ async def seed_syngenta_catalog() -> dict:
                 existing.pack_size = item["pack_size"]
                 existing.unit_size = unit_s
                 existing.carton_multiplier = multiplier
-                existing.standard_retail_price = mrp
-                existing.standard_wholesale_price = ret_pack
-                existing.buying_price = dist_pack
-                existing.carton_wholesale_price = ret_ctn
-                existing.carton_buying_price = dist_ctn
+
+                # Protect live customized prices from being wiped on server reboots
+                if force_price_reset or existing.standard_retail_price is None or existing.standard_retail_price <= Decimal("0"):
+                    existing.standard_retail_price = mrp
+                if force_price_reset or existing.standard_wholesale_price is None or existing.standard_wholesale_price <= Decimal("0"):
+                    existing.standard_wholesale_price = ret_pack
+                if force_price_reset or existing.buying_price is None or existing.buying_price <= Decimal("0"):
+                    existing.buying_price = dist_pack
+                if force_price_reset or existing.carton_wholesale_price is None:
+                    existing.carton_wholesale_price = ret_ctn
+                if force_price_reset or existing.carton_buying_price is None:
+                    existing.carton_buying_price = dist_ctn
                 updated_count += 1
             else:
                 new_product = Product(
@@ -1807,5 +1819,7 @@ async def seed_syngenta_catalog() -> dict:
 
 
 if __name__ == "__main__":
-    res = asyncio.run(seed_syngenta_catalog())
-    print(f"Seed completed successfully: {res}")
+    import sys
+    force_reset = "--force-prices" in sys.argv
+    res = asyncio.run(seed_syngenta_catalog(force_price_reset=force_reset))
+    print(f"Seed completed successfully (force_price_reset={force_reset}): {res}")

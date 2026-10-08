@@ -59,6 +59,8 @@ export default function PosCounter({
     finalTotalAmount,
     addToCart,
     clearCart,
+    parkCurrentCart,
+    parkedCarts,
   } = useCart()
 
   // ─── Remote Data State ──────────────────────────────────────────
@@ -291,8 +293,8 @@ export default function PosCounter({
       checkoutKeyRef.current = null
       clearCart()
 
-      // Refresh stock counts in background (in-stock only for POS)
-      getStock(true).then(setStocks).catch(console.error)
+      // Refresh stock counts in background (in-stock only for POS, forced fresh)
+      getStock(true, true).then(setStocks).catch(console.error)
       return res
     } catch (err) {
       showError(err, "Could not complete the sale")
@@ -330,6 +332,26 @@ export default function PosCounter({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isPrintPromptOpen) return
+
+      // F4: Hold/Park Current Order
+      if (e.key === "F4") {
+        if (cart.length > 0) {
+          e.preventDefault()
+          const activeCustomer = customers.find((c) => c.id === selectedCustomerId)
+          const label = activeCustomer ? activeCustomer.name : "Walk-in"
+          const ok = parkCurrentCart(label)
+          if (ok) {
+            showSuccess(
+              `Order held for ${label}. Ready for the next customer.`,
+              "Order Held",
+            )
+          } else {
+            showWarning("Maximum 3 held orders allowed. Resume or clear an existing one first.")
+          }
+        }
+        return
+      }
+
       if (e.key !== "Enter" && e.key !== "F9") return
       // Enter inside a text field belongs to that field (search, cash amount…).
       if (e.key === "Enter" && isTypingTarget(e.target)) return
@@ -347,7 +369,19 @@ export default function PosCounter({
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleCompleteSale, isPrintPromptOpen, cart.length, isSubmitting, paymentMethod, cashPaidInput])
+  }, [
+    handleCompleteSale,
+    isPrintPromptOpen,
+    cart.length,
+    isSubmitting,
+    paymentMethod,
+    cashPaidInput,
+    customers,
+    selectedCustomerId,
+    parkCurrentCart,
+    showSuccess,
+    showWarning,
+  ])
 
   return (
     <div
@@ -378,7 +412,7 @@ export default function PosCounter({
             isFocusMode={isFocusMode}
             onToggleFocusMode={onToggleFocusMode}
           />
-          <CartTicket />
+          <CartTicket customers={customers} />
 
           {/* Ambient keyboard shortcut indicator bar */}
           <div className="shrink-0 flex items-center justify-between px-4 py-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 text-[11px] text-slate-500 dark:text-slate-400 rounded-b-lg">
@@ -386,6 +420,11 @@ export default function PosCounter({
               <span className="flex items-center gap-1.5">
                 <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-200 shadow-2xs">F2</kbd>
                 <span>Search</span>
+              </span>
+              <span className="text-slate-300 dark:text-slate-600">•</span>
+              <span className="flex items-center gap-1.5">
+                <kbd className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] font-bold text-slate-700 dark:text-slate-200 shadow-2xs">F4</kbd>
+                <span>Hold Order</span>
               </span>
               <span className="text-slate-300 dark:text-slate-600">•</span>
               <span className="flex items-center gap-1.5">
