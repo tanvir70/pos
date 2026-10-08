@@ -535,7 +535,7 @@ export default function InventoryTable({
                                   Active Lots for {item.nameEn}
                                 </span>
                                 <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                                  ({activeLots.length} {activeLots.length === 1 ? "batch" : "batches"} in stock • Zero-stock lots hidden)
+                                  ({activeLots.length} {activeLots.length === 1 ? "batch" : "batches"} in stock)
                                 </span>
                               </div>
                               <button
