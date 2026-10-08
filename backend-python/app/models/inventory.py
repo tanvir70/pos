@@ -3,6 +3,7 @@ from decimal import Decimal
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
@@ -18,6 +19,11 @@ from app.models.base import Base
 
 class InventoryLot(Base):
     __tablename__ = "inventory_lot"
+    __table_args__ = (
+        CheckConstraint("purchase_cost >= 0", name="chk_lot_purchase_cost_non_negative"),
+        CheckConstraint("lot_retail_price >= 0", name="chk_lot_retail_price_non_negative"),
+        CheckConstraint("lot_wholesale_price >= 0", name="chk_lot_wholesale_price_non_negative"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
@@ -43,7 +49,10 @@ class InventoryLot(Base):
 
 class StockInventory(Base):
     __tablename__ = "stock_inventory"
-    __table_args__ = (UniqueConstraint("lot_id", "location", name="uq_lot_location"),)
+    __table_args__ = (
+        UniqueConstraint("lot_id", "location", name="uq_lot_location"),
+        CheckConstraint("quantity >= 0", name="chk_stock_qty_non_negative"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     version: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)

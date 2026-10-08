@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from sqlalchemy import (
     BigInteger,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Integer,
@@ -49,6 +50,10 @@ class Customer(Base):
 
 class CustomerLedger(Base):
     __tablename__ = "customer_ledger"
+    __table_args__ = (
+        CheckConstraint("debit >= 0", name="chk_customer_ledger_debit_non_negative"),
+        CheckConstraint("credit >= 0", name="chk_customer_ledger_credit_non_negative"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     customer_id: Mapped[int] = mapped_column(

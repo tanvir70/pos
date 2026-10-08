@@ -30,6 +30,11 @@ if "sqlite" in settings.DATABASE_URL:
         cursor.execute("PRAGMA wal_autocheckpoint=1000")
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.close()
+        dbapi_connection.isolation_level = None
+
+    @event.listens_for(engine.sync_engine, "begin")
+    def do_begin(conn):
+        conn.exec_driver_sql("BEGIN IMMEDIATE")
 
 async_session_maker = async_sessionmaker(
     bind=engine,

@@ -291,6 +291,7 @@ async def process_return(
     if refund_type == "DUE_ADJUSTMENT" and customer:
         new_due = ((customer.current_due or Decimal("0.00")) - total_refund).quantize(Decimal("0.01"))
         customer.current_due = new_due
+        customer.version = (customer.version or 0) + 1
         ledger = CustomerLedger(
             customer_id=customer.id,
             transaction_date=datetime.now(),

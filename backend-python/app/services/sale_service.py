@@ -171,6 +171,7 @@ async def process_sale(
 
         after_stock = (before_stock - total_qty).quantize(Decimal("0.001"))
         dokan_stock.quantity = after_stock
+        dokan_stock.version = (dokan_stock.version or 0) + 1
 
         # Immutable StockMovement entry
         movement = StockMovement(
@@ -230,24 +231,37 @@ async def process_sale(
             detail=f"Discount and round-off cannot exceed subtotal ({subtotal})",
         )
 
-    cash_paid = max(Decimal("0.00"), req.cash_paid.quantize(Decimal("0.01")))
-    cash_tendered = (
-        max(Decimal("0.00"), req.cash_tendered.quantize(Decimal("0.01")))
-        if req.cash_tendered > Decimal("0.00")
-        else cash_paid
-    )
-    if cash_tendered < cash_paid:
+    digital_paid = max(Decimal("0.00"), req.digital_paid.quantize(Decimal("0.01")))
+    if digital_paid > total_amount:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cash tendered ({cash_tendered}) cannot be less than cash paid ({cash_paid})",
+            detail=f"Digital paid ({digital_paid}) cannot exceed total invoice amount ({total_amount})",
         )
 
-    change_amount = Decimal("0.00")
-    if cash_tendered > cash_paid:
-        change_amount = (cash_tendered - cash_paid).quantize(Decimal("0.01"))
+    # In strict double-entry POS accounting:
+    # 1. Effective cash credited to the invoice balance cannot exceed net remaining balance (total_amount - digital_paid).
+    # 2. Any excess physical cash handed over is cash_tendered.
+    # 3. Change amount returned to customer is strictly (cash_tendered - cash_paid).
+    max_cash_needed = max(Decimal("0.00"), total_amount - digital_paid)
+    raw_cash_paid = max(Decimal("0.00"), req.cash_paid.quantize(Decimal("0.01")))
+    
+    if req.cash_tendered > Decimal("0.00") and req.cash_tendered < raw_cash_paid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cash tendered ({req.cash_tendered.quantize(Decimal('0.01'))}) cannot be less than cash paid ({raw_cash_paid})",
+        )
 
-    digital_paid = max(Decimal("0.00"), req.digital_paid.quantize(Decimal("0.01")))
-    total_paid = cash_paid + digital_paid
+    raw_tendered = (
+        max(Decimal("0.00"), req.cash_tendered.quantize(Decimal("0.01")))
+        if req.cash_tendered > Decimal("0.00")
+        else raw_cash_paid
+    )
+
+    cash_paid = min(raw_cash_paid, max_cash_needed).quantize(Decimal("0.01"))
+    cash_tendered = max(raw_tendered, raw_cash_paid, cash_paid)
+    change_amount = (cash_tendered - cash_paid).quantize(Decimal("0.01"))
+
+    total_paid = (cash_paid + digital_paid).quantize(Decimal("0.01"))
     due_amount = max(Decimal("0.00"), total_amount - total_paid).quantize(Decimal("0.01"))
 
     if due_amount > Decimal("0.00") and not customer:
@@ -307,6 +321,7 @@ async def process_sale(
         customer.total_purchases = ((customer.total_purchases or Decimal("0.00")) + total_amount).quantize(Decimal("0.01"))
         if due_amount > Decimal("0.00"):
             customer.current_due = ((customer.current_due or Decimal("0.00")) + due_amount).quantize(Decimal("0.01"))
+            customer.version = (customer.version or 0) + 1
             ledger = CustomerLedger(
                 customer_id=customer.id,
                 transaction_date=datetime.now(),

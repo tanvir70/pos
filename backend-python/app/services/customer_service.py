@@ -231,6 +231,7 @@ async def record_customer_payment(
 
     new_due = max(Decimal("0.00"), (current_due - amount).quantize(Decimal("0.01")))
     c.current_due = new_due
+    c.version = (c.version or 0) + 1
 
     method = (req.payment_method or "CASH").upper()
     if method in ("BKASH", "NAGAD", "ROCKET"):

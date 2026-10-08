@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from sqlalchemy import (
     BigInteger,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Integer,
@@ -14,6 +15,15 @@ from app.models.base import Base
 
 class Sale(Base):
     __tablename__ = "sale"
+    __table_args__ = (
+        CheckConstraint("subtotal >= 0", name="chk_sale_subtotal_non_negative"),
+        CheckConstraint("discount >= 0", name="chk_sale_discount_non_negative"),
+        CheckConstraint("round_off >= 0", name="chk_sale_round_off_non_negative"),
+        CheckConstraint("total_amount >= 0", name="chk_sale_total_amount_non_negative"),
+        CheckConstraint("cash_paid >= 0", name="chk_sale_cash_paid_non_negative"),
+        CheckConstraint("digital_paid >= 0", name="chk_sale_digital_paid_non_negative"),
+        CheckConstraint("due_amount >= 0", name="chk_sale_due_amount_non_negative"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     version: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
@@ -45,6 +55,12 @@ class Sale(Base):
 
 class SaleItem(Base):
     __tablename__ = "sale_item"
+    __table_args__ = (
+        CheckConstraint("total_quantity > 0", name="chk_sale_item_qty_positive"),
+        CheckConstraint("unit_price >= 0", name="chk_sale_item_price_non_negative"),
+        CheckConstraint("unit_cost >= 0", name="chk_sale_item_cost_non_negative"),
+        CheckConstraint("subtotal >= 0", name="chk_sale_item_subtotal_non_negative"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     sale_id: Mapped[int] = mapped_column(
