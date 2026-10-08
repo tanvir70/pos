@@ -29,6 +29,17 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Remove browser default spin buttons on number inputs across all browsers */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .field {
   width: 100%;
   background: white;

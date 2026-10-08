@@ -422,13 +422,13 @@ export default function QuickAddStockModal({
                         {countUnit.plural.toLowerCase()}
                       </span>
                     }
-                    className="font-bold"
+                    className="font-bold pr-16"
                   />
                 </div>
               </div>
             </div>
           ) : (
-            <div className="w-44 pt-0.5">
+            <div className="w-56 pt-0.5">
               <Input
                 id="addStockQtyInput"
                 label="Total Quantity *"
@@ -442,11 +442,11 @@ export default function QuickAddStockModal({
                 isMonospace
                 inputSize="sm"
                 rightAdornment={
-                  <span className="text-xs text-slate-400 font-medium">
+                  <span className="text-xs text-slate-400 font-medium select-none">
                     {countUnit.plural.toLowerCase()}
                   </span>
                 }
-                className="font-bold"
+                className="font-bold pr-16"
                 autoFocus
               />
             </div>

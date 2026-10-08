@@ -72,7 +72,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             data-slot="input"
             aria-invalid={!!error}
             className={cn(
-              "w-full rounded-lg border bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-all outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:opacity-50",
+              "w-full rounded-lg border bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-all outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:opacity-50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
               sizeClasses,
               isMonospace && "tabular-nums font-mono font-medium",
               error
