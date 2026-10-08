@@ -14,7 +14,7 @@ import {
   pluralizeUnit,
   getPackagingUnit,
 } from "../../utils/unit"
-import { Package, TrendingUp, Layers, Warehouse, Box } from "lucide-react"
+import { Package, TrendingUp, Layers, Warehouse, Box, Lock } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export interface StockModalProduct {
@@ -630,11 +630,15 @@ export default function QuickAddStockModal({
                 id="addStockLotInput"
                 label="Lot / Batch No *"
                 required
-                value={addStockLotNumber}
-                onChange={(e) => setAddStockLotNumber(e.target.value)}
+                readOnly
+                tabIndex={-1}
+                value={addStockLotNumber || getNextLotNumber(matched?.lots)}
                 placeholder="e.g. LOT-02"
                 isMonospace
                 inputSize="sm"
+                rightAdornment={<Lock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />}
+                className="bg-slate-100/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 font-bold cursor-not-allowed select-none"
+                helperText="Auto-incremented"
               />
             </div>
 
