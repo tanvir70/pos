@@ -297,11 +297,24 @@ async def test_lot_entry_canonical_quantity_and_scannable_sticker_barcode():
             token = login.json()["token"]
             headers = {"Authorization": f"Bearer {token}"}
 
-            # Fetch any active product
-            prods_res = await ac.get("/api/products", headers=headers)
-            prods = prods_res.json()
-            assert len(prods) > 0
-            prod = prods[0]
+            # Create isolated test product to guarantee deterministic sequential barcodes
+            code = f"TEST{uuid.uuid4().hex[:5].upper()}"
+            new_prod_res = await ac.post(
+                "/api/products",
+                json={
+                    "nameEn": f"Barcode Test Chemical {code}",
+                    "nameBn": "বারকোড টেস্ট",
+                    "category": "Insecticide",
+                    "productCode": code,
+                    "baseUnit": "Packet",
+                    "standardRetailPrice": 60,
+                    "standardWholesalePrice": 53,
+                    "buyingPrice": 47,
+                },
+                headers=headers,
+            )
+            assert new_prod_res.status_code == 201, new_prod_res.text
+            prod = new_prod_res.json()
             pid = prod["id"]
             clean_code = re.sub(r"[^A-Za-z0-9]", "", (prod.get("defaultBarcode") or prod["productCode"]).strip())
 

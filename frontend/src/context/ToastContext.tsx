@@ -14,7 +14,7 @@ export type ToastType = "success" | "error" | "warning" | "info"
 export interface ToastAction {
   label: string
   onClick: () => void
-  intent?: "default" | "danger"
+  intent?: "default" | "danger" | "primary"
 }
 
 export interface ToastOptions {
@@ -395,12 +395,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     type="button"
                     key={action.label}
                     onClick={action.onClick}
-                    className={`px-3 py-1.5 rounded-md border text-xs font-bold cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-md border text-xs font-bold cursor-pointer transition-colors ${
                       action.intent === "danger"
                         ? "bg-rose-600 border-rose-500 text-white hover:bg-rose-500"
-                        : isConfirmation
-                          ? "bg-white dark:bg-slate-800 border-red-300 dark:border-rose-900/80 text-red-700 dark:text-rose-300 hover:bg-red-50 dark:hover:bg-slate-700"
-                          : "bg-white/10 border-white/25 text-white hover:bg-white/20"
+                        : action.intent === "primary"
+                          ? "bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 shadow-xs"
+                          : isConfirmation
+                            ? "bg-white dark:bg-slate-800 border-red-300 dark:border-rose-900/80 text-red-700 dark:text-rose-300 hover:bg-red-50 dark:hover:bg-slate-700"
+                            : "bg-white/10 border-white/25 text-white hover:bg-white/20"
                     }`}
                   >
                     {action.label}

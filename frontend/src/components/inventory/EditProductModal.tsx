@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import type { Product, GroupedProduct } from "../../types"
 import { updateProduct } from "../../api/endpoints"
 import { useToast } from "../../context/ToastContext"
@@ -50,7 +50,8 @@ export default function EditProductModal({
   onClose,
   onSuccess,
 }: EditProductModalProps) {
-  const { showSuccess, showError, showWarning } = useToast()
+  const { showSuccess, showError, showWarning, showToast, dismissToast } = useToast()
+  const confirmToastIdRef = useRef<string | null>(null)
 
   // Form states
   const [nameEn, setNameEn] = useState("")
@@ -181,42 +182,92 @@ export default function EditProductModal({
     const multiplier = Math.max(1, parseFloat(cartonMultiplier) || 1)
     const minAlert = Math.max(0, parseInt(minStockAlert, 10) || 5)
 
-    try {
-      setIsSaving(true)
-      const payload: Partial<Product> = {
-        nameEn: cleanNameEn,
-        nameBn: nameBn.trim() || cleanNameEn,
-        category: category.trim(),
-        companyName: companyName.trim() || "Syngenta Bangladesh Limited",
-        baseUnit: baseUnit.trim(),
-        packSize: packSize.trim() || null,
-        unitSize: packSize.trim() || null,
-        cartonMultiplier: multiplier,
-        standardRetailPrice: retail,
-        standardWholesalePrice: wholesale,
-        buyingPrice: buying,
-        defaultBarcode: defaultBarcode.trim() || targetProduct.defaultBarcode,
-        minStockAlert: minAlert,
-      }
-
-      const updated = await updateProduct(targetProduct.id, payload)
-
-      const summaryMsg = `${updated.nameEn} • MRP: ৳${updated.standardRetailPrice} • Wholesale: ৳${updated.standardWholesalePrice || updated.standardRetailPrice} • Pack: ${updated.packSize || updated.baseUnit}`
-      showSuccess(summaryMsg, "Product Master Updated")
-
-      onSuccess(updated)
-      onClose()
-    } catch (err) {
-      showError(err, "Failed to update product master")
-    } finally {
-      setIsSaving(false)
+    const payload: Partial<Product> = {
+      nameEn: cleanNameEn,
+      nameBn: nameBn.trim() || cleanNameEn,
+      category: category.trim(),
+      companyName: companyName.trim() || "Syngenta Bangladesh Limited",
+      baseUnit: baseUnit.trim(),
+      packSize: packSize.trim() || null,
+      unitSize: packSize.trim() || null,
+      cartonMultiplier: multiplier,
+      standardRetailPrice: retail,
+      standardWholesalePrice: wholesale,
+      buyingPrice: buying,
+      defaultBarcode: defaultBarcode.trim() || targetProduct.defaultBarcode,
+      minStockAlert: minAlert,
     }
+
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
+
+    const toastId = showToast({
+      type: "info",
+      title: "Confirm Product Update",
+      message: `Update product master for ${cleanNameEn} (#${targetProduct.productCode}) • MRP ৳${retail.toFixed(2)} • Wholesale ৳${wholesale.toFixed(2)}?`,
+      duration: 0,
+      closePrevious: true,
+      position: "top-center",
+      actions: [
+        {
+          label: "Cancel",
+          intent: "default",
+          onClick: () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+          },
+        },
+        {
+          label: "Confirm Update",
+          intent: "primary",
+          onClick: async () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+            try {
+              setIsSaving(true)
+              const updated = await updateProduct(targetProduct.id, payload)
+
+              const summaryMsg = `${updated.nameEn} • MRP: ৳${updated.standardRetailPrice} • Wholesale: ৳${updated.standardWholesalePrice || updated.standardRetailPrice} • Pack: ${updated.packSize || updated.baseUnit}`
+              showSuccess(summaryMsg, "Product Master Updated")
+
+              onSuccess(updated)
+              onClose()
+            } catch (err) {
+              showError(err, "Failed to update product master")
+            } finally {
+              setIsSaving(false)
+            }
+          },
+        },
+      ],
+    })
+
+    confirmToastIdRef.current = toastId
   }
+
+  const handleModalClose = () => {
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
+    onClose()
+  }
+
+  useEffect(() => {
+    return () => {
+      if (confirmToastIdRef.current) {
+        dismissToast(confirmToastIdRef.current)
+        confirmToastIdRef.current = null
+      }
+    }
+  }, [dismissToast])
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleModalClose}
       size="lg"
       headerVariant="light"
       icon={

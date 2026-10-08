@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import type { GroupedProduct } from "../../types"
 import { createLot } from "../../api/endpoints"
 import { getNextLotNumber } from "../../utils/lotNumber"
@@ -43,7 +43,8 @@ export default function QuickAddStockModal({
   onClose,
   onSuccess,
 }: QuickAddStockModalProps) {
-  const { showSuccess, showError, showWarning } = useToast()
+  const { showSuccess, showError, showWarning, showToast, dismissToast } = useToast()
+  const confirmToastIdRef = useRef<string | null>(null)
 
   const [hasCartons, setHasCartons] = useState<boolean>(true)
   const [cartonMultiplier, setCartonMultiplier] = useState<string>("20")
@@ -172,6 +173,10 @@ export default function QuickAddStockModal({
   const retailMargin = calculateMargin(retailNum, buyingNum)
 
   const handleClose = () => {
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
     setAddStockQty("")
     setCartons("")
     setLoose("")
@@ -185,7 +190,16 @@ export default function QuickAddStockModal({
     onClose()
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    return () => {
+      if (confirmToastIdRef.current) {
+        dismissToast(confirmToastIdRef.current)
+        confirmToastIdRef.current = null
+      }
+    }
+  }, [dismissToast])
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const qty = Math.max(0, parseFloat(addStockQty) || 0)
     if (qty <= 0) {
@@ -193,70 +207,105 @@ export default function QuickAddStockModal({
       return
     }
 
-    try {
-      setIsAddingStock(true)
-      const buying = Math.max(0, parseFloat(addStockBuying) || product.buyingPrice || 0)
-      const retail = Math.max(0, parseFloat(addStockRetail) || product.retailPrice || 0)
-      const wholesale = Math.max(0, parseFloat(addStockWholesale) || product.wholesalePrice || retail)
+    const buying = Math.max(0, parseFloat(addStockBuying) || product.buyingPrice || 0)
+    const retail = Math.max(0, parseFloat(addStockRetail) || product.retailPrice || 0)
+    const wholesale = Math.max(0, parseFloat(addStockWholesale) || product.wholesalePrice || retail)
 
-      if (retail <= 0) {
-        showWarning("Please enter a valid retail price")
-        return
-      }
-
-      if (wholesale <= 0) {
-        showWarning("Please enter a valid wholesale price")
-        return
-      }
-
-      const today = new Date().toISOString().split("T")[0]
-      const expiryDate =
-        addStockExpiry ||
-        new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-
-      if (expiryDate < today) {
-        showWarning("Expiry date cannot be in the past.")
-        return
-      }
-
-      const m = groupedProducts.find((p) => p.productId === product.productId)
-      const defaultLot = getNextLotNumber(m?.lots)
-      const lotNumber = addStockLotNumber.trim() || defaultLot
-      const challanNo = addStockChallan.trim() || `CH-${Date.now().toString().slice(-6)}`
-      const cleanCode =
-        (m?.productCode || product.productCode || "").replace(/[^A-Za-z0-9]/g, "") ||
-        String(product.productId)
-      const cleanLot = lotNumber.replace(/^LOT-?/i, "") || "01"
-      const lotBarcode = `${cleanCode}-${cleanLot}`
-
-      await createLot({
-        productId: product.productId,
-        lotNumber,
-        barcode: lotBarcode,
-        quantity: qty,
-        purchaseCost: buying,
-        lotRetailPrice: retail,
-        lotWholesalePrice: wholesale,
-        entryDate: new Date().toISOString().split("T")[0],
-        expiryDate,
-        supplierName: addStockSupplier.trim() || "Syngenta Bangladesh Limited",
-        challanNo,
-      })
-
-      const unitLabel = qty === 1 ? countUnit.singular : countUnit.plural
-      const cartonBreakdown =
-        hasCartons && parseFloat(cartons) > 0
-          ? ` (${cartons} ctn${parseFloat(loose) > 0 ? ` + ${loose} loose` : ""})`
-          : ""
-      const summaryMsg = `${product.nameEn} • +${qty} ${unitLabel}${cartonBreakdown} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}`
-      showSuccess(summaryMsg, "Stock Lot Inwarded")
-      handleClose()
-      onSuccess()
-    } catch (err) {
-      showError(err, "Failed to add stock")
-    } finally {
-      setIsAddingStock(false)
+    if (retail <= 0) {
+      showWarning("Please enter a valid retail price")
+      return
     }
+
+    if (wholesale <= 0) {
+      showWarning("Please enter a valid wholesale price")
+      return
+    }
+
+    const today = new Date().toISOString().split("T")[0]
+    const expiryDate =
+      addStockExpiry ||
+      new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+
+    if (expiryDate < today) {
+      showWarning("Expiry date cannot be in the past.")
+      return
+    }
+
+    const m = groupedProducts.find((p) => p.productId === product.productId)
+    const defaultLot = getNextLotNumber(m?.lots)
+    const lotNumber = addStockLotNumber.trim() || defaultLot
+    const challanNo = addStockChallan.trim() || `CH-${Date.now().toString().slice(-6)}`
+    const cleanCode =
+      (m?.productCode || product.productCode || "").replace(/[^A-Za-z0-9]/g, "") ||
+      String(product.productId)
+    const cleanLot = lotNumber.replace(/^LOT-?/i, "") || "01"
+    const lotBarcode = `${cleanCode}-${cleanLot}`
+
+    const unitLabel = qty === 1 ? countUnit.singular : countUnit.plural
+    const cartonBreakdown =
+      hasCartons && parseFloat(cartons) > 0
+        ? ` (${cartons} ctn${parseFloat(loose) > 0 ? ` + ${loose} loose` : ""})`
+        : ""
+
+    // Dismiss existing confirmation toaster if any
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
+
+    const toastId = showToast({
+      type: "info",
+      title: "Confirm Stock Inwarding",
+      message: `Inward +${qty} ${unitLabel}${cartonBreakdown} for ${product.nameEn} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}?`,
+      duration: 0,
+      closePrevious: true,
+      position: "top-center",
+      actions: [
+        {
+          label: "Cancel",
+          intent: "default",
+          onClick: () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+          },
+        },
+        {
+          label: "Confirm Inwarding",
+          intent: "primary",
+          onClick: async () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+            try {
+              setIsAddingStock(true)
+              await createLot({
+                productId: product.productId,
+                lotNumber,
+                barcode: lotBarcode,
+                quantity: qty,
+                purchaseCost: buying,
+                lotRetailPrice: retail,
+                lotWholesalePrice: wholesale,
+                entryDate: new Date().toISOString().split("T")[0],
+                expiryDate,
+                supplierName: addStockSupplier.trim() || "Syngenta Bangladesh Limited",
+                challanNo,
+              })
+
+              const summaryMsg = `${product.nameEn} • +${qty} ${unitLabel}${cartonBreakdown} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}`
+              showSuccess(summaryMsg, "Stock Lot Inwarded")
+              handleClose()
+              onSuccess()
+            } catch (err) {
+              showError(err, "Failed to add stock")
+            } finally {
+              setIsAddingStock(false)
+            }
+          },
+        },
+      ],
+    })
+
+    confirmToastIdRef.current = toastId
   }
 
   return (
