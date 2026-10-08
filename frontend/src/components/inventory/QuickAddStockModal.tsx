@@ -91,6 +91,15 @@ export default function QuickAddStockModal({
     }
   }, [product, groupedProducts])
 
+  useEffect(() => {
+    return () => {
+      if (confirmToastIdRef.current) {
+        dismissToast(confirmToastIdRef.current)
+        confirmToastIdRef.current = null
+      }
+    }
+  }, [dismissToast])
+
   if (!product) return null
 
   const multiplierNum = Math.max(1, parseFloat(cartonMultiplier) || 1)
@@ -192,15 +201,6 @@ export default function QuickAddStockModal({
     setSaveAsDefaultCarton(false)
     onClose()
   }
-
-  useEffect(() => {
-    return () => {
-      if (confirmToastIdRef.current) {
-        dismissToast(confirmToastIdRef.current)
-        confirmToastIdRef.current = null
-      }
-    }
-  }, [dismissToast])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

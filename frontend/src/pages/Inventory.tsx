@@ -393,12 +393,14 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
       />
 
       {/* Quick Add Dokan Stock Modal */}
-      <QuickAddStockModal
-        product={stockModalProduct}
-        groupedProducts={groupedProducts}
-        onClose={() => setStockModalProduct(null)}
-        onSuccess={loadData}
-      />
+      {stockModalProduct && (
+        <QuickAddStockModal
+          product={stockModalProduct}
+          groupedProducts={groupedProducts}
+          onClose={() => setStockModalProduct(null)}
+          onSuccess={loadData}
+        />
+      )}
 
       {/* Floating Lot Selection Popover for Multi-Lot Products */}
       <ProductLotsPopover
