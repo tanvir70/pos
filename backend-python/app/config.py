@@ -1,5 +1,9 @@
 from functools import lru_cache
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+_DEFAULT_DB_FILE = (_BACKEND_DIR / "pos.db").as_posix()
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
@@ -14,8 +18,8 @@ class Settings(BaseSettings):
     LOG_DIR: str = "logs"
     LOG_MAX_BYTES: int = 5 * 1024 * 1024  # 5 MB per file
     LOG_BACKUP_COUNT: int = 3  # Keep at most 3 historical files
-    DATABASE_URL: str = "sqlite+aiosqlite:///./pos.db"
-    SYNC_DATABASE_URL: str = "sqlite:///./pos.db"
+    DATABASE_URL: str = f"sqlite+aiosqlite:///{_DEFAULT_DB_FILE}"
+    SYNC_DATABASE_URL: str = f"sqlite:///{_DEFAULT_DB_FILE}"
     JWT_SECRET: str = "PosSystemSecureKey2026SecureSecretForHmacSha256MustBe32BytesOrLonger"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
