@@ -36,6 +36,12 @@ async def record_lot_entry(db: AsyncSession, request: LotEntryRequest) -> Invent
             detail=f"Product with ID {request.product_id} not found",
         )
 
+    # 1.1 If requested, atomically update master product's carton packaging defaults
+    if request.save_as_default_carton_size and request.carton_multiplier and request.carton_multiplier > 0:
+        product.carton_multiplier = request.carton_multiplier
+        product.carton_wholesale_price = (request.lot_wholesale_price * request.carton_multiplier).quantize(Decimal("0.01"))
+        product.carton_buying_price = (request.purchase_cost * request.carton_multiplier).quantize(Decimal("0.01"))
+
     # 2. Standardize sequential LOT-01 naming if lot_number is blank or DEFAULT
     import re
     lot_num = (request.lot_number or "").strip()

@@ -48,6 +48,7 @@ export default function QuickAddStockModal({
 
   const [hasCartons, setHasCartons] = useState<boolean>(true)
   const [cartonMultiplier, setCartonMultiplier] = useState<string>("20")
+  const [saveAsDefaultCarton, setSaveAsDefaultCarton] = useState<boolean>(false)
   const [addStockQty, setAddStockQty] = useState("")
   const [cartons, setCartons] = useState("")
   const [loose, setLoose] = useState("")
@@ -73,6 +74,7 @@ export default function QuickAddStockModal({
         ) || 20
 
       setCartonMultiplier(String(detectedMultiplier))
+      setSaveAsDefaultCarton(false)
       setHasCartons(true)
       setAddStockQty("")
       setCartons("")
@@ -187,6 +189,7 @@ export default function QuickAddStockModal({
     setAddStockExpiry("")
     setAddStockSupplier("")
     setAddStockChallan("")
+    setSaveAsDefaultCarton(false)
     onClose()
   }
 
@@ -246,6 +249,10 @@ export default function QuickAddStockModal({
       hasCartons && parseFloat(cartons) > 0
         ? ` (${cartons} ctn${parseFloat(loose) > 0 ? ` + ${loose} loose` : ""})`
         : ""
+    const cartonUpdateNotice =
+      hasCartons && saveAsDefaultCarton
+        ? ` • Set default carton to ${multiplierNum} ${multiplierNum === 1 ? countUnit.singular : countUnit.plural}`
+        : ""
 
     // Dismiss existing confirmation toaster if any
     if (confirmToastIdRef.current) {
@@ -256,7 +263,7 @@ export default function QuickAddStockModal({
     const toastId = showToast({
       type: "info",
       title: "Confirm Stock Inwarding",
-      message: `Inward +${qty} ${unitLabel}${cartonBreakdown} for ${product.nameEn} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}?`,
+      message: `Inward +${qty} ${unitLabel}${cartonBreakdown} for ${product.nameEn} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}${cartonUpdateNotice}?`,
       duration: 0,
       closePrevious: true,
       position: "top-center",
@@ -289,9 +296,11 @@ export default function QuickAddStockModal({
                 expiryDate,
                 supplierName: addStockSupplier.trim() || "Syngenta Bangladesh Limited",
                 challanNo,
+                saveAsDefaultCartonSize: hasCartons && saveAsDefaultCarton,
+                cartonMultiplier: hasCartons && saveAsDefaultCarton ? multiplierNum : undefined,
               })
 
-              const summaryMsg = `${product.nameEn} • +${qty} ${unitLabel}${cartonBreakdown} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}`
+              const summaryMsg = `${product.nameEn} • +${qty} ${unitLabel}${cartonBreakdown} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}${cartonUpdateNotice}`
               showSuccess(summaryMsg, "Stock Lot Inwarded")
               handleClose()
               onSuccess()
@@ -416,6 +425,19 @@ export default function QuickAddStockModal({
                   </span>
                 )}
               </div>
+
+              {/* Explicit Checkbox: Save default carton size for future lot entries & POS carton sales */}
+              <label className="flex items-center gap-2 px-1 py-0.5 cursor-pointer select-none text-[11px] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100">
+                <input
+                  type="checkbox"
+                  checked={saveAsDefaultCarton}
+                  onChange={(e) => setSaveAsDefaultCarton(e.target.checked)}
+                  className="rounded border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer accent-emerald-600"
+                />
+                <span>
+                  Save <strong className="font-mono font-bold text-emerald-700 dark:text-emerald-400">{multiplierNum}</strong> as default carton size for future lot entries &amp; POS carton sales
+                </span>
+              </label>
 
               {/* Inwarding Inputs: Cartons + Loose Units = Total Quantity */}
               <div className="flex flex-wrap items-center gap-3 pt-0.5">

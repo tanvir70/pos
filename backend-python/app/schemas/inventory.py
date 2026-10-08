@@ -33,6 +33,15 @@ class LotEntryRequest(CamelModel):
     location: str = Field(default="DOKAN", description="Stock receiving location")
     supplier_name: str | None = Field(default=None, description="Distributor / vendor name")
     challan_no: str | None = Field(default=None, description="Delivery challan reference")
+    save_as_default_carton_size: bool = Field(
+        default=False,
+        description="Whether to atomically update master product's carton_multiplier and carton prices",
+    )
+    carton_multiplier: Decimal | None = Field(
+        default=None,
+        gt=Decimal("0.000"),
+        description="Carton packaging multiplier (units per carton) to persist if save_as_default_carton_size is True",
+    )
 
     @field_validator("lot_number")
     @classmethod

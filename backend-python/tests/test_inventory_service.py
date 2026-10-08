@@ -373,3 +373,29 @@ async def test_lot_entry_canonical_quantity_and_scannable_sticker_barcode():
                 headers=headers,
             )
             assert fail_res.status_code == 422
+
+            # 4. Lot entry with saveAsDefaultCartonSize=True updates master product carton_multiplier and carton prices atomically
+            lot_carton_res = await ac.post(
+                "/api/inventory/lots",
+                json={
+                    "productId": pid,
+                    "lotNumber": "LOT-04",
+                    "quantity": 199,
+                    "purchaseCost": 51,
+                    "lotRetailPrice": 60,
+                    "lotWholesalePrice": 53.55,
+                    "expiryDate": "2028-10-07",
+                    "saveAsDefaultCartonSize": True,
+                    "cartonMultiplier": 199,
+                },
+                headers=headers,
+            )
+            assert lot_carton_res.status_code == 201, lot_carton_res.text
+
+            # Verify product master was updated atomically
+            updated_prod_res = await ac.get(f"/api/products/{pid}", headers=headers)
+            assert updated_prod_res.status_code == 200
+            updated_prod = updated_prod_res.json()
+            assert float(updated_prod["cartonMultiplier"]) == 199.0
+            assert float(updated_prod["cartonWholesalePrice"]) == round(53.55 * 199, 2)
+            assert float(updated_prod["cartonBuyingPrice"]) == round(51.0 * 199, 2)

@@ -147,6 +147,8 @@ export interface LotEntryRequest {
   challanNo?: string
   quantity: number
   location?: string
+  saveAsDefaultCartonSize?: boolean
+  cartonMultiplier?: number
 }
 
 export interface QuarantineStockItem {
