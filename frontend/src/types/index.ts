@@ -78,6 +78,9 @@ export interface InventoryLot {
   supplierName?: string | null
   challanNo?: string | null
   createdAt?: string
+  cartonMultiplier?: number
+  packSize?: string | null
+  unitSize?: string | null
 }
 
 export interface GroupedProduct {

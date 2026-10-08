@@ -122,19 +122,35 @@ export default function StockAdjustmentModal({
     [products, selectedProductId]
   )
 
-  // Auto-detect carton multiplier when selected product changes
+  const productLots = useMemo(
+    () => lots.filter((l) => (selectedProductId ? l.productId === selectedProductId : true)),
+    [lots, selectedProductId]
+  )
+
+  const currentLot = useMemo(() => {
+    if (selectedLotId) return productLots.find((l) => l.id === selectedLotId)
+    return productLots[0]
+  }, [productLots, selectedLotId])
+
+  // Auto-detect carton multiplier when selected lot or product changes
   useEffect(() => {
-    if (currentProduct) {
-      const detected = getEffectiveMultiplier(
-        currentProduct.cartonMultiplier,
-        currentProduct.packSize,
-        currentProduct.unitSize,
-      ) || 20
+    if (currentLot || currentProduct) {
+      const lotMultiplier = currentLot?.cartonMultiplier
+      const productMultiplier = currentProduct?.cartonMultiplier
+      const packStr = currentLot?.packSize || currentProduct?.packSize
+      const unitStr = currentLot?.unitSize || currentProduct?.unitSize
+
+      const detected =
+        getEffectiveMultiplier(
+          lotMultiplier ?? productMultiplier,
+          packStr,
+          unitStr,
+        ) || 20
       setCartonMultiplier(String(detected))
     } else {
       setCartonMultiplier("20")
     }
-  }, [currentProduct])
+  }, [currentLot, currentProduct])
 
   // Clear product and refresh all associated fields
   const handleClearProduct = () => {
@@ -152,14 +168,23 @@ export default function StockAdjustmentModal({
   // Select product and reset quantities/errors
   const handleSelectProduct = (p: Product) => {
     const availLots = lots.filter((l) => l.productId === p.id)
+    const initialLot = availLots[0]
     setSelectedProductId(p.id)
-    setSelectedLotId(availLots[0]?.id)
+    setSelectedLotId(initialLot?.id)
     setCartons("")
     setLooseUnits("1")
     setReason("")
     setErrorMessage(null)
     setProductSearchQuery("")
     setIsProductDropdownOpen(false)
+
+    const detected =
+      getEffectiveMultiplier(
+        initialLot?.cartonMultiplier ?? p.cartonMultiplier,
+        initialLot?.packSize || p.packSize,
+        initialLot?.unitSize || p.unitSize,
+      ) || 20
+    setCartonMultiplier(String(detected))
   }
 
   // Filtered products for search
@@ -173,16 +198,6 @@ export default function StockAdjustmentModal({
       (p.category || "").toLowerCase().includes(q)
     ).slice(0, 60)
   }, [products, productSearchQuery])
-
-  const productLots = useMemo(
-    () => lots.filter((l) => (selectedProductId ? l.productId === selectedProductId : true)),
-    [lots, selectedProductId]
-  )
-
-  const currentLot = useMemo(() => {
-    if (selectedLotId) return productLots.find((l) => l.id === selectedLotId)
-    return productLots[0]
-  }, [productLots, selectedLotId])
 
   // Total Quantity Calculation with flexible Carton Multiplier
   const multiplierNum = Math.max(1, parseFloat(cartonMultiplier) || 1)
@@ -403,7 +418,20 @@ export default function StockAdjustmentModal({
               </label>
               <Select
                 value={selectedLotId ? String(selectedLotId) : (currentLot?.id ? String(currentLot.id) : "")}
-                onValueChange={(val) => setSelectedLotId(Number(val))}
+                onValueChange={(val) => {
+                  const idNum = Number(val)
+                  setSelectedLotId(idNum)
+                  const targetLot = productLots.find((l) => l.id === idNum)
+                  if (targetLot) {
+                    const detected =
+                      getEffectiveMultiplier(
+                        targetLot.cartonMultiplier ?? currentProduct?.cartonMultiplier,
+                        targetLot.packSize || currentProduct?.packSize,
+                        targetLot.unitSize || currentProduct?.unitSize,
+                      ) || 20
+                    setCartonMultiplier(String(detected))
+                  }
+                }}
                 disabled={!selectedProductId || productLots.length === 0}
               >
                 <SelectTrigger className="w-full bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 font-mono">
@@ -412,7 +440,7 @@ export default function StockAdjustmentModal({
                 <SelectContent>
                   {productLots.map((l) => (
                     <SelectItem key={l.id} value={String(l.id)} className="font-mono">
-                      {formatLotNumber(l.lotNumber)} (Exp: {l.expiryDate} • Cost: {formatTk(l.purchaseCost)})
+                      {formatLotNumber(l.lotNumber)} (Exp: {l.expiryDate} • Cost: {formatTk(l.purchaseCost)}{l.cartonMultiplier ? ` • ${l.cartonMultiplier} pcs/ctn` : ""})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -478,14 +506,20 @@ export default function StockAdjustmentModal({
                     value={cartonMultiplier}
                     placeholder="20"
                     className="w-full text-xs font-bold font-mono px-3 py-2 pr-8 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 text-slate-700 dark:text-slate-300 cursor-not-allowed select-none focus:outline-none"
-                    title="Carton multiplier is locked to product master definition"
+                    title={
+                      currentLot?.cartonMultiplier
+                        ? `Carton multiplier is locked to Lot #${currentLot.lotNumber} packaging ratio`
+                        : "Carton multiplier is locked to product master definition"
+                    }
                   />
                   <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
                     <Lock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                   </div>
                 </div>
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 block">
-                  Product master default (locked)
+                  {currentLot?.cartonMultiplier
+                    ? `Lot #${currentLot.lotNumber} ratio (locked)`
+                    : "Product master default (locked)"}
                 </span>
               </div>
 

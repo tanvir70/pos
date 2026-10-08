@@ -46,6 +46,12 @@ async def lifespan(app: FastAPI):
             from sqlalchemy import text
             await conn.execute(text("UPDATE inventory_lot SET lot_number = 'LOT-01' WHERE UPPER(lot_number) IN ('DEFAULT', 'INITIAL', '') OR lot_number IS NULL"))
             await conn.execute(text("UPDATE stock_movement SET remarks = REPLACE(REPLACE(remarks, 'DEFAULT', 'LOT-01'), 'default', 'LOT-01') WHERE remarks LIKE '%DEFAULT%' OR remarks LIKE '%default%'"))
+            await conn.execute(text("ALTER TABLE inventory_lot ADD COLUMN carton_multiplier NUMERIC(10, 3)"))
+        except Exception:
+            pass
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("UPDATE inventory_lot SET carton_multiplier = (SELECT product.carton_multiplier FROM product WHERE product.id = inventory_lot.product_id) WHERE carton_multiplier IS NULL"))
         except Exception:
             pass
 

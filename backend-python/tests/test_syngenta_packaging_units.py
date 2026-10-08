@@ -1,3 +1,4 @@
+import os
 import pytest
 from decimal import Decimal
 from httpx import ASGITransport, AsyncClient
@@ -249,3 +250,86 @@ async def test_change_password_validation():
             )
             assert short_res.status_code == 400
             assert "at least 6 characters" in short_res.json()["message"]
+
+
+@pytest.mark.asyncio
+async def test_lot_specific_carton_multiplier_reflection():
+    """Verify lots preserve their specific carton packaging multiplier and reflect per lot."""
+    async with lifespan(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            login_res = await ac.post("/api/auth/login", json={"username": "owner", "password": "owner123"})
+            token = login_res.json()["token"]
+            headers = {"Authorization": f"Bearer {token}"}
+
+            # Create product with default multiplier 20
+            p_res = await ac.post(
+                "/api/products",
+                json={
+                    "productCode": f"TEST-LOT-MULT-{os.urandom(3).hex()}",
+                    "nameEn": "Lot Packaging Test",
+                    "nameBn": "লট প্যাকেজিং টেস্ট",
+                    "category": "Insecticide",
+                    "baseUnit": "Bottle",
+                    "cartonMultiplier": 20,
+                    "standardRetailPrice": 100.0,
+                    "standardWholesalePrice": 90.0,
+                    "buyingPrice": 80.0,
+                },
+                headers=headers,
+            )
+            assert p_res.status_code == 201
+            pid = p_res.json()["id"]
+
+            # Create Lot 1 with 20 units/ctn
+            lot1_res = await ac.post(
+                "/api/inventory/lots",
+                json={
+                    "productId": pid,
+                    "lotNumber": "LOT-01",
+                    "quantity": 100,
+                    "purchaseCost": 80,
+                    "lotRetailPrice": 100,
+                    "lotWholesalePrice": 90,
+                    "expiryDate": "2028-10-01",
+                    "cartonMultiplier": 20,
+                },
+                headers=headers,
+            )
+            assert lot1_res.status_code == 201
+
+            # Create Lot 2 with 24 units/ctn (different packaging ratio)
+            lot2_res = await ac.post(
+                "/api/inventory/lots",
+                json={
+                    "productId": pid,
+                    "lotNumber": "LOT-02",
+                    "quantity": 120,
+                    "purchaseCost": 75,
+                    "lotRetailPrice": 98,
+                    "lotWholesalePrice": 88,
+                    "expiryDate": "2028-11-01",
+                    "cartonMultiplier": 24,
+                },
+                headers=headers,
+            )
+            assert lot2_res.status_code == 201
+
+            # Query lots by product
+            lots_res = await ac.get(f"/api/inventory/lots?productId={pid}", headers=headers)
+            assert lots_res.status_code == 200
+            lots_data = lots_res.json()
+            lot1 = next(l for l in lots_data if l["lotNumber"] == "LOT-01")
+            lot2 = next(l for l in lots_data if l["lotNumber"] == "LOT-02")
+            assert Decimal(str(lot1["cartonMultiplier"])) == Decimal("20")
+            assert Decimal(str(lot2["cartonMultiplier"])) == Decimal("24")
+
+            # Query inventory stock list
+            stock_res = await ac.get("/api/inventory/stock", headers=headers)
+            assert stock_res.status_code == 200
+            stocks = stock_res.json()
+            s_lot1 = next(s for s in stocks if s["lotId"] == lot1["id"])
+            s_lot2 = next(s for s in stocks if s["lotId"] == lot2["id"])
+            assert Decimal(str(s_lot1["cartonMultiplier"])) == Decimal("20")
+            assert Decimal(str(s_lot2["cartonMultiplier"])) == Decimal("24")
+

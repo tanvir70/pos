@@ -218,6 +218,9 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
       lotRetailPrice: s.lotRetailPrice || 0,
       lotWholesalePrice: s.lotWholesalePrice || 0,
       barcode: s.lotBarcode || s.barcode || "",
+      cartonMultiplier: s.cartonMultiplier,
+      packSize: s.packSize,
+      unitSize: s.unitSize,
     }))
   }, [stocks])
 

@@ -92,6 +92,11 @@ async def record_lot_entry(db: AsyncSession, request: LotEntryRequest) -> Invent
             final_barcode = f"{base_bc}-{seq}"
 
     # 4. Create lot
+    lot_carton_multiplier = (
+        request.carton_multiplier
+        if request.carton_multiplier and request.carton_multiplier > 0
+        else product.carton_multiplier
+    )
     lot = InventoryLot(
         product_id=request.product_id,
         lot_number=lot_num,
@@ -103,6 +108,7 @@ async def record_lot_entry(db: AsyncSession, request: LotEntryRequest) -> Invent
         barcode=final_barcode,
         supplier_name=request.supplier_name,
         challan_no=request.challan_no,
+        carton_multiplier=lot_carton_multiplier,
     )
     db.add(lot)
     await db.flush()
@@ -180,7 +186,7 @@ async def get_stock_overview(db: AsyncSession, in_stock_only: bool = False) -> l
                 product_name_bn=p.name_bn,
                 category=p.category,
                 base_unit=p.base_unit,
-                carton_multiplier=p.carton_multiplier,
+                carton_multiplier=lot.carton_multiplier if lot.carton_multiplier is not None else p.carton_multiplier,
                 pack_size=p.pack_size,
                 unit_size=p.unit_size,
                 default_barcode=p.default_barcode,
@@ -229,6 +235,7 @@ async def get_lots_by_product(
             supplier_name=lot.supplier_name,
             challan_no=lot.challan_no,
             created_at=lot.created_at,
+            carton_multiplier=lot.carton_multiplier if lot.carton_multiplier is not None else (lot.product.carton_multiplier if lot.product else None),
         )
         for lot in lots
     ]

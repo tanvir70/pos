@@ -43,6 +43,7 @@ class InventoryLot(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.current_timestamp(), nullable=False
     )
+    carton_multiplier: Mapped[Decimal | None] = mapped_column(Numeric(10, 3), nullable=True)
 
     product = relationship("Product", lazy="joined")
     stocks = relationship("StockInventory", back_populates="lot", cascade="all, delete-orphan")

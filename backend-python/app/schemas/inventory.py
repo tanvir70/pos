@@ -19,6 +19,7 @@ class InventoryLotDto(CamelModel):
     supplier_name: str | None = None
     challan_no: str | None = None
     created_at: datetime | None = None
+    carton_multiplier: Decimal | None = None
 
 class LotEntryRequest(CamelModel):
     product_id: int = Field(gt=0, description="Master product ID")
