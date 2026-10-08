@@ -316,12 +316,14 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
       />
 
       {/* Edit Product Master Modal */}
-      <EditProductModal
-        isOpen={!!editProduct}
-        product={editProduct}
-        onClose={() => setEditProduct(null)}
-        onSuccess={() => loadData()}
-      />
+      {editProduct && (
+        <EditProductModal
+          isOpen={true}
+          product={editProduct}
+          onClose={() => setEditProduct(null)}
+          onSuccess={() => loadData()}
+        />
+      )}
 
       {/* Dokan Stock Inventory Table */}
       <InventoryTable

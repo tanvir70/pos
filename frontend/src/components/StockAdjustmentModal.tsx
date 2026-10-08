@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useState, useMemo, useEffect, useRef } from "react"
 import type { Product, InventoryLot, StockAdjustmentRequest, StockAdjustmentResponse } from "../types"
 import { recordStockAdjustment } from "../api/endpoints"
 import { formatLotNumber } from "../utils/lotNumber"
+import { getEffectiveMultiplier } from "../utils/unit"
 import {
   X,
   AlertTriangle,
@@ -11,6 +12,7 @@ import {
   Layers,
   CheckCircle2,
   Package,
+  Search,
 } from "lucide-react"
 import {
   Select,
@@ -78,11 +80,16 @@ export default function StockAdjustmentModal({
   const [selectedProductId, setSelectedProductId] = useState<number | undefined>(initialProductId)
   const [selectedLotId, setSelectedLotId] = useState<number | undefined>(initialLotId)
   const [adjustmentType, setAdjustmentType] = useState<string>("BREAKAGE_LEAKAGE")
+  const [cartonMultiplier, setCartonMultiplier] = useState<string>("20")
   const [cartons, setCartons] = useState<string>("")
   const [looseUnits, setLooseUnits] = useState<string>("1")
   const [reason, setReason] = useState<string>("")
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const [productSearchQuery, setProductSearchQuery] = useState<string>("")
+  const [isProductDropdownOpen, setIsProductDropdownOpen] = useState<boolean>(false)
+  const searchContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -92,14 +99,51 @@ export default function StockAdjustmentModal({
       setErrorMessage(null)
       setCartons("")
       setLooseUnits("1")
+      setProductSearchQuery("")
+      setIsProductDropdownOpen(false)
     }
   }, [isOpen, initialProductId, initialLotId])
+
+  // Click outside search container to close dropdown
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsProductDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleOutsideClick)
+    return () => document.removeEventListener("mousedown", handleOutsideClick)
+  }, [])
 
   // Selected Product & Lots
   const currentProduct = useMemo(
     () => products.find((p) => p.id === selectedProductId),
     [products, selectedProductId]
   )
+
+  // Auto-detect carton multiplier when selected product changes
+  useEffect(() => {
+    if (currentProduct) {
+      const detected = getEffectiveMultiplier(
+        currentProduct.cartonMultiplier,
+        currentProduct.packSize,
+        currentProduct.unitSize,
+      ) || 20
+      setCartonMultiplier(String(detected))
+    }
+  }, [currentProduct])
+
+  // Filtered products for search
+  const filteredProducts = useMemo(() => {
+    if (!productSearchQuery.trim()) return products.slice(0, 60)
+    const q = productSearchQuery.toLowerCase().trim()
+    return products.filter((p) =>
+      (p.nameEn || "").toLowerCase().includes(q) ||
+      (p.nameBn || "").toLowerCase().includes(q) ||
+      (p.productCode || "").toLowerCase().includes(q) ||
+      (p.category || "").toLowerCase().includes(q)
+    ).slice(0, 60)
+  }, [products, productSearchQuery])
 
   const productLots = useMemo(
     () => lots.filter((l) => (selectedProductId ? l.productId === selectedProductId : true)),
@@ -111,11 +155,11 @@ export default function StockAdjustmentModal({
     return productLots[0]
   }, [productLots, selectedLotId])
 
-  // Total Quantity Calculation
-  const cartonMultiplier = currentProduct?.cartonMultiplier || 1
+  // Total Quantity Calculation with flexible Carton Multiplier
+  const multiplierNum = Math.max(1, parseFloat(cartonMultiplier) || 1)
   const numCartons = parseFloat(cartons) || 0
   const numLoose = parseFloat(looseUnits) || 0
-  const totalBaseUnits = numCartons * cartonMultiplier + numLoose
+  const totalBaseUnits = numCartons * multiplierNum + numLoose
 
   // Financial Loss Calculation
   const costPrice = currentLot?.purchaseCost || currentProduct?.buyingPrice || 0
@@ -209,25 +253,122 @@ export default function StockAdjustmentModal({
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                 Product *
               </label>
-              <Select
-                value={selectedProductId ? String(selectedProductId) : ""}
-                onValueChange={(val) => {
-                  const numVal = Number(val) || undefined
-                  setSelectedProductId(numVal)
-                  setSelectedLotId(undefined)
-                }}
-              >
-                <SelectTrigger className="w-full bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
-                  <SelectValue placeholder="-- Select Product --" />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      {p.nameEn} ({p.productCode})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+              {currentProduct ? (
+                /* Selected Product Card with Clear / Cross (X) Button */
+                <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400">
+                      <Package className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                          {currentProduct.nameEn}
+                        </span>
+                        <span className="text-[10px] font-mono font-semibold px-1 py-0.2 rounded bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                          #{currentProduct.productCode}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {currentProduct.category} • {currentProduct.packSize || currentProduct.unitSize || currentProduct.baseUnit}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedProductId(undefined)
+                      setSelectedLotId(undefined)
+                      setProductSearchQuery("")
+                      setIsProductDropdownOpen(true)
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors cursor-pointer shrink-0"
+                    title="Clear product selection and select another"
+                    aria-label="Clear product selection"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                /* Searchable Product Input with Dropdown */
+                <div className="relative" ref={searchContainerRef}>
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={productSearchQuery}
+                      onChange={(e) => {
+                        setProductSearchQuery(e.target.value)
+                        setIsProductDropdownOpen(true)
+                      }}
+                      onFocus={() => setIsProductDropdownOpen(true)}
+                      placeholder="Search product by name or code..."
+                      className="w-full text-xs font-medium pl-9 pr-8 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                    />
+                    {productSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setProductSearchQuery("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded cursor-pointer"
+                        aria-label="Clear search query"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {isProductDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-30 divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredProducts.length === 0 ? (
+                        <div className="p-3 text-center text-xs text-slate-500 dark:text-slate-400">
+                          No products found matching &ldquo;{productSearchQuery}&rdquo;
+                        </div>
+                      ) : (
+                        filteredProducts.map((p) => {
+                          const availLots = lots.filter((l) => l.productId === p.id)
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedProductId(p.id)
+                                setSelectedLotId(availLots[0]?.id)
+                                setIsProductDropdownOpen(false)
+                                setProductSearchQuery("")
+                              }}
+                              className="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors flex items-center justify-between gap-2 cursor-pointer"
+                            >
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                                  {p.nameEn}
+                                </div>
+                                <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-mono font-medium">#{p.productCode}</span>
+                                  <span>•</span>
+                                  <span>{p.category}</span>
+                                  {p.packSize && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{p.packSize}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="shrink-0 text-right">
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                  {availLots.length} {availLots.length === 1 ? "lot" : "lots"}
+                                </span>
+                              </div>
+                            </button>
+                          )
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 2. Lot Selection */}
@@ -293,11 +434,30 @@ export default function StockAdjustmentModal({
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Quantity to Deduct *
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-1 block">
-                  Cartons ({cartonMultiplier} {currentProduct?.baseUnit || "units"}/ctn)
-                </span>
+                <label className="text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1 flex items-center justify-between">
+                  <span>Carton Multiplier</span>
+                  <span className="text-[10px] text-slate-400 font-normal">
+                    {currentProduct?.baseUnit || "pcs"}/ctn
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={cartonMultiplier}
+                  onChange={(e) => setCartonMultiplier(e.target.value)}
+                  placeholder="20"
+                  className="w-full text-xs font-bold font-mono px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1 flex items-center justify-between">
+                  <span>Cartons</span>
+                  <span className="text-[10px] text-slate-400 font-normal">boxes</span>
+                </label>
                 <input
                   type="number"
                   step="1"
@@ -305,14 +465,15 @@ export default function StockAdjustmentModal({
                   value={cartons}
                   onChange={(e) => setCartons(e.target.value)}
                   placeholder="0"
-                  className="w-full text-xs font-semibold px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                  className="w-full text-xs font-semibold font-mono px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-1 block">
-                  Loose {currentProduct?.baseUnit || "Units"}
-                </span>
+                <label className="text-[11px] text-slate-600 dark:text-slate-400 font-bold mb-1 flex items-center justify-between">
+                  <span>Loose {currentProduct?.baseUnit || "Units"}</span>
+                  <span className="text-[10px] text-slate-400 font-normal">pieces</span>
+                </label>
                 <input
                   type="number"
                   step="1"
@@ -320,20 +481,25 @@ export default function StockAdjustmentModal({
                   value={looseUnits}
                   onChange={(e) => setLooseUnits(e.target.value)}
                   placeholder="0"
-                  className="w-full text-xs font-semibold px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                  className="w-full text-xs font-semibold font-mono px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
                 />
               </div>
             </div>
 
             {/* Live Financial Calculation Box */}
-            <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs">
+            <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs flex-wrap gap-2">
               <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-slate-600 dark:text-slate-300">
                   Total Deducted:{" "}
-                  <strong className="text-slate-900 dark:text-slate-100">
+                  <strong className="text-slate-900 dark:text-slate-100 font-mono text-sm">
                     {totalBaseUnits} {currentProduct?.baseUnit || "units"}
                   </strong>
+                  {numCartons > 0 && (
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 ml-1.5 font-mono">
+                      ({numCartons} ctn × {multiplierNum}{numLoose > 0 ? ` + ${numLoose} loose` : ""})
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="text-right">
