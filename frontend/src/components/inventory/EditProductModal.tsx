@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import type { Product, GroupedProduct } from "../../types"
 import { updateProduct } from "../../api/endpoints"
 import { useToast } from "../../context/ToastContext"
@@ -50,8 +50,7 @@ export default function EditProductModal({
   onClose,
   onSuccess,
 }: EditProductModalProps) {
-  const { showSuccess, showError, showWarning, showToast, dismissToast } = useToast()
-  const confirmToastIdRef = useRef<string | null>(null)
+  const { showSuccess, showError, showWarning } = useToast()
 
   // Form states
   const [nameEn, setNameEn] = useState("")
@@ -105,15 +104,6 @@ export default function EditProductModal({
     }
   }, [targetProduct])
 
-  useEffect(() => {
-    return () => {
-      if (confirmToastIdRef.current) {
-        dismissToast(confirmToastIdRef.current)
-        confirmToastIdRef.current = null
-      }
-    }
-  }, [dismissToast])
-
   // Dirty state tracking (Layer 1 Invariant: prevent redundant DB locks)
   const isChanged = useMemo(() => {
     if (!targetProduct) return false
@@ -166,7 +156,7 @@ export default function EditProductModal({
 
   if (!isOpen || !targetProduct) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const cleanNameEn = nameEn.trim()
@@ -191,81 +181,40 @@ export default function EditProductModal({
     const multiplier = Math.max(1, parseFloat(cartonMultiplier) || 1)
     const minAlert = Math.max(0, parseInt(minStockAlert, 10) || 5)
 
-    // Dismiss previous confirmation toast if active
-    if (confirmToastIdRef.current) {
-      dismissToast(confirmToastIdRef.current)
-      confirmToastIdRef.current = null
+    try {
+      setIsSaving(true)
+      const payload: Partial<Product> = {
+        nameEn: cleanNameEn,
+        nameBn: nameBn.trim() || cleanNameEn,
+        category: category.trim(),
+        companyName: companyName.trim() || "Syngenta Bangladesh Limited",
+        baseUnit: baseUnit.trim(),
+        packSize: packSize.trim() || null,
+        unitSize: packSize.trim() || null,
+        cartonMultiplier: multiplier,
+        standardRetailPrice: retail,
+        standardWholesalePrice: wholesale,
+        buyingPrice: buying,
+        defaultBarcode: defaultBarcode.trim() || targetProduct.defaultBarcode,
+        minStockAlert: minAlert,
+      }
+
+      const updated = await updateProduct(targetProduct.id, payload)
+      const summaryMsg = `${updated.nameEn} • MRP ৳${updated.standardRetailPrice} • Wholesale ৳${updated.standardWholesalePrice || updated.standardRetailPrice} • Pack: ${updated.packSize || updated.baseUnit}`
+      showSuccess(summaryMsg, "Product Master Updated")
+      onSuccess(updated)
+      onClose()
+    } catch (err) {
+      showError(err, "Failed to update product master")
+    } finally {
+      setIsSaving(false)
     }
-
-    const toastId = showToast({
-      type: "success",
-      title: "Confirm Product Master Update",
-      message: `Update ${cleanNameEn} • MRP ৳${retail.toFixed(2)} • Wholesale ৳${wholesale.toFixed(2)} • Buy ৳${buying.toFixed(2)} • Pack: ${packSize || baseUnit} (${multiplier} pcs/ctn)?`,
-      duration: 0,
-      closePrevious: true,
-      position: "center",
-      actions: [
-        {
-          label: "Cancel",
-          intent: "default",
-          onClick: () => {
-            dismissToast(toastId)
-            confirmToastIdRef.current = null
-          },
-        },
-        {
-          label: "Confirm Update",
-          intent: "primary",
-          onClick: async () => {
-            dismissToast(toastId)
-            confirmToastIdRef.current = null
-            try {
-              setIsSaving(true)
-              const payload: Partial<Product> = {
-                nameEn: cleanNameEn,
-                nameBn: nameBn.trim() || cleanNameEn,
-                category: category.trim(),
-                companyName: companyName.trim() || "Syngenta Bangladesh Limited",
-                baseUnit: baseUnit.trim(),
-                packSize: packSize.trim() || null,
-                unitSize: packSize.trim() || null,
-                cartonMultiplier: multiplier,
-                standardRetailPrice: retail,
-                standardWholesalePrice: wholesale,
-                buyingPrice: buying,
-                defaultBarcode: defaultBarcode.trim() || targetProduct.defaultBarcode,
-                minStockAlert: minAlert,
-              }
-              const updated = await updateProduct(targetProduct.id, payload)
-              const summaryMsg = `${updated.nameEn} • MRP ৳${updated.standardRetailPrice} • Wholesale ৳${updated.standardWholesalePrice || updated.standardRetailPrice} • Pack: ${updated.packSize || updated.baseUnit}`
-              showSuccess(summaryMsg, "Product Master Updated")
-              onSuccess(updated)
-              onClose()
-            } catch (err) {
-              showError(err, "Failed to update product master")
-            } finally {
-              setIsSaving(false)
-            }
-          },
-        },
-      ],
-    })
-
-    confirmToastIdRef.current = toastId
-  }
-
-  const handleModalClose = () => {
-    if (confirmToastIdRef.current) {
-      dismissToast(confirmToastIdRef.current)
-      confirmToastIdRef.current = null
-    }
-    onClose()
   }
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleModalClose}
+      onClose={onClose}
       closeOnEsc={true}
       size="lg"
       headerVariant="light"
