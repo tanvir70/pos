@@ -95,15 +95,32 @@ export default function StockAdjustmentModal({
   useEffect(() => {
     if (isOpen) {
       setSelectedProductId(initialProductId)
-      setSelectedLotId(initialLotId)
+      const availLots = lots.filter((l) => (initialProductId ? l.productId === initialProductId : true))
+      const resolvedLot = initialLotId
+        ? availLots.find((l) => l.id === initialLotId)
+        : availLots[0]
+      setSelectedLotId(resolvedLot?.id)
       setReason("")
       setErrorMessage(null)
       setCartons("")
       setLooseUnits("1")
       setProductSearchQuery("")
       setIsProductDropdownOpen(false)
+
+      const prod = products.find((p) => p.id === initialProductId)
+      if (resolvedLot || prod) {
+        const detected =
+          getEffectiveMultiplier(
+            resolvedLot?.cartonMultiplier ?? prod?.cartonMultiplier,
+            resolvedLot?.packSize || prod?.packSize,
+            resolvedLot?.unitSize || prod?.unitSize,
+          ) || 20
+        setCartonMultiplier(String(detected))
+      } else {
+        setCartonMultiplier("20")
+      }
     }
-  }, [isOpen, initialProductId, initialLotId])
+  }, [isOpen, initialProductId, initialLotId, lots, products])
 
   // Click outside search container to close dropdown
   useEffect(() => {

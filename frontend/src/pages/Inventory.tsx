@@ -90,12 +90,12 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   const [stockModalProduct, setStockModalProduct] = useState<StockModalProduct | null>(null)
 
   // ─── Load Initial Data ──────────────────────────────────────────
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (force = false) => {
     try {
       setIsLoading(true)
       const [stockData, productData] = await Promise.all([
-        getStock(),
-        getProducts(),
+        getStock(false, force),
+        getProducts(undefined, force),
       ])
       setStocks(stockData)
       setProducts(productData)
@@ -242,7 +242,7 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
   const handleAdjustmentSuccess = (adj: StockAdjustmentResponse) => {
     const summaryMsg = `${adj.productNameEn || "Product"} • Lot #${adj.lotNumber} • -${adj.quantity} ${adj.unit || "units"} (${adj.adjustmentType}) • Voucher: ${adj.adjustmentNo}`
     showSuccess(summaryMsg, "Stock Adjustment Recorded")
-    loadData()
+    loadData(true)
   }
 
   return (
@@ -288,7 +288,7 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
           </Button>
 
           <RefreshButton
-            onClick={loadData}
+            onClick={() => loadData(true)}
             isLoading={isLoading}
             title="Refresh inventory"
           />
@@ -403,7 +403,7 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
           product={stockModalProduct}
           groupedProducts={groupedProducts}
           onClose={() => setStockModalProduct(null)}
-          onSuccess={loadData}
+          onSuccess={() => loadData(true)}
         />
       )}
 

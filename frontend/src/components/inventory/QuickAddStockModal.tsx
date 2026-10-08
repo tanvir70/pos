@@ -312,10 +312,7 @@ export default function QuickAddStockModal({
                 supplierName: addStockSupplier.trim() || "Syngenta Bangladesh Limited",
                 challanNo,
                 saveAsDefaultCartonSize: hasCartons && isMultiplierChanged && saveAsDefaultCarton,
-                cartonMultiplier:
-                  hasCartons && isMultiplierChanged && saveAsDefaultCarton
-                    ? multiplierNum
-                    : undefined,
+                cartonMultiplier: hasCartons ? multiplierNum : (product.cartonMultiplier || undefined),
               })
 
               const summaryMsg = `${product.nameEn} • +${qty} ${unitLabel}${cartonBreakdown} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}${cartonUpdateNotice}`
