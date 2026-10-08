@@ -55,6 +55,7 @@ export default function QuickAddStockModal({
 
   const [hasCartons, setHasCartons] = useState<boolean>(true)
   const [cartonMultiplier, setCartonMultiplier] = useState<string>("20")
+  const [initialCartonMultiplier, setInitialCartonMultiplier] = useState<number>(20)
   const [saveAsDefaultCarton, setSaveAsDefaultCarton] = useState<boolean>(false)
   const [addStockQty, setAddStockQty] = useState("")
   const [cartons, setCartons] = useState("")
@@ -81,6 +82,7 @@ export default function QuickAddStockModal({
         ) || 20
 
       setCartonMultiplier(String(detectedMultiplier))
+      setInitialCartonMultiplier(detectedMultiplier)
       setSaveAsDefaultCarton(false)
       setHasCartons(true)
       setAddStockQty("")
@@ -122,6 +124,10 @@ export default function QuickAddStockModal({
     const l = parseFloat(loose) || 0
     const total = c * m + l
     setAddStockQty(total > 0 ? String(total) : "")
+
+    // Automatically activate the checkbox if the multiplier differs from the product default
+    const isDifferent = Math.abs(m - initialCartonMultiplier) > 0.001
+    setSaveAsDefaultCarton(isDifferent)
   }
 
   const handleCartonsChange = (val: string) => {
@@ -435,15 +441,31 @@ export default function QuickAddStockModal({
               </div>
 
               {/* Explicit Checkbox: Save default carton size for future lot entries & POS carton sales */}
-              <label className="flex items-center gap-2 px-1 py-0.5 cursor-pointer select-none text-[11px] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100">
+              <label
+                className={cn(
+                  "flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer select-none text-[11px] transition-all duration-150 border",
+                  saveAsDefaultCarton
+                    ? "bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800 shadow-2xs font-medium"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/40",
+                )}
+              >
                 <input
                   type="checkbox"
                   checked={saveAsDefaultCarton}
                   onChange={(e) => setSaveAsDefaultCarton(e.target.checked)}
-                  className="rounded border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer accent-emerald-600"
+                  className="rounded border-slate-300 dark:border-slate-600 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer accent-emerald-600 shrink-0"
                 />
-                <span>
-                  Save <strong className="font-mono font-bold text-emerald-700 dark:text-emerald-400">{multiplierNum}</strong> as default carton size for future lot entries &amp; POS carton sales
+                <span className="leading-snug">
+                  Save{" "}
+                  <strong className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                    {multiplierNum}
+                  </strong>{" "}
+                  as default carton size for future lot entries &amp; POS carton sales
+                  {saveAsDefaultCarton && (
+                    <span className="ml-1.5 inline-flex items-center text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
+                      Activated
+                    </span>
+                  )}
                 </span>
               </label>
 
