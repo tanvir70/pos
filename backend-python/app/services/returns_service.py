@@ -208,6 +208,7 @@ async def process_return(
         before_stock = stock.quantity.quantize(Decimal("0.001"))
         after_stock = (before_stock + qty).quantize(Decimal("0.001"))
         stock.quantity = after_stock
+        stock.version = (stock.version or 0) + 1
 
         movement_type = "RETURN_QUARANTINED" if is_damaged else "RETURN_RESTOCKED"
         movement = StockMovement(

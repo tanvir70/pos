@@ -203,15 +203,15 @@ async def reconcile_customer_ledger(db: AsyncSession, customer_id: int) -> Recon
     c.current_due = ledger_due
     c.version = (c.version or 0) + 1
 
-    # Record reconciliation adjustment entry
+    # Record reconciliation audit journal entry for compliance history without distorting true ledger balance
     adjustment_entry = CustomerLedger(
         customer_id=c.id,
         transaction_date=datetime.now(),
         transaction_type="AUDIT_RECONCILIATION",
-        debit=variance if variance > Decimal("0.00") else Decimal("0.00"),
-        credit=abs(variance) if variance < Decimal("0.00") else Decimal("0.00"),
+        debit=Decimal("0.00"),
+        credit=Decimal("0.00"),
         balance_after=ledger_due,
-        notes=f"Automated financial reconciliation: synced stored due from {prev_due} to {ledger_due}",
+        notes=f"Automated financial reconciliation: synced cached due from {prev_due} to true ledger balance {ledger_due} (drift was {variance})",
     )
     db.add(adjustment_entry)
     await db.flush()

@@ -271,6 +271,7 @@ async def dispose_quarantine_stock(db: AsyncSession, req: QuarantineDisposalRequ
     before = stock.quantity
     stock.quantity -= req.quantity
     after = stock.quantity
+    stock.version = (stock.version or 0) + 1
 
     lot = stock.lot
     p = lot.product
@@ -337,6 +338,7 @@ async def record_stock_adjustment(
     before_dokan = dokan_stock.quantity
     dokan_stock.quantity -= req.quantity
     after_dokan = dokan_stock.quantity
+    dokan_stock.version = (dokan_stock.version or 0) + 1
 
     # 3. Handle move to quarantine if specified
     if req.action_type == "MOVE_TO_QUARANTINE":
@@ -350,6 +352,7 @@ async def record_stock_adjustment(
         before_q = q_stock.quantity
         q_stock.quantity += req.quantity
         after_q = q_stock.quantity
+        q_stock.version = (q_stock.version or 0) + 1
 
     # 4. Generate adjustment record (7 digits)
     adj_no = await get_next_sequence(db, "stock_adjustment")

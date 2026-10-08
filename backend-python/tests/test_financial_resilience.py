@@ -200,3 +200,36 @@ async def test_ledger_reconciliation_self_healing():
             # 5. Verify customer profile is now healed
             cust_check = (await ac.get(f"/api/customers/{cust_id}", headers=headers)).json()
             assert float(cust_check["currentDue"]) == 500.0
+
+            # 6. Verify subsequent financial audit confirms complete mathematical reconciliation
+            audit_res2 = await ac.get("/api/backup/financial-audit", headers=headers)
+            assert audit_res2.status_code == 200
+            healed_entry = next(
+                (a for a in audit_res2.json()["ledgerAnomalies"] if a["customerId"] == cust_id), None
+            )
+            assert healed_entry is None, "Customer still reported as anomaly after reconciliation!"
+
+@pytest.mark.asyncio
+async def test_negative_customer_due_rejected():
+    """Verify that creating a customer with negative currentDue or initialDue is rejected by schema."""
+    async with lifespan(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            login = await ac.post("/api/auth/login", json={"username": "owner", "password": "1234"})
+            token = login.json()["token"]
+            headers = {"Authorization": f"Bearer {token}"}
+
+            phone_suffix = str(uuid.uuid4().int)[:8]
+            res1 = await ac.post(
+                "/api/customers",
+                json={"name": "Bad Customer", "phone": f"017{phone_suffix}", "currentDue": -100.0},
+                headers=headers,
+            )
+            assert res1.status_code == 422
+
+            res2 = await ac.post(
+                "/api/customers",
+                json={"name": "Bad Customer 2", "phone": f"017{phone_suffix}", "initialDue": -50.0},
+                headers=headers,
+            )
+            assert res2.status_code == 422

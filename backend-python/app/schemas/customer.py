@@ -34,7 +34,7 @@ class CustomerRequest(CamelModel):
     village_address: str | None = None
     land_area: str | None = None
     customer_type: str = "RETAIL"
-    current_due: Decimal | None = None
+    current_due: Decimal | None = Field(default=None, ge=Decimal("0.00"))
     initial_due: Decimal | None = Field(default=None, ge=Decimal("0.00"))
     mfs_type: str | None = None
     mfs_number: str | None = None
