@@ -331,14 +331,17 @@ export default function InventoryTable({
 
                       {/* Dokan Stock */}
                       <TableCell align="center">
-                        <div className="flex items-center justify-center gap-2">
-                          {item.totalStock <= 0 ? (
+                        {item.totalStock <= 0 ? (
+                          <div className="flex items-center justify-center">
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                               0 Out of Stock
                             </span>
-                          ) : (
-                            <div className="flex flex-col items-center gap-0.5">
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-0.5">
+                            {/* Row 1: Primary Stock Count + Batch Accordion Trigger */}
+                            <div className="flex items-center justify-center gap-1.5">
                               {isLowStock ? (
                                 <span
                                   className="inline-flex items-center gap-1.5 font-mono font-bold text-sm text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800"
@@ -356,7 +359,7 @@ export default function InventoryTable({
                                 </span>
                               ) : (
                                 <span
-                                  className="font-mono font-bold text-sm text-slate-900 dark:text-slate-100 tabular-nums px-1"
+                                  className="font-mono font-bold text-sm text-slate-900 dark:text-slate-100 tabular-nums px-0.5"
                                   title={
                                     activeLots[0]
                                       ? `Lot: ${formatLotNumber(activeLots[0].lotNumber)} | Expiry: ${activeLots[0].expiryDate || "N/A"}`
@@ -366,48 +369,51 @@ export default function InventoryTable({
                                   {item.totalStock}
                                 </span>
                               )}
-                              {(() => {
-                                const mult = getEffectiveMultiplier(item.cartonMultiplier, item.packSize, item.unitSize)
-                                if (mult <= 1 || item.totalStock <= 0) return null
-                                const ctns = Math.floor(item.totalStock / mult)
-                                const loose = item.totalStock % mult
-                                return (
-                                  <span className="font-mono text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 whitespace-nowrap">
-                                    {ctns > 0 ? `${ctns} ${pluralizeUnit("Carton", ctns)}` : ""}
-                                    {ctns > 0 && loose > 0 ? " + " : ""}
-                                    {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose)}` : ""}
-                                  </span>
-                                )
-                              })()}
-                            </div>
-                          )}
 
-                          {/* Smart Multi-Lot Tag: only shown when 2 or more distinct active lots exist */}
-                          {activeLots.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => toggleLotsExpanded(item.productId)}
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border transition-all cursor-pointer ${
-                                isExpanded
-                                  ? "bg-slate-900 dark:bg-emerald-600 text-white border-slate-900 dark:border-emerald-600 shadow-2xs"
-                                  : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:border-emerald-300"
-                              }`}
-                              title={
-                                isExpanded
-                                  ? "Collapse lot batches"
-                                  : `View ${activeLots.length} separate batches`
-                              }
-                            >
-                              <Layers className="w-3 h-3" />
-                              <span>{activeLots.length} Lots</span>
-                              {isExpanded ? (
-                                <ChevronUp className="w-3 h-3" />
-                              ) : (
-                                <ChevronDown className="w-3 h-3" />
+                              {/* Smart Multi-Lot Tag: placed neatly next to the stock count */}
+                              {activeLots.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleLotsExpanded(item.productId)}
+                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border transition-all cursor-pointer ${
+                                    isExpanded
+                                      ? "bg-slate-900 dark:bg-emerald-600 text-white border-slate-900 dark:border-emerald-600 shadow-2xs"
+                                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-emerald-700 dark:hover:text-emerald-300 hover:border-emerald-300"
+                                  }`}
+                                  title={
+                                    isExpanded
+                                      ? "Collapse lot batches"
+                                      : `View ${activeLots.length} separate batches`
+                                  }
+                                >
+                                  <Layers className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                                  <span>{activeLots.length} Lots</span>
+                                  {isExpanded ? (
+                                    <ChevronUp className="w-2.5 h-2.5" />
+                                  ) : (
+                                    <ChevronDown className="w-2.5 h-2.5" />
+                                  )}
+                                </button>
                               )}
-                            </button>
-                          )}
-                        </div>
+                            </div>
+
+                            {/* Row 2: Secondary Carton Breakdown as a subtle, clean subtitle */}
+                            {(() => {
+                              const mult = getEffectiveMultiplier(item.cartonMultiplier, item.packSize, item.unitSize)
+                              if (mult <= 1 || item.totalStock <= 0) return null
+                              const ctns = Math.floor(item.totalStock / mult)
+                              const loose = item.totalStock % mult
+                              if (ctns === 0 && loose === 0) return null
+                              return (
+                                <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap leading-none mt-0.5">
+                                  {ctns > 0 ? `${ctns} ctn` : ""}
+                                  {ctns > 0 && loose > 0 ? " + " : ""}
+                                  {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose).toLowerCase()}` : ""}
+                                </span>
+                              )
+                            })()}
+                          </div>
+                        )}
                       </TableCell>
 
                       {/* Retail Price */}
@@ -606,10 +612,10 @@ export default function InventoryTable({
                                               const ctns = Math.floor(lotQty / mult)
                                               const loose = lotQty % mult
                                               return (
-                                                <span className="font-mono text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-1 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                                                  {ctns > 0 ? `${ctns} ${pluralizeUnit("Carton", ctns)}` : ""}
+                                                <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap leading-none mt-0.5 block">
+                                                  {ctns > 0 ? `${ctns} ctn` : ""}
                                                   {ctns > 0 && loose > 0 ? " + " : ""}
-                                                  {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose)}` : ""}
+                                                  {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose).toLowerCase()}` : ""}
                                                 </span>
                                               )
                                             })()}
