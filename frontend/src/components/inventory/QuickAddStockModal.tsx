@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react"
-import { createPortal } from "react-dom"
+import React, { useState, useEffect, useRef } from "react"
 import type { GroupedProduct } from "../../types"
 import { createLot } from "../../api/endpoints"
 import { getNextLotNumber } from "../../utils/lotNumber"
@@ -22,11 +21,6 @@ import {
   Warehouse,
   Box,
   Lock,
-  PackageCheck,
-  Boxes,
-  Calendar,
-  CheckCircle2,
-  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -56,7 +50,8 @@ export default function QuickAddStockModal({
   onClose,
   onSuccess,
 }: QuickAddStockModalProps) {
-  const { showSuccess, showError, showWarning } = useToast()
+  const { showSuccess, showError, showWarning, showToast, dismissToast } = useToast()
+  const confirmToastIdRef = useRef<string | null>(null)
 
   const [hasCartons, setHasCartons] = useState<boolean>(true)
   const [cartonMultiplier, setCartonMultiplier] = useState<string>("20")
@@ -72,7 +67,6 @@ export default function QuickAddStockModal({
   const [addStockSupplier, setAddStockSupplier] = useState("")
   const [addStockChallan, setAddStockChallan] = useState("")
   const [isAddingStock, setIsAddingStock] = useState(false)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   const matched = groupedProducts.find((p) => p.productId === product?.productId)
 
@@ -101,22 +95,17 @@ export default function QuickAddStockModal({
       )
       setAddStockSupplier("Syngenta Bangladesh Limited")
       setAddStockChallan(`CH-${Date.now().toString().slice(-6)}`)
-      setShowConfirmModal(false)
     }
   }, [product, groupedProducts])
 
   useEffect(() => {
-    if (!showConfirmModal) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault()
-        e.stopPropagation()
-        setShowConfirmModal(false)
+    return () => {
+      if (confirmToastIdRef.current) {
+        dismissToast(confirmToastIdRef.current)
+        confirmToastIdRef.current = null
       }
     }
-    window.addEventListener("keydown", onKeyDown, true)
-    return () => window.removeEventListener("keydown", onKeyDown, true)
-  }, [showConfirmModal])
+  }, [dismissToast])
 
   if (!product) return null
 
@@ -202,7 +191,10 @@ export default function QuickAddStockModal({
   const retailMargin = calculateMargin(retailNum, buyingNum)
 
   const handleClose = () => {
-    setShowConfirmModal(false)
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
     setAddStockQty("")
     setCartons("")
     setLoose("")
@@ -248,78 +240,97 @@ export default function QuickAddStockModal({
       return
     }
 
-    setShowConfirmModal(true)
-  }
+    const buying = Math.max(0, parseFloat(addStockBuying) || product.buyingPrice || 0)
+    const m = groupedProducts.find((p) => p.productId === product.productId)
+    const defaultLot = getNextLotNumber(m?.lots)
+    const lotNumber = addStockLotNumber.trim() || defaultLot
+    const challanNo = addStockChallan.trim() || `CH-${Date.now().toString().slice(-6)}`
+    const cleanCode =
+      (m?.productCode || product.productCode || "").replace(/[^A-Za-z0-9]/g, "") ||
+      String(product.productId)
+    const cleanLot = lotNumber.replace(/^LOT-?/i, "") || "01"
+    const lotBarcode = `${cleanCode}-${cleanLot}`
 
-  const handleConfirmInwarding = async () => {
-    try {
-      setIsAddingStock(true)
-      const qty = Math.max(0, parseFloat(addStockQty) || 0)
-      const buying = Math.max(0, parseFloat(addStockBuying) || product.buyingPrice || 0)
-      const retail = Math.max(0, parseFloat(addStockRetail) || product.retailPrice || 0)
-      const wholesale = Math.max(0, parseFloat(addStockWholesale) || product.wholesalePrice || retail)
-      const expiryDate =
-        addStockExpiry ||
-        new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+    const unitLabel = qty === 1 ? countUnit.singular : countUnit.plural
+    const cartonBreakdown =
+      hasCartons && parseFloat(cartons) > 0
+        ? ` (${cartons} ctn${parseFloat(loose) > 0 ? ` + ${loose} loose` : ""})`
+        : ""
+    const cartonUpdateNotice =
+      hasCartons && saveAsDefaultCarton
+        ? ` • Default carton set to ${multiplierNum}`
+        : ""
 
-      const m = groupedProducts.find((p) => p.productId === product.productId)
-      const defaultLot = getNextLotNumber(m?.lots)
-      const lotNumber = addStockLotNumber.trim() || defaultLot
-      const challanNo = addStockChallan.trim() || `CH-${Date.now().toString().slice(-6)}`
-      const cleanCode =
-        (m?.productCode || product.productCode || "").replace(/[^A-Za-z0-9]/g, "") ||
-        String(product.productId)
-      const cleanLot = lotNumber.replace(/^LOT-?/i, "") || "01"
-      const lotBarcode = `${cleanCode}-${cleanLot}`
-
-      await createLot({
-        productId: product.productId,
-        lotNumber,
-        barcode: lotBarcode,
-        quantity: qty,
-        purchaseCost: buying,
-        lotRetailPrice: retail,
-        lotWholesalePrice: wholesale,
-        entryDate: new Date().toISOString().split("T")[0],
-        expiryDate,
-        supplierName: addStockSupplier.trim() || "Syngenta Bangladesh Limited",
-        challanNo,
-        saveAsDefaultCartonSize: hasCartons && saveAsDefaultCarton,
-        cartonMultiplier: hasCartons && saveAsDefaultCarton ? multiplierNum : undefined,
-      })
-
-      const unitLabel = qty === 1 ? countUnit.singular : countUnit.plural
-      const cartonBreakdown =
-        hasCartons && parseFloat(cartons) > 0
-          ? ` (${cartons} ctn${parseFloat(loose) > 0 ? ` + ${loose} loose` : ""})`
-          : ""
-      const cartonUpdateNotice =
-        hasCartons && saveAsDefaultCarton
-          ? ` • Default carton set to ${multiplierNum}`
-          : ""
-
-      showSuccess(
-        `Added +${qty} ${unitLabel}${cartonBreakdown} (Lot #${lotNumber}) for ${product.nameEn}${cartonUpdateNotice}`,
-        "Stock Lot Inwarded",
-      )
-      setShowConfirmModal(false)
-      handleClose()
-      onSuccess()
-    } catch (err) {
-      showError(err, "Failed to add stock")
-    } finally {
-      setIsAddingStock(false)
+    // Dismiss previous confirmation toast if active
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
     }
+
+    const toastId = showToast({
+      type: "success",
+      title: "Confirm Stock Inwarding",
+      message: `Inward +${qty} ${unitLabel}${cartonBreakdown} for ${product.nameEn} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}${cartonUpdateNotice}?`,
+      duration: 0,
+      closePrevious: true,
+      position: "center",
+      actions: [
+        {
+          label: "Cancel",
+          intent: "default",
+          onClick: () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+          },
+        },
+        {
+          label: "Confirm Inwarding",
+          intent: "primary",
+          onClick: async () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+            try {
+              setIsAddingStock(true)
+              await createLot({
+                productId: product.productId,
+                lotNumber,
+                barcode: lotBarcode,
+                quantity: qty,
+                purchaseCost: buying,
+                lotRetailPrice: retail,
+                lotWholesalePrice: wholesale,
+                entryDate: new Date().toISOString().split("T")[0],
+                expiryDate,
+                supplierName: addStockSupplier.trim() || "Syngenta Bangladesh Limited",
+                challanNo,
+                saveAsDefaultCartonSize: hasCartons && saveAsDefaultCarton,
+                cartonMultiplier: hasCartons && saveAsDefaultCarton ? multiplierNum : undefined,
+              })
+
+              const summaryMsg = `${product.nameEn} • +${qty} ${unitLabel}${cartonBreakdown} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}${cartonUpdateNotice}`
+              showSuccess(summaryMsg, "Stock Lot Inwarded")
+              handleClose()
+              onSuccess()
+            } catch (err) {
+              showError(err, "Failed to add stock")
+            } finally {
+              setIsAddingStock(false)
+            }
+          },
+        },
+      ],
+    })
+
+    confirmToastIdRef.current = toastId
   }
 
   return (
-    <>
-      <Modal
-        isOpen={!!product}
-        onClose={handleClose}
-        closeOnEsc={!showConfirmModal}
-        size="lg"
-        headerVariant="light"
+    <Modal
+      isOpen={!!product}
+      onClose={handleClose}
+      closeOnEsc={true}
+      size="lg"
+      headerVariant="light"
       icon={
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 shadow-2xs">
           <Package className="w-5 h-5 stroke-[2.5]" />
@@ -700,227 +711,5 @@ export default function QuickAddStockModal({
         </div>
       </form>
     </Modal>
-
-    {/* ─── Centered Confirmation Dialog ─── */}
-    {showConfirmModal &&
-      typeof document !== "undefined" &&
-      createPortal(
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="confirm-inwarding-title"
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => {
-            if (!isAddingStock) setShowConfirmModal(false)
-          }}
-        >
-          <div
-            className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-6 py-4 bg-slate-50/90 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 shadow-2xs">
-                  <PackageCheck className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <div>
-                  <h3
-                    id="confirm-inwarding-title"
-                    className="text-base font-bold text-slate-900 dark:text-slate-100 leading-snug"
-                  >
-                    Confirm Stock Inwarding
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Please verify batch details and pricing before confirming
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                disabled={isAddingStock}
-                onClick={() => setShowConfirmModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg p-1.5 transition-colors cursor-pointer"
-                aria-label="Close confirmation dialog"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Body Content */}
-            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-              {/* Product Identity */}
-              <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
-                <div className="min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Product
-                  </span>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
-                    {product.nameEn}
-                  </h4>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {effectivePackStr && (
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 shadow-2xs">
-                      {effectivePackStr}
-                    </span>
-                  )}
-                  <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-md bg-slate-200/80 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                    {product.baseUnit}
-                  </span>
-                </div>
-              </div>
-
-              {/* Hero Inwarding Quantity Card */}
-              <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border border-emerald-200 dark:border-emerald-800/80 p-4">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                    <Boxes className="w-3.5 h-3.5" />
-                    Inwarding Quantity
-                  </span>
-                  {hasCartons && parseFloat(cartons) > 0 && (
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-200/80 dark:bg-emerald-800/60 text-emerald-900 dark:text-emerald-100 font-mono">
-                      {cartons} {parseFloat(cartons) === 1 ? "Carton" : "Cartons"}
-                      {parseFloat(loose) > 0 ? ` + ${loose} ${countUnit.singular}` : ""}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black font-mono tracking-tight text-emerald-700 dark:text-emerald-400">
-                    +{parseFloat(addStockQty) || 0}
-                  </span>
-                  <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-                    {(parseFloat(addStockQty) || 0) === 1 ? countUnit.singular : countUnit.plural}
-                  </span>
-                </div>
-                {hasCartons && multiplierNum > 1 && (
-                  <p className="text-[11px] text-emerald-700/90 dark:text-emerald-400/90 mt-1">
-                    Carton Packing: {multiplierNum} {countUnit.plural} per carton
-                  </p>
-                )}
-              </div>
-
-              {/* Key Metrics Grid */}
-              <div className="grid grid-cols-2 gap-2.5">
-                {/* Lot / Batch */}
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-1">
-                    <Lock className="w-3 h-3 text-slate-400" />
-                    Lot / Batch No
-                  </div>
-                  <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-100">
-                    {addStockLotNumber.trim() || getNextLotNumber(matched?.lots)}
-                  </div>
-                </div>
-
-                {/* Expiry Date */}
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-1">
-                    <Calendar className="w-3 h-3 text-slate-400" />
-                    Expiry Date
-                  </div>
-                  <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-100">
-                    {addStockExpiry || new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
-                  </div>
-                </div>
-
-                {/* Purchase Cost */}
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                    Purchase Cost
-                  </div>
-                  <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-100">
-                    ৳{(parseFloat(addStockBuying) || product.buyingPrice || 0).toFixed(2)}
-                  </div>
-                  {hasCartons && multiplierNum > 1 && (
-                    <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
-                      ৳{((parseFloat(addStockBuying) || product.buyingPrice || 0) * multiplierNum).toFixed(2)} / ctn
-                    </div>
-                  )}
-                </div>
-
-                {/* Retail Price (MRP) */}
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 font-semibold mb-1">
-                    Retail Price (MRP)
-                  </div>
-                  <div className="text-sm font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                    ৳{(parseFloat(addStockRetail) || product.retailPrice || 0).toFixed(2)}
-                  </div>
-                  {hasCartons && multiplierNum > 1 && (
-                    <div className="text-[10px] font-mono text-emerald-600/80 dark:text-emerald-500">
-                      ৳{((parseFloat(addStockRetail) || product.retailPrice || 0) * multiplierNum).toFixed(2)} / ctn
-                    </div>
-                  )}
-                </div>
-
-                {/* Wholesale Price */}
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                    Wholesale Price
-                  </div>
-                  <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-100">
-                    ৳{(parseFloat(addStockWholesale) || product.wholesalePrice || parseFloat(addStockRetail) || 0).toFixed(2)}
-                  </div>
-                </div>
-
-                {/* Challan No */}
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                    Challan No
-                  </div>
-                  <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-100 truncate">
-                    {addStockChallan.trim() || `CH-${Date.now().toString().slice(-6)}`}
-                  </div>
-                </div>
-              </div>
-
-              {/* Supplier Info */}
-              <div className="px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 flex items-center justify-between text-xs">
-                <span className="text-slate-500 dark:text-slate-400 font-medium">Supplier / Vendor:</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[240px]">
-                  {addStockSupplier.trim() || "Syngenta Bangladesh Limited"}
-                </span>
-              </div>
-
-              {/* Default Carton Size Notification (if checked) */}
-              {hasCartons && saveAsDefaultCarton && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>
-                    Will save <strong>{multiplierNum}</strong> as default carton size for this product.
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Footer Actions */}
-            <div className="px-6 py-4 bg-slate-50/90 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="md"
-                disabled={isAddingStock}
-                onClick={() => setShowConfirmModal(false)}
-                className="cursor-pointer"
-              >
-                Back to Edit
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                size="md"
-                isLoading={isAddingStock}
-                onClick={handleConfirmInwarding}
-                className="bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold px-6 shadow-sm cursor-pointer"
-              >
-                Confirm Inwarding
-              </Button>
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
-    </>
   )
 }

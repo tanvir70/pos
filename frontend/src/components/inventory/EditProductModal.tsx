@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react"
-import { createPortal } from "react-dom"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import type { Product, GroupedProduct } from "../../types"
 import { updateProduct } from "../../api/endpoints"
 import { useToast } from "../../context/ToastContext"
@@ -13,9 +12,6 @@ import {
   Tag,
   ShieldAlert,
   TrendingUp,
-  CheckCircle2,
-  X,
-  PackageCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -54,7 +50,8 @@ export default function EditProductModal({
   onClose,
   onSuccess,
 }: EditProductModalProps) {
-  const { showSuccess, showError, showWarning } = useToast()
+  const { showSuccess, showError, showWarning, showToast, dismissToast } = useToast()
+  const confirmToastIdRef = useRef<string | null>(null)
 
   // Form states
   const [nameEn, setNameEn] = useState("")
@@ -70,7 +67,6 @@ export default function EditProductModal({
   const [defaultBarcode, setDefaultBarcode] = useState("")
   const [minStockAlert, setMinStockAlert] = useState("5")
   const [isSaving, setIsSaving] = useState(false)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   // Target product extraction (handles either Product or GroupedProduct)
   const targetProduct = useMemo<Product | null>(() => {
@@ -106,22 +102,17 @@ export default function EditProductModal({
       )
       setDefaultBarcode(targetProduct.defaultBarcode || "")
       setMinStockAlert(String(targetProduct.minStockAlert ?? 5))
-      setShowConfirmModal(false)
     }
   }, [targetProduct])
 
   useEffect(() => {
-    if (!showConfirmModal) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault()
-        e.stopPropagation()
-        setShowConfirmModal(false)
+    return () => {
+      if (confirmToastIdRef.current) {
+        dismissToast(confirmToastIdRef.current)
+        confirmToastIdRef.current = null
       }
     }
-    window.addEventListener("keydown", onKeyDown, true)
-    return () => window.removeEventListener("keydown", onKeyDown, true)
-  }, [showConfirmModal])
+  }, [dismissToast])
 
   // Dirty state tracking (Layer 1 Invariant: prevent redundant DB locks)
   const isChanged = useMemo(() => {
@@ -196,62 +187,88 @@ export default function EditProductModal({
       return
     }
 
-    setShowConfirmModal(true)
-  }
-
-  const handleConfirmUpdate = async () => {
-    if (!targetProduct) return
-    const cleanNameEn = nameEn.trim()
-    const retail = parseFloat(standardRetailPrice) || 0
-    const wholesale = parseFloat(standardWholesalePrice) || 0
     const buying = Math.max(0, parseFloat(buyingPrice) || 0)
     const multiplier = Math.max(1, parseFloat(cartonMultiplier) || 1)
     const minAlert = Math.max(0, parseInt(minStockAlert, 10) || 5)
 
-    const payload: Partial<Product> = {
-      nameEn: cleanNameEn,
-      nameBn: nameBn.trim() || cleanNameEn,
-      category: category.trim(),
-      companyName: companyName.trim() || "Syngenta Bangladesh Limited",
-      baseUnit: baseUnit.trim(),
-      packSize: packSize.trim() || null,
-      unitSize: packSize.trim() || null,
-      cartonMultiplier: multiplier,
-      standardRetailPrice: retail,
-      standardWholesalePrice: wholesale,
-      buyingPrice: buying,
-      defaultBarcode: defaultBarcode.trim() || targetProduct.defaultBarcode,
-      minStockAlert: minAlert,
+    // Dismiss previous confirmation toast if active
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
     }
 
-    try {
-      setIsSaving(true)
-      const updated = await updateProduct(targetProduct.id, payload)
-      const summaryMsg = `${updated.nameEn} • MRP: ৳${updated.standardRetailPrice} • Wholesale: ৳${updated.standardWholesalePrice || updated.standardRetailPrice} • Pack: ${updated.packSize || updated.baseUnit}`
-      showSuccess(summaryMsg, "Product Master Updated")
-      setShowConfirmModal(false)
-      onSuccess(updated)
-      onClose()
-    } catch (err) {
-      showError(err, "Failed to update product master")
-    } finally {
-      setIsSaving(false)
-    }
+    const toastId = showToast({
+      type: "success",
+      title: "Confirm Product Master Update",
+      message: `Update ${cleanNameEn} • MRP ৳${retail.toFixed(2)} • Wholesale ৳${wholesale.toFixed(2)} • Buy ৳${buying.toFixed(2)} • Pack: ${packSize || baseUnit} (${multiplier} pcs/ctn)?`,
+      duration: 0,
+      closePrevious: true,
+      position: "center",
+      actions: [
+        {
+          label: "Cancel",
+          intent: "default",
+          onClick: () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+          },
+        },
+        {
+          label: "Confirm Update",
+          intent: "primary",
+          onClick: async () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+            try {
+              setIsSaving(true)
+              const payload: Partial<Product> = {
+                nameEn: cleanNameEn,
+                nameBn: nameBn.trim() || cleanNameEn,
+                category: category.trim(),
+                companyName: companyName.trim() || "Syngenta Bangladesh Limited",
+                baseUnit: baseUnit.trim(),
+                packSize: packSize.trim() || null,
+                unitSize: packSize.trim() || null,
+                cartonMultiplier: multiplier,
+                standardRetailPrice: retail,
+                standardWholesalePrice: wholesale,
+                buyingPrice: buying,
+                defaultBarcode: defaultBarcode.trim() || targetProduct.defaultBarcode,
+                minStockAlert: minAlert,
+              }
+              const updated = await updateProduct(targetProduct.id, payload)
+              const summaryMsg = `${updated.nameEn} • MRP ৳${updated.standardRetailPrice} • Wholesale ৳${updated.standardWholesalePrice || updated.standardRetailPrice} • Pack: ${updated.packSize || updated.baseUnit}`
+              showSuccess(summaryMsg, "Product Master Updated")
+              onSuccess(updated)
+              onClose()
+            } catch (err) {
+              showError(err, "Failed to update product master")
+            } finally {
+              setIsSaving(false)
+            }
+          },
+        },
+      ],
+    })
+
+    confirmToastIdRef.current = toastId
   }
 
   const handleModalClose = () => {
-    setShowConfirmModal(false)
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
     onClose()
   }
 
   return (
-    <>
-      <Modal
-        isOpen={isOpen}
-        onClose={handleModalClose}
-        closeOnEsc={!showConfirmModal}
-        size="lg"
-        headerVariant="light"
+    <Modal
+      isOpen={isOpen}
+      onClose={handleModalClose}
+      closeOnEsc={true}
+      size="lg"
+      headerVariant="light"
       icon={
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-800 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-2xs">
           <Edit3 className="w-5 h-5 stroke-[2.5]" />
@@ -518,164 +535,5 @@ export default function EditProductModal({
         </div>
       </form>
     </Modal>
-
-    {/* ─── Centered Confirmation Dialog ─── */}
-    {showConfirmModal &&
-      typeof document !== "undefined" &&
-      createPortal(
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="confirm-edit-product-title"
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => {
-            if (!isSaving) setShowConfirmModal(false)
-          }}
-        >
-          <div
-            className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-6 py-4 bg-slate-50/90 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 dark:bg-emerald-950/80 text-teal-700 dark:text-emerald-400 border border-teal-200/80 dark:border-emerald-800/80 shadow-2xs">
-                  <PackageCheck className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <div>
-                  <h3
-                    id="confirm-edit-product-title"
-                    className="text-base font-bold text-slate-900 dark:text-slate-100 leading-snug"
-                  >
-                    Confirm Product Master Update
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Review product changes before updating master catalog
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                disabled={isSaving}
-                onClick={() => setShowConfirmModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg p-1.5 transition-colors cursor-pointer"
-                aria-label="Close confirmation dialog"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-              <div className="p-3.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Product Master
-                  </span>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
-                    {nameEn}
-                  </h4>
-                  {nameBn && nameBn !== nameEn && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                      {nameBn}
-                    </p>
-                  )}
-                </div>
-                <div className="shrink-0 text-right">
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600">
-                    #{targetProduct.productCode}
-                  </span>
-                  <span className="block text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                    {category}
-                  </span>
-                </div>
-              </div>
-
-              {/* Pricing & Units Grid */}
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-1">
-                    Retail Price (MRP)
-                  </div>
-                  <div className="text-sm font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                    ৳{parseFloat(standardRetailPrice || "0").toFixed(2)}
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                    Wholesale Price
-                  </div>
-                  <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-100">
-                    ৳{parseFloat(standardWholesalePrice || "0").toFixed(2)}
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                    Purchase Cost
-                  </div>
-                  <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-100">
-                    ৳{(parseFloat(buyingPrice) || 0).toFixed(2)}
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                    Gross Margin
-                  </div>
-                  <div className="text-sm font-mono font-bold text-slate-800 dark:text-slate-100">
-                    {marginPct ? `${marginPct}%` : "—"}
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                    Pack Size & Unit
-                  </div>
-                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">
-                    {packSize || "N/A"} ({baseUnit})
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-                    Carton Packaging
-                  </div>
-                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-100">
-                    {cartonMultiplier} {baseUnit}s / ctn
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 bg-slate-50/90 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-              <Button
-                type="button"
-                variant="ghost"
-                size="md"
-                disabled={isSaving}
-                onClick={() => setShowConfirmModal(false)}
-                className="cursor-pointer"
-              >
-                Back to Edit
-              </Button>
-              <Button
-                type="button"
-                variant="primary"
-                size="md"
-                isLoading={isSaving}
-                onClick={handleConfirmUpdate}
-                className="bg-teal-700 hover:bg-teal-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white font-bold px-6 shadow-sm cursor-pointer"
-              >
-                Confirm Update
-              </Button>
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
-    </>
   )
 }

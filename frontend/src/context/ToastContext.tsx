@@ -334,12 +334,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
     return (
       <React.Fragment key={toast.id}>
-        {isConfirmation && (
+        {(isConfirmation || (isCenter && Boolean(toast.actions && toast.actions.length > 0))) && (
           <button
             type="button"
-            aria-label="Cancel logout"
+            aria-label="Dismiss toast overlay"
             onClick={() => dismissToast(toast.id)}
-            className="pointer-events-auto fixed inset-0 z-[1] h-screen w-screen cursor-default bg-slate-950/55 backdrop-blur-[1px]"
+            className="pointer-events-auto fixed inset-0 z-[1] h-screen w-screen cursor-default bg-slate-950/45 backdrop-blur-[1px]"
           />
         )}
         <div
@@ -352,7 +352,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 : isTopCenter
                   ? "w-full animate-in slide-in-from-top-4 fade-in duration-250 shadow-2xl backdrop-blur-md rounded-2xl border-2"
                   : isCenter
-                    ? "w-full animate-in zoom-in-95 fade-in duration-200 shadow-2xl backdrop-blur-md rounded-2xl border-2"
+                    ? "relative z-[2] w-full animate-in zoom-in-95 fade-in duration-200 shadow-2xl backdrop-blur-md rounded-2xl border-2"
                     : "w-full animate-in slide-in-from-top-2 duration-200"
           } ${
             isConfirmation
@@ -399,10 +399,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                       action.intent === "danger"
                         ? "bg-rose-600 border-rose-500 text-white hover:bg-rose-500"
                         : action.intent === "primary"
-                          ? "bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 shadow-xs"
+                          ? isSuccess
+                            ? "bg-white border-white text-emerald-950 hover:bg-emerald-50 shadow-md font-bold"
+                            : "bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 shadow-xs"
                           : isConfirmation
                             ? "bg-white dark:bg-slate-800 border-red-300 dark:border-rose-900/80 text-red-700 dark:text-rose-300 hover:bg-red-50 dark:hover:bg-slate-700"
-                            : "bg-white/10 border-white/25 text-white hover:bg-white/20"
+                            : isSuccess
+                              ? "bg-emerald-950/40 border-emerald-400/40 text-emerald-100 hover:bg-emerald-950/70 font-semibold"
+                              : "bg-white/10 border-white/25 text-white hover:bg-white/20"
                     }`}
                   >
                     {action.label}
@@ -461,11 +465,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {toasts.some((t) => t.position === "center") && (
         <div
           aria-live="polite"
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] flex flex-col items-center gap-2.5 max-w-sm sm:max-w-md w-full pointer-events-none px-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none p-4"
         >
-          {toasts
-            .filter((t) => t.position === "center")
-            .map(renderToast)}
+          <div className="flex flex-col items-center gap-2.5 max-w-sm sm:max-w-md w-full pointer-events-none">
+            {toasts
+              .filter((t) => t.position === "center")
+              .map(renderToast)}
+          </div>
         </div>
       )}
 
