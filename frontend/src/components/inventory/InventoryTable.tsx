@@ -375,10 +375,10 @@ export default function InventoryTable({
                                 <button
                                   type="button"
                                   onClick={() => toggleLotsExpanded(item.productId)}
-                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold border transition-all cursor-pointer ${
+                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold border transition-all cursor-pointer ${
                                     isExpanded
                                       ? "bg-slate-900 dark:bg-emerald-600 text-white border-slate-900 dark:border-emerald-600 shadow-2xs"
-                                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-emerald-700 dark:hover:text-emerald-300 hover:border-emerald-300"
+                                      : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:border-emerald-300"
                                   }`}
                                   title={
                                     isExpanded
@@ -386,7 +386,7 @@ export default function InventoryTable({
                                       : `View ${activeLots.length} separate batches`
                                   }
                                 >
-                                  <Layers className="w-3 h-3 text-slate-500 dark:text-slate-400" />
+                                  <Layers className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
                                   <span>{activeLots.length} Lots</span>
                                   {isExpanded ? (
                                     <ChevronUp className="w-2.5 h-2.5" />
