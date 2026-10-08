@@ -1,0 +1,26 @@
+services:
+  pos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rajib-pos
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - pos_data:/app/data
+      - pos_logs:/app/logs
+    environment:
+      - ENVIRONMENT=production
+      - PORT=8000
+      - HOST=0.0.0.0
+      - DATABASE_URL=sqlite+aiosqlite:////app/data/pos.db
+      - SYNC_DATABASE_URL=sqlite:////app/data/pos.db
+      - JWT_SECRET=PosSystemSecureKey2026SecureSecretForHmacSha256MustBe32BytesOrLonger
+      - TIMEZONE=Asia/Dhaka
+
+volumes:
+  pos_data:
+    driver: local
+  pos_logs:
+    driver: local

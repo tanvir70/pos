@@ -1,0 +1,23 @@
+[Unit]
+Description=Rajib Enterprise POS & Inventory Backend Service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/rajib-pos/backend-python
+ExecStart=/var/www/rajib-pos/backend-python/.venv/bin/python run.py
+Restart=always
+RestartSec=5
+Environment=ENVIRONMENT=production
+Environment=PORT=8000
+Environment=HOST=127.0.0.1
+
+# Resource limits & sandbox security
+LimitNOFILE=65536
+StandardOutput=append:/var/log/rajib-pos/app.log
+StandardError=append:/var/log/rajib-pos/error.log
+
+[Install]
+WantedBy=multi-user.target
