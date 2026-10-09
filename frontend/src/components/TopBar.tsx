@@ -59,12 +59,9 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
 
         <Separator orientation="vertical" className="h-5 bg-slate-200 dark:bg-slate-800" />
 
-        <div className="flex items-center gap-2 min-w-0">
-          <BrandLogo size="xs" variant="image" className="shrink-0" />
-          <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
-            {TAB_LABELS[activeTab]}
-          </span>
-        </div>
+        <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+          {TAB_LABELS[activeTab]}
+        </span>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">
