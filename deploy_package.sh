@@ -28,7 +28,7 @@ echo "=========================================================="
 echo "  [3/4] Running Backend Quality Gates (pytest suite)"
 echo "=========================================================="
 cd "$PROJECT_ROOT/backend-python"
-PYTHONPATH=.:.deps python3 .deps/bin/pytest tests/ -q
+PYTHONPATH=.:.deps python3 -m pytest tests/ -q
 cd "$PROJECT_ROOT"
 
 echo "=========================================================="
@@ -43,6 +43,7 @@ zip -r "$PROJECT_ROOT/deploy.zip" \
     alembic \
     alembic.ini \
     run.py \
+    passenger_wsgi.py \
     requirements.txt \
     watchdog.sh \
     reset_password.py \

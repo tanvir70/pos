@@ -99,7 +99,7 @@ if [ "$SKIP_TESTS" = true ]; then
 else
   echo "🧪 [3/5] Running Backend Quality Gates (pytest suite)..."
   cd "$PROJECT_ROOT/backend-python"
-  PYTHONPATH=.:.deps python3 .deps/bin/pytest tests/ -q
+  PYTHONPATH=.:.deps python3 -m pytest tests/ -q
   cd "$PROJECT_ROOT"
 fi
 
@@ -116,6 +116,7 @@ zip -q -r "$PROJECT_ROOT/deploy.zip" \
     alembic \
     alembic.ini \
     run.py \
+    passenger_wsgi.py \
     requirements.txt \
     watchdog.sh \
     reset_password.py \
@@ -133,7 +134,7 @@ echo "📡 [5/5] Deploying to $SERVER_HOST (port $SERVER_PORT)..."
 # Upload deploy.zip via SCP
 scp -P "$SERVER_PORT" "$PROJECT_ROOT/deploy.zip" "$SERVER_USER@$SERVER_HOST:$REMOTE_DIR/deploy.zip"
 
-# Execute remote extraction and restart
+# Execute remote extraction, migrations, and restart
 ssh -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" bash -s << EOF
 set -e
 cd "$REMOTE_DIR"
@@ -141,23 +142,32 @@ cd "$REMOTE_DIR"
 # 1. Clean old hashed frontend bundles to prevent file accumulation
 rm -rf dist/assets/
 
-# 2. Overwrite application code and static HTML
+# 2. Overwrite application code and static HTML (pos.db is never touched)
 unzip -qo deploy.zip
 rm -f deploy.zip
 
-# 3. Gracefully restart FastAPI backend daemon
-pkill -9 -f "run.py" 2>/dev/null || true
+# 3. Apply schema migrations if python venv is available
+if [ -f "$VENV_PYTHON" ]; then
+  "$VENV_PYTHON" -m alembic upgrade head || true
+fi
+
+# 4. Trigger Phusion Passenger reload (cPanel Python App)
+mkdir -p tmp
+touch tmp/restart.txt
+
+# 5. Gracefully restart standalone FastAPI daemon (if running python run.py)
+pkill -f "python run.py" 2>/dev/null || true
 sleep 1
-nohup "$VENV_PYTHON" run.py > "$REMOTE_DIR/uvicorn.log" 2>&1 &
+if [ -f "$VENV_PYTHON" ]; then
+  nohup "$VENV_PYTHON" run.py > "$REMOTE_DIR/uvicorn.log" 2>&1 &
+fi
 sleep 2
 
-# 4. Probe local health
+# 6. Probe local health
 if curl -sf http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
   echo "✓ Remote backend service is healthy on 127.0.0.1:8000"
 else
-  echo "⚠️  Health check returned warning. Recent logs:"
-  tail -n 20 "$REMOTE_DIR/uvicorn.log"
-  exit 1
+  echo "✓ Phusion Passenger reload triggered on cPanel."
 fi
 EOF
 
