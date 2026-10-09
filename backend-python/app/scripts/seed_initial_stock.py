@@ -1,6 +1,6 @@
 """
 Seed Initial Stock Script
-Rajib Enterprise POS & Inventory System
+Messers Rajib Enterprise POS & Inventory System
 
 Initializes 10 base units of stock for every product in the database:
 - Creates LOT-01 for each product that currently has no stock/lots.

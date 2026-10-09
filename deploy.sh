@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# One-Click Fast Deployment Script for Messrs. Rajib Enterprise POS
+# One-Click Fast Deployment Script for Messers Rajib Enterprise POS
 #
 # Usage:
 #   ./deploy.sh             Full build, backend tests, deploy & restart (~15s)

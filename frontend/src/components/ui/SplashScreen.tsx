@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react"
 import { Sprout, RotateCw } from "lucide-react"
+import { STORE_INFO } from "../../constants/store"
+import BrandLogo from "./BrandLogo"
 
 export interface SplashScreenProps {
   message?: string
@@ -31,13 +33,11 @@ export default function SplashScreen({
 
       <div className="relative z-10 flex flex-col items-center max-w-sm text-center">
         {/* Dealership Brand Icon */}
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white flex items-center justify-center shadow-lg shadow-emerald-700/20 ring-1 ring-emerald-500/20 mb-4 animate-pulse">
-          <Sprout className="w-7 h-7" />
-        </div>
+        <BrandLogo size="xl" variant="image" className="mb-4 animate-pulse" />
 
         {/* Brand Names */}
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-          Rajib Enterprise
+          {STORE_INFO.name}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
           মেসার্স রাজীব এন্টারপ্রাইজ • Agrochemical Cockpit

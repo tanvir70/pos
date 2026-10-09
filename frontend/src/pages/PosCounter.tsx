@@ -6,7 +6,7 @@ import type {
   SaleRequest,
   SaleResponse,
 } from "../types"
-import { getStock, getCustomers, createSale, createCustomer } from "../api/endpoints"
+import { getStock, getCustomers, createSale, createCustomer, updateCustomer } from "../api/endpoints"
 import { useCart } from "../context/CartContext"
 import { useToast } from "../context/ToastContext"
 import { useBarcodeScanner } from "../utils/barcode"
@@ -220,13 +220,39 @@ export default function PosCounter({
   ])
 
   const resolveCustomerForSale = useCallback(
-    async ({ phone, name }: { phone: string; name: string }): Promise<Customer> => {
+    async ({
+      phone,
+      name,
+      address,
+    }: {
+      phone: string
+      name: string
+      address?: string
+    }): Promise<Customer> => {
       const normalizedPhone = normalizeBangladeshPhone(phone)
       const existingCustomer = customers.find(
         (customer) => normalizeBangladeshPhone(customer.phone) === normalizedPhone,
       )
 
       if (existingCustomer) {
+        if (address?.trim() && !existingCustomer.villageAddress && !existingCustomer.address) {
+          try {
+            const updated = await updateCustomer(existingCustomer.id, {
+              name: existingCustomer.name,
+              phone: existingCustomer.phone,
+              customerType: existingCustomer.customerType,
+              villageAddress: address.trim(),
+            })
+            setCustomers((current) =>
+              current.map((c) => (c.id === updated.id ? updated : c)),
+            )
+            setSelectedCustomerId(updated.id)
+            setCompletedCustomer(updated)
+            return updated
+          } catch (e) {
+            console.error("Failed to update customer address:", e)
+          }
+        }
         setSelectedCustomerId(existingCustomer.id)
         setCompletedCustomer(existingCustomer)
         return existingCustomer
@@ -236,6 +262,7 @@ export default function PosCounter({
         name: name.trim(),
         phone: normalizedPhone,
         customerType: saleMode,
+        villageAddress: address?.trim() || undefined,
         currentDue: 0,
       })
 

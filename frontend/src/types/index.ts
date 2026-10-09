@@ -1,5 +1,5 @@
 // ============================================================================
-// Domain Types & DTOs for Rajib Enterprise POS & Inventory
+// Domain Types & DTOs for Messers Rajib Enterprise POS & Inventory
 // Matches backend Spring Boot entities and REST DTOs
 // ============================================================================
 
@@ -213,6 +213,7 @@ export interface CustomerRequest {
   whatsappNumber?: string | null
   email?: string | null
   villageAddress?: string | null
+  address?: string | null
   landArea?: string | null
   customerType?: CustomerType | string
   currentDue?: number | null

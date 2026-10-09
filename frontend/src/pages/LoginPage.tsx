@@ -14,6 +14,8 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { useAuth } from "../context/AuthContext"
+import { STORE_INFO } from "../constants/store"
+import BrandLogo from "../components/ui/BrandLogo"
 
 export default function LoginPage() {
   const { login, isLoggingIn } = useAuth()
@@ -75,9 +77,7 @@ export default function LoginPage() {
             <div>
               {/* Dealership Crest & Live Indicator */}
               <div className="flex items-center justify-between gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25 ring-1 ring-emerald-400/30 shrink-0">
-                  <Sprout className="w-6 h-6" />
-                </div>
+                <BrandLogo size="lg" variant="image" className="shrink-0" />
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold tracking-wide">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -90,7 +90,7 @@ export default function LoginPage() {
               {/* Title & Bengali Descriptor */}
               <div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                  Rajib Enterprise
+                  {STORE_INFO.name}
                 </h1>
                 <p className="text-sm font-medium text-emerald-400/90 mt-1">
                   মেসার্স রাজীব এন্টারপ্রাইজ • Agrochemical Cockpit
@@ -288,7 +288,7 @@ export default function LoginPage() {
           All right reserve for Gridmark Labs.
         </p>
         <p className="text-[11px] text-slate-400 flex items-center gap-2">
-          <span>Messrs. Rajib Enterprise POS Terminal</span>
+          <span>{STORE_INFO.name} POS Terminal</span>
           <span>•</span>
           <span>Engineered by Gridmark Labs</span>
           <span>•</span>

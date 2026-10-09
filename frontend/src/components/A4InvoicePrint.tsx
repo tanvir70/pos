@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 import { FileText, Printer, X } from "lucide-react"
 import type { SaleResponse, Customer } from "../types"
 import { STORE_INFO } from "../constants/store"
+import BrandLogo from "./ui/BrandLogo"
 
 // BUSINESS DECISION: A4 Invoice & Challan prints wholesale agricultural dispatches with
 // full customer profile, carton conversions, previous balance integration, and dual legal signatures.
@@ -185,24 +186,27 @@ export default function A4InvoicePrint({
             {/* Agrochemical Dealership Letterhead */}
             <div className="border-b-2 border-emerald-800 pb-4 mb-4">
               <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-black text-emerald-800 tracking-tight">
-                      {STORE_INFO.name}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
-                      {STORE_INFO.tagline}
-                    </span>
+                <div className="flex items-start gap-3.5">
+                  <BrandLogo size="lg" variant="image" className="shrink-0 mt-0.5" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-black text-emerald-800 tracking-tight">
+                        {STORE_INFO.name}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                        {STORE_INFO.tagline}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-gray-700 mt-0.5">
+                      {STORE_INFO.dealershipDescription}
+                    </p>
+                    <p className="text-[11px] text-gray-600">
+                      {STORE_INFO.address}.
+                    </p>
+                    <p className="text-[11px] text-gray-600">
+                      Mobile: {STORE_INFO.phone}
+                    </p>
                   </div>
-                  <p className="text-xs font-semibold text-gray-700 mt-0.5">
-                    {STORE_INFO.dealershipDescription}
-                  </p>
-                  <p className="text-[11px] text-gray-600">
-                    {STORE_INFO.address}.
-                  </p>
-                  <p className="text-[11px] text-gray-600">
-                    Mobile: {STORE_INFO.phone}
-                  </p>
                 </div>
 
                 <div className="text-right">
@@ -216,7 +220,7 @@ export default function A4InvoicePrint({
                     Date: {formattedDate} ({formattedTime})
                   </p>
                   <p className="text-[11px] text-gray-600 font-medium">
-                    Served by: Rajib Enterprise
+                    Served by: {STORE_INFO.name}
                   </p>
                 </div>
               </div>
@@ -477,7 +481,7 @@ export default function A4InvoicePrint({
                       Authorized Signatory
                     </p>
                     <p className="text-[10px] text-gray-500">
-                      Rajib Enterprise
+                      {STORE_INFO.name}
                     </p>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 """
 Setup Carton Multiplier Test Stock Script
-Rajib Enterprise POS & Inventory System
+Messers Rajib Enterprise POS & Inventory System
 
 Arranges the inventory database specifically for testing carton multipliers:
 - Sets stock in terms of CARTONS for all 118 catalog products:

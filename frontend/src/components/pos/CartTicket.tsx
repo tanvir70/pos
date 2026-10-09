@@ -252,16 +252,17 @@ export default function CartTicket({ customers }: CartTicketProps = {}) {
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
             {cart.map((item, index) => {
-              const lineTotal = calcLineTotal(item.quantity, item.unitPrice)
+              const currQty = Number(item.quantity) || 0
+              const lineTotal = calcLineTotal(currQty, item.unitPrice)
               const availableStock = Number.isFinite(Number(item.availableStock))
                 ? Math.max(0, Number(item.availableStock))
                 : 0
-              const isAtStockLimit = item.quantity >= availableStock
+              const isAtStockLimit = currQty >= availableStock
               const stockLimitMessage = `Only ${availableStock} ${pluralizeUnit(item.baseUnit, availableStock)} available in stock.`
               const multiplier = getEffectiveMultiplier(item.cartonMultiplier, item.packSize)
               const hasCartons = multiplier > 1
-              const ctns = hasCartons ? Math.floor(Number(item.quantity) / multiplier) : 0
-              const loose = hasCartons ? Math.round((Number(item.quantity) % multiplier) * 1000) / 1000 : 0
+              const ctns = hasCartons ? Math.floor(currQty / multiplier) : 0
+              const loose = hasCartons ? Math.round((currQty % multiplier) * 1000) / 1000 : 0
 
               return (
                 <article
@@ -375,17 +376,61 @@ export default function CartTicket({ customers }: CartTicketProps = {}) {
                         {hasCartons && (
                           <button
                             type="button"
+                            disabled={isAtStockLimit}
                             onClick={() => {
-                              const currQty = Number(item.quantity) || 0
-                              const nextQty = currQty + multiplier
-                              if (nextQty > availableStock) {
+                              if (currQty >= availableStock) {
                                 showWarning(stockLimitMessage, "Stock limit reached")
                                 return
                               }
-                              adjustQuantity(item.id, multiplier)
+
+                              // Smart Carton calculation:
+                              // If current quantity is loose (< 1 full carton, like 1 scanned packet):
+                              // The cashier scanned 1 to register the item, but wants 1 full carton!
+                              let targetQty: number
+                              if (currQty < multiplier) {
+                                targetQty = multiplier
+                              } else if (currQty % multiplier !== 0) {
+                                // Has loose units (e.g. 31 packets): check if +multiplier fits.
+                                if (currQty + multiplier <= availableStock) {
+                                  targetQty = currQty + multiplier
+                                } else {
+                                  // Next full carton boundary or capped available stock
+                                  const nextCartonBoundary = Math.ceil(currQty / multiplier) * multiplier
+                                  targetQty = Math.min(availableStock, nextCartonBoundary)
+                                }
+                              } else {
+                                targetQty = currQty + multiplier
+                              }
+
+                              // Guard against stock limit
+                              if (targetQty > availableStock) {
+                                if (currQty < availableStock) {
+                                  targetQty = availableStock
+                                  setQuantity(item.id, targetQty)
+                                  showSuccess(
+                                    `Set to ${targetQty} ${pluralizeUnit(item.baseUnit, targetQty)} (maximum available in lot)`,
+                                    "Stock adjusted",
+                                  )
+                                  return
+                                }
+                                showWarning(stockLimitMessage, "Stock limit reached")
+                                return
+                              }
+
+                              setQuantity(item.id, targetQty)
                             }}
-                            className="h-8 items-center justify-center rounded-lg border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 px-2 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:border-emerald-400 cursor-pointer transition-colors shadow-2xs whitespace-nowrap active:scale-95"
-                            title={`Add 1 full carton (+${multiplier} ${item.baseUnit})`}
+                            className={`h-8 items-center justify-center rounded-lg border px-2 text-[10px] font-bold transition-colors shadow-2xs whitespace-nowrap active:scale-95 ${
+                              isAtStockLimit
+                                ? "border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed opacity-60"
+                                : "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:border-emerald-400 cursor-pointer"
+                            }`}
+                            title={
+                              isAtStockLimit
+                                ? `Stock limit reached (${availableStock} in lot)`
+                                : currQty < multiplier
+                                  ? `Set to 1 full carton (${multiplier} ${pluralizeUnit(item.baseUnit, multiplier)})`
+                                  : `Add 1 carton (+${multiplier} ${pluralizeUnit(item.baseUnit, multiplier)})`
+                            }
                           >
                             +1 Ctn
                           </button>

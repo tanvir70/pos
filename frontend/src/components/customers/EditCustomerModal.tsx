@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import type { Customer, CustomerRequest, CustomerType } from "../../types"
 import { updateCustomer } from "../../api/endpoints"
+import { useToast } from "../../context/ToastContext"
 import {
   Select,
   SelectTrigger,
@@ -22,6 +23,9 @@ export default function EditCustomerModal({
   onClose,
   onSuccess,
 }: EditCustomerModalProps) {
+  const { showToast, showWarning, showError, dismissToast } = useToast()
+  const confirmToastIdRef = useRef<string | null>(null)
+
   const [form, setForm] = useState<CustomerRequest>({
     name: "",
     businessName: "",
@@ -32,6 +36,42 @@ export default function EditCustomerModal({
   })
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState<boolean>(false)
+
+  // Clean up confirmation toast if component unmounts
+  useEffect(() => {
+    return () => {
+      if (confirmToastIdRef.current) {
+        dismissToast(confirmToastIdRef.current)
+        confirmToastIdRef.current = null
+      }
+    }
+  }, [dismissToast])
+
+  // Dismiss confirmation toast when modal closes or ESC is pressed
+  const handleClose = () => {
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
+    onClose()
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (confirmToastIdRef.current) {
+          dismissToast(confirmToastIdRef.current)
+          confirmToastIdRef.current = null
+          return
+        }
+        handleClose()
+      }
+    }
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown)
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isOpen, dismissToast])
 
   useEffect(() => {
     if (customer) {
@@ -80,7 +120,8 @@ export default function EditCustomerModal({
     e.preventDefault()
     if (!isChanged) return
 
-    if (!form.name.trim()) {
+    const cleanName = form.name.trim()
+    if (!cleanName) {
       setFormError("Customer name is required.")
       return
     }
@@ -94,24 +135,200 @@ export default function EditCustomerModal({
       return
     }
 
-    try {
-      setIsSaving(true)
-      setFormError(null)
-      const updated = await updateCustomer(customer.id, {
-        name: form.name.trim(),
-        phone: cleanPhone,
-        businessName: form.businessName?.trim() ? form.businessName.trim() : null,
-        villageAddress: form.villageAddress?.trim() ? form.villageAddress.trim() : null,
-        landArea: form.landArea?.trim() ? form.landArea.trim() : null,
-        customerType: form.customerType,
+    // Build changes diff list
+    const changes: {
+      label: string
+      oldValue: string
+      newValue: string
+      diffBadge?: string
+      badgeVariant?: "positive" | "negative" | "neutral"
+    }[] = []
+
+    const origName = (customer.name || "").trim()
+    if (cleanName !== origName) {
+      changes.push({
+        label: "Customer Name",
+        oldValue: origName || "—",
+        newValue: cleanName,
       })
-      onSuccess(updated)
-      onClose()
-    } catch (err: any) {
-      setFormError(err?.message || "Failed to update customer profile.")
-    } finally {
-      setIsSaving(false)
     }
+
+    const origPhone = (customer.phone || "").trim()
+    if (cleanPhone !== origPhone) {
+      changes.push({
+        label: "Mobile Number",
+        oldValue: origPhone || "—",
+        newValue: cleanPhone,
+      })
+    }
+
+    const origType = (customer.customerType || "RETAIL").toUpperCase()
+    const newType = (form.customerType || "RETAIL").toUpperCase()
+    if (newType !== origType) {
+      changes.push({
+        label: "Customer Type",
+        oldValue: origType === "WHOLESALE" ? "Wholesale Customer" : "Retail Farmer",
+        newValue: newType === "WHOLESALE" ? "Wholesale Customer" : "Retail Farmer",
+        diffBadge: newType,
+        badgeVariant: newType === "WHOLESALE" ? "positive" : "neutral",
+      })
+    }
+
+    const origBusiness = (customer.businessName || "").trim()
+    const newBusiness = (form.businessName || "").trim()
+    if (newBusiness !== origBusiness) {
+      changes.push({
+        label: "Business Name",
+        oldValue: origBusiness || "—",
+        newValue: newBusiness || "—",
+      })
+    }
+
+    const origLand = (customer.landArea || "").trim()
+    const newLand = (form.landArea || "").trim()
+    if (newLand !== origLand) {
+      changes.push({
+        label: "Land Area",
+        oldValue: origLand || "—",
+        newValue: newLand || "—",
+      })
+    }
+
+    const origAddress = (customer.villageAddress || customer.address || "").trim()
+    const newAddress = (form.villageAddress || "").trim()
+    if (newAddress !== origAddress) {
+      changes.push({
+        label: "Village / Address",
+        oldValue: origAddress || "—",
+        newValue: newAddress || "—",
+      })
+    }
+
+    if (changes.length === 0) {
+      showWarning("No changes were made to save.")
+      return
+    }
+
+    const executeSave = async () => {
+      try {
+        setIsSaving(true)
+        setFormError(null)
+        const updated = await updateCustomer(customer.id, {
+          name: cleanName,
+          phone: cleanPhone,
+          businessName: newBusiness ? newBusiness : null,
+          villageAddress: newAddress ? newAddress : null,
+          landArea: newLand ? newLand : null,
+          customerType: form.customerType,
+        })
+        onSuccess(updated)
+        handleClose()
+      } catch (err: any) {
+        const errorMsg = err?.message || "Failed to update customer profile."
+        setFormError(errorMsg)
+        showError(err, "Failed to update customer profile")
+      } finally {
+        setIsSaving(false)
+      }
+    }
+
+    // Dismiss previous confirmation toast if active
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
+
+    const toastId = showToast({
+      type: "info",
+      title: "Confirm Customer Changes",
+      presentation: "confirmation",
+      duration: 0,
+      closePrevious: true,
+      message: (
+        <div className="space-y-3">
+          {/* Customer Header */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-snug">
+                {cleanName}
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                {changes.length === 1
+                  ? "1 field modified"
+                  : `${changes.length} fields modified`}
+              </div>
+            </div>
+            <div className="shrink-0 text-right">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 whitespace-nowrap">
+                ID #{customer.id}
+              </span>
+            </div>
+          </div>
+
+          {/* Changed Items Only */}
+          <div className="max-h-[280px] overflow-y-auto space-y-2 pr-0.5">
+            {changes.map((change) => (
+              <div
+                key={change.label}
+                className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-0.5">
+                     {change.label}
+                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="line-through text-slate-400 dark:text-slate-500 font-mono font-normal">
+                      {change.oldValue}
+                    </span>
+                    <span className="text-slate-400 font-bold">→</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                      {change.newValue}
+                    </span>
+                  </div>
+                </div>
+
+                {change.diffBadge && (
+                  <span
+                    className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold whitespace-nowrap border ${
+                      change.badgeVariant === "positive"
+                        ? "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    {change.diffBadge}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+            Confirm to commit {changes.length === 1 ? "this change" : "these changes"} to the customer account profile.
+          </div>
+        </div>
+      ),
+      actions: [
+        {
+          label: "Cancel",
+          intent: "default",
+          onClick: () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+          },
+        },
+        {
+          label: "Confirm",
+          intent: "danger",
+          onClick: async () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+            await executeSave()
+          },
+        },
+      ],
+    })
+
+    confirmToastIdRef.current = toastId
   }
 
   return (
@@ -128,7 +345,7 @@ export default function EditCustomerModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 text-sm font-medium px-2 py-1 rounded cursor-pointer"
           >
             Close
@@ -248,7 +465,7 @@ export default function EditCustomerModal({
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-md transition-colors cursor-pointer"
             >
               Cancel

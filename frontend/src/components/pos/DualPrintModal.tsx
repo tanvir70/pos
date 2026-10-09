@@ -4,6 +4,7 @@ import {
   Check,
   CheckCircle2,
   FileText,
+  MapPin,
   Phone,
   Printer,
   Receipt,
@@ -62,6 +63,7 @@ export interface DualPrintModalProps {
   onResolveCustomerForSale?: (details: {
     phone: string
     name: string
+    address?: string
   }) => Promise<Customer>
   onSaleCompleted?: (sale: SaleResponse, action: "thermal" | "a4" | "skipped") => void
 }
@@ -84,6 +86,7 @@ export default function DualPrintModal({
   const [registrationError, setRegistrationError] = useState<string | null>(null)
   const [customerPhone, setCustomerPhone] = useState(customer?.phone || "")
   const [customerName, setCustomerName] = useState(customer?.name || "")
+  const [customerAddress, setCustomerAddress] = useState(customer?.villageAddress || customer?.address || "")
   const [resolvedCustomer, setResolvedCustomer] = useState<Customer | null>(customer || null)
   const wasOpenRef = useRef(false)
   const saleCompletedNotifiedRef = useRef(false)
@@ -97,7 +100,26 @@ export default function DualPrintModal({
     ? customers.find((c) => normalizeBangladeshPhone(c.phone) === phoneDigits) ||
       (selectedCustomerMatchesPhone ? customer : null)
     : null
-  const customerForPrint = resolvedCustomer || matchedCustomer || customer || null
+
+  const baseCustomerForPrint = resolvedCustomer || matchedCustomer || customer || null
+  const customerForPrint: Customer | null = baseCustomerForPrint
+    ? {
+        ...baseCustomerForPrint,
+        villageAddress: customerAddress.trim() || baseCustomerForPrint.villageAddress || baseCustomerForPrint.address || null,
+        address: customerAddress.trim() || baseCustomerForPrint.address || baseCustomerForPrint.villageAddress || null,
+      }
+    : (customerName.trim() || customerAddress.trim() || customerPhone.trim())
+      ? ({
+          id: 0,
+          name: customerName.trim() || "Walk-in Customer",
+          phone: customerPhone.trim(),
+          villageAddress: customerAddress.trim() || null,
+          address: customerAddress.trim() || null,
+          customerType: "RETAIL",
+          currentDue: 0,
+        } as Customer)
+      : null
+
   const shouldCreateCustomer = !!phoneDigits && !matchedCustomer
 
   useEffect(() => {
@@ -105,6 +127,7 @@ export default function DualPrintModal({
       saleCompletedNotifiedRef.current = false
       setCustomerPhone(customer?.phone || "")
       setCustomerName(customer?.name || "")
+      setCustomerAddress(customer?.villageAddress || customer?.address || "")
       setResolvedCustomer(customer || null)
     }
 
@@ -116,12 +139,20 @@ export default function DualPrintModal({
       setIsRegistering(false)
       setCustomerPhone(customer?.phone || "")
       setCustomerName(customer?.name || "")
+      setCustomerAddress(customer?.villageAddress || customer?.address || "")
       setResolvedCustomer(customer || null)
       saleCompletedNotifiedRef.current = false
     }
 
     wasOpenRef.current = isOpen
   }, [isOpen, customer])
+
+  useEffect(() => {
+    if (matchedCustomer) {
+      setCustomerName(matchedCustomer.name || "")
+      setCustomerAddress(matchedCustomer.villageAddress || matchedCustomer.address || "")
+    }
+  }, [matchedCustomer])
 
   const notifySaleCompleted = useCallback(
     (completedSale: SaleResponse, action: "thermal" | "a4" | "skipped") => {
@@ -159,10 +190,25 @@ export default function DualPrintModal({
         customerForSale = await onResolveCustomerForSale({
           phone: phoneDigits,
           name: customerName.trim(),
+          address: customerAddress.trim() || undefined,
         })
         setResolvedCustomer(customerForSale)
       } else if (matchedCustomer) {
-        setResolvedCustomer(matchedCustomer)
+        if (
+          onResolveCustomerForSale &&
+          customerAddress.trim() &&
+          !matchedCustomer.villageAddress &&
+          !matchedCustomer.address
+        ) {
+          customerForSale = await onResolveCustomerForSale({
+            phone: phoneDigits || matchedCustomer.phone,
+            name: matchedCustomer.name,
+            address: customerAddress.trim(),
+          })
+          setResolvedCustomer(customerForSale)
+        } else {
+          setResolvedCustomer(matchedCustomer)
+        }
       }
       const response = await onRegisterForThermalPrint(customerForSale?.id ?? null)
       setRegisteredSale(response)
@@ -174,6 +220,7 @@ export default function DualPrintModal({
       setIsRegistering(false)
     }
   }, [
+    customerAddress,
     customerName,
     customerPhone,
     draft,
@@ -250,6 +297,7 @@ export default function DualPrintModal({
     return (
       <ThermalReceipt
         sale={effectiveSale}
+        customer={customerForPrint}
         autoPrint={autoPrint}
         onClose={() => {
           setActivePrintView(null)
@@ -565,6 +613,41 @@ export default function DualPrintModal({
               </div>
             </div>
 
+            {/* Address / Village Input */}
+            <div className="mt-3 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Address / Village
+                </label>
+                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                  {matchedCustomer ? (matchedCustomer.villageAddress || matchedCustomer.address ? "Directory Address" : "Optional") : "Optional"}
+                </span>
+              </div>
+              <div className="relative">
+                <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                <input
+                  type="text"
+                  value={customerAddress}
+                  onChange={(event) => {
+                    setCustomerAddress(event.target.value)
+                    setRegistrationError(null)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      void openThermalReceipt(true)
+                    }
+                  }}
+                  placeholder={
+                    matchedCustomer
+                      ? (matchedCustomer.villageAddress || matchedCustomer.address || "No address saved (type to record)")
+                      : "Village, Union or Area address (e.g. Kandapara, Sreebardi)"
+                  }
+                  className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 pl-10 pr-3 text-sm font-semibold text-slate-900 dark:text-slate-100 placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-emerald-500/15"
+                />
+              </div>
+            </div>
+
             {/* Contextual feedback callout */}
             {matchedCustomer ? (
               <div className="mt-3 flex items-start justify-between gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 p-3 text-xs text-emerald-900 dark:text-emerald-300">
@@ -576,6 +659,11 @@ export default function DualPrintModal({
                       <span className="ml-1.5 font-mono font-normal text-emerald-700 dark:text-emerald-400">
                         ({matchedCustomer.phone})
                       </span>
+                      {(customerAddress || matchedCustomer.villageAddress || matchedCustomer.address) && (
+                        <span className="ml-1.5 font-normal text-emerald-800/80 dark:text-emerald-300">
+                          • {customerAddress || matchedCustomer.villageAddress || matchedCustomer.address}
+                        </span>
+                      )}
                     </div>
                     <p className="mt-0.5 text-[11px] text-emerald-800/90 dark:text-emerald-300">
                       Customer found in directory. This invoice will link to their account ledger.

@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react"
 import { Printer, X } from "lucide-react"
-import type { SaleResponse } from "../types"
+import type { SaleResponse, Customer } from "../types"
 import { STORE_INFO } from "../constants/store"
 
 // BUSINESS DECISION: Thermal receipt (80mm/58mm) formatted specifically for fast retail counter
@@ -8,6 +8,7 @@ import { STORE_INFO } from "../constants/store"
 
 export interface ThermalReceiptProps {
   sale: SaleResponse
+  customer?: Customer | null
   onClose: () => void
   onAfterPrint?: () => void
   /** Open the browser print dialog as soon as the receipt renders (Enter-driven checkout). */
@@ -18,6 +19,7 @@ const tk = (n: number | undefined | null) => `৳${(n ?? 0).toLocaleString("en-U
 
 export default function ThermalReceipt({
   sale,
+  customer,
   onClose,
   onAfterPrint,
   autoPrint = false,
@@ -117,16 +119,22 @@ export default function ThermalReceipt({
                 <span className="font-medium text-gray-700">Served by:</span>
                 <span>{sale.cashierName || "Rajib"}</span>
               </div>
-              {sale.customerName && (
+              {(sale.customerName || customer?.name) && (
                 <div className="pt-1 mt-1 border-t border-dotted border-gray-300">
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-700">Customer:</span>
-                    <span className="font-bold">{sale.customerName}</span>
+                    <span className="font-bold">{sale.customerName || customer?.name}</span>
                   </div>
-                  {sale.customerPhone && (
+                  {(sale.customerPhone || customer?.phone) && (
                     <div className="flex justify-between text-[10px]">
                       <span className="text-gray-600">Mobile:</span>
-                      <span>{sale.customerPhone}</span>
+                      <span>{sale.customerPhone || customer?.phone}</span>
+                    </div>
+                  )}
+                  {(customer?.villageAddress || customer?.address) && (
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-gray-600">Address:</span>
+                      <span className="truncate max-w-[150px] text-right">{customer.villageAddress || customer.address}</span>
                     </div>
                   )}
                 </div>
@@ -261,7 +269,7 @@ export default function ThermalReceipt({
                   Seller Signature
                 </div>
                 <div className="text-[9px] text-gray-500 mt-0.5 font-normal">
-                  Rajib Enterprise
+                  {STORE_INFO.name}
                 </div>
               </div>
             </div>
@@ -275,7 +283,7 @@ export default function ThermalReceipt({
                 Quality pesticides & fertilizers.
               </p>
               <p className="text-[9px] text-gray-500 font-mono mt-1">
-                Powered by Rajib Enterprise POS
+                Powered by {STORE_INFO.name} POS
               </p>
             </div>
           </div>

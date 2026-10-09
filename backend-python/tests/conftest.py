@@ -11,15 +11,12 @@ TEST_DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "te
 os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_PATH}"
 os.environ["SYNC_DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
-@pytest.fixture(scope="session", autouse=True)
-def cleanup_test_database():
-    yield
+def _remove_db_files():
     if os.path.exists(TEST_DB_PATH):
         try:
             os.remove(TEST_DB_PATH)
         except Exception:
             pass
-    # Clean up wal and shm files if present
     for ext in ["-wal", "-shm"]:
         p = f"{TEST_DB_PATH}{ext}"
         if os.path.exists(p):
@@ -27,4 +24,10 @@ def cleanup_test_database():
                 os.remove(p)
             except Exception:
                 pass
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_test_database():
+    _remove_db_files()
+    yield
+    _remove_db_files()
 

@@ -225,7 +225,7 @@ export default function DueCollectionReceipt({
                   Seller Signature
                 </div>
                 <div className="text-[9px] text-gray-500 mt-0.5 font-normal">
-                  Rajib Enterprise
+                  {STORE_INFO.name}
                 </div>
               </div>
             </div>

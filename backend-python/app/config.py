@@ -8,7 +8,7 @@ _DEFAULT_DB_FILE = (_BACKEND_DIR / "pos.db").as_posix()
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    APP_NAME: str = "Rajib Enterprise"
+    APP_NAME: str = "Messers Rajib Enterprise"
     ENV: str = "production"
     ENVIRONMENT: str = "production"
     DEBUG: bool = False

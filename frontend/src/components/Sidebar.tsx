@@ -4,7 +4,6 @@ import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
 import { focusPrimarySearch } from "../utils/keyboard"
 import {
-  Sprout,
   ShoppingCart,
   LayoutDashboard,
   Package,
@@ -20,6 +19,8 @@ import {
   getWholesaleSettings,
   type WholesaleSettings,
 } from "../utils/wholesaleSettings"
+import { STORE_INFO } from "../constants/store"
+import BrandLogo from "./ui/BrandLogo"
 
 export interface SidebarProps {
   isOpen: boolean
@@ -40,57 +41,65 @@ interface TabTheme {
   activeBorder: string
   activeBadge: string
   inactiveBadge: string
+  activeBar: string
 }
 
 const TAB_THEMES: Record<NavigationTab, TabTheme> = {
   pos: {
-    activeBg: "bg-emerald-50/90 dark:bg-emerald-950/40",
-    activeText: "text-emerald-950 dark:text-emerald-200 font-bold",
-    activeBorder: "border-emerald-200/90 dark:border-emerald-800/60 shadow-xs shadow-emerald-600/5",
-    activeBadge: "bg-emerald-600 text-white border-emerald-500 shadow-sm shadow-emerald-700/25",
-    inactiveBadge: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200/70 dark:border-emerald-800/60 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/60 group-hover:border-emerald-300",
+    activeBg: "bg-white dark:bg-slate-800/95 border-emerald-400/80 dark:border-emerald-500/50 shadow-xs dark:shadow-md dark:shadow-emerald-500/10 ring-1 ring-emerald-500/15 dark:ring-emerald-400/20",
+    activeText: "text-emerald-950 dark:text-emerald-100 font-bold",
+    activeBorder: "border-emerald-400/80 dark:border-emerald-500/50",
+    activeBadge: "bg-emerald-600 text-white border-emerald-500 shadow-xs shadow-emerald-600/25 dark:bg-emerald-500 dark:border-emerald-400 dark:shadow-emerald-500/30",
+    inactiveBadge: "text-emerald-800/80 dark:text-emerald-400 group-hover:text-emerald-950 dark:group-hover:text-emerald-200",
+    activeBar: "bg-emerald-600 dark:bg-emerald-400",
   },
   dashboard: {
-    activeBg: "bg-blue-50/90 dark:bg-blue-950/40",
-    activeText: "text-blue-950 dark:text-blue-200 font-bold",
-    activeBorder: "border-blue-200/90 dark:border-blue-800/60 shadow-xs shadow-blue-600/5",
-    activeBadge: "bg-blue-600 text-white border-blue-500 shadow-sm shadow-blue-700/25",
-    inactiveBadge: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200/70 dark:border-blue-800/60 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/60 group-hover:border-blue-300",
+    activeBg: "bg-white dark:bg-slate-800/95 border-sky-400/80 dark:border-sky-500/50 shadow-xs dark:shadow-md dark:shadow-sky-500/10 ring-1 ring-sky-500/15 dark:ring-sky-400/20",
+    activeText: "text-sky-950 dark:text-sky-100 font-bold",
+    activeBorder: "border-sky-400/80 dark:border-sky-500/50",
+    activeBadge: "bg-sky-600 text-white border-sky-500 shadow-xs shadow-sky-600/25 dark:bg-sky-500 dark:border-sky-400 dark:shadow-sky-500/30",
+    inactiveBadge: "text-sky-800/80 dark:text-sky-400 group-hover:text-sky-950 dark:group-hover:text-sky-200",
+    activeBar: "bg-sky-600 dark:bg-sky-400",
   },
   inventory: {
-    activeBg: "bg-amber-50/90 dark:bg-amber-950/40",
-    activeText: "text-amber-950 dark:text-amber-200 font-bold",
-    activeBorder: "border-amber-200/90 dark:border-amber-800/60 shadow-xs shadow-amber-600/5",
-    activeBadge: "bg-amber-600 text-white border-amber-500 shadow-sm shadow-amber-700/25",
-    inactiveBadge: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200/70 dark:border-amber-800/60 group-hover:bg-amber-100 dark:group-hover:bg-amber-900/60 group-hover:border-amber-300",
+    activeBg: "bg-white dark:bg-slate-800/95 border-amber-400/80 dark:border-amber-500/50 shadow-xs dark:shadow-md dark:shadow-amber-500/10 ring-1 ring-amber-500/15 dark:ring-amber-400/20",
+    activeText: "text-amber-950 dark:text-amber-100 font-bold",
+    activeBorder: "border-amber-400/80 dark:border-amber-500/50",
+    activeBadge: "bg-amber-600 text-white border-amber-500 shadow-xs shadow-amber-600/25 dark:bg-amber-500 dark:border-amber-400 dark:shadow-amber-500/30",
+    inactiveBadge: "text-amber-800/80 dark:text-amber-400 group-hover:text-amber-950 dark:group-hover:text-amber-200",
+    activeBar: "bg-amber-600 dark:bg-amber-400",
   },
   customers: {
-    activeBg: "bg-indigo-50/90 dark:bg-indigo-950/40",
-    activeText: "text-indigo-950 dark:text-indigo-200 font-bold",
-    activeBorder: "border-indigo-200/90 dark:border-indigo-800/60 shadow-xs shadow-indigo-600/5",
-    activeBadge: "bg-indigo-600 text-white border-indigo-500 shadow-sm shadow-indigo-700/25",
-    inactiveBadge: "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200/70 dark:border-indigo-800/60 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/60 group-hover:border-indigo-300",
+    activeBg: "bg-white dark:bg-slate-800/95 border-indigo-400/80 dark:border-indigo-500/50 shadow-xs dark:shadow-md dark:shadow-indigo-500/10 ring-1 ring-indigo-500/15 dark:ring-indigo-400/20",
+    activeText: "text-indigo-950 dark:text-indigo-100 font-bold",
+    activeBorder: "border-indigo-400/80 dark:border-indigo-500/50",
+    activeBadge: "bg-indigo-600 text-white border-indigo-500 shadow-xs shadow-indigo-600/25 dark:bg-indigo-500 dark:border-indigo-400 dark:shadow-indigo-500/30",
+    inactiveBadge: "text-indigo-800/80 dark:text-indigo-400 group-hover:text-indigo-950 dark:group-hover:text-indigo-200",
+    activeBar: "bg-indigo-600 dark:bg-indigo-400",
   },
   returns: {
-    activeBg: "bg-rose-50/90 dark:bg-rose-950/40",
-    activeText: "text-rose-950 dark:text-rose-200 font-bold",
-    activeBorder: "border-rose-200/90 dark:border-rose-800/60 shadow-xs shadow-rose-600/5",
-    activeBadge: "bg-rose-600 text-white border-rose-500 shadow-sm shadow-rose-700/25",
-    inactiveBadge: "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200/70 dark:border-rose-800/60 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/60 group-hover:border-rose-300",
+    activeBg: "bg-white dark:bg-slate-800/95 border-rose-400/80 dark:border-rose-500/50 shadow-xs dark:shadow-md dark:shadow-rose-500/10 ring-1 ring-rose-500/15 dark:ring-rose-400/20",
+    activeText: "text-rose-950 dark:text-rose-100 font-bold",
+    activeBorder: "border-rose-400/80 dark:border-rose-500/50",
+    activeBadge: "bg-rose-600 text-white border-rose-500 shadow-xs shadow-rose-600/25 dark:bg-rose-500 dark:border-rose-400 dark:shadow-rose-500/30",
+    inactiveBadge: "text-rose-800/80 dark:text-rose-400 group-hover:text-rose-950 dark:group-hover:text-rose-200",
+    activeBar: "bg-rose-600 dark:bg-rose-400",
   },
   settings: {
-    activeBg: "bg-purple-50/90 dark:bg-purple-950/40",
-    activeText: "text-purple-950 dark:text-purple-200 font-bold",
-    activeBorder: "border-purple-200/90 dark:border-purple-800/60 shadow-xs shadow-purple-600/5",
-    activeBadge: "bg-purple-600 text-white border-purple-500 shadow-sm shadow-purple-700/25",
-    inactiveBadge: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200/70 dark:border-purple-800/60 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/60 group-hover:border-purple-300",
+    activeBg: "bg-white dark:bg-slate-800/95 border-purple-400/80 dark:border-purple-500/50 shadow-xs dark:shadow-md dark:shadow-purple-500/10 ring-1 ring-purple-500/15 dark:ring-purple-400/20",
+    activeText: "text-purple-950 dark:text-purple-100 font-bold",
+    activeBorder: "border-purple-400/80 dark:border-purple-500/50",
+    activeBadge: "bg-purple-600 text-white border-purple-500 shadow-xs shadow-purple-600/25 dark:bg-purple-500 dark:border-purple-400 dark:shadow-purple-500/30",
+    inactiveBadge: "text-purple-800/80 dark:text-purple-400 group-hover:text-purple-950 dark:group-hover:text-purple-200",
+    activeBar: "bg-purple-600 dark:bg-purple-400",
   },
   "bin-card": {
-    activeBg: "bg-teal-50/90 dark:bg-teal-950/40",
-    activeText: "text-teal-950 dark:text-teal-200 font-bold",
-    activeBorder: "border-teal-200/90 dark:border-teal-800/60 shadow-xs shadow-teal-600/5",
-    activeBadge: "bg-teal-600 text-white border-teal-500 shadow-sm shadow-teal-700/25",
-    inactiveBadge: "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border-teal-200/70 dark:border-teal-800/60 group-hover:bg-teal-100 dark:group-hover:bg-teal-900/60 group-hover:border-teal-300",
+    activeBg: "bg-white dark:bg-slate-800/95 border-teal-400/80 dark:border-teal-500/50 shadow-xs dark:shadow-md dark:shadow-teal-500/10 ring-1 ring-teal-500/15 dark:ring-teal-400/20",
+    activeText: "text-teal-950 dark:text-teal-100 font-bold",
+    activeBorder: "border-teal-400/80 dark:border-teal-500/50",
+    activeBadge: "bg-teal-600 text-white border-teal-500 shadow-xs shadow-teal-600/25 dark:bg-teal-500 dark:border-teal-400 dark:shadow-teal-500/30",
+    inactiveBadge: "text-teal-800/80 dark:text-teal-400 group-hover:text-teal-950 dark:group-hover:text-teal-200",
+    activeBar: "bg-teal-600 dark:bg-teal-400",
   },
 }
 
@@ -177,7 +186,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
       <div
         onClick={onClose}
         aria-hidden="true"
-        className={`fixed inset-0 bg-slate-900/40 z-40 md:hidden transition-opacity duration-200 ${
+        className={`fixed inset-0 bg-slate-900/40 z-40 md:hidden backdrop-blur-xs transition-opacity duration-200 ${
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       />
@@ -191,33 +200,145 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
         }`}
         aria-hidden={!isOpen}
       >
-        <div className="w-72 md:w-full h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl md:shadow-none flex flex-col overflow-hidden transition-colors duration-200">
+        <div className="relative w-72 md:w-full h-full bg-gradient-to-b from-[#dcf1e2] via-[#cae7d1] to-[#b8ddc0] dark:from-[#091018] dark:via-[#0c1420] dark:to-[#07130f] text-slate-800 dark:text-slate-200 border-r border-emerald-400/60 dark:border-slate-800/80 shadow-2xl md:shadow-none flex flex-col overflow-hidden transition-colors duration-200 select-none">
+          {/* Delicate agricultural dot-mesh texture */}
+          <div
+            className="absolute inset-0 opacity-[0.05] dark:opacity-[0.045] pointer-events-none"
+            style={{
+              backgroundImage: `radial-gradient(circle at 1px 1px, #047857 1px, transparent 0)`,
+              backgroundSize: "16px 16px",
+            }}
+          />
+
+          {/* Soft organic atmospheric mesh glows */}
+          <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-emerald-300/40 via-teal-200/25 to-transparent dark:from-emerald-950/25 dark:via-teal-950/10 dark:to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-emerald-300/45 via-teal-200/25 to-transparent dark:from-emerald-950/35 dark:via-teal-950/10 dark:to-transparent pointer-events-none" />
+
+          {/* Unified Botanical Foliage Watermark (Cohesive organic etching with vertical fade masking) */}
+          <div
+            className="absolute bottom-16 -right-6 w-72 h-[340px] pointer-events-none select-none overflow-hidden"
+            style={{
+              maskImage: "linear-gradient(to top, transparent 0%, black 18%, black 82%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to top, transparent 0%, black 18%, black 82%, transparent 100%)",
+            }}
+          >
+            <svg
+              viewBox="0 0 240 360"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-full h-full text-emerald-800/[0.13] dark:text-emerald-400/[0.07] transform rotate-3 translate-x-2"
+            >
+              {/* Main organic stem */}
+              <path
+                d="M130 355 Q 115 250 142 140 Q 155 70 170 15"
+                stroke="currentColor"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              />
+              {/* Node 1 - Lower left leaf */}
+              <path
+                d="M124 300 C 65 290 35 250 45 210 C 85 210 124 255 124 300 Z"
+                fill="currentColor"
+              />
+              <path
+                d="M124 300 Q 85 260 45 210"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeOpacity="0.4"
+                strokeLinecap="round"
+              />
+              {/* Node 2 - Lower right leaf */}
+              <path
+                d="M133 245 C 182 232 212 195 205 155 C 165 155 133 205 133 245 Z"
+                fill="currentColor"
+              />
+              <path
+                d="M133 245 Q 168 205 205 155"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeOpacity="0.4"
+                strokeLinecap="round"
+              />
+              {/* Node 3 - Mid left leaf */}
+              <path
+                d="M138 185 C 92 172 68 135 75 95 C 115 98 136 145 138 185 Z"
+                fill="currentColor"
+              />
+              <path
+                d="M138 185 Q 108 145 75 95"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeOpacity="0.4"
+                strokeLinecap="round"
+              />
+              {/* Node 4 - Mid right leaf */}
+              <path
+                d="M147 130 C 190 115 210 80 200 45 C 165 50 146 95 147 130 Z"
+                fill="currentColor"
+              />
+              <path
+                d="M147 130 Q 174 95 200 45"
+                stroke="currentColor"
+                strokeWidth="1.2"
+                strokeOpacity="0.4"
+                strokeLinecap="round"
+              />
+              {/* Node 5 - Terminal leaf */}
+              <path
+                d="M158 65 C 142 30 152 10 170 15 C 184 40 170 60 158 65 Z"
+                fill="currentColor"
+              />
+              {/* Subtle companion seedling on bottom left */}
+              <path
+                d="M50 340 Q 60 300 75 270"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeOpacity="0.6"
+              />
+              <path
+                d="M75 270 C 60 255 45 258 40 270 C 45 285 65 280 75 270 Z"
+                fill="currentColor"
+                fillOpacity="0.8"
+              />
+              <path
+                d="M75 270 C 90 260 102 268 100 280 C 88 288 78 280 75 270 Z"
+                fill="currentColor"
+                fillOpacity="0.8"
+              />
+            </svg>
+          </div>
+
           {/* Brand */}
           <div
-            className={`flex items-center justify-between px-4 h-16 border-b border-slate-200/80 dark:border-slate-800 shrink-0 gap-2.5 bg-gradient-to-r from-slate-50/70 via-white to-slate-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800/40 ${
+            className={`relative z-10 flex items-center justify-between px-4 h-16 border-b border-emerald-400/50 dark:border-slate-800/80 shrink-0 gap-2.5 bg-[#dcf1e2]/90 dark:bg-slate-900/80 backdrop-blur-md ${
               isRail ? "md:justify-center md:px-0" : ""
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white flex items-center justify-center shadow-md shadow-emerald-700/20 ring-1 ring-emerald-500/20 shrink-0">
-                <Sprout className="w-5 h-5 drop-shadow-xs" />
-              </div>
+              <BrandLogo size="md" variant="image" className="shrink-0 transition-transform hover:scale-105" />
               <div className={`truncate ${isRail ? "md:hidden" : ""}`}>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-tight truncate">
-                    Rajib Enterprise
+                  <span className="font-bold text-slate-900 dark:text-white text-sm leading-tight tracking-tight truncate">
+                    {STORE_INFO.name}
                   </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" title="System Online" />
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-none mt-0.5 truncate font-medium">
-                  Agrochemical Cockpit
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-700/12 dark:bg-emerald-400/15 text-emerald-800 dark:text-emerald-300 border border-emerald-600/25">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 animate-pulse" />
+                    Live
+                  </span>
+                  <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium truncate">
+                    Agro Cockpit
+                  </span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono ml-auto">v2.6</span>
+                </div>
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer md:hidden"
+              className="shrink-0 p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer md:hidden"
               aria-label="Close menu"
             >
               <X className="w-4 h-4" />
@@ -225,7 +346,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
           </div>
 
           {/* Navigation */}
-          <nav className={`flex-1 overflow-y-auto p-3 space-y-1.5 ${isRail ? "md:px-2" : ""}`}>
+          <nav className={`relative z-10 flex-1 overflow-y-auto p-3 space-y-1.5 ${isRail ? "md:px-2" : ""}`}>
             {NAV_TABS.map((tab, index) => {
               const isActive = activeTab === tab.id
               const Icon = tab.icon
@@ -271,19 +392,28 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                     }
                   }}
                   title={isRail ? tab.label : undefined}
-                  className={`group relative w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-semibold cursor-pointer border focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-slate-100 dark:focus:bg-slate-800 ${
+                  className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${
                     isRail ? "md:justify-center md:px-0" : ""
                   } ${
                     isActive
                       ? `${theme.activeBg} ${theme.activeText} ${theme.activeBorder}`
-                      : "border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-100"
+                      : "border-transparent text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-800/60 hover:border-emerald-200/50 dark:hover:border-slate-700/50 hover:shadow-2xs"
                   }`}
                 >
+                  {/* Active docked interior accent indicator */}
+                  {isActive && (
+                    <span
+                      className={`absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-md ${theme.activeBar} ${
+                        isRail ? "md:hidden" : ""
+                      }`}
+                    />
+                  )}
+
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 ${
                       isActive
-                        ? theme.activeBadge
-                        : `${theme.inactiveBadge} shadow-2xs`
+                        ? `${theme.activeBadge} border shadow-xs`
+                        : `${theme.inactiveBadge} group-hover:scale-105`
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -296,29 +426,49 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
             })}
           </nav>
 
-          {/* Footer */}
-          <div className={`border-t border-slate-200/80 dark:border-slate-800 p-3 space-y-2 shrink-0 bg-slate-50/40 dark:bg-slate-900/60 ${isRail ? "md:px-2" : ""}`}>
-            {/* Perfectly Aligned Logout Button */}
-            <button
-              type="button"
-              onClick={confirmLogout}
-              title={isRail ? "Logout" : undefined}
-              className={`group w-full flex items-center gap-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-800/70 hover:bg-rose-50/80 dark:hover:bg-rose-950/40 hover:border-rose-200/90 dark:hover:border-rose-800 text-slate-700 dark:text-slate-300 hover:text-rose-700 dark:hover:text-rose-400 text-sm font-semibold transition-all duration-200 cursor-pointer shadow-2xs ${
-                isRail ? "md:justify-center md:px-0 px-2.5 py-2" : "px-2.5 py-2"
+          {/* Footer - Executive User Profile & Session Card */}
+          <div
+            className={`relative z-10 border-t border-emerald-400/50 dark:border-slate-800/80 p-3 shrink-0 bg-[#cae7d1]/90 dark:bg-slate-900/80 backdrop-blur-md ${
+              isRail ? "md:px-2" : ""
+            }`}
+          >
+            <div
+              className={`flex items-center rounded-xl bg-white/95 dark:bg-slate-900/90 border border-emerald-300/70 dark:border-slate-800 shadow-2xs transition-all ${
+                isRail ? "md:p-1.5 md:justify-center" : "p-2 justify-between gap-2"
               }`}
             >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-slate-200/80 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-2xs group-hover:bg-rose-100 dark:group-hover:bg-rose-900/50 group-hover:border-rose-200 dark:group-hover:border-rose-700 group-hover:text-rose-600 dark:group-hover:text-rose-300 group-hover:scale-105 transition-all duration-200">
-                <LogOut className="w-4 h-4" />
-              </div>
-              <div className={`min-w-0 flex-1 text-left ${isRail ? "md:hidden" : ""}`}>
-                <div className="text-xs font-bold leading-tight truncate">
-                  Logout
+              {/* User Avatar + Identity */}
+              <div className={`flex items-center gap-2.5 min-w-0 ${isRail ? "md:hidden" : ""}`}>
+                {/* Avatar Badge with User Initial */}
+                <div className="w-8 h-8 rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs shadow-emerald-600/25">
+                  {(displayName || "Owner").charAt(0).toUpperCase()}
                 </div>
-                <div className="text-[10px] text-slate-400 dark:text-slate-500 group-hover:text-rose-600 dark:group-hover:text-rose-400 font-medium truncate mt-0.5">
-                  End active session
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate">
+                    {displayName || "Shop Owner"}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/50" />
+                    <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider truncate">
+                      {auth.role ? auth.role.replace("ROLE_", "") : "OWNER"}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </button>
+
+              {/* Sleek Logout Action */}
+              <button
+                type="button"
+                onClick={confirmLogout}
+                title="Logout (End session)"
+                aria-label="Logout"
+                className={`group flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/50 transition-all duration-150 cursor-pointer ${
+                  isRail ? "w-9 h-9" : "p-1.5 shrink-0"
+                }`}
+              >
+                <LogOut className="w-4 h-4 transition-transform group-hover:scale-110" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

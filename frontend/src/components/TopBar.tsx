@@ -5,6 +5,8 @@ import NetworkStatusBadge from "./NetworkStatusBadge"
 import Button from "./ui/Button"
 import Badge from "./ui/Badge"
 import { Separator } from "./ui/separator"
+import { STORE_INFO } from "../constants/store"
+import BrandLogo from "./ui/BrandLogo"
 
 export interface TopBarProps {
   isSidebarOpen: boolean
@@ -48,11 +50,9 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
             on desktop the collapsed sidebar stays visible as an icon rail with its own brand mark. */}
         {!isSidebarOpen && (
           <div className="flex items-center gap-2 min-w-0 shrink-0 md:hidden">
-            <div className="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-2xs">
-              <Sprout className="w-4 h-4" />
-            </div>
+            <BrandLogo size="xs" variant="image" />
             <span className="font-bold text-slate-900 dark:text-slate-100 text-sm truncate">
-              Rajib Enterprise
+              {STORE_INFO.name}
             </span>
           </div>
         )}

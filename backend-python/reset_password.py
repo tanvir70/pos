@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Messrs. Rajib Enterprise POS - Administrative Password Reset Utility
+Messers Rajib Enterprise POS - Administrative Password Reset Utility
 Usage:
     python reset_password.py <username> <new_password>
 Example:

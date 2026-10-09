@@ -1,5 +1,5 @@
 [Unit]
-Description=Rajib Enterprise POS & Inventory Backend Service
+Description=Messers Rajib Enterprise POS & Inventory Backend Service
 After=network.target
 
 [Service]

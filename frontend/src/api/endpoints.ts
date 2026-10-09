@@ -1,5 +1,5 @@
 // ============================================================================
-// Typed REST Endpoints for Rajib Enterprise POS & Inventory
+// Typed REST Endpoints for Messers Rajib Enterprise POS & Inventory
 // ============================================================================
 
 import { apiClient, downloadBlob, API_BASE_URL } from "./client"

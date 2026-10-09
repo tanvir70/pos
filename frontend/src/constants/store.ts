@@ -1,10 +1,10 @@
 // ============================================================================
 // Store Identity & Canonical Business Details
-// Messrs. Rajib Enterprise - Authorized Syngenta Dealership
+// Messers Rajib Enterprise - Authorized Syngenta Dealership
 // ============================================================================
 
 export const STORE_INFO = {
-  name: "Rajib Enterprise",
+  name: "Messers Rajib Enterprise",
   nameBn: "মেসার্স রাজীব এন্টারপ্রাইজ",
   tagline: "Authorized Agro Dealer",
   dealershipDescription: "Agrochemical Dealership Cockpit — Pesticides, Fertilizers & Seeds",

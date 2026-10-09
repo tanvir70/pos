@@ -2,7 +2,7 @@
 set -e
 
 # ==============================================================================
-# Automated Build & Packaging Script for Messrs. Rajib Enterprise POS
+# Automated Build & Packaging Script for Messers Rajib Enterprise POS
 # Usage: ./deploy_package.sh
 # Creates: deploy.zip (ready for upload to cPanel /home/rajibent/backend-python)
 # ==============================================================================

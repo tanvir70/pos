@@ -30,7 +30,7 @@ jobs:
       - name: Run Backend Quality Gate (pytest 100% Pass)
         run: |
           cd backend-python
-          pytest tests/ -v
+          PYTHONPATH=. python -m pytest tests/ -v
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -41,6 +41,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Install Frontend Dependencies
         run: |
@@ -94,11 +96,23 @@ jobs:
         with:
           name: deploy-bundle
 
-      - name: Deploy to cPanel via SSH / SCP
-        uses: appleboy/scp-action@master
-        if: ${{ env.HAS_SSH_SECRET == 'true' }}
+      - name: Check Deployment Credentials
+        id: check-secrets
         env:
-          HAS_SSH_SECRET: ${{ secrets.CPANEL_SSH_HOST != '' && secrets.CPANEL_SSH_KEY != '' }}
+          CPANEL_HOST: ${{ secrets.CPANEL_SSH_HOST }}
+          CPANEL_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+        run: |
+          if [ -n "$CPANEL_HOST" ] && [ -n "$CPANEL_KEY" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "cPanel SSH credentials found. Automated deployment will proceed."
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::cPanel SSH credentials (CPANEL_SSH_HOST, CPANEL_SSH_KEY) are not set in GitHub repository secrets. Deployment bundle deploy.zip was successfully built and saved as an artifact."
+          fi
+
+      - name: Deploy to cPanel via SSH / SCP
+        if: steps.check-secrets.outputs.configured == 'true'
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.CPANEL_SSH_HOST }}
           username: ${{ secrets.CPANEL_SSH_USER || 'rajibent' }}
@@ -108,10 +122,8 @@ jobs:
           target: ${{ secrets.CPANEL_REMOTE_DIR || '/home/rajibent/backend-python' }}
 
       - name: Remote Extraction & Service Reload
-        uses: appleboy/ssh-action@master
-        if: ${{ env.HAS_SSH_SECRET == 'true' }}
-        env:
-          HAS_SSH_SECRET: ${{ secrets.CPANEL_SSH_HOST != '' && secrets.CPANEL_SSH_KEY != '' }}
+        if: steps.check-secrets.outputs.configured == 'true'
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.CPANEL_SSH_HOST }}
           username: ${{ secrets.CPANEL_SSH_USER || 'rajibent' }}

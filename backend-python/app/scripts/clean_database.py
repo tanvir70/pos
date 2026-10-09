@@ -1,6 +1,6 @@
 """
 Database Reset & Cleaning Utility
-Rajib Enterprise POS & Inventory System
+Messers Rajib Enterprise POS & Inventory System
 
 Performs a clean production reset:
 - Cleans all operational/test transactions: sales, sales returns, stock movements,
