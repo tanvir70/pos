@@ -16,7 +16,7 @@ class SaleReturnItemRequest(CamelModel):
         return (v or "DOKAN").strip().upper()
 
 class SaleReturnRequest(CamelModel):
-    original_sale_id: int | None = Field(default=None, gt=0)
+    original_sale_id: int = Field(gt=0, description="Original sales invoice ID is mandatory for verified returns")
     customer_id: int | None = Field(default=None, gt=0)
     refund_type: str = "CASH_REFUND"  # 'CASH_REFUND' or 'DUE_ADJUSTMENT'
     reason: str | None = None

@@ -52,6 +52,8 @@ class SaleItemDetailResponse(CamelModel):
     unit_cost: Decimal
     subtotal: Decimal
     line_profit: Decimal
+    returned_quantity: Decimal = Field(default=Decimal("0.000"), ge=Decimal("0.000"))
+    remaining_quantity: Decimal = Field(default=Decimal("0.000"), ge=Decimal("0.000"))
 
 class SaleResponse(CamelModel):
     id: int

@@ -138,9 +138,25 @@ async def test_returns_cumulative_check_and_trap_b_negative_due():
             cust2 = cust2_res.json()
             cust2_id = cust2["id"]
 
+            # Perform verified sale of 1 unit @ 300.0 to cust2
+            sale2_res = await ac.post(
+                "/api/sales",
+                json={
+                    "customerId": cust2_id,
+                    "saleMode": "RETAIL",
+                    "items": [{"lotId": lot["id"], "totalQuantity": 1.0, "unitPrice": 300.0}],
+                    "paymentMethod": "CASH",
+                    "cashPaid": 300.0,
+                },
+                headers=headers,
+            )
+            assert sale2_res.status_code == 201
+            sale2 = sale2_res.json()
+
             ret_trap_b = await ac.post(
                 "/api/returns",
                 json={
+                    "originalSaleId": sale2["id"],
                     "customerId": cust2_id,
                     "refundType": "DUE_ADJUSTMENT",
                     "items": [{"lotId": lot["id"], "quantity": 1.0, "refundPrice": 300.0}],
@@ -149,6 +165,6 @@ async def test_returns_cumulative_check_and_trap_b_negative_due():
             )
             assert ret_trap_b.status_code == 201
 
-            # Check customer profile: currentDue should now be 100 - 300 = -200.00
+            # Check customer profile: currentDue was 100, refund of 300 reduces it to -200.00
             cust_check = (await ac.get(f"/api/customers/{cust2_id}", headers=headers)).json()
             assert float(cust_check["currentDue"]) == -200.0

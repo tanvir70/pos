@@ -105,33 +105,25 @@ export default function Returns() {
     // Auto-select customer if sale had one
     if (sale.customerId) {
       setSelectedCustomerId(sale.customerId)
+      const cust = customers.find((c) => c.id === sale.customerId)
+      if (cust && cust.currentDue > 0) {
+        setRefundType("DUE_ADJUSTMENT")
+      } else {
+        setRefundType("CASH_REFUND")
+      }
+    } else {
+      setSelectedCustomerId(null)
+      setRefundType("CASH_REFUND")
     }
 
-    // Pre-populate return items with all purchased items from the invoice
-    if (sale.items && sale.items.length > 0) {
-      const drafts: ReturnDraftItem[] = sale.items.map((it) => ({
-        lotId: it.lotId,
-        productName: it.productNameBn || it.productNameEn,
-        productNameBn: it.productNameBn,
-        productNameEn: it.productNameEn,
-        lotNumber: it.lotNumber,
-        barcode: it.barcode,
-        baseUnit: it.baseUnit || "unit",
-        purchasedQuantity: it.totalQuantity,
-        quantity: formatQuantityByUnit(it.totalQuantity, it.baseUnit),
-        refundPrice: it.unitPrice.toString(),
-        isDamaged: false,
-      }))
-      setReturnItems(drafts)
-    } else {
-      setReturnItems([])
-    }
+    // Reset return items so cashier chooses which product(s) to return from the invoice
+    setReturnItems([])
   }
 
   const handleSearchInvoice = async (invoiceNo: string) => {
     const trimmed = invoiceNo.trim()
     if (!trimmed) {
-      setInvoiceSearchError("Please enter a memo / invoice number.")
+      setInvoiceSearchError("Please enter a memo / invoice number or customer phone number.")
       return
     }
 
@@ -142,7 +134,7 @@ export default function Returns() {
       handleSelectFoundSale(sale)
     } catch (err: any) {
       setFoundSale(null)
-      setInvoiceSearchError("This invoice number was not found. You can still process a direct return without a receipt.")
+      setInvoiceSearchError("Invoice not found. Please verify the memo number or search by customer mobile number (017...).")
     } finally {
       setIsSearchingInvoice(false)
     }
@@ -153,6 +145,8 @@ export default function Returns() {
     setInvoiceSearchError(null)
     setReturnItems([])
     setSelectedStockItem(null)
+    setSelectedCustomerId(null)
+    setRefundType("CASH_REFUND")
   }
 
   // ─── Multi-Item Return Actions ──────────────────────────────────
@@ -162,6 +156,10 @@ export default function Returns() {
       if (exists) {
         return prev.filter((i) => i.lotId !== saleItem.lotId)
       } else {
+        const retQty = saleItem.returnedQuantity ?? 0
+        const remQty = saleItem.remainingQuantity != null ? saleItem.remainingQuantity : Math.max(0, saleItem.totalQuantity - retQty)
+        if (remQty <= 0) return prev
+
         const newItem: ReturnDraftItem = {
           lotId: saleItem.lotId,
           productName: saleItem.productNameBn || saleItem.productNameEn,
@@ -170,8 +168,10 @@ export default function Returns() {
           lotNumber: saleItem.lotNumber,
           barcode: saleItem.barcode,
           baseUnit: saleItem.baseUnit || "unit",
-          purchasedQuantity: saleItem.totalQuantity,
-          quantity: formatQuantityByUnit(saleItem.totalQuantity, saleItem.baseUnit),
+          purchasedQuantity: remQty,
+          returnedQuantity: retQty,
+          remainingQuantity: remQty,
+          quantity: formatQuantityByUnit(remQty, saleItem.baseUnit),
           refundPrice: saleItem.unitPrice.toString(),
           isDamaged: false,
         }
@@ -186,19 +186,31 @@ export default function Returns() {
 
   const handleSelectAllInvoiceItems = () => {
     if (!foundSale?.items) return
-    const drafts: ReturnDraftItem[] = foundSale.items.map((it) => ({
-      lotId: it.lotId,
-      productName: it.productNameBn || it.productNameEn,
-      productNameBn: it.productNameBn,
-      productNameEn: it.productNameEn,
-      lotNumber: it.lotNumber,
-      barcode: it.barcode,
-      baseUnit: it.baseUnit || "unit",
-      purchasedQuantity: it.totalQuantity,
-      quantity: formatQuantityByUnit(it.totalQuantity, it.baseUnit),
-      refundPrice: it.unitPrice.toString(),
-      isDamaged: false,
-    }))
+    const drafts: ReturnDraftItem[] = foundSale.items
+      .filter((it) => {
+        const retQty = it.returnedQuantity ?? 0
+        const remQty = it.remainingQuantity != null ? it.remainingQuantity : Math.max(0, it.totalQuantity - retQty)
+        return remQty > 0
+      })
+      .map((it) => {
+        const retQty = it.returnedQuantity ?? 0
+        const remQty = it.remainingQuantity != null ? it.remainingQuantity : Math.max(0, it.totalQuantity - retQty)
+        return {
+          lotId: it.lotId,
+          productName: it.productNameBn || it.productNameEn,
+          productNameBn: it.productNameBn,
+          productNameEn: it.productNameEn,
+          lotNumber: it.lotNumber,
+          barcode: it.barcode,
+          baseUnit: it.baseUnit || "unit",
+          purchasedQuantity: remQty,
+          returnedQuantity: retQty,
+          remainingQuantity: remQty,
+          quantity: formatQuantityByUnit(remQty, it.baseUnit),
+          refundPrice: it.unitPrice.toString(),
+          isDamaged: false,
+        }
+      })
     setReturnItems(drafts)
   }
 
@@ -206,33 +218,8 @@ export default function Returns() {
     setReturnItems([])
   }
 
-  // Direct Return product selection
-  const handleSelectStock = (item: StockItem) => {
-    setSelectedStockItem(item)
-    setReturnItems((prev) => {
-      const existing = prev.find((i) => i.lotId === item.lotId)
-      if (existing) {
-        const curQty = parseFloat(existing.quantity) || 0
-        return prev.map((i) =>
-          i.lotId === item.lotId ? { ...i, quantity: (curQty + 1).toString() } : i
-        )
-      } else {
-        const newItem: ReturnDraftItem = {
-          lotId: item.lotId,
-          productName: item.nameBn || item.productNameBn || item.nameEn || item.productNameEn || `Lot #${item.lotId}`,
-          productNameBn: item.nameBn || item.productNameBn,
-          productNameEn: item.nameEn || item.productNameEn,
-          lotNumber: item.lotNumber,
-          barcode: item.lotBarcode || item.barcode,
-          baseUnit: item.baseUnit || "unit",
-          quantity: "1",
-          refundPrice: (item.lotRetailPrice || 0).toString(),
-          isDamaged: false,
-        }
-        return [...prev, newItem]
-      }
-    })
-  }
+  // Stock selection helpers (deprecated / legacy compat)
+  const handleSelectStock = (_item: StockItem) => {}
 
   const handleClearSelectedStock = () => {
     setSelectedStockItem(null)
@@ -266,8 +253,13 @@ export default function Returns() {
   const handleSubmitReturn = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (!foundSale) {
+      setFormError("An original sales invoice must be verified before processing a return.")
+      return
+    }
+
     if (returnItems.length === 0) {
-      setFormError("Please select at least one product to return.")
+      setFormError("Please select at least one product from the verified invoice to return.")
       return
     }
 
@@ -287,7 +279,7 @@ export default function Returns() {
 
       if (it.purchasedQuantity != null && qtyNum > it.purchasedQuantity) {
         setFormError(
-          `Return quantity (${formatQuantityByUnit(qtyNum, it.baseUnit)}) for ${it.productName} cannot exceed purchased quantity (${formatQuantityByUnit(it.purchasedQuantity, it.baseUnit)}) on invoice.`
+          `Return quantity (${formatQuantityByUnit(qtyNum, it.baseUnit)}) for ${it.productName} cannot exceed available returnable quantity (${formatQuantityByUnit(it.purchasedQuantity, it.baseUnit)}) on invoice.`
         )
         return
       }
@@ -309,7 +301,7 @@ export default function Returns() {
       setFormError(null)
 
       const payload: SaleReturnRequest = {
-        originalSaleId: foundSale?.id ?? null,
+        originalSaleId: foundSale.id,
         customerId: selectedCustomerId,
         refundType,
         reason: reason.trim() || "Customer return",

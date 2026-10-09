@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from app.core_logging import get_logger
 from app.models.customer import Customer, CustomerLedger
 from app.models.inventory import InventoryLot, StockInventory, StockMovement
+from app.models.returns import SaleReturn, SaleReturnItem
 from app.models.sale import Sale, SaleItem
 from app.schemas.sale import (
     SaleItemDetailResponse,
@@ -19,7 +20,24 @@ from app.services.sequence_service import get_next_sequence
 
 logger = get_logger("sales")
 
-def to_sale_response(sale: Sale) -> SaleResponse:
+async def get_returned_quantities_by_lot_for_sale(
+    db: AsyncSession, sale_id: int
+) -> dict[int, Decimal]:
+    stmt = (
+        select(
+            SaleReturnItem.lot_id,
+            func.coalesce(func.sum(SaleReturnItem.quantity), Decimal("0.000")),
+        )
+        .join(SaleReturn, SaleReturnItem.sale_return_id == SaleReturn.id)
+        .where(SaleReturn.original_sale_id == sale_id)
+        .group_by(SaleReturnItem.lot_id)
+    )
+    rows = (await db.execute(stmt)).all()
+    return {row[0]: Decimal(str(row[1])) for row in rows}
+
+def to_sale_response(
+    sale: Sale, returned_quantities: dict[int, Decimal] | None = None
+) -> SaleResponse:
     item_responses: list[SaleItemDetailResponse] = []
     total_profit = Decimal("0.00")
 
@@ -28,6 +46,9 @@ def to_sale_response(sale: Sale) -> SaleResponse:
         p = lot.product if lot else None
         line_profit = ((it.unit_price - it.unit_cost) * it.total_quantity).quantize(Decimal("0.01"))
         total_profit += line_profit
+
+        ret_qty = (returned_quantities or {}).get(it.lot_id, Decimal("0.000"))
+        rem_qty = max(Decimal("0.000"), it.total_quantity - ret_qty)
 
         item_responses.append(
             SaleItemDetailResponse(
@@ -46,6 +67,8 @@ def to_sale_response(sale: Sale) -> SaleResponse:
                 unit_cost=it.unit_cost,
                 subtotal=it.subtotal,
                 line_profit=line_profit,
+                returned_quantity=ret_qty,
+                remaining_quantity=rem_qty,
             )
         )
 
@@ -368,7 +391,8 @@ async def get_sale_by_id(db: AsyncSession, sale_id: int) -> SaleResponse:
     sale = (await db.execute(stmt)).scalar_one_or_none()
     if not sale:
         raise HTTPException(status_code=404, detail=f"Sale not found with id: {sale_id}")
-    return to_sale_response(sale)
+    ret_map = await get_returned_quantities_by_lot_for_sale(db, sale.id)
+    return to_sale_response(sale, ret_map)
 
 async def get_sale_by_invoice(db: AsyncSession, invoice_no: str) -> SaleResponse:
     raw = invoice_no.strip()
@@ -402,12 +426,14 @@ async def get_sale_by_invoice(db: AsyncSession, invoice_no: str) -> SaleResponse
             )
             .options(*options)
             .order_by(desc(Sale.sale_date), desc(Sale.id))
+            .limit(1)
         )
         sale = (await db.execute(suffix_stmt)).scalars().first()
 
     if not sale:
         raise HTTPException(status_code=404, detail=f"Sale not found with invoice: {invoice_no}")
-    return to_sale_response(sale)
+    ret_map = await get_returned_quantities_by_lot_for_sale(db, sale.id)
+    return to_sale_response(sale, ret_map)
 
 async def search_sales_by_query(
     db: AsyncSession, query: str, limit: int = 10
@@ -438,7 +464,11 @@ async def search_sales_by_query(
         .limit(max_limit)
     )
     sales = (await db.execute(stmt)).scalars().all()
-    return [to_sale_response(s) for s in sales]
+    results: list[SaleResponse] = []
+    for s in sales:
+        ret_map = await get_returned_quantities_by_lot_for_sale(db, s.id)
+        results.append(to_sale_response(s, ret_map))
+    return results
 
 async def get_recent_sales(db: AsyncSession, limit: int = 50) -> list[SaleResponse]:
     stmt = (

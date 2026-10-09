@@ -93,30 +93,35 @@ async def process_return(
             detail=f"Invalid refund type '{refund_type}'. Expected CASH_REFUND or DUE_ADJUSTMENT",
         )
 
-    original_sale: Sale | None = None
-    if req.original_sale_id:
-        s_res = await db.execute(
-            select(Sale)
-            .where(Sale.id == req.original_sale_id)
-            .options(selectinload(Sale.items), selectinload(Sale.customer))
+    if not req.original_sale_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An original sales invoice (originalSaleId) is strictly required to process a verified return.",
         )
-        original_sale = s_res.scalar_one_or_none()
-        if not original_sale:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Original sale with ID {req.original_sale_id} not found",
-            )
+
+    s_res = await db.execute(
+        select(Sale)
+        .where(Sale.id == req.original_sale_id)
+        .options(selectinload(Sale.items), selectinload(Sale.customer))
+    )
+    original_sale = s_res.scalar_one_or_none()
+    if not original_sale:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Original sale with ID {req.original_sale_id} not found",
+        )
 
     customer: Customer | None = None
-    if req.customer_id:
-        c_res = await db.execute(select(Customer).where(Customer.id == req.customer_id))
+    target_customer_id = req.customer_id or original_sale.customer_id
+    if target_customer_id:
+        c_res = await db.execute(select(Customer).where(Customer.id == target_customer_id))
         customer = c_res.scalar_one_or_none()
         if not customer:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Customer with ID {req.customer_id} not found",
+                detail=f"Customer with ID {target_customer_id} not found",
             )
-    elif original_sale and original_sale.customer_id:
+    elif original_sale and original_sale.customer:
         customer = original_sale.customer
 
     if refund_type == "DUE_ADJUSTMENT" and not customer:
@@ -159,33 +164,44 @@ async def process_return(
             )
 
         # Cumulative validation against original invoice
-        if original_sale:
-            orig_it = next((si for si in original_sale.items if si.lot_id == lot.id), None)
-            if not orig_it:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Lot {lot.lot_number} was not part of original invoice {original_sale.invoice_no}",
-                )
-
-            # Check historical returned quantity on this sale
-            prev_ret_stmt = (
-                select(func.coalesce(func.sum(SaleReturnItem.quantity), Decimal("0.000")))
-                .join(SaleReturn, SaleReturnItem.sale_return_id == SaleReturn.id)
-                .where(
-                    SaleReturn.original_sale_id == original_sale.id,
-                    SaleReturnItem.lot_id == lot.id,
-                )
+        orig_it = next((si for si in original_sale.items if si.lot_id == lot.id), None)
+        if not orig_it:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Lot {lot.lot_number} was not part of original invoice {original_sale.invoice_no}",
             )
-            already_returned = (await db.execute(prev_ret_stmt)).scalar() or Decimal("0.000")
-            if already_returned + qty > orig_it.total_quantity:
-                prod_label = lot.product.name_en if lot.product else lot.lot_number
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Cannot return {qty} units of {prod_label}. Already returned {already_returned} of {orig_it.total_quantity} purchased on invoice {original_sale.invoice_no}.",
-                )
 
-            if refund_price == Decimal("0.00"):
-                refund_price = orig_it.unit_price
+        prod_label = lot.product.name_en if lot.product else lot.lot_number
+
+        # Check historical returned quantity on this sale
+        prev_ret_stmt = (
+            select(func.coalesce(func.sum(SaleReturnItem.quantity), Decimal("0.000")))
+            .join(SaleReturn, SaleReturnItem.sale_return_id == SaleReturn.id)
+            .where(
+                SaleReturn.original_sale_id == original_sale.id,
+                SaleReturnItem.lot_id == lot.id,
+            )
+        )
+        already_returned = (await db.execute(prev_ret_stmt)).scalar() or Decimal("0.000")
+        remaining_returnable = orig_it.total_quantity - already_returned
+        if remaining_returnable <= Decimal("0.000"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Item {prod_label} has already been fully returned for invoice {original_sale.invoice_no}.",
+            )
+        if already_returned + qty > orig_it.total_quantity:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot return {qty} units of {prod_label}. Already returned {already_returned} of {orig_it.total_quantity} purchased on invoice {original_sale.invoice_no}.",
+            )
+
+        if refund_price == Decimal("0.00"):
+            refund_price = orig_it.unit_price
+        elif refund_price > orig_it.unit_price:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Refund price ৳{refund_price} cannot exceed original invoice price ৳{orig_it.unit_price} for {prod_label}.",
+            )
 
         line_subtotal = (qty * refund_price).quantize(Decimal("0.01"))
         total_refund += line_subtotal

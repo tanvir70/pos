@@ -198,7 +198,7 @@ async def test_returns_quantity_and_price_boundaries():
             assert excess_qty_res.status_code == 400
             assert "purchased on invoice" in excess_qty_res.json()["message"]
 
-            # 5. Refund total (250.0) exceeds original sale total amount (200.0) -> 400
+            # 5. Refund unit price (250.0) exceeds original unit price (100.0) -> 400
             excess_price_res = await ac.post(
                 "/api/returns",
                 json={
@@ -209,7 +209,7 @@ async def test_returns_quantity_and_price_boundaries():
                 headers=headers,
             )
             assert excess_price_res.status_code == 400
-            assert "exceeds remaining refundable amount" in excess_price_res.json()["message"]
+            assert "cannot exceed original invoice price" in excess_price_res.json()["message"]
 
             # 6. Lookups: get_return_by_id (200 vs 404) and get_recent_returns
             valid_ret = await ac.post(
@@ -326,3 +326,25 @@ async def test_returns_multiple_items_in_single_voucher():
             assert float(item_lots[lot1_id]["refundPrice"]) == 100.0
             assert float(item_lots[lot2_id]["quantity"]) == 2.0
             assert float(item_lots[lot2_id]["refundPrice"]) == 60.0
+
+@pytest.mark.asyncio
+async def test_returns_unverified_missing_sale_rejected():
+    """Verify that blind / unverified returns without original sales invoice are strictly rejected."""
+    async with lifespan(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            login = await ac.post("/api/auth/login", json={"username": "owner", "password": "1234"})
+            token = login.json()["token"]
+            headers = {"Authorization": f"Bearer {token}"}
+
+            # Return attempt with missing originalSaleId
+            blind_ret_res = await ac.post(
+                "/api/returns",
+                json={
+                    "refundType": "CASH_REFUND",
+                    "reason": "Attempting unverified blind return",
+                    "items": [{"lotId": 1, "quantity": 1.0, "refundPrice": 100.0}],
+                },
+                headers=headers,
+            )
+            assert blind_ret_res.status_code in (400, 422)

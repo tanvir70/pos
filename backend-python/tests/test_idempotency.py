@@ -181,8 +181,23 @@ async def test_sale_return_idempotency():
             lots = (await ac.get("/api/inventory/lots", headers=headers)).json()
             lot = next(l for l in lots if l["id"] == 1 or l["id"] == 7)
 
+            # Create original sale first
+            sale_res = await ac.post(
+                "/api/sales",
+                json={
+                    "saleMode": "RETAIL",
+                    "paymentMethod": "CASH",
+                    "cashPaid": 200.0,
+                    "items": [{"lotId": lot["id"], "totalQuantity": 2.0, "unitPrice": 100.0}],
+                },
+                headers=headers,
+            )
+            assert sale_res.status_code == 201
+            sale = sale_res.json()
+
             return_key = f"IDEM-RET-TEST-{uuid.uuid4()}"
             ret_req = {
+                "originalSaleId": sale["id"],
                 "refundType": "CASH_REFUND",
                 "reason": "Customer change of mind",
                 "clientTrxId": return_key,

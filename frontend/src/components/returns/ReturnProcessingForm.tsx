@@ -7,9 +7,9 @@ import {
   User,
   Loader2,
   Package,
-  Trash2,
   X,
-  ShieldAlert,
+  Receipt,
+  ShieldCheck,
 } from "lucide-react"
 import CustomerSearchSelect from "./CustomerSearchSelect"
 import type {
@@ -37,7 +37,7 @@ export interface ReturnProcessingFormProps {
   onSelectCustomerId: (id: number | null) => void
   stocks: StockItem[]
   selectedStockItem?: StockItem | null
-  onSelectStock: (item: StockItem) => void
+  onSelectStock?: (item: StockItem) => void
   onClearSelectedStock?: () => void
   // Multi-item return props
   returnItems: ReturnDraftItem[]
@@ -72,9 +72,6 @@ export default function ReturnProcessingForm({
   selectedCustomerId,
   onSelectCustomerId,
   stocks,
-  selectedStockItem,
-  onSelectStock,
-  onClearSelectedStock,
   returnItems,
   onUpdateReturnItem,
   onRemoveReturnItem,
@@ -99,7 +96,7 @@ export default function ReturnProcessingForm({
         <div className="flex items-center gap-2">
           <ClipboardEdit className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
           <h2 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg">
-            Return Form
+            Sales Return Counter
           </h2>
         </div>
         {returnItems.length > 0 && (
@@ -117,34 +114,53 @@ export default function ReturnProcessingForm({
       )}
 
       <form onSubmit={onSubmit} className="space-y-4">
-        {/* ── Top Row: Side-by-Side Search (Left: Invoice / Item Lookup, Right: Customer Account) ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-          <ReturnSuperSearch
-            stocks={stocks}
-            selectedStockItem={selectedStockItem}
-            onSelectStock={onSelectStock}
-            onClearSelectedStock={onClearSelectedStock}
-            foundSale={foundSale}
-            isSearchingInvoice={isSearchingInvoice}
-            invoiceSearchError={invoiceSearchError}
-            onSearchInvoice={onSearchInvoice}
-            onClearInvoice={onClearInvoice}
-            onSelectFoundSale={onSelectFoundSale}
-            selectedLotIds={selectedLotIds}
-            onToggleInvoiceItem={onToggleInvoiceItem}
-            onSelectAllInvoiceItems={onSelectAllInvoiceItems}
-            onDeselectAllInvoiceItems={onDeselectAllInvoiceItems}
-            renderOnlySearch={true}
-          />
+        {/* ── Top Row: Invoice Search & Customer Status ── */}
+        {foundSale ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <ReturnSuperSearch
+              foundSale={foundSale}
+              isSearchingInvoice={isSearchingInvoice}
+              invoiceSearchError={invoiceSearchError}
+              onSearchInvoice={onSearchInvoice}
+              onClearInvoice={onClearInvoice}
+              onSelectFoundSale={onSelectFoundSale}
+              renderOnlySearch={true}
+            />
 
-          <CustomerSearchSelect
-            customers={customers}
-            selectedCustomerId={selectedCustomerId}
-            onSelectCustomerId={onSelectCustomerId}
-            refundType={refundType}
-            calculatedTotalRefund={calculatedTotalRefund}
-          />
-        </div>
+            <CustomerSearchSelect
+              customers={customers}
+              selectedCustomerId={selectedCustomerId}
+              onSelectCustomerId={onSelectCustomerId}
+              refundType={refundType}
+              calculatedTotalRefund={calculatedTotalRefund}
+            />
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <ReturnSuperSearch
+              foundSale={foundSale}
+              isSearchingInvoice={isSearchingInvoice}
+              invoiceSearchError={invoiceSearchError}
+              onSearchInvoice={onSearchInvoice}
+              onClearInvoice={onClearInvoice}
+              onSelectFoundSale={onSelectFoundSale}
+              renderOnlySearch={true}
+            />
+
+            {/* Empty State Banner explaining mandatory invoice verification */}
+            <div className="p-6 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700/80 rounded-2xl text-center space-y-2.5">
+              <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 flex items-center justify-center mx-auto">
+                <ShieldCheck className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                Original Sales Invoice Verification Required
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                To protect store stock and prevent refund fraud, all returns must be verified against an original sales memo. Search above by <strong>Customer Phone Number (017...)</strong>, <strong>Customer Name</strong>, or <strong>Invoice Memo #</strong>.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Full Width: Matched Invoice Line Items Selection Panel ── */}
         {foundSale && (
@@ -159,288 +175,249 @@ export default function ReturnProcessingForm({
           />
         )}
 
-        {/* ── Full Width: Direct Selected Product Banner (without invoice) ── */}
-        {!foundSale && selectedStockItem && (
-          <div className="p-3 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-emerald-950 dark:text-emerald-200 flex items-center justify-between animate-in fade-in duration-100">
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <div>
-                <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
-                  {selectedStockItem.nameBn || selectedStockItem.productNameBn} ({selectedStockItem.nameEn || selectedStockItem.productNameEn})
-                </div>
-                <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
-                  <span className="font-mono font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.5 rounded">
-                    Lot #{formatLotNumber(selectedStockItem.lotNumber)}
-                  </span>
-                  <span>·</span>
-                  <span>Barcode: {selectedStockItem.lotBarcode || selectedStockItem.barcode || "N/A"}</span>
-                  <span>·</span>
-                  <span>Exp: {selectedStockItem.expiryDate || "N/A"}</span>
-                  <span>·</span>
-                  <span>Unit: {selectedStockItem.baseUnit}</span>
-                </div>
+        {/* 3. Multi-Item Return Table / Cart */}
+        {foundSale && (
+          <div className="space-y-2 pt-1">
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-1.5">
+                <Package className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                  Queued Return Items ({returnItems.length})
+                </span>
               </div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="text-right">
-                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 font-mono tabular-nums">
-                  Rate: {tk(selectedStockItem.lotRetailPrice)}
-                </div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                  Current Stock: {selectedStockItem.quantity ?? (selectedStockItem as any).totalQuantity ?? 0} {selectedStockItem.baseUnit}
-                </div>
-              </div>
-              {onClearSelectedStock && (
+              {returnItems.length > 0 && (
                 <button
                   type="button"
-                  onClick={onClearSelectedStock}
-                  className="p-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors cursor-pointer"
-                  title="Remove selected product"
+                  onClick={onClearAllReturnItems}
+                  className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
+                  Clear All
                 </button>
               )}
             </div>
+
+            {returnItems.length === 0 ? (
+              <div className="p-5 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-center text-xs text-slate-500 dark:text-slate-400">
+                <Package className="w-6 h-6 text-slate-400 mx-auto mb-1.5 opacity-60" />
+                <p className="font-bold text-slate-700 dark:text-slate-300">No items selected from invoice</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Click on any purchased product in the invoice card above to add it to your return queue.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {returnItems.map((item) => {
+                  const qtyVal = parseFloat(item.quantity) || 0
+                  const priceVal = parseFloat(item.refundPrice) || 0
+                  const lineTotal = qtyVal * priceVal
+
+                  return (
+                    <div
+                      key={item.lotId}
+                      className="p-3 bg-white dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700/80 rounded-xl shadow-2xs space-y-2 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                    >
+                      {/* Item Heading */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm">
+                            {item.productNameBn || item.productName}
+                            {item.productNameEn && item.productNameBn ? ` (${item.productNameEn})` : ""}
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
+                            <span className="font-mono font-bold bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-300 px-1.5 py-0.2 rounded border border-slate-200 dark:border-slate-600">
+                              Lot #{formatLotNumber(item.lotNumber)}
+                            </span>
+                            {item.barcode && (
+                              <span className="font-mono text-slate-400 dark:text-slate-500">#{item.barcode}</span>
+                            )}
+                            {item.purchasedQuantity != null && (
+                              <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                                Max returnable: <strong>{formatQuantityByUnit(item.purchasedQuantity, item.baseUnit)} {item.baseUnit}</strong>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 block uppercase font-bold">Subtotal</span>
+                            <span className="text-xs sm:text-sm font-bold font-mono text-slate-900 dark:text-slate-100 tabular-nums">
+                              {tk(lineTotal)}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => onRemoveReturnItem(item.lotId)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-colors cursor-pointer"
+                            title="Remove item"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Inputs Row: Quantity, Refund Rate, Quarantine Damaged Toggle */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/80">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                              Return Qty ({item.baseUnit}) *
+                            </label>
+                            {isDiscreteUnit(item.baseUnit) && (
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Whole unit</span>
+                            )}
+                          </div>
+                          <input
+                            type="number"
+                            step={isDiscreteUnit(item.baseUnit) ? "1" : "0.001"}
+                            min={isDiscreteUnit(item.baseUnit) ? "1" : "0.001"}
+                            max={item.purchasedQuantity != null ? item.purchasedQuantity : undefined}
+                            required
+                            value={item.quantity}
+                            onChange={(e) => {
+                              let val = e.target.value
+                              if (isDiscreteUnit(item.baseUnit) && val.includes(".")) {
+                                val = val.split(".")[0]
+                              }
+                              onUpdateReturnItem(item.lotId, "quantity", val)
+                            }}
+                            placeholder={isDiscreteUnit(item.baseUnit) ? "1" : "1.000"}
+                            className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-slate-100 tabular-nums focus:border-emerald-600 dark:focus:border-emerald-500 focus:outline-hidden"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Refund Rate (৳) *
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            required
+                            value={item.refundPrice}
+                            onChange={(e) => onUpdateReturnItem(item.lotId, "refundPrice", e.target.value)}
+                            placeholder="0.00"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-slate-100 tabular-nums focus:border-emerald-600 dark:focus:border-emerald-500 focus:outline-hidden"
+                          />
+                        </div>
+
+                        <div className="flex flex-col justify-end">
+                          <label
+                            className={`flex items-center gap-2 p-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
+                              item.isDamaged
+                                ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200"
+                                : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={item.isDamaged}
+                              onChange={(e) => onUpdateReturnItem(item.lotId, "isDamaged", e.target.checked)}
+                              className="rounded text-amber-600 focus:ring-amber-500 h-3.5 w-3.5"
+                            />
+                            <span className="text-[11px]">Damaged / Leaked</span>
+                            {item.isDamaged && (
+                              <span className="text-[10px] font-bold bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 px-1.5 py-0.2 rounded ml-auto">
+                                Quarantine
+                              </span>
+                            )}
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
-        {/* 3. Multi-Item Return Table / Cart */}
-        <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-1.5">
-              <Package className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-                Selected Return Items ({returnItems.length})
-              </span>
+        {/* 4. Refund Method & Summary (Only when invoice is verified) */}
+        {foundSale && (
+          <>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Refund Method *
+              </label>
+              <div className="grid grid-cols-2 gap-2 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => onRefundTypeChange("CASH_REFUND")}
+                  className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    refundType === "CASH_REFUND"
+                      ? "bg-white dark:bg-slate-700 text-slate-950 dark:text-slate-100 shadow-xs border border-slate-200/80 dark:border-slate-600"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <Banknote className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>Cash Refund (Till)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRefundTypeChange("DUE_ADJUSTMENT")}
+                  className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    refundType === "DUE_ADJUSTMENT"
+                      ? "bg-white dark:bg-slate-700 text-indigo-950 dark:text-indigo-200 shadow-xs border border-slate-200/80 dark:border-slate-600"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span>Due Adjustment (Ledger)</span>
+                </button>
+              </div>
             </div>
-            {returnItems.length > 0 && (
-              <button
-                type="button"
-                onClick={onClearAllReturnItems}
-                className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors cursor-pointer"
-              >
-                Clear All
-              </button>
-            )}
-          </div>
 
-          {returnItems.length === 0 ? (
-            <div className="p-5 bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-center text-xs text-slate-500 dark:text-slate-400">
-              <Package className="w-6 h-6 text-slate-400 mx-auto mb-1.5 opacity-60" />
-              <p className="font-bold text-slate-700 dark:text-slate-300">No items queued for return</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Search memo / invoice above and select items, or search product barcode to return.
-              </p>
+            {/* 5. Return Reason */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Reason for Return
+              </label>
+              <input
+                type="text"
+                value={reason}
+                onChange={(e) => onReasonChange(e.target.value)}
+                placeholder="e.g. Unopened leftover after spraying season"
+                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl text-xs sm:text-sm focus:border-emerald-600 dark:focus:border-emerald-500 focus:outline-hidden"
+              />
             </div>
-          ) : (
-            <div className="space-y-2.5">
-              {returnItems.map((item) => {
-                const qtyVal = parseFloat(item.quantity) || 0
-                const priceVal = parseFloat(item.refundPrice) || 0
-                const lineTotal = qtyVal * priceVal
 
-                return (
-                  <div
-                    key={item.lotId}
-                    className="p-3 bg-white dark:bg-slate-800/70 border border-slate-200/90 dark:border-slate-700/80 rounded-xl shadow-2xs space-y-2 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
-                  >
-                    {/* Item Heading */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm">
-                          {item.productNameBn || item.productName}
-                          {item.productNameEn && item.productNameBn ? ` (${item.productNameEn})` : ""}
-                        </div>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
-                          <span className="font-mono font-bold bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-300 px-1.5 py-0.2 rounded border border-slate-200 dark:border-slate-600">
-                            Lot #{formatLotNumber(item.lotNumber)}
-                          </span>
-                          {item.barcode && (
-                            <span className="font-mono text-slate-400 dark:text-slate-500">#{item.barcode}</span>
-                          )}
-                          {item.purchasedQuantity != null && (
-                            <span className="text-emerald-700 dark:text-emerald-400 font-medium">
-                              Purchased: <strong>{formatQuantityByUnit(item.purchasedQuantity, item.baseUnit)} {item.baseUnit}</strong>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="text-right">
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 block uppercase font-bold">Subtotal</span>
-                          <span className="text-xs sm:text-sm font-bold font-mono text-slate-900 dark:text-slate-100 tabular-nums">
-                            {tk(lineTotal)}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => onRemoveReturnItem(item.lotId)}
-                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 transition-colors cursor-pointer"
-                          title="Remove item"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Inputs Row: Quantity, Refund Rate, Quarantine Damaged Toggle */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-700/80">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                            Return Qty ({item.baseUnit}) *
-                          </label>
-                          {isDiscreteUnit(item.baseUnit) && (
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Whole unit</span>
-                          )}
-                        </div>
-                        <input
-                          type="number"
-                          step={isDiscreteUnit(item.baseUnit) ? "1" : "0.001"}
-                          min={isDiscreteUnit(item.baseUnit) ? "1" : "0.001"}
-                          max={item.purchasedQuantity != null ? item.purchasedQuantity : undefined}
-                          required
-                          value={item.quantity}
-                          onChange={(e) => {
-                            let val = e.target.value
-                            if (isDiscreteUnit(item.baseUnit) && val.includes(".")) {
-                              val = val.split(".")[0]
-                            }
-                            onUpdateReturnItem(item.lotId, "quantity", val)
-                          }}
-                          placeholder={isDiscreteUnit(item.baseUnit) ? "1" : "1.000"}
-                          className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-slate-100 tabular-nums focus:border-emerald-600 dark:focus:border-emerald-500 focus:outline-hidden"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                          Refund Rate (৳) *
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          required
-                          value={item.refundPrice}
-                          onChange={(e) => onUpdateReturnItem(item.lotId, "refundPrice", e.target.value)}
-                          placeholder="0.00"
-                          className="w-full px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-xs font-bold font-mono text-slate-900 dark:text-slate-100 tabular-nums focus:border-emerald-600 dark:focus:border-emerald-500 focus:outline-hidden"
-                        />
-                      </div>
-
-                      <div className="flex flex-col justify-end">
-                        <label
-                          className={`flex items-center gap-2 p-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
-                            item.isDamaged
-                              ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200"
-                              : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={item.isDamaged}
-                            onChange={(e) => onUpdateReturnItem(item.lotId, "isDamaged", e.target.checked)}
-                            className="rounded text-amber-600 focus:ring-amber-500 h-3.5 w-3.5"
-                          />
-                          <span className="text-[11px]">Damaged / Leaked</span>
-                          {item.isDamaged && (
-                            <span className="text-[10px] font-bold bg-amber-200 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 px-1.5 py-0.2 rounded ml-auto">
-                              Quarantine
-                            </span>
-                          )}
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* 4. Refund Method */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Refund Method *
-          </label>
-          <div className="grid grid-cols-2 gap-2 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-xl">
-            <button
-              type="button"
-              onClick={() => onRefundTypeChange("CASH_REFUND")}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                refundType === "CASH_REFUND"
-                  ? "bg-white dark:bg-slate-700 text-slate-950 dark:text-slate-100 shadow-xs border border-slate-200/80 dark:border-slate-600"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
-            >
-              <Banknote className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Cash Refund (Till)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onRefundTypeChange("DUE_ADJUSTMENT")}
-              className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                refundType === "DUE_ADJUSTMENT"
-                  ? "bg-white dark:bg-slate-700 text-indigo-950 dark:text-indigo-200 shadow-xs border border-slate-200/80 dark:border-slate-600"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
-            >
-              <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>Due Adjustment (Ledger)</span>
-            </button>
-          </div>
-        </div>
-
-        {/* 5. Return Reason */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Reason for Return
-          </label>
-          <input
-            type="text"
-            value={reason}
-            onChange={(e) => onReasonChange(e.target.value)}
-            placeholder="e.g. Unopened leftover after spraying season"
-            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl text-xs sm:text-sm focus:border-emerald-600 dark:focus:border-emerald-500 focus:outline-hidden"
-          />
-        </div>
-
-        {/* 6. Total Summary & Submit Action */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Total Refund Payable</span>
-            <div className="text-2xl font-black font-mono text-slate-900 dark:text-slate-100 tabular-nums">
-              {tk(calculatedTotalRefund)}
-            </div>
-            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-              {refundType === "CASH_REFUND"
-                ? "Cash paid directly from till"
-                : "Credited to customer ledger (store credit if exceeds due)"}
-            </span>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting || returnItems.length === 0}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-white bg-slate-950 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 transition-all shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Processing...</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-4 h-4" />
-                <span>
-                  Process Return & Print Voucher {returnItems.length > 0 ? `(${returnItems.length} items)` : ""}
+            {/* 6. Total Summary & Submit Action */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Total Refund Payable</span>
+                <div className="text-2xl font-black font-mono text-slate-900 dark:text-slate-100 tabular-nums">
+                  {tk(calculatedTotalRefund)}
+                </div>
+                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                  {refundType === "CASH_REFUND"
+                    ? "Cash paid directly from till"
+                    : "Credited to customer ledger (store credit if exceeds due)"}
                 </span>
-              </>
-            )}
-          </button>
-        </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting || returnItems.length === 0}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-white bg-slate-950 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 transition-all shadow-xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>
+                      Process Return & Print Voucher {returnItems.length > 0 ? `(${returnItems.length} items)` : ""}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+          </>
+        )}
       </form>
     </div>
   )

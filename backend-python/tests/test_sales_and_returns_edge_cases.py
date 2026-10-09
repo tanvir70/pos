@@ -295,9 +295,10 @@ async def test_returns_expired_lot_auto_quarantine():
             token = login.json()["token"]
             headers = {"Authorization": f"Bearer {token}"}
 
-            # Seed an expired lot
+            # Seed an expired lot and historical sale
             exp_lot_num = f"RET-EXP-{uuid.uuid4().hex[:5].upper()}"
             exp_lot_id = None
+            exp_sale_id = None
             try:
                 async with engine.begin() as conn:
                     await conn.execute(
@@ -322,10 +323,48 @@ async def test_returns_expired_lot_auto_quarantine():
                     ).fetchone()
                     exp_lot_id = lot_row[0]
 
-                # Return this expired lot with isDamaged=False
+                    inv_no = f"INV-EXP-{uuid.uuid4().hex[:6].upper()}"
+                    await conn.execute(
+                        text(
+                            """
+                            INSERT INTO sale (
+                                version, invoice_no, sale_date, sale_mode, subtotal, discount,
+                                round_off, total_amount, payment_method, cash_paid, cash_tendered,
+                                change_amount, digital_paid, due_amount
+                            ) VALUES (
+                                0, :inv_no, '2023-06-01 10:00:00', 'RETAIL', 500.0, 0.0,
+                                0.0, 500.0, 'CASH', 500.0, 500.0, 0.0, 0.0, 0.0
+                            )
+                            """
+                        ),
+                        {"inv_no": inv_no},
+                    )
+                    sale_row = (
+                        await conn.execute(
+                            text("SELECT id FROM sale WHERE invoice_no = :inv_no"),
+                            {"inv_no": inv_no},
+                        )
+                    ).fetchone()
+                    exp_sale_id = sale_row[0]
+
+                    await conn.execute(
+                        text(
+                            """
+                            INSERT INTO sale_item (
+                                sale_id, lot_id, total_quantity, unit_price, unit_cost, subtotal
+                            ) VALUES (
+                                :sale_id, :lot_id, 5.0, 100.0, 50.0, 500.0
+                            )
+                            """
+                        ),
+                        {"sale_id": exp_sale_id, "lot_id": exp_lot_id},
+                    )
+
+                # Return this expired lot with isDamaged=False from verified sale
                 ret_res = await ac.post(
                     "/api/returns",
                     json={
+                        "originalSaleId": exp_sale_id,
                         "refundType": "CASH_REFUND",
                         "reason": "Customer found past expiry date at home",
                         "items": [
@@ -349,6 +388,10 @@ async def test_returns_expired_lot_auto_quarantine():
                     async with engine.begin() as conn:
                         await conn.execute(text("DELETE FROM sale_return_item WHERE lot_id = :id"), {"id": exp_lot_id})
                         await conn.execute(text("DELETE FROM stock_inventory WHERE lot_id = :id"), {"id": exp_lot_id})
+                        if exp_sale_id:
+                            await conn.execute(text("DELETE FROM sale_return WHERE original_sale_id = :sid"), {"sid": exp_sale_id})
+                            await conn.execute(text("DELETE FROM sale_item WHERE sale_id = :sid"), {"sid": exp_sale_id})
+                            await conn.execute(text("DELETE FROM sale WHERE id = :sid"), {"sid": exp_sale_id})
                         await conn.execute(text("DELETE FROM inventory_lot WHERE id = :id"), {"id": exp_lot_id})
 
 @pytest.mark.asyncio

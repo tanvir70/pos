@@ -322,6 +322,8 @@ export interface SaleItemResponse {
   expiryDate?: string | null
   cartonMultiplier?: number | null
   baseUnit?: string | null
+  returnedQuantity?: number
+  remainingQuantity?: number
 }
 
 export interface SaleResponse {
@@ -367,13 +369,15 @@ export interface ReturnDraftItem {
   barcode?: string
   baseUnit: string
   purchasedQuantity?: number
+  returnedQuantity?: number
+  remainingQuantity?: number
   quantity: string
   refundPrice: string
   isDamaged: boolean
 }
 
 export interface SaleReturnRequest {
-  originalSaleId?: number | null
+  originalSaleId: number
   customerId?: number | null
   refundType: RefundType | string
   reason?: string | null

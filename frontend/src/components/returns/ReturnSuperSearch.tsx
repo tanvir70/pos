@@ -2,29 +2,21 @@ import React, { useState, useEffect, useMemo, useRef } from "react"
 import {
   Search,
   Receipt,
-  CheckCircle2,
   X,
   Loader2,
-  Package,
-  Barcode,
-  Sparkles,
-  ArrowRight,
-  Check,
-  Tag,
+  CheckCircle2,
+  Phone,
+  User,
+  Calendar,
   AlertTriangle,
-  CheckSquare,
-  Square,
-  FileText,
 } from "lucide-react"
 import type { StockItem, SaleResponse, SaleItemResponse } from "../../types"
-import { formatLotNumber } from "../../utils/lotNumber"
-import { formatQuantityByUnit, pluralizeUnit } from "../../utils/unit"
 import { searchSales } from "../../api/endpoints"
 
 export interface ReturnSuperSearchProps {
-  stocks: StockItem[]
+  stocks?: StockItem[]
   selectedStockItem?: StockItem | null
-  onSelectStock: (item: StockItem) => void
+  onSelectStock?: (item: StockItem) => void
   onClearSelectedStock?: () => void
   foundSale: SaleResponse | null
   isSearchingInvoice: boolean
@@ -34,7 +26,6 @@ export interface ReturnSuperSearchProps {
   onSelectFoundSale?: (sale: SaleResponse) => void
   onSelectInvoiceItem?: (saleItem: SaleItemResponse, stockItem: StockItem) => void
   selectedInvoiceItemLotId?: number | null
-  // Multi-item return props
   selectedLotIds?: number[]
   onToggleInvoiceItem?: (saleItem: SaleItemResponse, stockItem: StockItem) => void
   onSelectAllInvoiceItems?: () => void
@@ -46,22 +37,12 @@ const tk = (n: number | undefined | null) =>
   `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 export default function ReturnSuperSearch({
-  stocks,
-  selectedStockItem,
-  onSelectStock,
-  onClearSelectedStock,
   foundSale,
   isSearchingInvoice,
   invoiceSearchError,
   onSearchInvoice,
   onClearInvoice,
   onSelectFoundSale,
-  onSelectInvoiceItem,
-  selectedInvoiceItemLotId,
-  selectedLotIds = [],
-  onToggleInvoiceItem,
-  onSelectAllInvoiceItems,
-  onDeselectAllInvoiceItems,
   renderOnlySearch = false,
 }: ReturnSuperSearchProps) {
   const [query, setQuery] = useState("")
@@ -104,18 +85,6 @@ export default function ReturnSuperSearch({
     }
   }, [isChangingMemo])
 
-  // Auto-detect if current input is likely an invoice query
-  const isInvoiceQuery = useMemo(() => {
-    const q = query.trim().toUpperCase()
-    return (
-      q.startsWith("INV") ||
-      q.startsWith("MEMO") ||
-      q.startsWith("#") ||
-      /^\d+$/.test(q) ||
-      (q.length > 3 && q.includes("-"))
-    )
-  }, [query])
-
   // Live query for matching invoices (debounced)
   useEffect(() => {
     const trimmed = query.trim()
@@ -127,57 +96,37 @@ export default function ReturnSuperSearch({
     const timer = setTimeout(async () => {
       try {
         setIsSearchingSales(true)
-        const sales = await searchSales(trimmed, 6)
+        const sales = await searchSales(trimmed, 8)
         setMatchingSales(sales)
       } catch {
         setMatchingSales([])
       } finally {
         setIsSearchingSales(false)
       }
-    }, 160)
+    }, 150)
 
     return () => clearTimeout(timer)
   }, [query])
-
-  // Filter matching stock items for live product suggestions
-  const matchingStocks = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return []
-
-    return stocks
-      .filter((s) => {
-        const matchNameEn = (s.nameEn || s.productNameEn || "").toLowerCase().includes(q)
-        const matchNameBn = (s.nameBn || s.productNameBn || "").toLowerCase().includes(q)
-        const matchCode = (s.productCode || "").toLowerCase().includes(q)
-        const matchLot = (s.lotNumber || "").toLowerCase().includes(q)
-        const matchBarcode = (s.lotBarcode || s.barcode || "").toLowerCase().includes(q)
-        return matchNameEn || matchNameBn || matchCode || matchLot || matchBarcode
-      })
-      .slice(0, 8)
-  }, [stocks, query])
 
   // Handle Search Submission (Barcode Scan or Enter Key)
   const handleTriggerSearch = async () => {
     const trimmed = query.trim()
     if (!trimmed) return
 
-    // 1. Direct exact barcode match against inventory lots
-    const exactBarcodeMatch = stocks.find(
-      (s) =>
-        (s.lotBarcode && s.lotBarcode.toLowerCase() === trimmed.toLowerCase()) ||
-        (s.barcode && s.barcode.toLowerCase() === trimmed.toLowerCase()) ||
-        (s.defaultBarcode && s.defaultBarcode.toLowerCase() === trimmed.toLowerCase()),
-    )
-
-    if (exactBarcodeMatch && !isInvoiceQuery) {
-      onSelectStock(exactBarcodeMatch)
+    // If an invoice is highlighted in dropdown, select it
+    if (matchingSales.length > 0 && activeIndex >= 0 && activeIndex < matchingSales.length) {
+      const selected = matchingSales[activeIndex]
+      if (onSelectFoundSale) {
+        onSelectFoundSale(selected)
+      } else {
+        await onSearchInvoice(selected.invoiceNo)
+      }
       setQuery("")
       setIsOpen(false)
       setIsChangingMemo(false)
       return
     }
 
-    // 2. Invoice Lookup (Supports full invoice or suffix like 217)
     try {
       await onSearchInvoice(trimmed)
       setQuery("")
@@ -189,44 +138,18 @@ export default function ReturnSuperSearch({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const totalItems = matchingSales.length + matchingStocks.length
-
     if (e.key === "ArrowDown") {
       e.preventDefault()
-      if (totalItems > 0) {
-        setActiveIndex((prev) => (prev + 1) % totalItems)
+      if (matchingSales.length > 0) {
+        setActiveIndex((prev) => (prev + 1) % matchingSales.length)
       }
     } else if (e.key === "ArrowUp") {
       e.preventDefault()
-      if (totalItems > 0) {
-        setActiveIndex((prev) => (prev - 1 + totalItems) % totalItems)
+      if (matchingSales.length > 0) {
+        setActiveIndex((prev) => (prev - 1 + matchingSales.length) % matchingSales.length)
       }
     } else if (e.key === "Enter") {
       e.preventDefault()
-      if (isOpen && totalItems > 0) {
-        if (activeIndex < matchingSales.length) {
-          const selectedSale = matchingSales[activeIndex]
-          if (onSelectFoundSale) {
-            onSelectFoundSale(selectedSale)
-          } else {
-            void onSearchInvoice(selectedSale.invoiceNo)
-          }
-          setQuery("")
-          setIsOpen(false)
-          setIsChangingMemo(false)
-          return
-        } else {
-          const stockIdx = activeIndex - matchingSales.length
-          const selectedStock = matchingStocks[stockIdx]
-          if (selectedStock) {
-            onSelectStock(selectedStock)
-            setQuery("")
-            setIsOpen(false)
-            setIsChangingMemo(false)
-            return
-          }
-        }
-      }
       void handleTriggerSearch()
     } else if (e.key === "Escape") {
       setIsOpen(false)
@@ -234,25 +157,36 @@ export default function ReturnSuperSearch({
     }
   }
 
+  const handleSelectSale = (sale: SaleResponse) => {
+    if (onSelectFoundSale) {
+      onSelectFoundSale(sale)
+    } else {
+      void onSearchInvoice(sale.invoiceNo)
+    }
+    setQuery("")
+    setIsOpen(false)
+    setIsChangingMemo(false)
+  }
+
   return (
-    <div ref={containerRef} className="space-y-1.5">
+    <div ref={containerRef} className="space-y-1.5 w-full">
       {/* Label and Hint */}
       <div className="flex items-center justify-between">
         <label className="text-xs font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
           <Receipt className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-          <span>Invoice / Item Lookup</span>
+          <span>Original Invoice Verification *</span>
         </label>
         <span className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
-          Search suffix (e.g. <strong>217</strong>) or barcode
+          Search by <strong>Phone</strong>, <strong>Name</strong>, or <strong>Memo #</strong>
         </span>
       </div>
 
-      {/* Mode A: Invoice Loaded Compact Display (when renderOnlySearch is true) */}
+      {/* Mode A: Invoice Loaded Compact Display */}
       {foundSale && !isChangingMemo ? (
-        <div className="p-3 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl flex items-center justify-between gap-2 shadow-2xs">
+        <div className="p-3 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-emerald-200 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 flex items-center justify-center shrink-0 font-bold text-xs">
-              <Receipt className="w-4 h-4" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -260,13 +194,20 @@ export default function ReturnSuperSearch({
                   #{foundSale.invoiceNo}
                 </span>
                 <span className="text-[10px] font-bold bg-emerald-200 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 px-1.5 py-0.2 rounded-md">
-                  Active
+                  Verified Sale
                 </span>
               </div>
               <div className="text-[11px] text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 mt-0.5 flex-wrap">
-                <span>Total: <strong>{tk(foundSale.totalAmount)}</strong></span>
+                <span className="font-medium text-slate-700 dark:text-slate-300">
+                  {foundSale.customerName || "Walk-in Retail"}
+                  {foundSale.customerPhone ? ` (${foundSale.customerPhone})` : ""}
+                </span>
                 <span>·</span>
-                <span>{foundSale.items?.length || 0} items</span>
+                <span>
+                  Bill: <strong>{tk(foundSale.totalAmount)}</strong>
+                </span>
+                <span>·</span>
+                <span>{foundSale.items?.length || 0} items purchased</span>
               </div>
             </div>
           </div>
@@ -275,9 +216,9 @@ export default function ReturnSuperSearch({
             <button
               type="button"
               onClick={() => setIsChangingMemo(true)}
-              className="text-[11px] font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-950 dark:hover:text-emerald-100 bg-emerald-100 dark:bg-emerald-900/60 hover:bg-emerald-200 dark:hover:bg-emerald-800 px-2 py-1 rounded-md cursor-pointer transition-colors"
+              className="text-[11px] font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-950 dark:hover:text-emerald-100 bg-emerald-100 dark:bg-emerald-900/60 hover:bg-emerald-200 dark:hover:bg-emerald-800 px-2.5 py-1 rounded-md cursor-pointer transition-colors"
             >
-              Change Memo
+              Change Invoice
             </button>
             <button
               type="button"
@@ -314,7 +255,7 @@ export default function ReturnSuperSearch({
                 if (query.trim()) setIsOpen(true)
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Search memo (e.g. 217), barcode, product..."
+              placeholder="Scan memo barcode, or search by Phone (017...), Name, or Memo #..."
               className="w-full pl-9 pr-24 py-2.5 bg-slate-50/60 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-850 border border-slate-200 dark:border-slate-700 focus:border-emerald-600 dark:focus:border-emerald-500 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl text-xs sm:text-sm font-medium transition-all shadow-2xs focus:outline-hidden"
             />
 
@@ -350,17 +291,12 @@ export default function ReturnSuperSearch({
                 disabled={isSearchingInvoice || !query.trim()}
                 className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 flex items-center gap-1"
               >
-                {isSearchingInvoice ? (
+                {isSearchingInvoice || isSearchingSales ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : isInvoiceQuery ? (
+                ) : (
                   <>
                     <Receipt className="w-3 h-3" />
                     <span>Find</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-3 h-3" />
-                    <span>Search</span>
                   </>
                 )}
               </button>
@@ -369,8 +305,8 @@ export default function ReturnSuperSearch({
 
           {/* Autocomplete Dropdown */}
           {isOpen && query.trim() && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in duration-100 max-h-80 overflow-y-auto">
-              {/* Direct Memo Suffix Trigger */}
+            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in duration-100 max-h-84 overflow-y-auto">
+              {/* Direct Memo Suffix / Code Search */}
               <div
                 onClick={() => {
                   void handleTriggerSearch()
@@ -389,36 +325,27 @@ export default function ReturnSuperSearch({
               </div>
 
               {/* Matching Invoices List */}
-              {matchingSales.length > 0 && (
+              {matchingSales.length > 0 ? (
                 <div className="divide-y divide-emerald-100/50 dark:divide-emerald-900/40 bg-emerald-50/20 dark:bg-emerald-950/10">
                   <div className="px-3 py-1.5 bg-emerald-100/70 dark:bg-emerald-950/80 text-[10px] font-bold uppercase tracking-wider text-emerald-950 dark:text-emerald-200 flex items-center justify-between">
                     <span className="flex items-center gap-1.5">
                       <Receipt className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                      <span>Matching Invoices ({matchingSales.length})</span>
+                      <span>Found Matching Invoices ({matchingSales.length})</span>
                     </span>
-                    <span className="text-[10px] font-normal text-emerald-700 dark:text-emerald-400">Click to select memo</span>
+                    <span className="text-[10px] font-normal text-emerald-700 dark:text-emerald-400">Click or press Enter to load</span>
                   </div>
                   {matchingSales.map((sale, idx) => {
                     const isSelected = activeIndex === idx
                     return (
                       <div
                         key={sale.id}
-                        onClick={() => {
-                          if (onSelectFoundSale) {
-                            onSelectFoundSale(sale)
-                          } else {
-                            void onSearchInvoice(sale.invoiceNo)
-                          }
-                          setQuery("")
-                          setIsOpen(false)
-                          setIsChangingMemo(false)
-                        }}
-                        className={`p-2.5 text-xs transition-colors cursor-pointer flex items-center justify-between ${
+                        onClick={() => handleSelectSale(sale)}
+                        className={`p-3 text-xs transition-colors cursor-pointer flex items-center justify-between ${
                           isSelected ? "bg-emerald-100/80 dark:bg-emerald-900/50" : "hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                         }`}
                       >
                         <div className="min-w-0 flex-1 pr-3">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-mono font-bold text-emerald-950 dark:text-emerald-200 text-xs sm:text-sm">
                               #{sale.invoiceNo}
                             </span>
@@ -427,19 +354,31 @@ export default function ReturnSuperSearch({
                             </span>
                           </div>
                           <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
-                            <span className="font-semibold text-slate-800 dark:text-slate-200">
-                              {sale.customerName || "Walk-in Retail"}
+                            <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1">
+                              <User className="w-3 h-3 text-slate-400" />
+                              <span>{sale.customerName || "Walk-in Retail"}</span>
+                            </span>
+                            {sale.customerPhone && (
+                              <span className="text-slate-500 font-mono flex items-center gap-0.5">
+                                <Phone className="w-2.5 h-2.5 text-slate-400" />
+                                <span>{sale.customerPhone}</span>
+                              </span>
+                            )}
+                            <span>·</span>
+                            <span className="flex items-center gap-0.5">
+                              <Calendar className="w-2.5 h-2.5 text-slate-400" />
+                              <span>
+                                {new Date(sale.saleDate).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </span>
                             </span>
                             <span>·</span>
-                            <span>
-                              {new Date(sale.saleDate).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              })}
+                            <span className="text-emerald-800 dark:text-emerald-300 font-medium">
+                              {sale.items?.length || 0} {sale.items?.length === 1 ? "item" : "items"}
                             </span>
-                            <span>·</span>
-                            <span>{sale.items?.length || 0} items</span>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
@@ -447,88 +386,35 @@ export default function ReturnSuperSearch({
                             {tk(sale.totalAmount)}
                           </div>
                           <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
-                            Select Memo ↵
+                            Select Invoice ↵
                           </span>
                         </div>
                       </div>
                     )
                   })}
                 </div>
-              )}
-
-              {/* Matching Product Lots List */}
-              {matchingStocks.length > 0 && (
-                <div className="divide-y divide-slate-50 dark:divide-slate-800">
-                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800/80 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Matching Products & Lots ({matchingStocks.length})
+              ) : (
+                !isSearchingSales && (
+                  <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                    <p className="font-medium text-slate-700 dark:text-slate-300">
+                      No invoices found matching "{query.trim()}"
+                    </p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+                      Check customer mobile number (e.g. 017...), customer name, or scan the invoice barcode.
+                    </p>
                   </div>
-                  {matchingStocks.map((item, idx) => {
-                    const globalIdx = matchingSales.length + idx
-                    const isSelected = activeIndex === globalIdx
-                    const stockQty = item.quantity ?? item.totalQuantity ?? 0
-
-                    return (
-                      <div
-                        key={item.lotId}
-                        onClick={() => {
-                          onSelectStock(item)
-                          setQuery("")
-                          setIsOpen(false)
-                          setIsChangingMemo(false)
-                        }}
-                        className={`p-2.5 text-xs transition-colors cursor-pointer flex items-center justify-between ${
-                          isSelected ? "bg-emerald-50/80 dark:bg-emerald-950/40" : "hover:bg-slate-50 dark:hover:bg-slate-800/60"
-                        }`}
-                      >
-                        <div className="min-w-0 flex-1 pr-3">
-                          <div className="flex items-center gap-2 truncate">
-                            <span className="font-bold text-slate-900 dark:text-slate-100 truncate">
-                              {item.nameBn || item.productNameBn} ({item.nameEn || item.productNameEn})
-                            </span>
-                            {item.packSize && (
-                              <span className="shrink-0 text-[10px] font-medium text-emerald-800 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-300 dark:border-emerald-800">
-                                {item.packSize}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5 flex-wrap">
-                            <span className="font-mono font-bold bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-                              Lot #{formatLotNumber(item.lotNumber)}
-                            </span>
-                            {(item.lotBarcode || item.barcode) && (
-                              <span className="font-mono text-slate-400 dark:text-slate-500">
-                                #{item.lotBarcode || item.barcode}
-                              </span>
-                            )}
-                            <span>·</span>
-                            <span>
-                              Stock: <strong className="text-slate-800 dark:text-slate-200">{stockQty} {pluralizeUnit(item.baseUnit, stockQty)}</strong>
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                            {tk(item.lotRetailPrice)}
-                          </span>
-                          <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                            per {item.baseUnit}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                )
               )}
             </div>
           )}
+        </div>
+      )}
 
-          {/* Invoice Error Message */}
-          {invoiceSearchError && (
-            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mt-1.5 flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span>{invoiceSearchError}</span>
-            </p>
-          )}
+      {/* Invoice Search Error Banner */}
+      {invoiceSearchError && (
+        <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900/60 rounded-xl text-rose-800 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+          <span>{invoiceSearchError}</span>
         </div>
       )}
     </div>
