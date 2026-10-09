@@ -455,11 +455,15 @@ export default function StockAdjustmentModal({
                   <SelectValue placeholder="-- Select Batch / Lot --" />
                 </SelectTrigger>
                 <SelectContent>
-                  {productLots.map((l) => (
-                    <SelectItem key={l.id} value={String(l.id)} className="font-mono">
-                      {formatLotNumber(l.lotNumber)} (Exp: {l.expiryDate} • Cost: {formatTk(l.purchaseCost)}{l.cartonMultiplier ? ` • ${l.cartonMultiplier} pcs/ctn` : ""})
-                    </SelectItem>
-                  ))}
+                  {productLots.map((l) => {
+                    const multNum = l.cartonMultiplier != null ? Number(l.cartonMultiplier) : null
+                    const unitLabel = currentProduct?.baseUnit ? `${currentProduct.baseUnit}/ctn` : "pcs/ctn"
+                    return (
+                      <SelectItem key={l.id} value={String(l.id)} className="font-mono">
+                        {formatLotNumber(l.lotNumber)} (Exp: {l.expiryDate} • Cost: {formatTk(l.purchaseCost)}{multNum ? ` • ${multNum} ${unitLabel}` : ""})
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>

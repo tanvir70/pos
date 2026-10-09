@@ -16988,3 +16988,4 @@ pydantic_core._pydantic_core.ValidationError: 1 validation error for LotEntryReq
 2026-10-03 05:15:02 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/adjustments "HTTP/1.1 201 Created"
 2026-10-03 05:15:02 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
 2026-10-03 05:15:03 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/adjustments?productId=1&page=0&size=5 "HTTP/1.1 200 OK"
+2026-10-09 13:50:54 [INFO] [app]: Starting up Rajib Enterprise (Environment: production)...
