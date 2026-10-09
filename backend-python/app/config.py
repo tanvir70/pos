@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -7,6 +8,15 @@ _DEFAULT_DB_FILE = (_BACKEND_DIR / "pos.db").as_posix()
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @model_validator(mode="after")
+    def ensure_utf8mb4_mysql(self) -> "Settings":
+        for attr in ("DATABASE_URL", "SYNC_DATABASE_URL"):
+            val = getattr(self, attr, "")
+            if "mysql" in val and "charset=" not in val:
+                sep = "&" if "?" in val else "?"
+                setattr(self, attr, f"{val}{sep}charset=utf8mb4")
+        return self
 
     APP_NAME: str = "Messers Rajib Enterprise"
     ENV: str = "production"

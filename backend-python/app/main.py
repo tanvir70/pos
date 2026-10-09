@@ -41,8 +41,24 @@ async def lifespan(app: FastAPI):
     # 1. Ensure all tables exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        if "sqlite" not in settings.DATABASE_URL:
+            from sqlalchemy import text
+            await conn.execute(text("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"))
+
         def _migrate_schema_sync(sync_conn):
             from sqlalchemy import inspect, text
+            if "sqlite" not in settings.DATABASE_URL:
+                for tbl in [
+                    "product", "customer", "customer_ledger",
+                    "inventory_lot", "stock_inventory", "stock_movement",
+                    "sale", "sale_item", "sale_return", "sale_return_item",
+                    "stock_adjustment", "stock_adjustment_item", "app_user", "document_sequences"
+                ]:
+                    try:
+                        sync_conn.execute(text(f"ALTER TABLE {tbl} CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))
+                    except Exception:
+                        pass
+
             sync_conn.execute(text("UPDATE inventory_lot SET lot_number = 'LOT-01' WHERE UPPER(lot_number) IN ('DEFAULT', 'INITIAL', '') OR lot_number IS NULL"))
             sync_conn.execute(text("UPDATE stock_movement SET remarks = REPLACE(REPLACE(remarks, 'DEFAULT', 'LOT-01'), 'default', 'LOT-01') WHERE remarks LIKE '%DEFAULT%' OR remarks LIKE '%default%'"))
             inspector = inspect(sync_conn)
