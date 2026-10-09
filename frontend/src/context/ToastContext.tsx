@@ -23,6 +23,7 @@ export interface ToastOptions {
   actions?: ToastAction[]
   presentation?: "default" | "confirmation"
   closePrevious?: boolean
+  icon?: React.ReactNode
 }
 
 export interface ToastItem {
@@ -30,6 +31,7 @@ export interface ToastItem {
   type: ToastType
   title?: string
   message: React.ReactNode
+  icon?: React.ReactNode
   timestamp: number
   duration?: number
   actions?: ToastAction[]
@@ -322,19 +324,132 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Keyboard accessibility: dismiss active confirmation toast on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        const activeConfirm = toasts.find(
+          (t) => t.presentation === "confirmation" && !t.isClosing,
+        )
+        if (activeConfirm) {
+          e.stopPropagation()
+          dismissToast(activeConfirm.id)
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [toasts, dismissToast])
+
+  // Dedicated renderer for full-fidelity modal-level confirmation toasts
+  const renderConfirmationToast = (toast: ToastItem) => {
+    const isSuccess = toast.type === "success"
+    const isError = toast.type === "error"
+    const isWarning = toast.type === "warning"
+    const isInfo = toast.type === "info"
+    const isClosing = toast.isClosing
+
+    return (
+      <div
+        key={toast.id}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+      >
+        {/* Backdrop */}
+        <div
+          aria-hidden="true"
+          onClick={() => dismissToast(toast.id)}
+          className={`fixed inset-0 bg-slate-950/50 backdrop-blur-[2px] transition-opacity duration-200 cursor-default ${
+            isClosing ? "opacity-0" : "opacity-100"
+          }`}
+        />
+
+        {/* Modal Card */}
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby={`toast-title-${toast.id}`}
+          className={`relative z-10 w-full max-w-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-950/30 p-5 sm:p-6 transition-all duration-200 ${
+            isClosing
+              ? "opacity-0 scale-95 translate-y-1 pointer-events-none"
+              : "animate-in zoom-in-95 fade-in duration-150"
+          }`}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800">
+                {toast.icon ? (
+                  toast.icon
+                ) : isSuccess ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                ) : isError ? (
+                  <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                ) : isWarning ? (
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                ) : (
+                  <Info className="w-5 h-5 text-teal-600 dark:text-emerald-400" />
+                )}
+              </div>
+              <h4
+                id={`toast-title-${toast.id}`}
+                className="font-bold text-base tracking-tight text-slate-900 dark:text-slate-100 truncate"
+              >
+                {toast.title || "Confirm Action"}
+              </h4>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => dismissToast(toast.id)}
+              className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              aria-label="Dismiss alert"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Full-width Body Content */}
+          <div className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+            {toast.message}
+          </div>
+
+          {/* Footer Actions: Cancel (White) and Confirm (Red) */}
+          {toast.actions && toast.actions.length > 0 && (
+            <div className="flex items-center justify-end gap-2.5 mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800">
+              {toast.actions.map((action) => (
+                <button
+                  type="button"
+                  key={action.label}
+                  onClick={action.onClick}
+                  className={`px-5 py-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all active:scale-[0.98] ${
+                    action.intent === "danger" || action.intent === "primary"
+                      ? "bg-rose-600 border-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/20"
+                      : "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs"
+                  }`}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Standard renderer for regular toast notifications
   const renderToast = (toast: ToastItem) => {
     const isSuccess = toast.type === "success"
     const isError = toast.type === "error"
     const isWarning = toast.type === "warning"
     const isInfo = toast.type === "info"
-    const isConfirmation = toast.presentation === "confirmation"
     const isTopCenter = toast.position === "top-center"
     const isCenter = toast.position === "center"
     const isClosing = toast.isClosing
 
     return (
       <React.Fragment key={toast.id}>
-        {(isConfirmation || (isCenter && Boolean(toast.actions && toast.actions.length > 0))) && (
+        {isCenter && Boolean(toast.actions && toast.actions.length > 0) && (
           <button
             type="button"
             aria-label="Dismiss toast overlay"
@@ -347,17 +462,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           className={`pointer-events-auto flex items-start gap-3.5 p-4 rounded-xl border shadow-xl transition-all duration-150 ${
             isClosing
               ? "opacity-0 -translate-y-2 scale-95 pointer-events-none"
-              : isConfirmation
-                ? "fixed left-1/2 top-1/2 z-[2] -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-md bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-950/40 rounded-2xl p-4 sm:p-5"
-                : isTopCenter
-                  ? "w-full animate-in slide-in-from-top-4 fade-in duration-250 shadow-2xl backdrop-blur-md rounded-2xl border-2"
-                  : isCenter
-                    ? "relative z-[2] w-full animate-in zoom-in-95 fade-in duration-200 shadow-2xl backdrop-blur-md rounded-2xl border-2"
-                    : "w-full animate-in slide-in-from-top-2 duration-200"
+              : isTopCenter
+                ? "w-full animate-in slide-in-from-top-4 fade-in duration-250 shadow-2xl backdrop-blur-md rounded-2xl border-2"
+                : isCenter
+                  ? "relative z-[2] w-full animate-in zoom-in-95 fade-in duration-200 shadow-2xl backdrop-blur-md rounded-2xl border-2"
+                  : "w-full animate-in slide-in-from-top-2 duration-200"
           } ${
-            isConfirmation
-              ? ""
-              : isSuccess
+            isSuccess
               ? "bg-emerald-900/95 text-white border-emerald-400 shadow-emerald-950/40"
               : isError
                 ? "bg-rose-900/95 text-white border-rose-500 shadow-rose-950/30"
@@ -368,61 +479,46 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         >
           {/* Semantic Icon */}
           <div className="shrink-0 mt-0.5 select-none">
-            {isSuccess && (
-              <CheckCircle2
-                className={`w-5 h-5 ${isConfirmation ? "text-emerald-600 dark:text-emerald-400" : "text-emerald-300"}`}
-              />
-            )}
-            {isError && (
-              <XCircle
-                className={`w-5 h-5 ${isConfirmation ? "text-rose-600 dark:text-rose-400" : "text-rose-300"}`}
-              />
-            )}
-            {isWarning && (
-              <AlertTriangle
-                className={`w-5 h-5 ${isConfirmation ? "text-amber-600 dark:text-amber-400" : "text-amber-300"}`}
-              />
-            )}
-            {isInfo && (
-              <Info
-                className={`w-5 h-5 ${isConfirmation ? "text-sky-600 dark:text-sky-400" : "text-sky-300"}`}
-              />
+            {toast.icon ? (
+              toast.icon
+            ) : isSuccess ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+            ) : isError ? (
+              <XCircle className="w-5 h-5 text-rose-300" />
+            ) : isWarning ? (
+              <AlertTriangle className="w-5 h-5 text-amber-300" />
+            ) : (
+              <Info className="w-5 h-5 text-sky-300" />
             )}
           </div>
 
           {/* Message Content */}
           <div className="flex-1 min-w-0 pr-1">
             {toast.title && (
-              <h4 className="font-bold text-sm tracking-tight leading-tight mb-1 text-slate-900 dark:text-slate-100">
+              <h4 className="font-bold text-sm tracking-tight leading-tight mb-1 text-white">
                 {toast.title}
               </h4>
             )}
-            <div
-              className={`text-xs leading-relaxed font-normal ${
-                isConfirmation ? "text-slate-600 dark:text-slate-300" : "text-white/90"
-              }`}
-            >
+            <div className="text-xs leading-relaxed font-normal text-white/90">
               {toast.message}
             </div>
             {toast.actions && toast.actions.length > 0 && (
-              <div className="flex items-center justify-end gap-2.5 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-end gap-2 mt-3 pt-2.5 border-t border-white/15">
                 {toast.actions.map((action) => (
                   <button
                     type="button"
                     key={action.label}
                     onClick={action.onClick}
-                    className={`px-4 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-all active:scale-98 ${
-                      action.intent === "danger" || (isConfirmation && action.intent === "primary")
-                        ? "bg-rose-600 border-rose-600 text-white hover:bg-rose-700 shadow-xs"
-                        : isConfirmation
-                          ? "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs"
-                          : action.intent === "primary"
-                            ? isSuccess
-                              ? "bg-white border-white text-emerald-950 hover:bg-emerald-50 shadow-md font-bold"
-                              : "bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 shadow-xs"
-                            : isSuccess
-                              ? "bg-emerald-950/40 border-emerald-400/40 text-emerald-100 hover:bg-emerald-950/70 font-semibold"
-                              : "bg-white/10 border-white/25 text-white hover:bg-white/20"
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-all active:scale-95 ${
+                      action.intent === "primary"
+                        ? isSuccess
+                          ? "bg-white border-white text-emerald-950 hover:bg-emerald-50 shadow-md font-bold"
+                          : "bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 shadow-xs"
+                        : action.intent === "danger"
+                          ? "bg-rose-600 border-rose-500 text-white hover:bg-rose-500 shadow-xs"
+                          : isSuccess
+                            ? "bg-emerald-950/40 border-emerald-400/40 text-emerald-100 hover:bg-emerald-950/70 font-semibold"
+                            : "bg-white/10 border-white/25 text-white hover:bg-white/20"
                     }`}
                   >
                     {action.label}
@@ -436,11 +532,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={() => dismissToast(toast.id)}
-            className={`shrink-0 rounded-lg p-1.5 transition-colors leading-none cursor-pointer ${
-              isConfirmation
-                ? "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                : "text-white/70 hover:text-white hover:bg-white/10"
-            }`}
+            className="shrink-0 rounded-lg p-1.5 transition-colors leading-none cursor-pointer text-white/70 hover:text-white hover:bg-white/10"
             aria-label="Dismiss alert"
           >
             <X className="w-4 h-4" />
@@ -465,27 +557,36 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     >
       {children}
 
+      {/* Confirmation Dialogs Overlay (Topmost z-index, centered viewport) */}
+      {toasts.some((t) => t.presentation === "confirmation") && (
+        <div className="fixed inset-0 z-[100000] pointer-events-auto">
+          {toasts
+            .filter((t) => t.presentation === "confirmation")
+            .map(renderConfirmationToast)}
+        </div>
+      )}
+
       {/* Top Center Toasts Container (Middle of screen) */}
-      {toasts.some((t) => t.position === "top-center") && (
+      {toasts.some((t) => t.position === "top-center" && t.presentation !== "confirmation") && (
         <div
           aria-live="polite"
           className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-2.5 max-w-sm sm:max-w-lg w-full pointer-events-none px-4"
         >
           {toasts
-            .filter((t) => t.position === "top-center")
+            .filter((t) => t.position === "top-center" && t.presentation !== "confirmation")
             .map(renderToast)}
         </div>
       )}
 
       {/* Dead Center Toasts Container */}
-      {toasts.some((t) => t.position === "center") && (
+      {toasts.some((t) => t.position === "center" && t.presentation !== "confirmation") && (
         <div
           aria-live="polite"
           className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none p-4"
         >
           <div className="flex flex-col items-center gap-2.5 max-w-sm sm:max-w-md w-full pointer-events-none">
             {toasts
-              .filter((t) => t.position === "center")
+              .filter((t) => t.position === "center" && t.presentation !== "confirmation")
               .map(renderToast)}
           </div>
         </div>
@@ -497,7 +598,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         className="fixed top-4 right-4 z-[9999] flex flex-col gap-2.5 max-w-sm sm:max-w-md w-full pointer-events-none px-3 sm:px-0"
       >
         {toasts
-          .filter((t) => !t.position || t.position === "top-right")
+          .filter(
+            (t) =>
+              (!t.position || t.position === "top-right") &&
+              t.presentation !== "confirmation",
+          )
           .map(renderToast)}
       </div>
     </ToastContext.Provider>

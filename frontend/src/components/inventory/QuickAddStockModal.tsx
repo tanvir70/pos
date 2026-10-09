@@ -28,6 +28,7 @@ export interface StockModalProduct {
   productId: number
   productCode?: string
   nameEn: string
+  nameBn?: string | null
   baseUnit: string
   packSize?: string | null
   unitSize?: string | null
@@ -262,11 +263,11 @@ export default function QuickAddStockModal({
     const unitLabel = qty === 1 ? countUnit.singular : countUnit.plural
     const cartonBreakdown =
       hasCartons && parseFloat(cartons) > 0
-        ? ` (${cartons} ctn${parseFloat(loose) > 0 ? ` + ${loose} loose` : ""})`
+        ? `${cartons} ctn${parseFloat(loose) > 0 ? ` + ${loose} loose` : ""}`
         : ""
     const cartonUpdateNotice =
       hasCartons && isMultiplierChanged && saveAsDefaultCarton
-        ? ` • Default carton set to ${multiplierNum}`
+        ? `Default carton set to ${multiplierNum} ${countUnit.singular || "pcs"}`
         : ""
 
     // Dismiss previous confirmation toast if active
@@ -275,6 +276,8 @@ export default function QuickAddStockModal({
       confirmToastIdRef.current = null
     }
 
+    const bengaliName = product.nameBn || matched?.nameBn
+
     const toastId = showToast({
       type: "success",
       title: "Confirm Stock Inwarding",
@@ -282,41 +285,71 @@ export default function QuickAddStockModal({
       duration: 0,
       closePrevious: true,
       message: (
-        <div className="space-y-2 mt-1">
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
-              {product.nameEn}
-            </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono">
-              +{qty} {unitLabel}{cartonBreakdown ? ` ${cartonBreakdown}` : ""}
-            </span>
+        <div className="space-y-3">
+          {/* Product Header */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-snug">
+                {product.nameEn}
+              </div>
+              {bengaliName && bengaliName !== product.nameEn && (
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-bangla mt-0.5">
+                  {bengaliName}
+                </div>
+              )}
+            </div>
+            <div className="shrink-0 text-right">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-800 font-mono whitespace-nowrap shadow-2xs">
+                +{qty} {unitLabel}
+              </span>
+              {cartonBreakdown && (
+                <div className="text-[11px] font-mono font-medium text-slate-500 dark:text-slate-400 mt-1 whitespace-nowrap">
+                  ({cartonBreakdown})
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
-            <div>
-              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Lot Number</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">#{lotNumber}</span>
+          {/* Details Grid */}
+          <div className="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
+            <div className="space-y-0.5">
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
+                Lot Number
+              </span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
+                #{lotNumber}
+              </span>
             </div>
-            <div>
-              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Retail MRP</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{retail.toFixed(2)}</span>
+            <div className="space-y-0.5">
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
+                Retail MRP
+              </span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
+                ৳{retail.toFixed(2)}
+              </span>
             </div>
-            <div>
-              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Expiry Date</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{expiryDate}</span>
+            <div className="space-y-0.5">
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
+                Expiry Date
+              </span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
+                {expiryDate}
+              </span>
             </div>
-            <div>
-              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Carton Size</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+            <div className="space-y-0.5">
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
+                Carton Multiplier
+              </span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
                 {multiplierNum} {countUnit.singular || "pcs"}/ctn
               </span>
             </div>
           </div>
 
           {cartonUpdateNotice && (
-            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
-              <span>⚠️</span>
-              <span>{cartonUpdateNotice.replace(/^[\s•]+/, "")}</span>
+            <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs font-medium text-amber-800 dark:text-amber-200 flex items-center gap-2">
+              <span className="text-base leading-none">⚠️</span>
+              <span>{cartonUpdateNotice}</span>
             </div>
           )}
         </div>

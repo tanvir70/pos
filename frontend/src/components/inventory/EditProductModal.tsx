@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import type { Product, GroupedProduct } from "../../types"
 import { updateProduct } from "../../api/endpoints"
 import { useToast } from "../../context/ToastContext"
@@ -50,7 +50,8 @@ export default function EditProductModal({
   onClose,
   onSuccess,
 }: EditProductModalProps) {
-  const { showSuccess, showError, showWarning } = useToast()
+  const { showToast, showSuccess, showError, showWarning, dismissToast } = useToast()
+  const confirmToastIdRef = useRef<string | null>(null)
 
   // Form states
   const [nameEn, setNameEn] = useState("")
@@ -156,7 +157,24 @@ export default function EditProductModal({
 
   if (!isOpen || !targetProduct) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    return () => {
+      if (confirmToastIdRef.current) {
+        dismissToast(confirmToastIdRef.current)
+        confirmToastIdRef.current = null
+      }
+    }
+  }, [dismissToast])
+
+  const handleClose = () => {
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
+    onClose()
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
     const cleanNameEn = nameEn.trim()
@@ -181,40 +199,215 @@ export default function EditProductModal({
     const multiplier = Math.max(1, parseFloat(cartonMultiplier) || 1)
     const minAlert = Math.max(0, parseInt(minStockAlert, 10) || 5)
 
-    try {
-      setIsSaving(true)
-      const payload: Partial<Product> = {
-        nameEn: cleanNameEn,
-        nameBn: nameBn.trim() || cleanNameEn,
-        category: category.trim(),
-        companyName: companyName.trim() || "Syngenta Bangladesh Limited",
-        baseUnit: baseUnit.trim(),
-        packSize: packSize.trim() || null,
-        unitSize: packSize.trim() || null,
-        cartonMultiplier: multiplier,
-        standardRetailPrice: retail,
-        standardWholesalePrice: wholesale,
-        buyingPrice: buying,
-        defaultBarcode: defaultBarcode.trim() || targetProduct.defaultBarcode,
-        minStockAlert: minAlert,
-      }
+    const origRetail = Number(targetProduct.standardRetailPrice || 0)
+    const retailChanged = Math.abs(origRetail - retail) > 0.001
 
-      const updated = await updateProduct(targetProduct.id, payload)
-      const summaryMsg = `${updated.nameEn} • MRP ৳${updated.standardRetailPrice} • Wholesale ৳${updated.standardWholesalePrice || updated.standardRetailPrice} • Pack: ${updated.packSize || updated.baseUnit}`
-      showSuccess(summaryMsg, "Product Master Updated")
-      onSuccess(updated)
-      onClose()
-    } catch (err) {
-      showError(err, "Failed to update product master")
-    } finally {
-      setIsSaving(false)
+    const origWholesale = Number(targetProduct.standardWholesalePrice || 0)
+    const wholesaleChanged = Math.abs(origWholesale - wholesale) > 0.001
+
+    const origBuying = Number(targetProduct.buyingPrice || 0)
+    const buyingChanged = Math.abs(origBuying - buying) > 0.001
+
+    const origMultiplier = Number(targetProduct.cartonMultiplier || 20)
+    const multiplierChanged = Math.abs(origMultiplier - multiplier) > 0.001
+
+    const origPack = (targetProduct.packSize || targetProduct.unitSize || "").trim()
+    const packChanged = packSize.trim() !== origPack
+
+    const origCategory = (targetProduct.category || "").trim()
+    const categoryChanged = category.trim() !== origCategory
+
+    const origNameEn = (targetProduct.nameEn || "").trim()
+    const nameChanged = cleanNameEn !== origNameEn
+
+    const executeSave = async () => {
+      try {
+        setIsSaving(true)
+        const payload: Partial<Product> = {
+          nameEn: cleanNameEn,
+          nameBn: nameBn.trim() || cleanNameEn,
+          category: category.trim(),
+          companyName: companyName.trim() || "Syngenta Bangladesh Limited",
+          baseUnit: baseUnit.trim(),
+          packSize: packSize.trim() || null,
+          unitSize: packSize.trim() || null,
+          cartonMultiplier: multiplier,
+          standardRetailPrice: retail,
+          standardWholesalePrice: wholesale,
+          buyingPrice: buying,
+          defaultBarcode: defaultBarcode.trim() || targetProduct.defaultBarcode,
+          minStockAlert: minAlert,
+        }
+
+        const updated = await updateProduct(targetProduct.id, payload)
+        const summaryMsg = `${updated.nameEn} • MRP ৳${updated.standardRetailPrice} • Wholesale ৳${updated.standardWholesalePrice || updated.standardRetailPrice} • Pack: ${updated.packSize || updated.baseUnit}`
+        showSuccess(summaryMsg, "Product Master Updated")
+        onSuccess(updated)
+        onClose()
+      } catch (err) {
+        showError(err, "Failed to update product master")
+      } finally {
+        setIsSaving(false)
+      }
     }
+
+    // Dismiss previous confirmation toast if active
+    if (confirmToastIdRef.current) {
+      dismissToast(confirmToastIdRef.current)
+      confirmToastIdRef.current = null
+    }
+
+    const toastId = showToast({
+      type: "info",
+      title: "Confirm Product Changes",
+      presentation: "confirmation",
+      duration: 0,
+      closePrevious: true,
+      message: (
+        <div className="space-y-3">
+          {/* Product Header */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-snug">
+                {cleanNameEn}
+              </div>
+              {nameBn && nameBn.trim() !== cleanNameEn && (
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-bangla mt-0.5">
+                  {nameBn.trim()}
+                </div>
+              )}
+            </div>
+            <div className="shrink-0 text-right">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 whitespace-nowrap">
+                #{targetProduct.productCode}
+              </span>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium whitespace-nowrap">
+                {category.trim()} • {baseUnit.trim()}
+              </div>
+            </div>
+          </div>
+
+          {/* Details Grid */}
+          <div className="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
+            {/* Retail MRP */}
+            <div className="space-y-0.5">
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
+                Retail MRP
+              </span>
+              <div className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
+                {retailChanged ? (
+                  <span className="inline-flex items-center gap-1.5 flex-wrap">
+                    <span className="line-through text-slate-400 font-normal">৳{origRetail.toFixed(2)}</span>
+                    <span className="text-emerald-700 dark:text-emerald-400">→ ৳{retail.toFixed(2)}</span>
+                  </span>
+                ) : (
+                  <span>৳{retail.toFixed(2)}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Wholesale Price */}
+            <div className="space-y-0.5">
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
+                Wholesale Price
+              </span>
+              <div className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
+                {wholesaleChanged ? (
+                  <span className="inline-flex items-center gap-1.5 flex-wrap">
+                    <span className="line-through text-slate-400 font-normal">৳{origWholesale.toFixed(2)}</span>
+                    <span className="text-emerald-700 dark:text-emerald-400">→ ৳{wholesale.toFixed(2)}</span>
+                  </span>
+                ) : (
+                  <span>৳{wholesale.toFixed(2)}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Purchase Cost */}
+            <div className="space-y-0.5">
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
+                Purchase Cost
+              </span>
+              <div className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
+                {buyingChanged ? (
+                  <span className="inline-flex items-center gap-1.5 flex-wrap">
+                    <span className="line-through text-slate-400 font-normal">৳{origBuying.toFixed(2)}</span>
+                    <span className="text-emerald-700 dark:text-emerald-400">→ ৳{buying.toFixed(2)}</span>
+                  </span>
+                ) : (
+                  <span>৳{buying.toFixed(2)}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Carton Multiplier */}
+            <div className="space-y-0.5">
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
+                Units per Carton
+              </span>
+              <div className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
+                {multiplierChanged ? (
+                  <span className="inline-flex items-center gap-1.5 flex-wrap">
+                    <span className="line-through text-slate-400 font-normal">{origMultiplier}</span>
+                    <span className="text-emerald-700 dark:text-emerald-400">→ {multiplier} /ctn</span>
+                  </span>
+                ) : (
+                  <span>{multiplier} /ctn</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Changed Attributes Banner if applicable */}
+          {(packChanged || categoryChanged || nameChanged) && (
+            <div className="p-2.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex flex-wrap gap-x-3 gap-y-1">
+              {nameChanged && (
+                <span>
+                  <strong className="text-slate-800 dark:text-slate-200">Name:</strong> {cleanNameEn}
+                </span>
+              )}
+              {packChanged && (
+                <span>
+                  <strong className="text-slate-800 dark:text-slate-200">Pack:</strong> {packSize.trim() || "Default"}
+                </span>
+              )}
+              {categoryChanged && (
+                <span>
+                  <strong className="text-slate-800 dark:text-slate-200">Category:</strong> {category.trim()}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      ),
+      actions: [
+        {
+          label: "Cancel",
+          intent: "default",
+          onClick: () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+          },
+        },
+        {
+          label: "Confirm",
+          intent: "danger",
+          onClick: async () => {
+            dismissToast(toastId)
+            confirmToastIdRef.current = null
+            await executeSave()
+          },
+        },
+      ],
+    })
+
+    confirmToastIdRef.current = toastId
   }
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       closeOnEsc={true}
       size="lg"
       headerVariant="light"
@@ -459,7 +652,7 @@ export default function EditProductModal({
               type="button"
               variant="ghost"
               size="md"
-              onClick={onClose}
+              onClick={handleClose}
               className="cursor-pointer"
             >
               Cancel
