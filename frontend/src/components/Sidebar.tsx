@@ -323,11 +323,7 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                     {STORE_INFO.name}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-700/12 dark:bg-emerald-400/15 text-emerald-800 dark:text-emerald-300 border border-emerald-600/25">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 animate-pulse" />
-                    Live
-                  </span>
+                <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-[11px] text-slate-600 dark:text-slate-400 font-medium truncate">
                     Agro Cockpit
                   </span>
