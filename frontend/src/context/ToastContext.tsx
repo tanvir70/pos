@@ -29,7 +29,7 @@ export interface ToastItem {
   id: string
   type: ToastType
   title?: string
-  message: string
+  message: React.ReactNode
   timestamp: number
   duration?: number
   actions?: ToastAction[]
@@ -41,12 +41,12 @@ export interface ToastItem {
 
 export interface ToastContextType {
   showToast: (toast: Omit<ToastItem, "id" | "timestamp">) => string
-  showSuccess: (message: string, title?: string, options?: ToastOptions) => string
+  showSuccess: (message: React.ReactNode, title?: string, options?: ToastOptions) => string
   showError: (err: unknown, title?: string, options?: ToastOptions) => string
-  showWarning: (message: string, title?: string, options?: ToastOptions) => string
-  showInfo: (message: string, title?: string, options?: ToastOptions) => string
+  showWarning: (message: React.ReactNode, title?: string, options?: ToastOptions) => string
+  showInfo: (message: React.ReactNode, title?: string, options?: ToastOptions) => string
   showToggleToast: (
-    message: string,
+    message: React.ReactNode,
     title?: string,
     type?: ToastType,
     options?: ToastOptions,
@@ -266,7 +266,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   )
 
   const showSuccess = useCallback(
-    (message: string, title = "Success", options?: ToastOptions) => {
+    (message: React.ReactNode, title = "Success", options?: ToastOptions) => {
       return showToast({ type: "success", title, message, ...options })
     },
     [showToast],
@@ -287,14 +287,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   )
 
   const showWarning = useCallback(
-    (message: string, title = "Warning", options?: ToastOptions) => {
+    (message: React.ReactNode, title = "Warning", options?: ToastOptions) => {
       return showToast({ type: "warning", title, message, duration: 5500, ...options })
     },
     [showToast],
   )
 
   const showInfo = useCallback(
-    (message: string, title = "Info", options?: ToastOptions) => {
+    (message: React.ReactNode, title = "Info", options?: ToastOptions) => {
       return showToast({ type: "info", title, message, ...options })
     },
     [showToast],
@@ -302,7 +302,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const showToggleToast = useCallback(
     (
-      message: string,
+      message: React.ReactNode,
       title?: string,
       type: ToastType = "info",
       options?: ToastOptions,
@@ -348,7 +348,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             isClosing
               ? "opacity-0 -translate-y-2 scale-95 pointer-events-none"
               : isConfirmation
-                ? "fixed left-1/2 top-1/2 z-[2] -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-red-200 dark:border-rose-900/60 shadow-2xl shadow-slate-950/30"
+                ? "fixed left-1/2 top-1/2 z-[2] -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-md bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-950/40 rounded-2xl p-4 sm:p-5"
                 : isTopCenter
                   ? "w-full animate-in slide-in-from-top-4 fade-in duration-250 shadow-2xl backdrop-blur-md rounded-2xl border-2"
                   : isCenter
@@ -367,43 +367,59 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           }`}
         >
           {/* Semantic Icon */}
-          <div className={`shrink-0 mt-0.5 select-none ${isConfirmation ? "text-red-600 dark:text-rose-400" : ""}`}>
-            {isSuccess && <CheckCircle2 className="w-5 h-5 text-emerald-300" />}
-            {isError && <XCircle className="w-5 h-5 text-rose-300" />}
-            {isWarning && <AlertTriangle className="w-5 h-5 text-amber-300" />}
-            {isInfo && <Info className="w-5 h-5 text-sky-300" />}
+          <div className="shrink-0 mt-0.5 select-none">
+            {isSuccess && (
+              <CheckCircle2
+                className={`w-5 h-5 ${isConfirmation ? "text-emerald-600 dark:text-emerald-400" : "text-emerald-300"}`}
+              />
+            )}
+            {isError && (
+              <XCircle
+                className={`w-5 h-5 ${isConfirmation ? "text-rose-600 dark:text-rose-400" : "text-rose-300"}`}
+              />
+            )}
+            {isWarning && (
+              <AlertTriangle
+                className={`w-5 h-5 ${isConfirmation ? "text-amber-600 dark:text-amber-400" : "text-amber-300"}`}
+              />
+            )}
+            {isInfo && (
+              <Info
+                className={`w-5 h-5 ${isConfirmation ? "text-sky-600 dark:text-sky-400" : "text-sky-300"}`}
+              />
+            )}
           </div>
 
           {/* Message Content */}
           <div className="flex-1 min-w-0 pr-1">
             {toast.title && (
-              <h4 className="font-bold text-sm tracking-tight leading-tight mb-0.5">
+              <h4 className="font-bold text-sm tracking-tight leading-tight mb-1 text-slate-900 dark:text-slate-100">
                 {toast.title}
               </h4>
             )}
-            <p
-              className={`text-xs leading-relaxed font-normal break-words ${
+            <div
+              className={`text-xs leading-relaxed font-normal ${
                 isConfirmation ? "text-slate-600 dark:text-slate-300" : "text-white/90"
               }`}
             >
               {toast.message}
-            </p>
+            </div>
             {toast.actions && toast.actions.length > 0 && (
-              <div className="flex items-center justify-end gap-2 mt-3">
+              <div className="flex items-center justify-end gap-2.5 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
                 {toast.actions.map((action) => (
                   <button
                     type="button"
                     key={action.label}
                     onClick={action.onClick}
-                    className={`px-3 py-1.5 rounded-md border text-xs font-bold cursor-pointer transition-colors ${
-                      action.intent === "danger"
-                        ? "bg-rose-600 border-rose-500 text-white hover:bg-rose-500"
-                        : action.intent === "primary"
-                          ? isSuccess
-                            ? "bg-white border-white text-emerald-950 hover:bg-emerald-50 shadow-md font-bold"
-                            : "bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 shadow-xs"
-                          : isConfirmation
-                            ? "bg-white dark:bg-slate-800 border-red-300 dark:border-rose-900/80 text-red-700 dark:text-rose-300 hover:bg-red-50 dark:hover:bg-slate-700"
+                    className={`px-4 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-all active:scale-98 ${
+                      action.intent === "danger" || (isConfirmation && action.intent === "primary")
+                        ? "bg-rose-600 border-rose-600 text-white hover:bg-rose-700 shadow-xs"
+                        : isConfirmation
+                          ? "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-2xs"
+                          : action.intent === "primary"
+                            ? isSuccess
+                              ? "bg-white border-white text-emerald-950 hover:bg-emerald-50 shadow-md font-bold"
+                              : "bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 shadow-xs"
                             : isSuccess
                               ? "bg-emerald-950/40 border-emerald-400/40 text-emerald-100 hover:bg-emerald-950/70 font-semibold"
                               : "bg-white/10 border-white/25 text-white hover:bg-white/20"
@@ -420,9 +436,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <button
             type="button"
             onClick={() => dismissToast(toast.id)}
-            className={`shrink-0 rounded-md p-1 transition-colors leading-none cursor-pointer ${
+            className={`shrink-0 rounded-lg p-1.5 transition-colors leading-none cursor-pointer ${
               isConfirmation
-                ? "text-slate-400 hover:text-red-600 dark:hover:text-rose-400 hover:bg-red-50 dark:hover:bg-rose-950/50"
+                ? "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 : "text-white/70 hover:text-white hover:bg-white/10"
             }`}
             aria-label="Dismiss alert"

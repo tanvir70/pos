@@ -278,10 +278,49 @@ export default function QuickAddStockModal({
     const toastId = showToast({
       type: "success",
       title: "Confirm Stock Inwarding",
-      message: `Inward +${qty} ${unitLabel}${cartonBreakdown} for ${product.nameEn} • Lot #${lotNumber} • MRP ৳${retail.toFixed(2)} • Exp: ${expiryDate}${cartonUpdateNotice}?`,
+      presentation: "confirmation",
       duration: 0,
       closePrevious: true,
-      position: "center",
+      message: (
+        <div className="space-y-2 mt-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+              {product.nameEn}
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono">
+              +{qty} {unitLabel}{cartonBreakdown ? ` ${cartonBreakdown}` : ""}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
+            <div>
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Lot Number</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">#{lotNumber}</span>
+            </div>
+            <div>
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Retail MRP</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{retail.toFixed(2)}</span>
+            </div>
+            <div>
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Expiry Date</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{expiryDate}</span>
+            </div>
+            <div>
+              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Carton Size</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                {multiplierNum} {countUnit.singular || "pcs"}/ctn
+              </span>
+            </div>
+          </div>
+
+          {cartonUpdateNotice && (
+            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-1.5">
+              <span>⚠️</span>
+              <span>{cartonUpdateNotice.replace(/^[\s•]+/, "")}</span>
+            </div>
+          )}
+        </div>
+      ),
       actions: [
         {
           label: "Cancel",
@@ -292,8 +331,8 @@ export default function QuickAddStockModal({
           },
         },
         {
-          label: "Confirm Inwarding",
-          intent: "primary",
+          label: "Confirm",
+          intent: "danger",
           onClick: async () => {
             dismissToast(toastId)
             confirmToastIdRef.current = null
