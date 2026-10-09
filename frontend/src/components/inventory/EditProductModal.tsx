@@ -200,25 +200,156 @@ export default function EditProductModal({
     const minAlert = Math.max(0, parseInt(minStockAlert, 10) || 5)
 
     const origRetail = Number(targetProduct.standardRetailPrice || 0)
-    const retailChanged = Math.abs(origRetail - retail) > 0.001
-
     const origWholesale = Number(targetProduct.standardWholesalePrice || 0)
-    const wholesaleChanged = Math.abs(origWholesale - wholesale) > 0.001
-
     const origBuying = Number(targetProduct.buyingPrice || 0)
-    const buyingChanged = Math.abs(origBuying - buying) > 0.001
-
     const origMultiplier = Number(targetProduct.cartonMultiplier || 20)
-    const multiplierChanged = Math.abs(origMultiplier - multiplier) > 0.001
-
     const origPack = (targetProduct.packSize || targetProduct.unitSize || "").trim()
-    const packChanged = packSize.trim() !== origPack
-
     const origCategory = (targetProduct.category || "").trim()
-    const categoryChanged = category.trim() !== origCategory
-
     const origNameEn = (targetProduct.nameEn || "").trim()
-    const nameChanged = cleanNameEn !== origNameEn
+    const origNameBn = (targetProduct.nameBn || "").trim()
+    const origCompany = (targetProduct.companyName || "").trim()
+    const origBaseUnit = (targetProduct.baseUnit || "").trim()
+    const origBarcode = (targetProduct.defaultBarcode || "").trim()
+    const origMinAlert = Number(targetProduct.minStockAlert ?? 5)
+
+    interface FieldChange {
+      label: string
+      oldValue: string
+      newValue: string
+      diffBadge?: string
+      badgeVariant?: "positive" | "negative" | "neutral"
+    }
+
+    const changes: FieldChange[] = []
+
+    // 1. Product Name (English)
+    if (cleanNameEn !== origNameEn) {
+      changes.push({
+        label: "Product Name (English)",
+        oldValue: origNameEn || "—",
+        newValue: cleanNameEn,
+      })
+    }
+
+    // 2. Product Name (Bengali)
+    const cleanNameBn = nameBn.trim()
+    if (cleanNameBn !== origNameBn && cleanNameBn !== "") {
+      changes.push({
+        label: "Product Name (Bengali)",
+        oldValue: origNameBn || "—",
+        newValue: cleanNameBn,
+      })
+    }
+
+    // 3. Category
+    if (category.trim() !== origCategory) {
+      changes.push({
+        label: "Category",
+        oldValue: origCategory || "—",
+        newValue: category.trim(),
+      })
+    }
+
+    // 4. Company Name
+    if (companyName.trim() !== origCompany) {
+      changes.push({
+        label: "Company / Manufacturer",
+        oldValue: origCompany || "—",
+        newValue: companyName.trim(),
+      })
+    }
+
+    // 5. Base Unit
+    if (baseUnit.trim() !== origBaseUnit) {
+      changes.push({
+        label: "Base Unit",
+        oldValue: origBaseUnit || "—",
+        newValue: baseUnit.trim(),
+      })
+    }
+
+    // 6. Pack Size / Weight
+    if (packSize.trim() !== origPack) {
+      changes.push({
+        label: "Pack Size / Weight",
+        oldValue: origPack || "—",
+        newValue: packSize.trim() || "—",
+      })
+    }
+
+    // 7. Units per Carton
+    if (multiplier !== origMultiplier) {
+      const diff = multiplier - origMultiplier
+      changes.push({
+        label: "Units per Carton",
+        oldValue: `${origMultiplier} /ctn`,
+        newValue: `${multiplier} /ctn`,
+        diffBadge: `${diff > 0 ? "+" : ""}${diff} /ctn`,
+        badgeVariant: diff > 0 ? "positive" : "negative",
+      })
+    }
+
+    // 8. Standard Retail Price (MRP)
+    if (Math.abs(retail - origRetail) > 0.001) {
+      const diff = retail - origRetail
+      changes.push({
+        label: "Standard Retail Price (MRP)",
+        oldValue: `৳${origRetail.toFixed(2)}`,
+        newValue: `৳${retail.toFixed(2)}`,
+        diffBadge: `${diff > 0 ? "+৳" : "-৳"}${Math.abs(diff).toFixed(2)}`,
+        badgeVariant: diff >= 0 ? "positive" : "negative",
+      })
+    }
+
+    // 9. Standard Wholesale Price
+    if (Math.abs(wholesale - origWholesale) > 0.001) {
+      const diff = wholesale - origWholesale
+      changes.push({
+        label: "Standard Wholesale Price",
+        oldValue: `৳${origWholesale.toFixed(2)}`,
+        newValue: `৳${wholesale.toFixed(2)}`,
+        diffBadge: `${diff > 0 ? "+৳" : "-৳"}${Math.abs(diff).toFixed(2)}`,
+        badgeVariant: diff >= 0 ? "positive" : "negative",
+      })
+    }
+
+    // 10. Purchase Cost / Unit
+    if (Math.abs(buying - origBuying) > 0.001) {
+      const diff = buying - origBuying
+      changes.push({
+        label: "Purchase Cost / Unit",
+        oldValue: `৳${origBuying.toFixed(2)}`,
+        newValue: `৳${buying.toFixed(2)}`,
+        diffBadge: `${diff > 0 ? "+৳" : "-৳"}${Math.abs(diff).toFixed(2)}`,
+        badgeVariant: "neutral",
+      })
+    }
+
+    // 11. Default Barcode / SKU
+    if (defaultBarcode.trim() !== origBarcode) {
+      changes.push({
+        label: "Default Barcode / SKU",
+        oldValue: origBarcode || "—",
+        newValue: defaultBarcode.trim() || "—",
+      })
+    }
+
+    // 12. Low Stock Alert Threshold
+    if (minAlert !== origMinAlert) {
+      const diff = minAlert - origMinAlert
+      changes.push({
+        label: "Low Stock Alert Threshold",
+        oldValue: `${origMinAlert} units`,
+        newValue: `${minAlert} units`,
+        diffBadge: `${diff > 0 ? "+" : ""}${diff} units`,
+        badgeVariant: "neutral",
+      })
+    }
+
+    if (changes.length === 0) {
+      showWarning("No changes were made to save.")
+      return
+    }
 
     const executeSave = async () => {
       try {
@@ -271,113 +402,61 @@ export default function EditProductModal({
               <div className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-snug">
                 {cleanNameEn}
               </div>
-              {nameBn && nameBn.trim() !== cleanNameEn && (
-                <div className="text-xs text-slate-500 dark:text-slate-400 font-bangla mt-0.5">
-                  {nameBn.trim()}
-                </div>
-              )}
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                {changes.length === 1
+                  ? "1 field modified"
+                  : `${changes.length} fields modified`}
+              </div>
             </div>
             <div className="shrink-0 text-right">
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 whitespace-nowrap">
                 #{targetProduct.productCode}
               </span>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium whitespace-nowrap">
-                {category.trim()} • {baseUnit.trim()}
-              </div>
             </div>
           </div>
 
-          {/* Details Grid */}
-          <div className="grid grid-cols-2 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs">
-            {/* Retail MRP */}
-            <div className="space-y-0.5">
-              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
-                Retail MRP
-              </span>
-              <div className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
-                {retailChanged ? (
-                  <span className="inline-flex items-center gap-1.5 flex-wrap">
-                    <span className="line-through text-slate-400 font-normal">৳{origRetail.toFixed(2)}</span>
-                    <span className="text-emerald-700 dark:text-emerald-400">→ ৳{retail.toFixed(2)}</span>
+          {/* Changed Items Only */}
+          <div className="max-h-[280px] overflow-y-auto space-y-2 pr-0.5">
+            {changes.map((change) => (
+              <div
+                key={change.label}
+                className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 text-xs"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-0.5">
+                    {change.label}
                   </span>
-                ) : (
-                  <span>৳{retail.toFixed(2)}</span>
-                )}
-              </div>
-            </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="line-through text-slate-400 dark:text-slate-500 font-mono font-normal">
+                      {change.oldValue}
+                    </span>
+                    <span className="text-slate-400 font-bold">→</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                      {change.newValue}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Wholesale Price */}
-            <div className="space-y-0.5">
-              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
-                Wholesale Price
-              </span>
-              <div className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
-                {wholesaleChanged ? (
-                  <span className="inline-flex items-center gap-1.5 flex-wrap">
-                    <span className="line-through text-slate-400 font-normal">৳{origWholesale.toFixed(2)}</span>
-                    <span className="text-emerald-700 dark:text-emerald-400">→ ৳{wholesale.toFixed(2)}</span>
+                {change.diffBadge && (
+                  <span
+                    className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold whitespace-nowrap border ${
+                      change.badgeVariant === "positive"
+                        ? "bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                        : change.badgeVariant === "negative"
+                          ? "bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                    }`}
+                  >
+                    {change.diffBadge}
                   </span>
-                ) : (
-                  <span>৳{wholesale.toFixed(2)}</span>
                 )}
               </div>
-            </div>
-
-            {/* Purchase Cost */}
-            <div className="space-y-0.5">
-              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
-                Purchase Cost
-              </span>
-              <div className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
-                {buyingChanged ? (
-                  <span className="inline-flex items-center gap-1.5 flex-wrap">
-                    <span className="line-through text-slate-400 font-normal">৳{origBuying.toFixed(2)}</span>
-                    <span className="text-emerald-700 dark:text-emerald-400">→ ৳{buying.toFixed(2)}</span>
-                  </span>
-                ) : (
-                  <span>৳{buying.toFixed(2)}</span>
-                )}
-              </div>
-            </div>
-
-            {/* Carton Multiplier */}
-            <div className="space-y-0.5">
-              <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">
-                Units per Carton
-              </span>
-              <div className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
-                {multiplierChanged ? (
-                  <span className="inline-flex items-center gap-1.5 flex-wrap">
-                    <span className="line-through text-slate-400 font-normal">{origMultiplier}</span>
-                    <span className="text-emerald-700 dark:text-emerald-400">→ {multiplier} /ctn</span>
-                  </span>
-                ) : (
-                  <span>{multiplier} /ctn</span>
-                )}
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Changed Attributes Banner if applicable */}
-          {(packChanged || categoryChanged || nameChanged) && (
-            <div className="p-2.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex flex-wrap gap-x-3 gap-y-1">
-              {nameChanged && (
-                <span>
-                  <strong className="text-slate-800 dark:text-slate-200">Name:</strong> {cleanNameEn}
-                </span>
-              )}
-              {packChanged && (
-                <span>
-                  <strong className="text-slate-800 dark:text-slate-200">Pack:</strong> {packSize.trim() || "Default"}
-                </span>
-              )}
-              {categoryChanged && (
-                <span>
-                  <strong className="text-slate-800 dark:text-slate-200">Category:</strong> {category.trim()}
-                </span>
-              )}
-            </div>
-          )}
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+            Confirm to commit {changes.length === 1 ? "this change" : "these changes"} to the product master catalog.
+          </div>
         </div>
       ),
       actions: [
