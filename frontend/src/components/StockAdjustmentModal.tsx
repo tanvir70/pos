@@ -39,33 +39,43 @@ const formatTk = (n: number) =>
 const ADJUSTMENT_REASONS = [
   {
     type: "BREAKAGE_LEAKAGE",
+    titleEn: "Breakage / Leakage",
+    titleBn: "ভাঙা বা লিক",
     label: "Breakage / Bottle Leakage (ভাঙা বা লিক)",
     desc: "Bottle shattered, lid leaked, or pouch torn during transit or counter handling",
-    icon: <Flame className="w-4 h-4 text-rose-600" />,
+    icon: Flame,
   },
   {
     type: "DAMAGE_SPOILAGE",
+    titleEn: "Moisture / Spoilage",
+    titleBn: "নষ্ট বা জমাট",
     label: "Moisture / Spoilage (নষ্ট বা জমাট)",
     desc: "Powder got moist, caked, or active ingredient coagulated before expiry",
-    icon: <ShieldAlert className="w-4 h-4 text-orange-600" />,
+    icon: ShieldAlert,
   },
   {
     type: "PHYSICAL_AUDIT_VARIANCE",
+    titleEn: "Physical Audit Variance",
+    titleBn: "হিসাবের গরমিল",
     label: "Physical Audit Variance (হিসাবের গরমিল)",
     desc: "Discrepancy found during routine stock count / cycle counting",
-    icon: <ClipboardList className="w-4 h-4 text-amber-600" />,
+    icon: ClipboardList,
   },
   {
     type: "EXPIRED_SCRAP",
+    titleEn: "Expired Chemical Scrap",
+    titleBn: "মেয়াদোত্তীর্ণ স্ক্র্যাপ",
     label: "Expired Chemical Scrap (মেয়াদোত্তীর্ণ স্ক্র্যাপ)",
     desc: "Shelf-life expired and lawfully prohibited from sale under Pesticide Ordinance",
-    icon: <AlertTriangle className="w-4 h-4 text-red-600" />,
+    icon: AlertTriangle,
   },
   {
     type: "PROMOTIONAL_SAMPLE",
+    titleEn: "Promotional / Farmer Demo",
+    titleBn: "নমুনা প্রদান",
     label: "Promotional Sample / Farmer Demo (নমুনা প্রদান)",
     desc: "Free demonstration sample distributed to farmer for field trial",
-    icon: <Package className="w-4 h-4 text-emerald-600" />,
+    icon: Package,
   },
 ]
 
@@ -474,9 +484,10 @@ export default function StockAdjustmentModal({
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Adjustment Reason *
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {ADJUSTMENT_REASONS.map((r) => {
                 const isSelected = adjustmentType === r.type
+                const IconComponent = r.icon
                 return (
                   <button
                     key={r.type}
@@ -484,16 +495,45 @@ export default function StockAdjustmentModal({
                     onClick={() => setAdjustmentType(r.type)}
                     className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-slate-900 dark:bg-emerald-600 border-slate-900 dark:border-emerald-600 text-white shadow-xs"
+                        ? "bg-slate-900 dark:bg-emerald-600 border-slate-900 dark:border-emerald-600 text-white shadow-sm ring-1 ring-slate-900/10 dark:ring-emerald-500/20"
                         : "bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
                     }`}
                   >
-                    <div className="mt-0.5 shrink-0">{r.icon}</div>
+                    <div
+                      className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${
+                        isSelected
+                          ? "bg-white/15 text-white"
+                          : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      <IconComponent className="w-4 h-4" />
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <p className={`text-xs font-bold ${isSelected ? "text-white" : "text-slate-900 dark:text-slate-100"}`}>
-                        {r.label}
-                      </p>
-                      <p className={`text-[10px] mt-0.5 line-clamp-2 ${isSelected ? "text-slate-300 dark:text-emerald-100" : "text-slate-500 dark:text-slate-400"}`}>
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span
+                          className={`text-xs font-bold leading-snug tracking-tight ${
+                            isSelected ? "text-white" : "text-slate-900 dark:text-slate-100"
+                          }`}
+                        >
+                          {r.titleEn}
+                        </span>
+                        <span
+                          className={`text-[11px] font-medium leading-snug font-bangla ${
+                            isSelected
+                              ? "text-slate-300 dark:text-emerald-100"
+                              : "text-slate-500 dark:text-slate-400"
+                          }`}
+                        >
+                          ({r.titleBn})
+                        </span>
+                      </div>
+                      <p
+                        className={`text-[11px] leading-relaxed mt-1 line-clamp-2 ${
+                          isSelected
+                            ? "text-slate-300 dark:text-emerald-100"
+                            : "text-slate-500 dark:text-slate-400"
+                        }`}
+                      >
                         {r.desc}
                       </p>
                     </div>

@@ -17374,3 +17374,388 @@ pydantic_core._pydantic_core.ValidationError: 1 validation error for LotEntryReq
 2026-10-09 14:44:56 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
 [SQL: PRAGMA wal_checkpoint(TRUNCATE)]
 (Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:35 [INFO] [alembic.runtime.plugins]: setup plugin alembic.autogenerate.schemas
+2026-10-09 14:48:35 [INFO] [alembic.runtime.plugins]: setup plugin alembic.autogenerate.tables
+2026-10-09 14:48:35 [INFO] [alembic.runtime.plugins]: setup plugin alembic.autogenerate.types
+2026-10-09 14:48:35 [INFO] [alembic.runtime.plugins]: setup plugin alembic.autogenerate.constraints
+2026-10-09 14:48:35 [INFO] [alembic.runtime.plugins]: setup plugin alembic.autogenerate.defaults
+2026-10-09 14:48:35 [INFO] [alembic.runtime.plugins]: setup plugin alembic.autogenerate.comments
+2026-10-09 14:48:35 [INFO] [alembic.runtime.plugins]: setup plugin alembic.ext.checkconstraint_byname
+2026-10-09 14:48:35 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:36 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock?inStockOnly=true "HTTP/1.1 200 OK"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-10-09 14:48:36 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:36 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:36 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:36 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-10-09 14:48:36 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000001, total=500.00, paid=500.00, due=0.00, customer=Audit Test Customer
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 400 Bad Request"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-10-09 14:48:36 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/3 "HTTP/1.1 200 OK"
+2026-10-09 14:48:36 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:36 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:37 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:37 [WARNING] [auth]: Failed login attempt for user 'owner' (wrong password)
+2026-10-09 14:48:37 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 401 Unauthorized"
+2026-10-09 14:48:37 [WARNING] [auth]: Failed login attempt for unknown user 'nonexistent_user'
+2026-10-09 14:48:37 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 401 Unauthorized"
+2026-10-09 14:48:37 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:37 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:37 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:37 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:37 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:37 [INFO] [httpx]: HTTP Request: GET http://test/api/auth/me "HTTP/1.1 401 Unauthorized"
+2026-10-09 14:48:37 [INFO] [httpx]: HTTP Request: GET http://test/api/auth/me "HTTP/1.1 401 Unauthorized"
+2026-10-09 14:48:37 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:37 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:37 [INFO] [httpx]: HTTP Request: GET http://test/api/auth/me "HTTP/1.1 200 OK"
+2026-10-09 14:48:37 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:37 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:37 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:37 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:37 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:38 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/change-password "HTTP/1.1 400 Bad Request"
+2026-10-09 14:48:38 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/change-password "HTTP/1.1 400 Bad Request"
+2026-10-09 14:48:38 [INFO] [auth]: Password updated successfully for user 'owner'
+2026-10-09 14:48:38 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/change-password "HTTP/1.1 200 OK"
+2026-10-09 14:48:38 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:38 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [auth]: Password updated successfully for user 'owner'
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/change-password "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:39 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:39 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:39 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/products "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=118 "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/customers "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000002, total=1300.00, paid=500.00, due=800.00, customer=Audit Test Customer
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/2 "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/2/payments "HTTP/1.1 201 Created"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/barcode/SYN-AMI-202502 "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/download "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:39 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:39 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:39 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/4/ledger "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: PUT http://test/api/customers/4 "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/4 "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/999999 "HTTP/1.1 404 Not Found"
+2026-10-09 14:48:39 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:39 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:39 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:39 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/customers?query=SEARCH-eb2159 "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/customers?query=SEARCH-eb2159&type=RETAIL "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/customers?query=SEARCH-eb2159&type=WHOLESALE "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/next-due-invoice-no "HTTP/1.1 200 OK"
+2026-10-09 14:48:39 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:39 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:39 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:40 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: PUT http://test/api/customers/7 "HTTP/1.1 200 OK"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/7 "HTTP/1.1 200 OK"
+2026-10-09 14:48:40 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:40 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:40 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:40 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:40 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:40 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:40 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000003, total=300.00, paid=300.00, due=0.00, customer=Walk-in
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000004, total=200.00, paid=50.00, due=150.00, customer=Dashboard Tester 4f48b9
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/9/payments "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-10-09 14:48:40 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:40 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:40 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:40 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:40 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/summary "HTTP/1.1 200 OK"
+2026-10-09 14:48:40 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:40 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:40 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:41 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000005, total=1000.00, paid=1000.00, due=0.00, customer=Walk-in
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:41 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000006, total=300.00, paid=300.00, due=0.00, customer=Walk-in
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/top-selling?limit=50&period=month "HTTP/1.1 200 OK"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: GET http://test/api/dashboard/top-selling?page=0&size=2&period=today "HTTP/1.1 200 OK"
+2026-10-09 14:48:41 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:41 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/financial-audit "HTTP/1.1 200 OK"
+2026-10-09 14:48:41 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:41 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:41 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000007, total=200.00, paid=200.00, due=0.00, customer=Walk-in
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:41 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:41 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:41 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:41 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 400 Bad Request"
+2026-10-09 14:48:41 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:41 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:41 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:41 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:41 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:41 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:41 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:42 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/financial-audit "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [audit]: Reconciled customer #10 (Reconciliation Test Customer): previous=999.00, new=500.00, delta=-499.00
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/backup/reconcile-customer/10 "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/10 "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: GET http://test/api/backup/financial-audit "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:42 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:42 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:42 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:42 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:42 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:42 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:42 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000008, total=100.00, paid=100.00, due=0.00, customer=Walk-in
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-HEADER-9eed43c4-a20c-49b7-ab9a-07176c908be4 (invoice=INV-20261009-0000008)
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:42 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:42 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:42 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-10-09 14:48:42 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000009, total=50.00, paid=50.00, due=0.00, customer=Walk-in
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:42 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-TEST-BODY-024f843a-52f0-4390-a61c-af7f121e862f (invoice=INV-20261009-0000009)
+2026-10-09 14:48:42 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:42 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:42 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:42 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:43 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/customers "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/11/payments "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/11 "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [customer]: Idempotent replay for customer payment: key=IDEM-PAY-TEST-511b9e68-ed97-40c1-9e88-d575ea0940f5, ledger_id=13
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/customers/11/payments "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: GET http://test/api/customers/11 "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:43 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:43 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:43 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [returns]: Idempotent replay for return with client_trx_id=IDEM-RET-TEST-ff152c93-d11c-475f-92e4-2a5df1f49847 (return_no=RET-20261009-0000005)
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/returns "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:43 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:43 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:43 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [sales]: Sale completed: invoice=INV-20261009-0000010, total=100.00, paid=100.00, due=0.00, customer=Walk-in
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-CONCURRENT-fc3d47eb-4e55-4af7-adca-eebf828303d7 (invoice=INV-20261009-0000010)
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [sales]: Idempotent replay for sale with client_trx_id=IDEM-CONCURRENT-fc3d47eb-4e55-4af7-adca-eebf828303d7 (invoice=INV-20261009-0000010)
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/sales "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:43 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:43 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:43 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 404 Not Found"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:43 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:43 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:43 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/adjustments "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/adjustments "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:43 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/adjustments "HTTP/1.1 400 Bad Request"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/adjustments "HTTP/1.1 201 Created"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/quarantine "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:44 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:44 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:44 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/adjustments "HTTP/1.1 201 Created"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/quarantine/dispose "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/quarantine/dispose "HTTP/1.1 400 Bad Request"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/quarantine/dispose "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/valuation "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:44 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:44 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:44 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/products "HTTP/1.1 201 Created"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 422 Unprocessable Entity"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: GET http://test/api/products/122 "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:44 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:44 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:44 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/movements?lotId=19&movementType=LOT_ENTRY "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:44 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:44 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:44 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?fefo=true "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?fefo=false "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/lots?productId=1 "HTTP/1.1 200 OK"
+2026-10-09 14:48:44 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:44 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-10-09 14:48:44 [INFO] [app]: Starting up Rajib Enterprise (Environment: test)...
+2026-10-09 14:48:45 [INFO] [auth]: User 'owner' logged in successfully (role: ROLE_OWNER)
+2026-10-09 14:48:45 [INFO] [httpx]: HTTP Request: POST http://test/api/auth/login "HTTP/1.1 200 OK"
+2026-10-09 14:48:45 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/lots "HTTP/1.1 201 Created"
+2026-10-09 14:48:45 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/adjustments "HTTP/1.1 201 Created"
+2026-10-09 14:48:45 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-10-09 14:48:45 [INFO] [httpx]: HTTP Request: POST http://test/api/inventory/adjustments "HTTP/1.1 201 Created"
+2026-10-09 14:48:45 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/stock "HTTP/1.1 200 OK"
+2026-10-09 14:48:45 [INFO] [httpx]: HTTP Request: GET http://test/api/inventory/adjustments?productId=1&page=0&size=5 "HTTP/1.1 200 OK"
+2026-10-09 14:48:45 [INFO] [app]: Gracefully shutting down Rajib Enterprise...
+2026-10-09 14:48:45 [WARNING] [app]: Could not execute SQLite WAL checkpoint on shutdown: (sqlite3.OperationalError) database table is locked
+[SQL: PRAGMA wal_checkpoint(TRUNCATE)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
