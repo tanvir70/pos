@@ -250,10 +250,28 @@ if os.path.exists(frontend_dist):
     if os.path.exists(assets_dir):
         app.mount("/assets", ImmutableStaticFiles(directory=assets_dir), name="assets")
 
+    @app.get("/favicon.ico", include_in_schema=False)
+    async def serve_favicon():
+        fp = os.path.join(frontend_dist, "favicon.ico")
+        if os.path.isfile(fp):
+            return FileResponse(fp, media_type="image/x-icon")
+        raise HTTPException(status_code=404, detail="Favicon not found")
+
+    @app.get("/logo.png", include_in_schema=False)
+    async def serve_logo():
+        fp = os.path.join(frontend_dist, "logo.png")
+        if os.path.isfile(fp):
+            return FileResponse(fp, media_type="image/png")
+        raise HTTPException(status_code=404, detail="Logo not found")
+
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         if full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="API endpoint not found")
+        if full_path:
+            static_file = os.path.join(frontend_dist, full_path)
+            if os.path.isfile(static_file):
+                return FileResponse(static_file)
         index_html = os.path.join(frontend_dist, "index.html")
         if os.path.exists(index_html):
             return FileResponse(

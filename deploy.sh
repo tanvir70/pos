@@ -21,7 +21,7 @@ fi
 
 # Configuration with sensible production defaults
 SERVER_USER="${SERVER_USER:-rajibent}"
-SERVER_HOST="${SERVER_HOST:-rajibenterprise.trade}"
+SERVER_HOST="${SERVER_HOST:-161.248.201.171}"
 SERVER_PORT="${SERVER_PORT:-22}"
 REMOTE_DIR="${REMOTE_DIR:-/home/rajibent/backend-python}"
 VENV_PYTHON="${VENV_PYTHON:-/home/rajibent/virtualenv/backend-python/3.12/bin/python}"
