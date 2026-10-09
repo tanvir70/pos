@@ -409,6 +409,7 @@ export default function QuickAddStockModal({
       isOpen={!!product}
       onClose={handleClose}
       closeOnEsc={true}
+      closeOnClickOutside={false}
       size="lg"
       headerVariant="light"
       icon={

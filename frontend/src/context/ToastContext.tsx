@@ -333,12 +333,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         )
         if (activeConfirm) {
           e.stopPropagation()
+          e.preventDefault()
           dismissToast(activeConfirm.id)
         }
       }
     }
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
+    // Listen in capture phase so confirmation toast intercepts Escape before underlying modals
+    window.addEventListener("keydown", handleKeyDown, true)
+    return () => window.removeEventListener("keydown", handleKeyDown, true)
   }, [toasts, dismissToast])
 
   // Dedicated renderer for full-fidelity modal-level confirmation toasts
@@ -352,12 +354,27 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     return (
       <div
         key={toast.id}
+        data-confirmation-overlay
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       >
         {/* Backdrop */}
         <div
           aria-hidden="true"
-          onClick={() => dismissToast(toast.id)}
+          data-confirmation-overlay
+          onPointerDown={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+          }}
+          onClick={(e) => {
+            e.stopPropagation()
+            dismissToast(toast.id)
+          }}
           className={`fixed inset-0 bg-slate-950/50 backdrop-blur-[2px] transition-opacity duration-200 cursor-default ${
             isClosing ? "opacity-0" : "opacity-100"
           }`}
@@ -368,6 +385,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           role="alertdialog"
           aria-modal="true"
           aria-labelledby={`toast-title-${toast.id}`}
+          data-confirmation-dialog
+          onPointerDown={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
           className={`relative z-10 w-full max-w-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-950/30 p-5 sm:p-6 transition-all duration-200 ${
             isClosing
               ? "opacity-0 scale-95 translate-y-1 pointer-events-none"
@@ -400,7 +421,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
             <button
               type="button"
-              onClick={() => dismissToast(toast.id)}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                dismissToast(toast.id)
+              }}
               className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               aria-label="Dismiss alert"
             >
@@ -420,7 +446,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 <button
                   type="button"
                   key={action.label}
-                  onClick={action.onClick}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    action.onClick()
+                  }}
                   className={`px-5 py-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all active:scale-[0.98] ${
                     action.intent === "danger" || action.intent === "primary"
                       ? "bg-rose-600 border-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/20"

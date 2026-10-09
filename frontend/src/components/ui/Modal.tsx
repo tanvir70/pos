@@ -62,10 +62,34 @@ export function Modal({
           className,
         )}
         onEscapeKeyDown={(e) => {
-          if (!closeOnEsc) e.preventDefault()
+          const hasConfirmDialog = Boolean(
+            document.querySelector('[data-confirmation-overlay], [data-confirmation-dialog], [role="alertdialog"]'),
+          )
+          if (hasConfirmDialog || !closeOnEsc) {
+            e.preventDefault()
+          }
         }}
         onPointerDownOutside={(e) => {
-          if (!closeOnClickOutside) e.preventDefault()
+          const target = e.target as HTMLElement | null
+          const isToastOrConfirm = Boolean(
+            target?.closest(
+              '[data-confirmation-overlay], [data-confirmation-dialog], [role="alertdialog"], [role="alert"], [data-slot="toast"], .fixed.z-\\[100000\\]',
+            ) || document.querySelector('[data-confirmation-overlay], [data-confirmation-dialog]'),
+          )
+          if (isToastOrConfirm || !closeOnClickOutside) {
+            e.preventDefault()
+          }
+        }}
+        onInteractOutside={(e) => {
+          const target = e.target as HTMLElement | null
+          const isToastOrConfirm = Boolean(
+            target?.closest(
+              '[data-confirmation-overlay], [data-confirmation-dialog], [role="alertdialog"], [role="alert"], [data-slot="toast"], .fixed.z-\\[100000\\]',
+            ) || document.querySelector('[data-confirmation-overlay], [data-confirmation-dialog]'),
+          )
+          if (isToastOrConfirm || !closeOnClickOutside) {
+            e.preventDefault()
+          }
         }}
       >
         {/* Accessible hidden DialogTitle if title is not rendered in standard header */}

@@ -488,6 +488,7 @@ export default function EditProductModal({
       isOpen={isOpen}
       onClose={handleClose}
       closeOnEsc={true}
+      closeOnClickOutside={false}
       size="lg"
       headerVariant="light"
       icon={
