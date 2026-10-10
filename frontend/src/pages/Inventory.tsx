@@ -20,6 +20,7 @@ import EditProductModal from "../components/inventory/EditProductModal"
 import QuickAddStockModal, { type StockModalProduct } from "../components/inventory/QuickAddStockModal"
 import ProductLotsPopover, { type LotDropdownProduct } from "../components/inventory/ProductLotsPopover"
 import InventoryTable from "../components/inventory/InventoryTable"
+import { cleanProductNameBn } from "@/constants/bengaliCatalog"
 import {
   Package,
   Plus,
@@ -133,7 +134,7 @@ export default function Inventory({ onNavigate }: InventoryProps = {}) {
         product: prod,
         productId: prod.id,
         nameEn: prod.nameEn,
-        nameBn: prod.nameBn,
+        nameBn: cleanProductNameBn(prod.nameBn, prod.nameEn, prod.productCode),
         productCode: prod.productCode,
         category: prod.category,
         baseUnit: prod.baseUnit,

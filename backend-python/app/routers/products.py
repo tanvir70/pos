@@ -8,15 +8,17 @@ from app.database import get_db
 from app.models.product import Product
 from app.schemas.inventory import InventoryLotDto
 from app.schemas.product import ProductCreateDto, ProductDto, ProductUpdateDto
+from app.services.catalog_helper import clean_product_name_bn
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 
 def to_product_dto(p: Product, initial_lot: InventoryLotDto | None = None) -> ProductDto:
+    resolved_name_bn = clean_product_name_bn(p.name_bn, p.name_en, p.product_code)
     return ProductDto(
         id=p.id,
         product_code=p.product_code,
         name_en=p.name_en,
-        name_bn=p.name_bn,
+        name_bn=resolved_name_bn,
         company_name=p.company_name,
         category=p.category,
         base_unit=p.base_unit,
@@ -53,7 +55,47 @@ async def list_products(
     stmt = stmt.order_by(Product.name_en.asc())
     result = await db.execute(stmt)
     products = result.scalars().all()
+
+    # Self-healing Layer: if any product has corrupted '?' in name_bn, fix in DB
+    corrupt = [p for p in products if p.name_bn and "?" in p.name_bn]
+    if corrupt:
+        for p in corrupt:
+            p.name_bn = clean_product_name_bn(p.name_bn, p.name_en, p.product_code)
+        try:
+            await db.commit()
+        except Exception:
+            pass
+
     return [to_product_dto(p) for p in products]
+
+@router.get("/repair-bangla")
+@router.post("/repair-bangla")
+async def repair_bangla_endpoint(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import text
+    try:
+        await db.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+        await db.execute(text("ALTER TABLE product CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"))
+        await db.execute(text("ALTER TABLE customer CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"))
+        await db.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+    except Exception:
+        pass
+
+    prods_res = await db.execute(select(Product))
+    all_prods = prods_res.scalars().all()
+    updated = 0
+    for p in all_prods:
+        clean_bn = clean_product_name_bn(p.name_bn, p.name_en, p.product_code)
+        if clean_bn != p.name_bn:
+            p.name_bn = clean_bn
+            updated += 1
+
+    await db.commit()
+    return {
+        "status": "success",
+        "total_products": len(all_prods),
+        "updated_count": updated,
+        "message": f"Successfully restored {updated} Bengali product names to utf8mb4."
+    }
 
 @router.get("/units")
 def get_supported_units():

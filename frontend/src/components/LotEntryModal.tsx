@@ -11,6 +11,7 @@ import {
   SelectContent,
   SelectItem,
 } from "./ui/select"
+import { cleanProductNameBn } from "@/constants/bengaliCatalog"
 
 export interface LotEntryModalProps {
   products: Product[]
@@ -235,7 +236,7 @@ export default function LotEntryModal({
               <SelectContent>
                 {products.map((p) => (
                   <SelectItem key={p.id} value={String(p.id)}>
-                    {p.nameEn} ({p.nameBn}) — {p.category} ({p.baseUnit})
+                    {p.nameEn} ({cleanProductNameBn(p.nameBn, p.nameEn, p.productCode)}) — {p.category} ({p.baseUnit})
                   </SelectItem>
                 ))}
               </SelectContent>

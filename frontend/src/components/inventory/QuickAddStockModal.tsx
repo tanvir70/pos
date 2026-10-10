@@ -23,6 +23,7 @@ import {
   Lock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { cleanProductNameBn } from "@/constants/bengaliCatalog"
 
 export interface StockModalProduct {
   productId: number
@@ -276,7 +277,11 @@ export default function QuickAddStockModal({
       confirmToastIdRef.current = null
     }
 
-    const bengaliName = product.nameBn || matched?.nameBn
+    const bengaliName = cleanProductNameBn(
+      product.nameBn || matched?.nameBn,
+      product.nameEn || matched?.nameEn,
+      product.productCode || matched?.productCode
+    )
 
     const toastId = showToast({
       type: "success",

@@ -23,6 +23,7 @@ import {
   roundAccounting,
 } from "../utils/currency"
 import { formatLotNumber } from "../utils/lotNumber"
+import { cleanProductNameBn } from "@/constants/bengaliCatalog"
 
 const ACTIVE_CART_STORAGE_KEY = "pos_active_cart_v2"
 const PARKED_CARTS_STORAGE_KEY = "pos_parked_carts_v1"
@@ -576,7 +577,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           productId: stockOrLot.productId,
           productCode: stockOrLot.productCode || "",
           nameEn: stockOrLot.productNameEn || stockOrLot.nameEn || "",
-          nameBn: stockOrLot.productNameBn || stockOrLot.nameBn || "",
+          nameBn: cleanProductNameBn(
+            stockOrLot.productNameBn || stockOrLot.nameBn,
+            stockOrLot.productNameEn || stockOrLot.nameEn,
+            stockOrLot.productCode
+          ),
           category: stockOrLot.category,
           baseUnit: stockOrLot.baseUnit || "Piece",
           packSize: (stockOrLot as any).packSize || null,

@@ -18,6 +18,7 @@ import { getEffectiveMultiplier, pluralizeUnit } from "../../utils/unit"
 import Badge from "../ui/Badge"
 import Button from "../ui/Button"
 import { Modal } from "../ui/Modal"
+import { cleanProductNameBn } from "@/constants/bengaliCatalog"
 
 function hasBusinessLot(lotNumber?: string) {
   return !!lotNumber
@@ -292,9 +293,13 @@ export default function CartTicket({ customers }: CartTicketProps = {}) {
                           </span>
                         )}
                       </div>
-                      {item.nameBn && item.nameBn !== item.nameEn && (
-                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">{item.nameBn}</p>
-                      )}
+                      {(() => {
+                        const bnText = cleanProductNameBn(item.nameBn, item.nameEn, item.productCode);
+                        if (bnText && bnText !== item.nameEn) {
+                          return <p className="truncate text-xs text-slate-500 dark:text-slate-400 font-bangla">{bnText}</p>;
+                        }
+                        return null;
+                      })()}
                       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-500 dark:text-slate-400">
                         <span className="font-mono">{item.productCode}</span>
                         <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-700" />

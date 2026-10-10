@@ -14,6 +14,7 @@ import {
   TrendingUp,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { cleanProductNameBn } from "@/constants/bengaliCatalog"
 
 export interface EditProductModalProps {
   isOpen: boolean
@@ -81,7 +82,7 @@ export default function EditProductModal({
   useEffect(() => {
     if (targetProduct) {
       setNameEn(targetProduct.nameEn || "")
-      setNameBn(targetProduct.nameBn || targetProduct.nameEn || "")
+      setNameBn(cleanProductNameBn(targetProduct.nameBn, targetProduct.nameEn, targetProduct.productCode))
       setCategory(targetProduct.category || "Insecticide")
       setCompanyName(targetProduct.companyName || "Syngenta Bangladesh Limited")
       setBaseUnit(targetProduct.baseUnit || "Piece")
@@ -109,7 +110,7 @@ export default function EditProductModal({
   const isChanged = useMemo(() => {
     if (!targetProduct) return false
     const origNameEn = (targetProduct.nameEn || "").trim()
-    const origNameBn = (targetProduct.nameBn || "").trim()
+    const origNameBn = cleanProductNameBn(targetProduct.nameBn, targetProduct.nameEn, targetProduct.productCode).trim()
     const origCategory = (targetProduct.category || "").trim()
     const origBaseUnit = (targetProduct.baseUnit || "").trim()
     const origPackSize = (targetProduct.packSize || targetProduct.unitSize || "").trim()
@@ -206,7 +207,7 @@ export default function EditProductModal({
     const origPack = (targetProduct.packSize || targetProduct.unitSize || "").trim()
     const origCategory = (targetProduct.category || "").trim()
     const origNameEn = (targetProduct.nameEn || "").trim()
-    const origNameBn = (targetProduct.nameBn || "").trim()
+    const origNameBn = cleanProductNameBn(targetProduct.nameBn, targetProduct.nameEn, targetProduct.productCode).trim()
     const origCompany = (targetProduct.companyName || "").trim()
     const origBaseUnit = (targetProduct.baseUnit || "").trim()
     const origBarcode = (targetProduct.defaultBarcode || "").trim()

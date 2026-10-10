@@ -17,6 +17,7 @@ import Input from "../ui/Input"
 import Button from "../ui/Button"
 import Badge from "../ui/Badge"
 import RefreshButton from "../ui/RefreshButton"
+import { cleanProductNameBn } from "@/constants/bengaliCatalog"
 
 export interface ProductSearchProps {
   stocks: StockItem[]
@@ -354,12 +355,21 @@ export default function ProductSearch({
                               <Check className="h-3.5 w-3.5 shrink-0 text-emerald-700 dark:text-emerald-400" />
                             )}
                           </div>
-                          {(item.productNameBn || item.nameBn) &&
-                            (item.productNameBn || item.nameBn) !== productName(item) && (
-                            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                              {item.productNameBn || item.nameBn}
-                            </p>
-                          )}
+                          {(() => {
+                            const bnText = cleanProductNameBn(
+                              item.productNameBn || item.nameBn,
+                              item.productNameEn || item.nameEn,
+                              item.productCode
+                            );
+                            if (bnText && bnText !== productName(item)) {
+                              return (
+                                <p className="truncate text-xs text-slate-500 dark:text-slate-400 font-bangla">
+                                  {bnText}
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()}
                           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
                             <span className="inline-flex items-center gap-1 font-mono">
                               <Barcode className="h-3.5 w-3.5" />
