@@ -61,6 +61,8 @@ echo "1. Upload 'deploy.zip' to /home/rajibent/backend-python/ (via cPanel File 
 echo "2. In cPanel Terminal, execute:"
 echo "   cd /home/rajibent/backend-python"
 echo "   unzip -o deploy.zip"
+echo "   /home/rajibent/virtualenv/backend-python/3.12/bin/python -m alembic upgrade head"
+echo "   touch tmp/restart.txt"
 echo "   pkill -f \"python run.py\" 2>/dev/null"
 echo "   nohup /home/rajibent/virtualenv/backend-python/3.12/bin/python run.py > /home/rajibent/backend-python/uvicorn.log 2>&1 &"
 echo "   curl -i http://127.0.0.1:8000/api/health"

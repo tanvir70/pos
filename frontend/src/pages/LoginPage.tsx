@@ -282,15 +282,15 @@ export default function LoginPage() {
         </div>
       </main>
 
-      {/* Premium Footer with Explicit Gridmark Labs Notice */}
+      {/* Premium Footer with Explicit Refyn Ventures Notice */}
       <footer className="relative z-10 py-6 text-center text-xs text-slate-400 flex flex-col items-center gap-1">
         <p className="font-semibold text-slate-300 tracking-wide text-xs">
-          All right reserve for Gridmark Labs.
+          All rights reserved for Refyn Ventures.
         </p>
         <p className="text-[11px] text-slate-400 flex items-center gap-2">
           <span>{STORE_INFO.name} POS Terminal</span>
           <span>•</span>
-          <span>Engineered by Gridmark Labs</span>
+          <span>Engineered by Refyn Ventures</span>
           <span>•</span>
           <span>&copy; {new Date().getFullYear()}</span>
         </p>

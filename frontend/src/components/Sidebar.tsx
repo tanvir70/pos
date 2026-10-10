@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Settings2,
   LogOut,
+  UserRound,
   X,
   History,
   type LucideIcon,
@@ -431,23 +432,22 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
             }`}
           >
             <div
-              className={`flex items-center rounded-xl bg-white/95 dark:bg-slate-900/90 border border-emerald-300/70 dark:border-slate-800 shadow-2xs transition-all ${
-                isRail ? "md:p-1.5 md:justify-center" : "p-2 justify-between gap-2"
+              className={`flex items-center rounded-xl bg-white/95 dark:bg-slate-900/95 border border-emerald-500/25 dark:border-slate-800 shadow-xs hover:border-emerald-500/40 transition-all ${
+                isRail ? "md:p-1.5 md:justify-center" : "p-2 sm:p-2.5 justify-between gap-2.5"
               }`}
             >
               {/* User Avatar + Identity */}
               <div className={`flex items-center gap-2.5 min-w-0 ${isRail ? "md:hidden" : ""}`}>
-                {/* Avatar Badge with User Initial */}
-                <div className="w-8 h-8 rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs shadow-emerald-600/25">
-                  {(displayName || "Owner").charAt(0).toUpperCase()}
+                {/* Avatar Badge with User Icon */}
+                <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center shrink-0 shadow-xs ring-1 ring-emerald-500/20">
+                  <UserRound className="w-4.5 h-4.5 text-white" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate">
                     {displayName || "Shop Owner"}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/50" />
-                    <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider truncate">
+                  <div className="mt-1">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-500/20 text-[9.5px] font-bold font-mono tracking-wider uppercase">
                       {auth.role ? auth.role.replace("ROLE_", "") : "OWNER"}
                     </span>
                   </div>
@@ -460,11 +460,11 @@ export default function Sidebar({ isOpen, onClose, activeTab, onTabChange }: Sid
                 onClick={confirmLogout}
                 title="Logout (End session)"
                 aria-label="Logout"
-                className={`group flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-transparent hover:border-rose-200 dark:hover:border-rose-900/50 transition-all duration-150 cursor-pointer ${
-                  isRail ? "w-9 h-9" : "p-1.5 shrink-0"
+                className={`group flex items-center justify-center rounded-lg text-slate-400 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300 bg-slate-50/80 dark:bg-slate-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/60 border border-slate-200/70 dark:border-slate-700/60 hover:border-rose-200 dark:hover:border-rose-900/50 transition-all duration-150 cursor-pointer shadow-2xs ${
+                  isRail ? "w-8.5 h-8.5" : "w-8 h-8 shrink-0"
                 }`}
               >
-                <LogOut className="w-4 h-4 transition-transform group-hover:scale-110" />
+                <LogOut className="w-3.5 h-3.5 transition-transform group-hover:scale-110" />
               </button>
             </div>
           </div>

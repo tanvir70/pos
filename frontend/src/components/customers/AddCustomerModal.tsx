@@ -118,14 +118,20 @@ export default function AddCustomerModal({
             {/* Name */}
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Customer Name *
+                {form.customerType === "WHOLESALE" || form.businessName?.trim()
+                  ? "Proprietor / Customer Name *"
+                  : "Customer Name *"}
               </label>
               <input
                 type="text"
                 required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Full Name"
+                placeholder={
+                  form.customerType === "WHOLESALE" || form.businessName?.trim()
+                    ? "Proprietor Full Name"
+                    : "Full Name"
+                }
                 className="w-full h-9 px-3 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-950"
               />
             </div>
@@ -155,7 +161,7 @@ export default function AddCustomerModal({
             {/* Land Area */}
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Land Area
+                Land Area {form.customerType === "WHOLESALE" ? "(Optional)" : ""}
               </label>
               <input
                 type="text"
@@ -166,17 +172,20 @@ export default function AddCustomerModal({
               />
             </div>
 
-
             {/* Business Name */}
             <div>
               <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Business Name
+                Business Name {form.customerType === "WHOLESALE" ? "(Store / Firm)" : "(Optional)"}
               </label>
               <input
                 type="text"
                 value={form.businessName || ""}
                 onChange={(e) => setForm({ ...form, businessName: e.target.value })}
-                placeholder="Business / Farm Name"
+                placeholder={
+                  form.customerType === "WHOLESALE"
+                    ? "e.g. Bismillah Krishi Vander"
+                    : "Business / Store Name (if any)"
+                }
                 className="w-full h-9 px-3 border border-slate-200 dark:border-slate-800 rounded-md text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-900 dark:focus:ring-emerald-500 bg-white dark:bg-slate-950"
               />
             </div>

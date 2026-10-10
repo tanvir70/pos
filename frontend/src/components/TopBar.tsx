@@ -80,7 +80,6 @@ export default function TopBar({ isSidebarOpen, onToggleSidebar, activeTab }: To
           )}
         </button>
 
-        <Separator orientation="vertical" className="h-4 bg-slate-200 dark:bg-slate-800" />
         <NetworkStatusBadge />
         <Separator orientation="vertical" className="h-4 bg-slate-200 dark:bg-slate-800 hidden sm:block" />
         <Badge

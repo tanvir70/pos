@@ -146,9 +146,10 @@ rm -rf dist/assets/
 unzip -qo deploy.zip
 rm -f deploy.zip
 
-# 3. Apply schema migrations if python venv is available
+# 3. Apply schema migrations and Bangla UTF-8 encoding fix
 if [ -f "$VENV_PYTHON" ]; then
   "$VENV_PYTHON" -m alembic upgrade head || true
+  PYTHONPATH="$REMOTE_DIR" "$VENV_PYTHON" -m app.scripts.fix_utf8_bangla || true
 fi
 
 # 4. Trigger Phusion Passenger reload (cPanel Python App)

@@ -223,10 +223,12 @@ export default function PosCounter({
     async ({
       phone,
       name,
+      businessName,
       address,
     }: {
       phone: string
       name: string
+      businessName?: string
       address?: string
     }): Promise<Customer> => {
       const normalizedPhone = normalizeBangladeshPhone(phone)
@@ -235,13 +237,16 @@ export default function PosCounter({
       )
 
       if (existingCustomer) {
-        if (address?.trim() && !existingCustomer.villageAddress && !existingCustomer.address) {
+        const needsAddress = address?.trim() && !existingCustomer.villageAddress && !existingCustomer.address
+        const needsBusiness = businessName?.trim() && !existingCustomer.businessName
+        if (needsAddress || needsBusiness) {
           try {
             const updated = await updateCustomer(existingCustomer.id, {
               name: existingCustomer.name,
               phone: existingCustomer.phone,
               customerType: existingCustomer.customerType,
-              villageAddress: address.trim(),
+              villageAddress: address?.trim() || existingCustomer.villageAddress || existingCustomer.address || undefined,
+              businessName: businessName?.trim() || existingCustomer.businessName || undefined,
             })
             setCustomers((current) =>
               current.map((c) => (c.id === updated.id ? updated : c)),
@@ -250,7 +255,7 @@ export default function PosCounter({
             setCompletedCustomer(updated)
             return updated
           } catch (e) {
-            console.error("Failed to update customer address:", e)
+            console.error("Failed to update customer details:", e)
           }
         }
         setSelectedCustomerId(existingCustomer.id)
@@ -261,6 +266,7 @@ export default function PosCounter({
       const createdCustomer = await createCustomer({
         name: name.trim(),
         phone: normalizedPhone,
+        businessName: businessName?.trim() || undefined,
         customerType: saleMode,
         villageAddress: address?.trim() || undefined,
         currentDue: 0,

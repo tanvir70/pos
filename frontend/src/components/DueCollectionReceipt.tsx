@@ -235,6 +235,9 @@ export default function DueCollectionReceipt({
               <p className="font-medium text-gray-800">
                 Thank you for clearing your dues!
               </p>
+              <p className="text-[9px] text-gray-500 font-mono mt-1">
+                {STORE_INFO.poweredBy}
+              </p>
             </div>
           </div>
         </div>

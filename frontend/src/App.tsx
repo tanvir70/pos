@@ -15,7 +15,7 @@ import { ToastProvider } from "./context/ToastContext"
 import { AuthProvider, useAuth } from "./context/AuthContext"
 import { CartProvider } from "./context/CartContext"
 import { SplashScreen } from "./components/ui"
-import { Separator } from "./components/ui/separator"
+import { STORE_INFO } from "./constants/store"
 import { isTypingTarget, focusPrimarySearch, focusSidebarMenu, focusFirstTableRow } from "./utils/keyboard"
 
 const SIDEBAR_OPEN_KEY = "pos_sidebar_open"
@@ -251,17 +251,27 @@ function AppShell() {
                 </Suspense>
               </div>
 
-              {/* Minimalist Monochrome Footer (All pages except POS) */}
-              <footer className="mt-14 pb-8 flex flex-col items-center gap-3 select-none no-print">
-                <Separator className="w-16 bg-border/60" />
-                <div className="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full border border-border/70 bg-card/60 shadow-2xs backdrop-blur-xs text-[11px] font-sans">
-                  <span className="text-muted-foreground/90 font-normal tracking-wide">
-                    Built and developed by
-                  </span>
-                  <span className="h-2.5 w-px bg-border" />
-                  <span className="font-semibold text-foreground tracking-tight">
-                    Gridmark Labs
-                  </span>
+              {/* Balanced Enterprise Status Bar Footer (All pages except POS) */}
+              <footer className="mt-12 pt-4 pb-3 border-t border-slate-200/80 dark:border-slate-800/80 select-none no-print">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 px-1 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      {STORE_INFO.name}
+                    </span>
+                    <span className="text-slate-300 dark:text-slate-600">•</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      Sreebardi Terminal
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-[11px]">
+                    <span className="text-slate-400 dark:text-slate-500">
+                      System Powered by
+                    </span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 tracking-tight">
+                      {STORE_INFO.systemVendor}
+                    </span>
+                  </div>
                 </div>
               </footer>
             </>

@@ -11,6 +11,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def ensure_utf8mb4_mysql(self) -> "Settings":
+        if "sqlite" not in self.DATABASE_URL and "sqlite" in self.SYNC_DATABASE_URL:
+            derived = self.DATABASE_URL.replace("+aiomysql", "+pymysql").replace("+asyncpg", "+psycopg2")
+            self.SYNC_DATABASE_URL = derived
+
         for attr in ("DATABASE_URL", "SYNC_DATABASE_URL"):
             val = getattr(self, attr, "")
             if "mysql" in val and "charset=" not in val:

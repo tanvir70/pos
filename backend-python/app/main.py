@@ -47,17 +47,11 @@ async def lifespan(app: FastAPI):
 
         def _migrate_schema_sync(sync_conn):
             from sqlalchemy import inspect, text
-            if "sqlite" not in settings.DATABASE_URL:
-                for tbl in [
-                    "product", "customer", "customer_ledger",
-                    "inventory_lot", "stock_inventory", "stock_movement",
-                    "sale", "sale_item", "sale_return", "sale_return_item",
-                    "stock_adjustment", "stock_adjustment_item", "app_user", "document_sequences"
-                ]:
-                    try:
-                        sync_conn.execute(text(f"ALTER TABLE {tbl} CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"))
-                    except Exception:
-                        pass
+            from app.scripts.fix_utf8_bangla import run_utf8_bangla_migration_sync
+            try:
+                run_utf8_bangla_migration_sync(sync_conn)
+            except Exception as e:
+                logger.warning("Bangla encoding migration check warning: %s", e)
 
             sync_conn.execute(text("UPDATE inventory_lot SET lot_number = 'LOT-01' WHERE UPPER(lot_number) IN ('DEFAULT', 'INITIAL', '') OR lot_number IS NULL"))
             sync_conn.execute(text("UPDATE stock_movement SET remarks = REPLACE(REPLACE(remarks, 'DEFAULT', 'LOT-01'), 'default', 'LOT-01') WHERE remarks LIKE '%DEFAULT%' OR remarks LIKE '%default%'"))

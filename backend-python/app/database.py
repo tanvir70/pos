@@ -14,7 +14,10 @@ if "sqlite" not in settings.DATABASE_URL:
         "pool_size": settings.DB_POOL_SIZE,
         "max_overflow": settings.DB_MAX_OVERFLOW,
         "pool_recycle": settings.DB_POOL_RECYCLE,
-        "connect_args": {"charset": "utf8mb4"},
+        "connect_args": {
+            "charset": "utf8mb4",
+            "init_command": "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
+        },
     })
 
 engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)

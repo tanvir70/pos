@@ -151,7 +151,7 @@ export default function ReturnReceiptModal({ voucher, onClose }: ReturnReceiptMo
             Returned goods verified & received
           </p>
           <p className="text-[9px] text-gray-500 font-mono mt-1">
-            Powered by {STORE_INFO.name} POS
+            {STORE_INFO.poweredBy}
           </p>
         </div>
 

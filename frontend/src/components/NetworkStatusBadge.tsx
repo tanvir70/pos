@@ -62,15 +62,5 @@ export default function NetworkStatusBadge() {
     )
   }
 
-  return (
-    <div
-      role="status"
-      aria-label="Network connected"
-      title="System online and connected"
-      className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 shrink-0"
-    >
-      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 ring-2 ring-emerald-100 dark:ring-emerald-950" />
-      <span className="hidden sm:inline">Online</span>
-    </div>
-  )
+  return null
 }

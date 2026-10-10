@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   AlertCircle,
+  Building2,
   Check,
   CheckCircle2,
   FileText,
@@ -63,6 +64,7 @@ export interface DualPrintModalProps {
   onResolveCustomerForSale?: (details: {
     phone: string
     name: string
+    businessName?: string
     address?: string
   }) => Promise<Customer>
   onSaleCompleted?: (sale: SaleResponse, action: "thermal" | "a4" | "skipped") => void
@@ -86,6 +88,7 @@ export default function DualPrintModal({
   const [registrationError, setRegistrationError] = useState<string | null>(null)
   const [customerPhone, setCustomerPhone] = useState(customer?.phone || "")
   const [customerName, setCustomerName] = useState(customer?.name || "")
+  const [customerBusinessName, setCustomerBusinessName] = useState(customer?.businessName || "")
   const [customerAddress, setCustomerAddress] = useState(customer?.villageAddress || customer?.address || "")
   const [resolvedCustomer, setResolvedCustomer] = useState<Customer | null>(customer || null)
   const wasOpenRef = useRef(false)
@@ -105,13 +108,15 @@ export default function DualPrintModal({
   const customerForPrint: Customer | null = baseCustomerForPrint
     ? {
         ...baseCustomerForPrint,
+        businessName: customerBusinessName.trim() || baseCustomerForPrint.businessName || null,
         villageAddress: customerAddress.trim() || baseCustomerForPrint.villageAddress || baseCustomerForPrint.address || null,
         address: customerAddress.trim() || baseCustomerForPrint.address || baseCustomerForPrint.villageAddress || null,
       }
-    : (customerName.trim() || customerAddress.trim() || customerPhone.trim())
+    : (customerName.trim() || customerBusinessName.trim() || customerAddress.trim() || customerPhone.trim())
       ? ({
           id: 0,
           name: customerName.trim() || "Walk-in Customer",
+          businessName: customerBusinessName.trim() || null,
           phone: customerPhone.trim(),
           villageAddress: customerAddress.trim() || null,
           address: customerAddress.trim() || null,
@@ -127,6 +132,7 @@ export default function DualPrintModal({
       saleCompletedNotifiedRef.current = false
       setCustomerPhone(customer?.phone || "")
       setCustomerName(customer?.name || "")
+      setCustomerBusinessName(customer?.businessName || "")
       setCustomerAddress(customer?.villageAddress || customer?.address || "")
       setResolvedCustomer(customer || null)
     }
@@ -139,6 +145,7 @@ export default function DualPrintModal({
       setIsRegistering(false)
       setCustomerPhone(customer?.phone || "")
       setCustomerName(customer?.name || "")
+      setCustomerBusinessName(customer?.businessName || "")
       setCustomerAddress(customer?.villageAddress || customer?.address || "")
       setResolvedCustomer(customer || null)
       saleCompletedNotifiedRef.current = false
@@ -150,6 +157,7 @@ export default function DualPrintModal({
   useEffect(() => {
     if (matchedCustomer) {
       setCustomerName(matchedCustomer.name || "")
+      setCustomerBusinessName(matchedCustomer.businessName || "")
       setCustomerAddress(matchedCustomer.villageAddress || matchedCustomer.address || "")
     }
   }, [matchedCustomer])
@@ -190,20 +198,23 @@ export default function DualPrintModal({
         customerForSale = await onResolveCustomerForSale({
           phone: phoneDigits,
           name: customerName.trim(),
+          businessName: customerBusinessName.trim() || undefined,
           address: customerAddress.trim() || undefined,
         })
         setResolvedCustomer(customerForSale)
       } else if (matchedCustomer) {
         if (
           onResolveCustomerForSale &&
-          customerAddress.trim() &&
-          !matchedCustomer.villageAddress &&
-          !matchedCustomer.address
+          ((customerAddress.trim() &&
+            !matchedCustomer.villageAddress &&
+            !matchedCustomer.address) ||
+            (customerBusinessName.trim() && !matchedCustomer.businessName))
         ) {
           customerForSale = await onResolveCustomerForSale({
             phone: phoneDigits || matchedCustomer.phone,
             name: matchedCustomer.name,
-            address: customerAddress.trim(),
+            businessName: customerBusinessName.trim() || matchedCustomer.businessName || undefined,
+            address: customerAddress.trim() || matchedCustomer.villageAddress || matchedCustomer.address || undefined,
           })
           setResolvedCustomer(customerForSale)
         } else {
@@ -613,38 +624,75 @@ export default function DualPrintModal({
               </div>
             </div>
 
-            {/* Address / Village Input */}
-            <div className="mt-3 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Address / Village
-                </label>
-                <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                  {matchedCustomer ? (matchedCustomer.villageAddress || matchedCustomer.address ? "Directory Address" : "Optional") : "Optional"}
-                </span>
+            {/* Business / Firm Name & Address / Village Inputs */}
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Business / Store Name
+                  </label>
+                  <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                    Optional (wholesale)
+                  </span>
+                </div>
+                <div className="relative">
+                  <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                  <input
+                    type="text"
+                    value={matchedCustomer?.businessName || customerBusinessName}
+                    onChange={(event) => {
+                      setCustomerBusinessName(event.target.value)
+                      setRegistrationError(null)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        void openThermalReceipt(true)
+                      }
+                    }}
+                    readOnly={!!matchedCustomer?.businessName}
+                    placeholder="e.g. Bismillah Krishi Vander"
+                    className={`h-11 w-full rounded-xl border pl-10 pr-3 text-sm font-semibold outline-none transition ${
+                      matchedCustomer?.businessName
+                        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/50 text-emerald-950 dark:text-emerald-200 font-bold select-none cursor-default"
+                        : "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-emerald-500/15"
+                    }`}
+                  />
+                </div>
               </div>
-              <div className="relative">
-                <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                <input
-                  type="text"
-                  value={customerAddress}
-                  onChange={(event) => {
-                    setCustomerAddress(event.target.value)
-                    setRegistrationError(null)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      void openThermalReceipt(true)
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Address / Village
+                  </label>
+                  <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                    {matchedCustomer ? (matchedCustomer.villageAddress || matchedCustomer.address ? "Directory Address" : "Optional") : "Optional"}
+                  </span>
+                </div>
+                <div className="relative">
+                  <MapPin className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                  <input
+                    type="text"
+                    value={customerAddress}
+                    onChange={(event) => {
+                      setCustomerAddress(event.target.value)
+                      setRegistrationError(null)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        void openThermalReceipt(true)
+                      }
+                    }}
+                    placeholder={
+                      matchedCustomer
+                        ? (matchedCustomer.villageAddress || matchedCustomer.address || "No address saved (type to record)")
+                        : "Village, Union or Area address"
                     }
-                  }}
-                  placeholder={
-                    matchedCustomer
-                      ? (matchedCustomer.villageAddress || matchedCustomer.address || "No address saved (type to record)")
-                      : "Village, Union or Area address (e.g. Kandapara, Sreebardi)"
-                  }
-                  className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 pl-10 pr-3 text-sm font-semibold text-slate-900 dark:text-slate-100 placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-emerald-500/15"
-                />
+                    className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 pl-10 pr-3 text-sm font-semibold text-slate-900 dark:text-slate-100 placeholder:font-normal placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none transition focus:border-emerald-600 focus:bg-white dark:focus:bg-slate-800 focus:ring-3 focus:ring-emerald-500/15"
+                  />
+                </div>
               </div>
             </div>
 
