@@ -35,7 +35,6 @@ TABLES = [
     "sale_return",
     "sale_return_item",
     "stock_adjustment",
-    "stock_adjustment_item",
     "app_user",
     "document_sequences",
     "alembic_version",

@@ -1,0 +1,149 @@
+-- ==============================================================================
+-- UTF-8 Bangla Repair & Permanent Collation Fix for Messers Rajib Enterprise
+-- Execute in cPanel phpMyAdmin -> SQL tab
+-- ==============================================================================
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+ALTER DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+ALTER TABLE `product` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `customer` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `customer_ledger` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `inventory_lot` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `stock_inventory` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `stock_movement` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `sale` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `sale_item` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `sale_return` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `sale_return_item` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `stock_adjustment` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `app_user` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `document_sequences` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Restore All 117 Syngenta Product Bengali Names
+UPDATE `product` SET `name_bn` = 'ভার্টাকো ৪০ ডব্লিউজি (10 gm)' WHERE `product_code` = '72598';
+UPDATE `product` SET `name_bn` = 'ভার্টাকো ৪০ ডব্লিউজি (30 gm)' WHERE `product_code` = '72597';
+UPDATE `product` SET `name_bn` = 'প্লেনাম ৫০ ডব্লিউজি (50 gm)' WHERE `product_code` = '64213';
+UPDATE `product` SET `name_bn` = 'প্লেনাম ৫০ ডব্লিউজি (100 gm)' WHERE `product_code` = '66917';
+UPDATE `product` SET `name_bn` = 'শোবিক্রন ৪২৫ ইসি (50 ml)' WHERE `product_code` = '29568';
+UPDATE `product` SET `name_bn` = 'শোবিক্রন ৪২৫ ইসি (100 ml)' WHERE `product_code` = '42123';
+UPDATE `product` SET `name_bn` = 'শোবিক্রন ৪২৫ ইসি (500 ml)' WHERE `product_code` = '29570';
+UPDATE `product` SET `name_bn` = 'ইনসিপিও ২০এসসি (40 ml)' WHERE `product_code` = '87913';
+UPDATE `product` SET `name_bn` = 'ইনসিপিও ২০এসসি (100 ml)' WHERE `product_code` = '75229';
+UPDATE `product` SET `name_bn` = 'কারাতে ২.৫ ইসি (50 ml)' WHERE `product_code` = '58896';
+UPDATE `product` SET `name_bn` = 'কারাতে ২.৫ ইসি (100 ml)' WHERE `product_code` = '58890';
+UPDATE `product` SET `name_bn` = 'কারাতে ২.৫ ইসি (500 ml)' WHERE `product_code` = '58886';
+UPDATE `product` SET `name_bn` = 'প্রোক্লেইম ৫এসজি (10 gm)' WHERE `product_code` = '70887';
+UPDATE `product` SET `name_bn` = 'প্রোক্লেইম ৫এসজি (30 gm)' WHERE `product_code` = '70897';
+UPDATE `product` SET `name_bn` = 'প্রোক্লেইম ৫এসজি (10 gm)' WHERE `product_code` = '87199';
+UPDATE `product` SET `name_bn` = 'পেগাসাস ৫০ এসসি (50 ml)' WHERE `product_code` = '59214';
+UPDATE `product` SET `name_bn` = 'পেগাসাস ৫০ এসসি (100 ml)' WHERE `product_code` = '61124';
+UPDATE `product` SET `name_bn` = 'ভলিয়াম ফ্লেক্সি ৩০০ এসসি (50 ml)' WHERE `product_code` = '43978';
+UPDATE `product` SET `name_bn` = 'একতারা ২৫ ডব্লিউজি (5 gm)' WHERE `product_code` = '34779';
+UPDATE `product` SET `name_bn` = 'একতারা ২৫ ডব্লিউজি (5 gm)' WHERE `product_code` = '87221';
+UPDATE `product` SET `name_bn` = 'ডেনিম ফিট ৫০ ডব্লিউজি (10 gm)' WHERE `product_code` = '87224';
+UPDATE `product` SET `name_bn` = 'ডেনিম ফিট ৫০ ডব্লিউজি (10 gm)' WHERE `product_code` = '59688';
+UPDATE `product` SET `name_bn` = 'ক্রুজার ৭০ ডব্লিউএস (20 gm)' WHERE `product_code` = '63913';
+UPDATE `product` SET `name_bn` = 'ফরটেনজা ৬০ এফএস (10 ml)' WHERE `product_code` = '70007';
+UPDATE `product` SET `name_bn` = 'ওয়ালেস ৫৫ইসি (100 ml)' WHERE `product_code` = '71830';
+UPDATE `product` SET `name_bn` = 'ওয়ালেস ৫৫ইসি (500 ml)' WHERE `product_code` = '72524';
+UPDATE `product` SET `name_bn` = 'মিনেক্টো এক্সট্রা (10 ml)' WHERE `product_code` = '72434';
+UPDATE `product` SET `name_bn` = 'মিনেক্টো এক্সট্রা (50 ml)' WHERE `product_code` = '74275';
+UPDATE `product` SET `name_bn` = 'আলিকা ২৪.৭ জেডসি (50 ml)' WHERE `product_code` = '69667';
+UPDATE `product` SET `name_bn` = 'আলিকা ২৪.৭ জেডসি (100 ml)' WHERE `product_code` = '70966';
+UPDATE `product` SET `name_bn` = 'ফসলট্যাপ ৫০ এসপি (100 gm)' WHERE `product_code` = '68508';
+UPDATE `product` SET `name_bn` = 'ফসলট্যাপ ৫০ এসপি (50 gm)' WHERE `product_code` = '72523';
+UPDATE `product` SET `name_bn` = 'ফিকর ৫০ এসসি (100 ml)' WHERE `product_code` = '71014';
+UPDATE `product` SET `name_bn` = 'ফিকর ৫০ এসসি (400 ml)' WHERE `product_code` = '71013';
+UPDATE `product` SET `name_bn` = 'ভেস্টোরিয়া ২০ ডব্লিউজি (15 gm)' WHERE `product_code` = '84793';
+UPDATE `product` SET `name_bn` = 'ভেস্টোরিয়া ২০ ডব্লিউজি (50 gm)' WHERE `product_code` = '84811';
+UPDATE `product` SET `name_bn` = 'এট্রেসিয়া ১০ডিসি (50 ml)' WHERE `product_code` = '88294';
+UPDATE `product` SET `name_bn` = 'ভার্টাকো কম্বো (10 gm)' WHERE `product_code` = '88739';
+UPDATE `product` SET `name_bn` = 'ভার্টিমেক ০১৮ ইসি (50 ml)' WHERE `product_code` = '63105';
+UPDATE `product` SET `name_bn` = 'ভার্টিমেক ০১৮ ইসি (100 ml)' WHERE `product_code` = '63106';
+UPDATE `product` SET `name_bn` = 'ভার্টিমেক ০১৮ ইসি (500 ml)' WHERE `product_code` = '63107';
+UPDATE `product` SET `name_bn` = 'টিল্ট ২৫০ ইসি (50 ml)' WHERE `product_code` = '58888';
+UPDATE `product` SET `name_bn` = 'টিল্ট ২৫০ ইসি (100 ml)' WHERE `product_code` = '58889';
+UPDATE `product` SET `name_bn` = 'টিল্ট ২৫০ ইসি (500 ml)' WHERE `product_code` = '58887';
+UPDATE `product` SET `name_bn` = 'স্কোর ২৫০ ইসি (50 ml)' WHERE `product_code` = '34002';
+UPDATE `product` SET `name_bn` = 'স্কোর ২৫০ ইসি (100 ml)' WHERE `product_code` = '30593';
+UPDATE `product` SET `name_bn` = 'স্কোর ২৫০ ইসি (500 ml)' WHERE `product_code` = '34001';
+UPDATE `product` SET `name_bn` = 'এমিটার টপ ৩২৫ এসসি (50 ml)' WHERE `product_code` = '88631';
+UPDATE `product` SET `name_bn` = 'এমিটার টপ ৩২৫ এসসি (100 ml)' WHERE `product_code` = '88630';
+UPDATE `product` SET `name_bn` = 'এমিটার টপ ৩২৫ এসসি (500 ml)' WHERE `product_code` = '88626';
+UPDATE `product` SET `name_bn` = 'এমিটার টপ ৩২৫ এসসি (50 ml)' WHERE `product_code` = '53294';
+UPDATE `product` SET `name_bn` = 'এমিটার টপ ৩২৫ এসসি (100 ml)' WHERE `product_code` = '46652';
+UPDATE `product` SET `name_bn` = 'এমিটার টপ ৩২৫ এসসি (500 ml)' WHERE `product_code` = '51574';
+UPDATE `product` SET `name_bn` = 'ফিলিয়া ৫২৫ এসই (50 ml)' WHERE `product_code` = '55458';
+UPDATE `product` SET `name_bn` = 'ফিলিয়া ৫২৫ এসই (100 ml)' WHERE `product_code` = '46420';
+UPDATE `product` SET `name_bn` = 'ফিলিয়া ৫২৫ এসই (500 ml)' WHERE `product_code` = '57918';
+UPDATE `product` SET `name_bn` = 'রিডোমিল গোল্ড এমজেড ৬৮ডব্লিউজি (100 gm)' WHERE `product_code` = '38775';
+UPDATE `product` SET `name_bn` = 'রিডোমিল গোল্ড এমজেড ৬৮ডব্লিউজি (0.5 kg)' WHERE `product_code` = '38776';
+UPDATE `product` SET `name_bn` = 'রিডোমিল গোল্ড এমজেড ৬৮ডব্লিউজি (1 kg)' WHERE `product_code` = '45144';
+UPDATE `product` SET `name_bn` = 'জ্যাজ ৮০ ডব্লিউপি (500 gm)' WHERE `product_code` = '52537';
+UPDATE `product` SET `name_bn` = 'জ্যাজ ৮০ ডব্লিউপি (100 gm)' WHERE `product_code` = '52539';
+UPDATE `product` SET `name_bn` = 'রেভাস ২৫০ এসসি (50 ml)' WHERE `product_code` = '58513';
+UPDATE `product` SET `name_bn` = 'রেভাস ২৫০ এসসি (100 ml)' WHERE `product_code` = '53508';
+UPDATE `product` SET `name_bn` = 'রেভাস ২৫০ এসসি (500 ml)' WHERE `product_code` = '53924';
+UPDATE `product` SET `name_bn` = 'মিরাভিস ডুও ২০এসসি (50 ml)' WHERE `product_code` = '80927';
+UPDATE `product` SET `name_bn` = 'মিরাভিস ডুও ২০এসসি (100 ml)' WHERE `product_code` = '81359';
+UPDATE `product` SET `name_bn` = 'আরমুর ৩০ইসি (100 ml)' WHERE `product_code` = '85250';
+UPDATE `product` SET `name_bn` = 'ক্যারিয়াল ফ্লেক্স ৪৩ডব্লিউজি (70 gm)' WHERE `product_code` = '85803';
+UPDATE `product` SET `name_bn` = 'থিওভিট ৮০ ডব্লিউজি (0.5 kg)' WHERE `product_code` = '16238';
+UPDATE `product` SET `name_bn` = 'থিওভিট ৮০ ডব্লিউজি (1 kg)' WHERE `product_code` = '16239';
+UPDATE `product` SET `name_bn` = 'থিওভিট ৮০ ডব্লিউজি (2 kg)' WHERE `product_code` = '16240';
+UPDATE `product` SET `name_bn` = 'থিওভিট ৮০ ডব্লিউজি (1 kg)' WHERE `product_code` = '92798';
+UPDATE `product` SET `name_bn` = 'থিওভিট ৮০ ডব্লিউজি (2 kg)' WHERE `product_code` = '92795';
+UPDATE `product` SET `name_bn` = 'থিওভিট ৮০ ডব্লিউজি (25 kg)' WHERE `product_code` = '30004';
+UPDATE `product` SET `name_bn` = 'কাল্টার (500 ml)' WHERE `product_code` = '88725';
+UPDATE `product` SET `name_bn` = 'সিলিকা ৮০ ডব্লিউজি (0.5 kg)' WHERE `product_code` = '47314';
+UPDATE `product` SET `name_bn` = 'সিলিকা ৮০ ডব্লিউজি (1 kg)' WHERE `product_code` = '58337';
+UPDATE `product` SET `name_bn` = 'সিলিকা ৮০ ডব্লিউজি (2 kg)' WHERE `product_code` = '63914';
+UPDATE `product` SET `name_bn` = 'ক্যালিবার ৫০ ডব্লিউপি (100 gm)' WHERE `product_code` = '68507';
+UPDATE `product` SET `name_bn` = 'ক্যালিবার ৫০ ডব্লিউপি (500 gm)' WHERE `product_code` = '70283';
+UPDATE `product` SET `name_bn` = 'বাউন্টি ৩৬ডব্লিউপি (100 gm)' WHERE `product_code` = '71016';
+UPDATE `product` SET `name_bn` = 'বাউন্টি ৩৬ডব্লিউপি (500 gm)' WHERE `product_code` = '71017';
+UPDATE `product` SET `name_bn` = 'কোজি ৪৫ডব্লিউপি (100 gm)' WHERE `product_code` = '70182';
+UPDATE `product` SET `name_bn` = 'রিফিট ৫০০ ইসি (100 ml)' WHERE `product_code` = '35348';
+UPDATE `product` SET `name_bn` = 'রিফিট ৫০০ ইসি (500 ml)' WHERE `product_code` = '30688';
+UPDATE `product` SET `name_bn` = 'রিফিট প্লাস ৩৭ ইডব্লিউ (250 ml)' WHERE `product_code` = '67637';
+UPDATE `product` SET `name_bn` = 'রিফিট প্লাস ৩৭ ইডব্লিউ (165 ml)' WHERE `product_code` = '78917';
+UPDATE `product` SET `name_bn` = 'লগ্রান ৭৫ডব্লিউজি (3 gm)' WHERE `product_code` = '66559';
+UPDATE `product` SET `name_bn` = 'লেজার ১০ ডব্লিউপি (25 gm)' WHERE `product_code` = '43868';
+UPDATE `product` SET `name_bn` = 'ক্যালেরিস এক্সট্রা ২৭.৫ এসসি (500 ml)' WHERE `product_code` = '75062';
+UPDATE `product` SET `name_bn` = 'ফিউসিলেড ম্যাক্স ১২.৫ ইসি (100 ml)' WHERE `product_code` = '59997';
+UPDATE `product` SET `name_bn` = 'ফসল আপ ৪৮এসএল (1 Lt)' WHERE `product_code` = '82888';
+UPDATE `product` SET `name_bn` = 'ফসল আপ ৪৮এসএল (500 ml)' WHERE `product_code` = '82898';
+UPDATE `product` SET `name_bn` = 'গেল ১৮ডব্লিউপি (100 gm)' WHERE `product_code` = '69037';
+UPDATE `product` SET `name_bn` = 'ক্লাভেঙ্গো ২০ এসএল (200 ml)' WHERE `product_code` = '80490';
+UPDATE `product` SET `name_bn` = 'প্রোটোজিম (50 ml)' WHERE `product_code` = '59703';
+UPDATE `product` SET `name_bn` = 'প্রোটোজিম (100 ml)' WHERE `product_code` = '59704';
+UPDATE `product` SET `name_bn` = 'প্রোটোজিম (500 ml)' WHERE `product_code` = '59769';
+UPDATE `product` SET `name_bn` = 'প্রাইম প্লাস (1 Lt)' WHERE `product_code` = '84781';
+UPDATE `product` SET `name_bn` = 'বিঙ্গো (100 gm)' WHERE `product_code` = '63728';
+UPDATE `product` SET `name_bn` = 'বিঙ্গো (0.5 kg)' WHERE `product_code` = '63730';
+UPDATE `product` SET `name_bn` = 'বিঙ্গো-স্যাক (100 gm)' WHERE `product_code` = '87269';
+UPDATE `product` SET `name_bn` = 'বিঙ্গো-স্যাক (0.5 kg)' WHERE `product_code` = '87848';
+UPDATE `product` SET `name_bn` = 'ম্যাগমা-স্যাক (1 kg)' WHERE `product_code` = '90521';
+UPDATE `product` SET `name_bn` = 'ম্যাগমা-স্যাক (2 kg)' WHERE `product_code` = '90556';
+UPDATE `product` SET `name_bn` = 'ম্যাগমা (1 kg)' WHERE `product_code` = '63731';
+UPDATE `product` SET `name_bn` = 'ম্যাগমা (2 kg)' WHERE `product_code` = '55296';
+UPDATE `product` SET `name_bn` = 'গ্রোজিন (1 kg)' WHERE `product_code` = '35440';
+UPDATE `product` SET `name_bn` = 'গ্রোজিন (1 kg)' WHERE `product_code` = '92493';
+UPDATE `product` SET `name_bn` = 'গ্রোজিন (1 kg)' WHERE `product_code` = '93175';
+UPDATE `product` SET `name_bn` = 'গ্রোজিন (2 kg)' WHERE `product_code` = '81636';
+UPDATE `product` SET `name_bn` = 'গ্রোজিন (2 kg)' WHERE `product_code` = '56655';
+UPDATE `product` SET `name_bn` = 'গ্রোজিন (2 kg)' WHERE `product_code` = '93171';
+UPDATE `product` SET `name_bn` = 'ল্যানিরেট (100 gm)' WHERE `product_code` = '35723';
+UPDATE `product` SET `name_bn` = 'পিজে-১৬ স্প্রেয়ার' WHERE `product_code` = '202255';
+UPDATE `product` SET `name_bn` = 'পিজেবি ১৬ স্প্রেয়ার' WHERE `product_code` = '4132143';
+UPDATE `product` SET `name_bn` = 'এক্সপি-১৬' WHERE `product_code` = '4035253';
+
+-- Restore Walk-in Customer Bengali Name
+UPDATE `customer` SET `name` = 'খুচরা ক্রেতা (Walk-in)' WHERE `phone` = '01700000000';
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Verification Query
+SELECT id, product_code, name_en, name_bn FROM `product` LIMIT 10;
