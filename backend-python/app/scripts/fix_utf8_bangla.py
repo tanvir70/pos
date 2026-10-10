@@ -114,26 +114,10 @@ def run_utf8_bangla_migration_sync(sync_conn) -> dict:
         except Exception:
             pass
 
-    # 3. Restore walk-in customer default Bengali name if corrupted
-    restored_walkin = False
-    try:
-        res = sync_conn.execute(
-            text(
-                "UPDATE customer SET name = :name "
-                "WHERE phone = '01700000000' AND (name LIKE '%?%' OR name = '' OR name IS NULL)"
-            ),
-            {"name": "খুচরা ক্রেতা (Walk-in)"},
-        )
-        if res.rowcount and res.rowcount > 0:
-            restored_walkin = True
-    except Exception:
-        pass
-
     return {
         "is_sqlite": is_sqlite,
         "converted_tables": converted_tables,
         "updated_products": updated_products,
-        "restored_walkin": restored_walkin,
     }
 
 
@@ -192,7 +176,6 @@ def main():
 
     print(f"✓ Converted tables: {len(res['converted_tables'])}")
     print(f"✓ Restored product Bengali names: {res['updated_products']}")
-    print(f"✓ Walk-in customer restored: {res['restored_walkin']}")
     print("==========================================================")
     print(" 🎉 SUCCESS! All Bengali text has been restored to utf8mb4!")
     print("==========================================================")

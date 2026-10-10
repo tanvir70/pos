@@ -140,9 +140,6 @@ UPDATE `product` SET `name_bn` = 'পিজে-১৬ স্প্রেয়া�
 UPDATE `product` SET `name_bn` = 'পিজেবি ১৬ স্প্রেয়ার' WHERE `product_code` = '4132143';
 UPDATE `product` SET `name_bn` = 'এক্সপি-১৬' WHERE `product_code` = '4035253';
 
--- Restore Walk-in Customer Bengali Name
-UPDATE `customer` SET `name` = 'খুচরা ক্রেতা (Walk-in)' WHERE `phone` = '01700000000';
-
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Verification Query
