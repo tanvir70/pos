@@ -4,6 +4,7 @@ import { getStockMovements } from "../api/endpoints"
 import Pagination from "./ui/Pagination"
 import DateRangeFilter, { type DateRange, defaultDateRange } from "./ui/DateRangeFilter"
 import { formatLotNumber } from "../utils/lotNumber"
+import { formatQuantity } from "../utils/unit"
 import RefreshButton from "./ui/RefreshButton"
 import {
   X,
@@ -365,7 +366,7 @@ export default function StockLedgerModal({
                         </td>
                         <td className="py-3 px-2 text-right font-mono font-bold tabular-nums">
                           <span className={isPositive ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
-                            {isPositive ? `+${m.quantityChange}` : m.quantityChange} {m.unit}
+                            {isPositive ? `+${formatQuantity(m.quantityChange, m.unit)}` : formatQuantity(m.quantityChange, m.unit)} {m.unit}
                           </span>
                         </td>
                         <td className="py-3 px-2 text-slate-600 dark:text-slate-400 max-w-[200px] truncate" title={m.remarks}>

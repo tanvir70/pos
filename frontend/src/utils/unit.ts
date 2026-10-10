@@ -40,24 +40,46 @@ export function isDiscreteUnit(unit?: string | null): boolean {
 }
 
 /**
+ * Canonical quantity formatter for the Rajib Enterprise POS & Inventory system.
+ * Formats a quantity value appropriately:
+ * - Whole numbers: Trims trailing zeros entirely (e.g. 2.000 -> "2", 10.000 -> "10").
+ * - Fractional numbers: Preserves only meaningful decimal places up to 3 decimals without trailing zeros
+ *   (e.g. 2.500 -> "2.5", 2.250 -> "2.25", 2.125 -> "2.125").
+ * - Discrete units (Bottle, Packet, Piece, Bag, etc.): Rounded to integers.
+ * - Handles numbers, strings, null, and undefined safely.
+ */
+export function formatQuantity(
+  qty: number | string | null | undefined,
+  unit?: string | null,
+): string {
+  if (qty == null || qty === "") return "0"
+  const num = typeof qty === "string" ? parseFloat(qty) : Number(qty)
+  if (!Number.isFinite(num)) return "0"
+
+  if (unit && isDiscreteUnit(unit)) {
+    return Math.round(num).toString()
+  }
+
+  if (Number.isInteger(num)) {
+    return num.toString()
+  }
+
+  // Remove redundant trailing zeroes after decimal point for weights/liquids
+  return parseFloat(num.toFixed(3)).toString()
+}
+
+/**
  * Formats a quantity value appropriately for its unit:
  * - Whole integers for discrete units (e.g. 2 instead of 2.000).
  * - Up to 3 decimal places without redundant trailing zeros for continuous units (Kg, Liter).
+ * - Returns empty string if input is null or empty.
  */
 export function formatQuantityByUnit(
   qty: number | string | null | undefined,
   unit?: string | null,
 ): string {
   if (qty == null || qty === "") return ""
-  const num = typeof qty === "string" ? parseFloat(qty) : qty
-  if (isNaN(num)) return ""
-
-  if (isDiscreteUnit(unit)) {
-    return Math.round(num).toString()
-  }
-
-  // Remove redundant trailing zeroes after decimal point for weights/liquids
-  return parseFloat(num.toFixed(3)).toString()
+  return formatQuantity(qty, unit)
 }
 
 export interface ParsedPackSize {

@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import type { SaleResponse } from "../../types"
 import { formatTk } from "../../utils/currency"
+import { formatQuantity } from "../../utils/unit"
 import Modal from "../ui/Modal"
 import Button from "../ui/Button"
 import Badge from "../ui/Badge"
@@ -134,7 +135,7 @@ export default function OrderDetailsModal({
             <span>Ordered Items ({sale.items?.length || 0})</span>
             <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
               Total Qty:{" "}
-              {(sale.items ?? []).reduce((acc, it) => acc + (Number(it.totalQuantity) || 0), 0)}
+              {formatQuantity((sale.items ?? []).reduce((acc, it) => acc + (Number(it.totalQuantity) || 0), 0))}
             </span>
           </div>
 
@@ -170,7 +171,7 @@ export default function OrderDetailsModal({
                       #{item.lotNumber}
                     </td>
                     <td className="py-2 px-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100 tabular-nums">
-                      {item.totalQuantity} {item.baseUnit || ""}
+                      {formatQuantity(item.totalQuantity, item.baseUnit)} {item.baseUnit || ""}
                     </td>
                     <td className="py-2 px-3 text-right font-mono text-slate-600 dark:text-slate-300 tabular-nums">
                       {formatTk(item.unitPrice)}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react"
 import type { SaleResponse, PagedResponse } from "../../types"
 import { getPaginatedSales } from "../../api/endpoints"
+import { formatQuantity } from "../../utils/unit"
 import {
   FileText,
   Printer,
@@ -40,11 +41,6 @@ export interface RecentOrdersTableProps {
 
 const tk = (n: number | undefined | null) =>
   `৳${(n ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-
-const formatQuantity = (n: number) =>
-  Number.isInteger(n)
-    ? n.toLocaleString("en-IN")
-    : n.toLocaleString("en-IN", { maximumFractionDigits: 3 })
 
 const formatDate = (isoString?: string) => {
   if (!isoString) return "-"

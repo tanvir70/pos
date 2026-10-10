@@ -14,7 +14,7 @@ import { useCart, MAX_PARKED_CARTS, type ParkedCart } from "../../context/CartCo
 import { useToast } from "../../context/ToastContext"
 import type { Customer } from "../../types"
 import { calcLineTotal, formatTk } from "../../utils/currency"
-import { getEffectiveMultiplier, pluralizeUnit } from "../../utils/unit"
+import { getEffectiveMultiplier, pluralizeUnit, formatQuantity } from "../../utils/unit"
 import Badge from "../ui/Badge"
 import Button from "../ui/Button"
 import { Modal } from "../ui/Modal"
@@ -448,10 +448,10 @@ export default function CartTicket({ customers }: CartTicketProps = {}) {
                         <span>
                           {ctns > 0 ? (
                             loose > 0
-                              ? `${ctns} ${pluralizeUnit("Carton", ctns)} + ${loose} ${pluralizeUnit(item.baseUnit, loose)}`
-                              : `${ctns} ${pluralizeUnit("Carton", ctns)} (${item.quantity} ${pluralizeUnit(item.baseUnit, item.quantity)})`
+                              ? `${ctns} ${pluralizeUnit("Carton", ctns)} + ${formatQuantity(loose, item.baseUnit)} ${pluralizeUnit(item.baseUnit, loose)}`
+                              : `${ctns} ${pluralizeUnit("Carton", ctns)} (${formatQuantity(item.quantity, item.baseUnit)} ${pluralizeUnit(item.baseUnit, item.quantity)})`
                           ) : (
-                            `${loose} ${pluralizeUnit(item.baseUnit, loose)} (Loose)`
+                            `${formatQuantity(loose, item.baseUnit)} ${pluralizeUnit(item.baseUnit, loose)} (Loose)`
                           )}
                         </span>
                       </div>
@@ -541,7 +541,7 @@ export default function CartTicket({ customers }: CartTicketProps = {}) {
                       {/* Item Preview */}
                       <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-sm">
                         {p.state.cart
-                          .map((ci) => `${ci.nameEn || ci.nameBn} (${ci.quantity})`)
+                          .map((ci) => `${ci.nameEn || ci.nameBn} (${formatQuantity(ci.quantity, ci.baseUnit)})`)
                           .join(", ")}
                       </div>
                     </div>

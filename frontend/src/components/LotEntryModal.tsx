@@ -3,6 +3,7 @@ import type { Product, LotEntryRequest } from "../types"
 import { createLot } from "../api/endpoints"
 import { calcWholesalePrice, getWholesaleSettings } from "../utils/wholesaleSettings"
 import { getNextLotNumber } from "../utils/lotNumber"
+import { formatQuantity } from "../utils/unit"
 import { Package, X, AlertTriangle, Loader2, Check } from "lucide-react"
 import {
   Select,
@@ -412,10 +413,10 @@ export default function LotEntryModal({
 
                 {parseFloat(quantity) > 0 && (
                   <p className="text-xs text-emerald-800 dark:text-emerald-300 font-medium bg-emerald-100/60 dark:bg-emerald-950/50 p-2 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                    📦 Breakdown: <strong className="font-bold">{parseFloat(quantity)} {selectedProduct.baseUnit}</strong> (
+                    📦 Breakdown: <strong className="font-bold">{formatQuantity(parseFloat(quantity), selectedProduct.baseUnit)} {selectedProduct.baseUnit}</strong> (
                     {Math.floor(parseFloat(quantity) / (selectedProduct.cartonMultiplier || 1))} Cartons
                     {parseFloat(quantity) % (selectedProduct.cartonMultiplier || 1) !== 0
-                      ? ` + ${(parseFloat(quantity) % (selectedProduct.cartonMultiplier || 1)).toFixed(0)} Loose ${selectedProduct.baseUnit}`
+                      ? ` + ${formatQuantity(parseFloat(quantity) % (selectedProduct.cartonMultiplier || 1), selectedProduct.baseUnit)} Loose ${selectedProduct.baseUnit}`
                       : ""}
                     )
                   </p>

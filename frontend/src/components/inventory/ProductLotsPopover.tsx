@@ -2,6 +2,7 @@ import React from "react"
 import { Tag } from "lucide-react"
 import type { StockItem } from "../../types"
 import { formatLotNumber } from "../../utils/lotNumber"
+import { formatQuantity } from "../../utils/unit"
 
 export interface LotDropdownProduct {
   productId: number
@@ -80,7 +81,7 @@ export default function ProductLotsPopover({
                   </div>
                   <div className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-2">
                     <span>
-                      Stock: <strong className="text-emerald-800 dark:text-emerald-400 font-mono font-bold">{lotQty}</strong>
+                      Stock: <strong className="text-emerald-800 dark:text-emerald-400 font-mono font-bold">{formatQuantity(lotQty, (lot as any).baseUnit)}</strong>
                     </span>
                     <span>•</span>
                     <span className="text-slate-500 dark:text-slate-400">

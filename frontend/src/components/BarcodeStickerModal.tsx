@@ -3,6 +3,7 @@ import type { StockItem } from "../types"
 import { getBarcodePngUrl } from "../api/endpoints"
 import { Tag, X, Sprout, Printer, Layers } from "lucide-react"
 import { formatLotNumber } from "../utils/lotNumber"
+import { formatQuantity } from "../utils/unit"
 import {
   Select,
   SelectTrigger,
@@ -271,7 +272,7 @@ export default function BarcodeStickerModal({
                     const qty = Number(l.quantity ?? (l as any).totalQuantity ?? 0)
                     return (
                       <SelectItem key={l.lotId} value={String(l.lotId)} className="font-mono text-xs">
-                        {formatLotNumber(l.lotNumber, idx)} • Stock: {qty} units • Exp: {l.expiryDate || "N/A"} • #{l.lotBarcode || l.barcode || l.defaultBarcode || ""}
+                        {formatLotNumber(l.lotNumber, idx)} • Stock: {formatQuantity(qty, (l as any).baseUnit)} units • Exp: {l.expiryDate || "N/A"} • #{l.lotBarcode || l.barcode || l.defaultBarcode || ""}
                       </SelectItem>
                     )
                   })}

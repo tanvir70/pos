@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react"
 import { Printer, X } from "lucide-react"
 import type { SaleResponse, Customer } from "../types"
 import { STORE_INFO } from "../constants/store"
+import { formatQuantity } from "../utils/unit"
 
 // BUSINESS DECISION: Thermal receipt (80mm/58mm) formatted specifically for fast retail counter
 // transactions with compact item breakdown, digital payment trace, and dealership footer.
@@ -171,10 +172,10 @@ export default function ThermalReceipt({
                         </div>
                       </td>
                       <td className="py-1.5 text-center font-bold tabular-nums">
-                        <div>{item.totalQuantity}</div>
+                        <div>{formatQuantity(item.totalQuantity, item.baseUnit)}</div>
                         {hasCartons && (
                           <div className="text-[9px] text-gray-600 font-medium">
-                            {loose > 0 ? `${ctns}c+${loose}p` : `${ctns}ctn`}
+                            {loose > 0 ? `${ctns}c+${formatQuantity(loose, item.baseUnit)}p` : `${ctns}ctn`}
                           </div>
                         )}
                       </td>

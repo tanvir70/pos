@@ -14,6 +14,7 @@ import {
 } from "../components/ui/select"
 import { formatLotNumber } from "../utils/lotNumber"
 import { focusSidebarMenu, focusFirstTableRow, focusPrimarySearch } from "../utils/keyboard"
+import { formatQuantity } from "../utils/unit"
 import {
   Table,
   TableHeader,
@@ -425,7 +426,7 @@ export default function StockLedgerPage({
         {/* 2. Inward Quantity (Page) */}
         <GotposStatCard
           title="Inward Movements (+)"
-          value={`${metrics.inwardCount} units`}
+          value={`${formatQuantity(metrics.inwardCount)} units`}
           subtitle="Lot entries, returns, opening stock"
           theme="emerald"
           icon={<ArrowUpRight className="w-5 h-5" />}
@@ -434,7 +435,7 @@ export default function StockLedgerPage({
         {/* 3. Outward Quantity (Page) */}
         <GotposStatCard
           title="Outward Deductions (-)"
-          value={`${metrics.outwardCount} units`}
+          value={`${formatQuantity(metrics.outwardCount)} units`}
           subtitle="POS sales, write-offs, transfers"
           theme="navy"
           icon={<ArrowDownRight className="w-5 h-5" />}
@@ -443,7 +444,7 @@ export default function StockLedgerPage({
         {/* 4. Damage / Shrinkage Loss (Page) */}
         <GotposStatCard
           title="Damage / Scrap Write-Offs"
-          value={`${metrics.damageLossUnits} units`}
+          value={`${formatQuantity(metrics.damageLossUnits)} units`}
           valueColor={metrics.damageLossUnits > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-slate-100"}
           subtitle="Breakage, moisture, expired write-offs"
           theme={metrics.damageLossUnits > 0 ? "rose" : "amber"}
@@ -813,7 +814,7 @@ export default function StockLedgerPage({
                             : "text-slate-500 dark:text-slate-400"
                         }`}
                       >
-                        {m.quantityChange > 0 ? `+${m.quantityChange}` : m.quantityChange}{" "}
+                        {m.quantityChange > 0 ? `+${formatQuantity(m.quantityChange, m.unit)}` : formatQuantity(m.quantityChange, m.unit)}{" "}
                         <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400">{m.unit}</span>
                       </span>
                     </td>

@@ -13,6 +13,7 @@ import type { SaleMode, StockItem } from "../../types"
 import { formatTk } from "../../utils/currency"
 import { formatLotNumber } from "../../utils/lotNumber"
 import { focusSidebarMenu } from "../../utils/keyboard"
+import { formatQuantity } from "../../utils/unit"
 import Input from "../ui/Input"
 import Button from "../ui/Button"
 import Badge from "../ui/Badge"
@@ -51,15 +52,6 @@ function availableQuantity(item: StockItem): number {
   const qty = item.quantity ?? item.totalQuantity ?? 0
   const parsed = typeof qty === "number" ? qty : parseFloat(String(qty))
   return Number.isFinite(parsed) ? parsed : 0
-}
-
-function formatQuantity(value: number | string | undefined | null): string {
-  if (value === undefined || value === null || value === "") return "0"
-  const n = typeof value === "number" ? value : parseFloat(String(value))
-  if (!Number.isFinite(n)) return "0"
-  return Number.isInteger(n)
-    ? n.toLocaleString("en-IN")
-    : n.toLocaleString("en-IN", { maximumFractionDigits: 3 })
 }
 
 function hasBusinessLot(item: StockItem) {

@@ -17,7 +17,7 @@ import {
 import type { Product, StockItem, GroupedProduct } from "../../types"
 import { formatTk } from "../../utils/currency"
 import { formatLotNumber } from "../../utils/lotNumber"
-import { getEffectiveMultiplier, pluralizeUnit } from "../../utils/unit"
+import { getEffectiveMultiplier, pluralizeUnit, formatQuantity } from "../../utils/unit"
 import { focusSidebarMenu, focusFirstTableRow, focusPrimarySearch } from "../../utils/keyboard"
 import Button from "../ui/Button"
 import Input from "../ui/Input"
@@ -352,7 +352,7 @@ export default function InventoryTable({
                                   }
                                 >
                                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                  {item.totalStock}
+                                  {formatQuantity(item.totalStock, item.baseUnit)}
                                   <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-tight">
                                     Low
                                   </span>
@@ -366,7 +366,7 @@ export default function InventoryTable({
                                       : undefined
                                   }
                                 >
-                                  {item.totalStock}
+                                  {formatQuantity(item.totalStock, item.baseUnit)}
                                 </span>
                               )}
 
@@ -408,7 +408,7 @@ export default function InventoryTable({
                                 <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap leading-none mt-0.5">
                                   {ctns > 0 ? `${ctns} ctn` : ""}
                                   {ctns > 0 && loose > 0 ? " + " : ""}
-                                  {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose).toLowerCase()}` : ""}
+                                  {loose > 0 ? `${formatQuantity(loose, item.baseUnit)} ${pluralizeUnit(item.baseUnit, loose).toLowerCase()}` : ""}
                                 </span>
                               )
                             })()}
@@ -604,7 +604,7 @@ export default function InventoryTable({
                                           {/* 3. AVAILABLE QTY */}
                                           <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                             <div className="font-mono font-bold text-sm text-emerald-800 dark:text-emerald-400 tabular-nums">
-                                              {lotQty}
+                                              {formatQuantity(lotQty, item.baseUnit)}
                                             </div>
                                             {(() => {
                                               const mult = getEffectiveMultiplier(item.cartonMultiplier, item.packSize, item.unitSize)
@@ -615,7 +615,7 @@ export default function InventoryTable({
                                                 <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap leading-none mt-0.5 block">
                                                   {ctns > 0 ? `${ctns} ctn` : ""}
                                                   {ctns > 0 && loose > 0 ? " + " : ""}
-                                                  {loose > 0 ? `${loose} ${pluralizeUnit(item.baseUnit, loose).toLowerCase()}` : ""}
+                                                  {loose > 0 ? `${formatQuantity(loose, item.baseUnit)} ${pluralizeUnit(item.baseUnit, loose).toLowerCase()}` : ""}
                                                 </span>
                                               )
                                             })()}

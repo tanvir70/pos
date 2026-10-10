@@ -4,6 +4,7 @@ import { FileText, Printer, X } from "lucide-react"
 import type { SaleResponse, Customer } from "../types"
 import { STORE_INFO } from "../constants/store"
 import BrandLogo from "./ui/BrandLogo"
+import { formatQuantity } from "../utils/unit"
 
 // BUSINESS DECISION: A4 Invoice & Challan prints wholesale agricultural dispatches with
 // full customer profile, carton conversions, previous balance integration, and dual legal signatures.
@@ -380,12 +381,12 @@ export default function A4InvoicePrint({
                           </td>
                           <td className="border-b border-r border-gray-300 py-2 px-2 text-center tabular-nums">
                             <div className="font-bold text-gray-900">
-                              {totalUnits} {item.baseUnit || "Pcs"}
+                              {formatQuantity(totalUnits, item.baseUnit)} {item.baseUnit || "Pcs"}
                             </div>
                             {hasCartons && (
                               <div className="text-[10px] font-semibold text-emerald-800">
                                 {loose > 0
-                                   ? `(${ctns} Ctn + ${loose} Pk)`
+                                   ? `(${ctns} Ctn + ${formatQuantity(loose, item.baseUnit)} Pk)`
                                    : `(${ctns} ${ctns > 1 ? "Ctns" : "Ctn"})`}
                               </div>
                             )}
